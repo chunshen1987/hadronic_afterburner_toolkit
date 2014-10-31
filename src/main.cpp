@@ -26,6 +26,7 @@
 #include "parameters.h"
 #include "arsenal.h"
 #include "ParameterReader.h"
+#include "particleSamples.h"
 
 using namespace std;
 
@@ -52,6 +53,9 @@ int main(int argc, char *argv[])
    Stopwatch sw_total;
    sw_total.tic();
    sw.tic();
+
+   particleSamples particle_list(paraRdr, path);
+   particle_list.read_in_particle_samples();
 
    sw_total.toc();
    cout << "Program totally finished in " << sw_total.takeTime() << " sec." << endl;

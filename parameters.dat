@@ -3,6 +3,8 @@ read_in_mode = 0                  # mode for reading in particle information
                                   # 1: reads outputs from UrQMD outputs
                                   # 2: reads outputs from hdf5 file
 
+event_buffer_size = 100           # buffer size of the number of events read in at once
+
 azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
                                   # 1: compute azimuthal dependent HBT correlation function
 
