@@ -27,6 +27,7 @@
 #include "arsenal.h"
 #include "ParameterReader.h"
 #include "particleSamples.h"
+#include "HBT_correlation.h"
 
 using namespace std;
 
@@ -56,6 +57,8 @@ int main(int argc, char *argv[])
 
    particleSamples particle_list(paraRdr, path);
    particle_list.read_in_particle_samples();
+   HBT_correlation test(paraRdr, path, &particle_list);
+   test.calculate_HBT_correlation_function();
 
    sw_total.toc();
    cout << "Program totally finished in " << sw_total.takeTime() << " sec." << endl;
