@@ -1,0 +1,19 @@
+read_in_mode = 0                  # mode for reading in particle information 
+                                  # 0: reads outputs from OSCAR outputs
+                                  # 1: reads outputs from UrQMD outputs
+                                  # 2: reads outputs from hdf5 file
+
+azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
+                                  # 1: compute azimuthal dependent HBT correlation function
+
+kT_differenitial_flag = 1         # 0: integrate the pair momentum k_T over a given kT range for correlation function
+                                  # 1: compute the correlation function at each specifiec kT point
+
+n_KT = 5                          # number of the pair momentum k_T to calculate
+KT_min = 0.0                      # minimum value of the pair momentum k_T (GeV)
+KT_max = 1.0                      # maximum value of the pair momentum k_T (GeV)
+n_Kphi = 48                       # number of the azimuthal angles for the pair momentum k_T (range is assumed to be from 0 to 2*pi)
+
+qnpts = 20                        # number of points for momentum q (difference of the pair momentum) for correlaction function
+delta_q = 0.01                    # grid spacing for momentum q in particle correlation function (GeV)
+init_q = 0.0                      # minimum value for momentum q (GeV)
