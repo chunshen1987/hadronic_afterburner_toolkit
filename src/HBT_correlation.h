@@ -31,8 +31,8 @@ class HBT_correlation
         double *KT_array, *Kphi_array;
 
         double *q_out, *q_side, *q_long;
-        double ****correl_3d;
-        double *****correl_3d_Kphi_diff;
+        double ****correl_3d_num, ****correl_3d_denorm;
+        double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
 
 
     public:

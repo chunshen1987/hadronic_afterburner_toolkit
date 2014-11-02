@@ -56,7 +56,6 @@ int main(int argc, char *argv[])
    sw.tic();
 
    particleSamples particle_list(paraRdr, path);
-   particle_list.read_in_particle_samples();
    HBT_correlation test(paraRdr, path, &particle_list);
    test.calculate_HBT_correlation_function();
 
