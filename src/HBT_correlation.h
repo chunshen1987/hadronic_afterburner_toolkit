@@ -43,6 +43,9 @@ class HBT_correlation
         void combine_particle_pairs(int event_id, particle_pair* list);
         void bin_into_correlation_function(int num_pair, particle_pair* pairlist);
 
+        void output_correlation_function();
+        void output_correlation_function_Kphi_differential();
+
 };
 
 #endif

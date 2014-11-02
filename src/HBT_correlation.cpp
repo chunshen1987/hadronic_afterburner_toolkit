@@ -1,5 +1,8 @@
 #include <cmath>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 #include "parameters.h"
 #include "HBT_correlation.h"
 using namespace std;
@@ -176,7 +179,10 @@ void HBT_correlation::calculate_HBT_correlation_function()
             delete [] particle_pairs_list;
         }
     }
-
+    if(azimuthal_flag == 0)
+        output_correlation_function();
+    else
+        output_correlation_function_Kphi_differential();
 }
 
 void HBT_correlation::combine_particle_pairs(int event_id, particle_pair* list)
@@ -263,6 +269,73 @@ void HBT_correlation::bin_into_correlation_function(int num_pair, particle_pair*
                 }
             }
 
+        }
+    }
+}
+
+void HBT_correlation::output_correlation_function()
+{
+    for(int iK = 0; iK < n_KT; iK++)
+    {
+        ostringstream filename_num;
+        ostringstream filename_denorm;
+        filename_num << path << "/HBT_correlation_function_num_KT_" << KT_array[iK] << ".dat";
+        filename_denorm << path << "/HBT_correlation_function_denorm_KT_" << KT_array[iK] << ".dat";
+        ofstream output_num(filename_num.str().c_str());
+        ofstream output_denorm(filename_denorm.str().c_str());
+        for(int iqlong = 0; iqlong < qnpts; iqlong++)
+        {
+            for(int iqout = 0; iqout < qnpts; iqout++)
+            {
+                for(int iqside = 0; iqside < qnpts; iqside++)
+                {
+                    output_num << scientific << setw(18) << setprecision(8) 
+                               << correl_3d_num[iK][iqout][iqside][iqlong] << "    ";
+                    output_denorm << scientific << setw(18) << setprecision(8) 
+                                  << correl_3d_denorm[iK][iqout][iqside][iqlong] << "    ";
+                }
+                output_num << endl;
+                output_denorm << endl;
+            }
+            output_num << endl;
+            output_denorm << endl;
+        }
+        output_num.close();
+        output_denorm.close();
+    }
+}
+
+void HBT_correlation::output_correlation_function_Kphi_differential()
+{
+    for(int iK = 0; iK < n_KT; iK++)
+    {
+        for(int iKphi = 0; iKphi < n_Kphi; iKphi++)
+        {
+            ostringstream filename_num;
+            ostringstream filename_denorm;
+            filename_num << path << "/HBT_correlation_function_num_KT_" << KT_array[iK] << "_Kphi_" << Kphi_array[iKphi] << ".dat";
+            filename_denorm << path << "/HBT_correlation_function_denorm_KT_" << KT_array[iK] << "_Kphi_" << Kphi_array[iKphi] << ".dat";
+            ofstream output_num(filename_num.str().c_str());
+            ofstream output_denorm(filename_denorm.str().c_str());
+            for(int iqlong = 0; iqlong < qnpts; iqlong++)
+            {
+                for(int iqout = 0; iqout < qnpts; iqout++)
+                {
+                    for(int iqside = 0; iqside < qnpts; iqside++)
+                    {
+                        output_num << scientific << setw(18) << setprecision(8) 
+                                   << correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong] << "    ";
+                        output_denorm << scientific << setw(18) << setprecision(8) 
+                                      << correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong] << "    ";
+                    }
+                    output_num << endl;
+                    output_denorm << endl;
+                }
+                output_num << endl;
+                output_denorm << endl;
+            }
+            output_num.close();
+            output_denorm.close();
         }
     }
 }
