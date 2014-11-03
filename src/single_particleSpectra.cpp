@@ -25,8 +25,12 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     pT_max = paraRdr->getVal("pT_max");
     dpT = (pT_max - pT_min)/(npT - 1 + 1e-15);
     pT_array = new double [npT];
+    pT_mean_array = new double [npT];
     for(int i = 0; i < npT; i++)
+    {
         pT_array[i] = pT_min + dpT*i;
+        pT_mean_array[i] = 0.0;
+    }
     for(int i = 0; i < order_max; i++)
     {
         Qn_vector_real[i] = 0.0;
@@ -50,6 +54,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
 singleParticleSpectra::~singleParticleSpectra()
 {
     delete [] pT_array;
+    delete [] pT_mean_array;
     delete [] Qn_vector_real;
     delete [] Qn_vector_imag;
     for(int i = 0; i < order_max; i++)
@@ -57,6 +62,8 @@ singleParticleSpectra::~singleParticleSpectra()
         delete [] Qn_diff_vector_real[i];
         delete [] Qn_diff_vector_imag[i];
     }
+    delete [] Qn_diff_vector_real;
+    delete [] Qn_diff_vector_imag;
 }
 
 void singleParticleSpectra::calculate_Qn_vector_shell()
@@ -105,6 +112,7 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id)
             {
                 double p_phi = atan2(py_local, px_local);
                 int p_idx = (int)((p_perp - pT_min)/dpT);
+                pT_mean_array[p_idx] += p_perp;
                 for(int iorder = 0; iorder < order_max; iorder++)
                 {
                     double cos_nphi = cos(iorder*p_phi);
@@ -147,8 +155,9 @@ void singleParticleSpectra::output_Qn_vectors()
     for(int ipT = 0; ipT < npT; ipT++)
     {
         double dNpT_ev_avg = Qn_diff_vector_real[0][ipT]/total_number_of_events;
+        double mean_pT = pT_mean_array[ipT]/dNpT_ev_avg/total_number_of_events;
         output_diff << scientific << setw(18) << setprecision(8) 
-                    << pT_array[ipT] << "   " << dNpT_ev_avg << "   ";
+                    << mean_pT << "   " << dNpT_ev_avg/mean_pT/dpT/(2*M_PI) << "   ";
         for(int iorder = 1; iorder < order_max; iorder++)
         {
             double vn_evavg_real = Qn_diff_vector_real[iorder][ipT]/total_number_of_events/dNpT_ev_avg;
