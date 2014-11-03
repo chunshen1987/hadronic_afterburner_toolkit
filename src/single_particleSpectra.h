@@ -28,6 +28,14 @@ class singleParticleSpectra
         double *Qn_vector_real_err, *Qn_vector_imag_err;
         double **Qn_diff_vector_real_err, **Qn_diff_vector_imag_err;
 
+        int check_spatial_flag;
+        int N_tau;
+        double tau_min, tau_max, dtau;
+        double *tau_array, *dNdtau_array;
+        int N_xpt;
+        double spatial_x_min, spatial_x_max, dspatial_x;
+        double *xpt_array, *dNdx_array;
+
     public:
         singleParticleSpectra(ParameterReader *paraRdr_in, string path_in, particleSamples *particle_list_in);
         ~singleParticleSpectra();
@@ -35,6 +43,9 @@ class singleParticleSpectra
         void calculate_Qn_vector_shell();
         void calculate_Qn_vector(int event_id);
         void output_Qn_vectors();
+        
+        void check_dNdSV(int event_id);
+        void output_dNdSV();
 
 };
 

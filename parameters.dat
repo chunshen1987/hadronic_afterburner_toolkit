@@ -18,6 +18,8 @@ rap_type = 1                      # 0: for pseudo-rapidity; 1: for rapidity
 rap_min = -0.5                    # minimum value of rapidity 
 rap_max = 0.5                     # maximum value of rapidity
 
+check_spatial_dis = 1             # flag to check dN/dtau distribution
+
 
 # Parameters for HBT correlation functions
 azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
