@@ -28,6 +28,7 @@
 #include "ParameterReader.h"
 #include "particleSamples.h"
 #include "HBT_correlation.h"
+#include "single_particleSpectra.h"
 
 using namespace std;
 
@@ -56,8 +57,10 @@ int main(int argc, char *argv[])
    sw.tic();
 
    particleSamples particle_list(paraRdr, path);
-   HBT_correlation test(paraRdr, path, &particle_list);
-   test.calculate_HBT_correlation_function();
+   singleParticleSpectra testSP(paraRdr, path, &particle_list);
+   testSP.calculate_Qn_vector_shell();
+   //HBT_correlation test(paraRdr, path, &particle_list);
+   //test.calculate_HBT_correlation_function();
 
    sw_total.toc();
    cout << "Program totally finished in " << sw_total.takeTime() << " sec." << endl;

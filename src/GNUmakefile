@@ -25,11 +25,12 @@ MAIN		=	HBT_afterbuner.e
 endif
 
 SRC		=	main.cpp arsenal.cpp gauss_quadrature.cpp \
-                  ParameterReader.cpp particleSamples.cpp HBT_correlation.cpp
+                  ParameterReader.cpp particleSamples.cpp HBT_correlation.cpp \
+                  single_particleSpectra.cpp
 
 INC		= 	parameters.h arsenal.h ParameterReader.h \
                   Stopwatch.h gauss_quadrature.h particleSamples.h \
-                  HBT_correlation.h
+                  HBT_correlation.h single_particleSpectra.h
 
 # -------------------------------------------------
 
@@ -75,9 +76,10 @@ install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)
 
 # --------------- Dependencies -------------------
-./main.cpp: arsenal.h parameters.h Stopwatch.h ParameterReader.h particleSamples.h HBT_correlation.h
+./main.cpp: arsenal.h parameters.h Stopwatch.h ParameterReader.h particleSamples.h HBT_correlation.h single_particleSpectra.h
 ./arsenal.cpp: arsenal.h gauss_quadrature.h
 ./gauss_quadrature.cpp: gauss_quadrature.h
 ./ParameterReader.cpp: ParameterReader.h arsenal.h
 ./particleSamples.cpp: ParameterReader.h particleSamples.h 
 ./HBT_correlation.cpp: HBT_correlation.h ParameterReader.h particleSamples.h
+./single_particleSpectra.cpp: single_particleSpectra.h ParameterReader.h particleSamples.h
