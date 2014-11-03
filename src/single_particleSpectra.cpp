@@ -17,8 +17,12 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     order_max = paraRdr->getVal("order_max");
     Qn_vector_real = new double [order_max];
     Qn_vector_imag = new double [order_max];
+    Qn_vector_real_err = new double [order_max];
+    Qn_vector_imag_err = new double [order_max];
     Qn_diff_vector_real = new double* [order_max];
     Qn_diff_vector_imag = new double* [order_max];
+    Qn_diff_vector_real_err = new double* [order_max];
+    Qn_diff_vector_imag_err = new double* [order_max];
 
     npT = paraRdr->getVal("npT");
     pT_min = paraRdr->getVal("pT_min");
@@ -26,21 +30,29 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     dpT = (pT_max - pT_min)/(npT - 1 + 1e-15);
     pT_array = new double [npT];
     pT_mean_array = new double [npT];
+    pT_mean_array_err = new double [npT];
     for(int i = 0; i < npT; i++)
     {
         pT_array[i] = pT_min + dpT*i;
         pT_mean_array[i] = 0.0;
+        pT_mean_array_err[i] = 0.0;
     }
     for(int i = 0; i < order_max; i++)
     {
         Qn_vector_real[i] = 0.0;
         Qn_vector_imag[i] = 0.0;
+        Qn_vector_real_err[i] = 0.0;
+        Qn_vector_imag_err[i] = 0.0;
         Qn_diff_vector_real[i] = new double [npT];
         Qn_diff_vector_imag[i] = new double [npT];
+        Qn_diff_vector_real_err[i] = new double [npT];
+        Qn_diff_vector_imag_err[i] = new double [npT];
         for(int j = 0; j < npT; j++)
         {
             Qn_diff_vector_real[i][j] = 0.0;
             Qn_diff_vector_imag[i][j] = 0.0;
+            Qn_diff_vector_real_err[i][j] = 0.0;
+            Qn_diff_vector_imag_err[i][j] = 0.0;
         }
     }
     total_number_of_events = 0;
@@ -55,15 +67,22 @@ singleParticleSpectra::~singleParticleSpectra()
 {
     delete [] pT_array;
     delete [] pT_mean_array;
+    delete [] pT_mean_array_err;
     delete [] Qn_vector_real;
     delete [] Qn_vector_imag;
+    delete [] Qn_vector_real_err;
+    delete [] Qn_vector_imag_err;
     for(int i = 0; i < order_max; i++)
     {
         delete [] Qn_diff_vector_real[i];
         delete [] Qn_diff_vector_imag[i];
+        delete [] Qn_diff_vector_real_err[i];
+        delete [] Qn_diff_vector_imag_err[i];
     }
     delete [] Qn_diff_vector_real;
     delete [] Qn_diff_vector_imag;
+    delete [] Qn_diff_vector_real_err;
+    delete [] Qn_diff_vector_imag_err;
 }
 
 void singleParticleSpectra::calculate_Qn_vector_shell()
@@ -88,6 +107,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell()
 void singleParticleSpectra::calculate_Qn_vector(int event_id)
 {
     int number_of_particles = particle_list->get_number_of_particles(event_id);
+
     for(int i = 0; i < number_of_particles; i++)
     {
         double pz_local = particle_list->get_particle(event_id, i).pz;
@@ -113,14 +133,19 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id)
                 double p_phi = atan2(py_local, px_local);
                 int p_idx = (int)((p_perp - pT_min)/dpT);
                 pT_mean_array[p_idx] += p_perp;
+                pT_mean_array_err[p_idx] += p_perp*p_perp;
                 for(int iorder = 0; iorder < order_max; iorder++)
                 {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
                     Qn_vector_real[iorder] += cos_nphi;
                     Qn_vector_imag[iorder] += sin_nphi;
+                    Qn_vector_real_err[iorder] += cos_nphi*cos_nphi;
+                    Qn_vector_imag_err[iorder] += sin_nphi*sin_nphi;
                     Qn_diff_vector_real[iorder][p_idx] += cos_nphi;
                     Qn_diff_vector_imag[iorder][p_idx] += sin_nphi;
+                    Qn_diff_vector_real_err[iorder][p_idx] += cos_nphi*cos_nphi;
+                    Qn_diff_vector_imag_err[iorder][p_idx] += sin_nphi*sin_nphi;
                 }
             }
         }
@@ -135,15 +160,20 @@ void singleParticleSpectra::output_Qn_vectors()
     ofstream output(filename.str().c_str());
 
     double dN_ev_avg = Qn_vector_real[0]/total_number_of_events;
-    for(int iorder = 0; iorder < order_max; iorder++)
+    double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events);
+    output << scientific << setw(18) << setprecision(8) 
+           << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   " 
+           << 0.0 << "   " << 0.0 << endl;
+    for(int iorder = 1; iorder < order_max; iorder++)
     {
-        double Qn_evavg_real = Qn_vector_real[iorder]/total_number_of_events;
-        double Qn_evavg_imag = Qn_vector_imag[iorder]/total_number_of_events;
-        double vn_real = Qn_evavg_real/dN_ev_avg;
-        double vn_imag = Qn_evavg_imag/dN_ev_avg;
+        double vn_evavg_real = Qn_vector_real[iorder]/Qn_vector_real[0];
+        double vn_evavg_imag = Qn_vector_imag[iorder]/Qn_vector_real[0];
+        double vn_real_err = sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] - vn_evavg_real*vn_evavg_real)/sqrt(Qn_vector_real[0]);
+        double vn_imag_err = sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_vector_real[0]);
+
         output << scientific << setw(18) << setprecision(8) << iorder << "   " 
-               << Qn_evavg_real << "   " << Qn_evavg_imag << "   " 
-               << vn_real << "   " << vn_imag << endl;
+               << vn_evavg_real << "   " << vn_real_err << "   " 
+               << vn_evavg_imag << "   " << vn_imag_err << endl;
     }
     output.close();
     
@@ -152,18 +182,25 @@ void singleParticleSpectra::output_Qn_vectors()
     filename_diff << path << "/particle_vndata_diff.dat";
     ofstream output_diff(filename_diff.str().c_str());
 
-    for(int ipT = 0; ipT < npT; ipT++)
+    for(int ipT = 0; ipT < npT - 1; ipT++)
     {
         double dNpT_ev_avg = Qn_diff_vector_real[0][ipT]/total_number_of_events;
-        double mean_pT = pT_mean_array[ipT]/dNpT_ev_avg/total_number_of_events;
+        double dNpT_ev_avg_err = sqrt(dNpT_ev_avg/total_number_of_events);
+        double mean_pT = pT_mean_array[ipT]/Qn_diff_vector_real[0][ipT];
+        double mean_pT_err = (pT_mean_array_err[ipT]/Qn_diff_vector_real[0][ipT] - mean_pT*mean_pT)/sqrt(Qn_diff_vector_real[0][ipT]);
         output_diff << scientific << setw(18) << setprecision(8) 
-                    << mean_pT << "   " << dNpT_ev_avg/mean_pT/dpT/(2*M_PI) << "   ";
+                    << mean_pT << "   " << mean_pT_err << "   " 
+                    << dNpT_ev_avg/mean_pT/dpT/(2*M_PI) << "   " 
+                    << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI);
         for(int iorder = 1; iorder < order_max; iorder++)
         {
-            double vn_evavg_real = Qn_diff_vector_real[iorder][ipT]/total_number_of_events/dNpT_ev_avg;
-            double vn_evavg_imag = Qn_diff_vector_imag[iorder][ipT]/total_number_of_events/dNpT_ev_avg;
+            double vn_evavg_real = Qn_diff_vector_real[iorder][ipT]/Qn_diff_vector_real[0][ipT];
+            double vn_evavg_imag = Qn_diff_vector_imag[iorder][ipT]/Qn_diff_vector_real[0][ipT];
+            double vn_evavg_real_err = sqrt(Qn_diff_vector_real_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] - vn_evavg_real*vn_evavg_real)/sqrt(Qn_diff_vector_real[0][ipT]);
+            double vn_evavg_imag_err = sqrt(Qn_diff_vector_imag_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_diff_vector_real[0][ipT]);
             output_diff << scientific << setw(18) << setprecision(8) 
-                        << vn_evavg_real << "   " << vn_evavg_imag << "   ";
+                        << vn_evavg_real << "   " << vn_evavg_real_err << "   " 
+                        << vn_evavg_imag << "   " << vn_evavg_imag_err;
         }
         output_diff << endl;
     }

@@ -17,7 +17,7 @@ class singleParticleSpectra
 
         int npT;
         double pT_min, pT_max, dpT;
-        double *pT_array, *pT_mean_array;
+        double *pT_array, *pT_mean_array, *pT_mean_array_err;
 
         int rap_type;
         double rap_min, rap_max;
@@ -25,6 +25,8 @@ class singleParticleSpectra
         int total_number_of_events;
         double *Qn_vector_real, *Qn_vector_imag;
         double **Qn_diff_vector_real, **Qn_diff_vector_imag;
+        double *Qn_vector_real_err, *Qn_vector_imag_err;
+        double **Qn_diff_vector_real_err, **Qn_diff_vector_imag_err;
 
     public:
         singleParticleSpectra(ParameterReader *paraRdr_in, string path_in, particleSamples *particle_list_in);
