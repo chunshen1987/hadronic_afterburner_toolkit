@@ -142,7 +142,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell()
             if(check_spatial_flag == 1)
                 check_dNdSV(iev);
         }
-        cout << "done!" << endl;
+        cout << " done!" << endl;
     }
     total_number_of_events = event_id;
     output_Qn_vectors();

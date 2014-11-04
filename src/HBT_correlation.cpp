@@ -160,14 +160,16 @@ HBT_correlation::~HBT_correlation()
 void HBT_correlation::calculate_HBT_correlation_function()
 {
     int event_id = 0;
+    int buffer_size = particle_list->get_event_buffer_size();
     while(!particle_list->end_of_file())
     {
+        cout << "Reading event: " << event_id+1 << "-" << event_id + buffer_size << " ... " << flush;
         particle_list->read_in_particle_samples();
+        cout << " processing ..." << flush;
         int nev = particle_list->get_number_of_events();
         for(int iev = 0; iev < nev; iev++)
         {
             event_id++;
-            cout << "Processing event: " << event_id << endl;
             int number_of_particles = particle_list->get_number_of_particles(iev);
             int num_of_pairs = number_of_particles*(number_of_particles - 1);
 
@@ -178,6 +180,7 @@ void HBT_correlation::calculate_HBT_correlation_function()
 
             delete [] particle_pairs_list;
         }
+        cout << " done!" << endl;
     }
     if(azimuthal_flag == 0)
         output_correlation_function();
@@ -237,6 +240,7 @@ void HBT_correlation::combine_particle_pairs(int event_id, particle_pair* list)
             pair_id++;
         }
     }
+    delete [] temp_particle_list;
 }
 
 void HBT_correlation::bin_into_correlation_function(int num_pair, particle_pair* pairlist)
