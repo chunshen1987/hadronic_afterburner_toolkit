@@ -66,7 +66,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     if(check_spatial_flag == 1)
     {
         // dN/dtau
-        N_tau = 100;
+        N_tau = 50;
         tau_min = 0.6;
         tau_max = 15.0;
         dtau = (tau_max - tau_min)/(N_tau - 1);
@@ -79,7 +79,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         }
 
         // dN/dx
-        N_xpt = 100;
+        N_xpt = 50;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
         dspatial_x = (spatial_x_max - spatial_x_min)/(N_xpt - 1);

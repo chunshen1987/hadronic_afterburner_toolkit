@@ -76,6 +76,7 @@ int particleSamples::read_in_particle_samples_OSCAR()
         if(!inputfile.eof())
         {
             int idx = ievent;
+            delete [] particle_list[idx]; // clean out the previous record
             particle_list[idx] = new particle_info [n_particle];
 
             int num_of_chosen_particle = 0;
