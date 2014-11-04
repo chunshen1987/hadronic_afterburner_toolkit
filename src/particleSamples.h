@@ -35,6 +35,7 @@ class particleSamples
         int read_in_particle_samples();
         int read_in_particle_samples_OSCAR();
         bool end_of_file() {return(inputfile.eof());};
+        int get_event_buffer_size() {return(event_buffer_size);};
         int get_number_of_events() {return(end_event_idx + 1);};
         int get_number_of_particles(int event_id) {return(num_of_particles[event_id]);};
         particle_info get_particle(int event_id, int part_id) {return(particle_list[event_id][part_id]);};

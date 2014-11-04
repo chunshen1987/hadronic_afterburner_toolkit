@@ -66,7 +66,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     if(check_spatial_flag == 1)
     {
         // dN/dtau
-        N_tau = 50;
+        N_tau = 500;
         tau_min = 0.6;
         tau_max = 15.0;
         dtau = (tau_max - tau_min)/(N_tau - 1);
@@ -79,7 +79,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         }
 
         // dN/dx
-        N_xpt = 50;
+        N_xpt = 500;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
         dspatial_x = (spatial_x_max - spatial_x_min)/(N_xpt - 1);
@@ -126,20 +126,23 @@ singleParticleSpectra::~singleParticleSpectra()
 void singleParticleSpectra::calculate_Qn_vector_shell()
 {
     int event_id = 0;
+    int buffer_size = particle_list->get_event_buffer_size();
     while(!particle_list->end_of_file())
     {
+        cout << "Reading event: " << event_id+1 << "-" << event_id + buffer_size << " ... " << flush;
         particle_list->read_in_particle_samples();
+        cout << " processing ..." << flush;
         int nev = particle_list->get_number_of_events();
         for(int iev = 0; iev < nev; iev++)
         {
             event_id++;
-            cout << "Processing event: " << event_id << endl;
             int number_of_particles = particle_list->get_number_of_particles(iev);
             calculate_Qn_vector(iev);
 
             if(check_spatial_flag == 1)
                 check_dNdSV(iev);
         }
+        cout << "done!" << endl;
     }
     total_number_of_events = event_id;
     output_Qn_vectors();
