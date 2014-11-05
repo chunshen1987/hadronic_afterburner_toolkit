@@ -30,14 +30,14 @@ class singleParticleSpectra
 
         int check_spatial_flag;
         int N_tau;
-        double tau_min, tau_max, dtau;
+        double tau_min, tau_max, dtau, intrinsic_dtau;
         double *tau_array, *dNdtau_array;
         int N_xpt;
-        double spatial_x_min, spatial_x_max, dspatial_x;
+        double spatial_x_min, spatial_x_max, dspatial_x, intrinsic_dx;
         double *xpt_array, *dNdx1_array;
         double *ypt_array, *dNdx2_array;
         int N_eta_s;
-        double eta_s_min, eta_s_max, deta_s;
+        double eta_s_min, eta_s_max, deta_s, intrinsic_detas;
         double *eta_s_array, *dNdetas_array;
 
     public:

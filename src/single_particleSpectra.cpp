@@ -66,7 +66,8 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     if(check_spatial_flag == 1)
     {
         // dN/dtau
-        N_tau = 30;
+        intrinsic_dtau = 0.1;
+        N_tau = 50;
         tau_min = 0.6;
         tau_max = 15.0;
         dtau = (tau_max - tau_min)/(N_tau - 1);
@@ -79,7 +80,8 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         }
 
         // dN/dx
-        N_xpt = 41;
+        intrinsic_dx = 0.5;
+        N_xpt = 50;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
         dspatial_x = (spatial_x_max - spatial_x_min)/(N_xpt - 1);
@@ -94,10 +96,12 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
             dNdx1_array[i] = 0.0;
             dNdx2_array[i] = 0.0;
         }
+
         // dN/deta_s
-        N_eta_s = 60;
-        eta_s_min = - 2.95;
-        eta_s_max = 2.95;
+        intrinsic_detas = 0.1;
+        N_eta_s = 40;
+        eta_s_min = - 3.0;
+        eta_s_max = 3.0;
         deta_s = (eta_s_max - eta_s_min)/(N_eta_s - 1);
         eta_s_array = new double [N_eta_s];
         dNdetas_array = new double [N_eta_s];
@@ -300,7 +304,8 @@ void singleParticleSpectra::check_dNdSV(int event_id)
             double tau_local = sqrt(t_local*t_local - z_local*z_local);
             if(tau_local > tau_min && tau_local < tau_max)
             {
-                int idx = (int)((tau_local - tau_min)/dtau);
+                double random = drand48()*intrinsic_dtau;
+                int idx = (int)((tau_local + random - tau_min)/dtau);
                 tau_array[idx] += tau_local;
                 dNdtau_array[idx]++;
             }
@@ -311,7 +316,8 @@ void singleParticleSpectra::check_dNdSV(int event_id)
             {
                 if(x_local > spatial_x_min && x_local < spatial_x_max)
                 {
-                    int idx = (int)((x_local - spatial_x_min)/dspatial_x);
+                    double random = drand48()*intrinsic_dx;
+                    int idx = (int)((x_local + random - spatial_x_min)/dspatial_x);
                     xpt_array[idx] += x_local;
                     dNdx1_array[idx]++;
                 }
@@ -320,7 +326,8 @@ void singleParticleSpectra::check_dNdSV(int event_id)
             {
                 if(y_local > spatial_x_min && y_local < spatial_x_max)
                 {
-                    int idx = (int)((y_local - spatial_x_min)/dspatial_x);
+                    double random = drand48()*intrinsic_dx;
+                    int idx = (int)((y_local + random - spatial_x_min)/dspatial_x);
                     ypt_array[idx] += y_local;
                     dNdx2_array[idx]++;
                 }
@@ -330,7 +337,8 @@ void singleParticleSpectra::check_dNdSV(int event_id)
             double y_minus_etas = rap_local - etas_local;
             if(y_minus_etas > eta_s_min && y_minus_etas < eta_s_max)
             {
-                int idx = (int)((y_minus_etas - eta_s_min)/deta_s);
+                double random = drand48()*intrinsic_detas;
+                int idx = (int)((y_minus_etas + random - eta_s_min)/deta_s);
                 eta_s_array[idx] += y_minus_etas;
                 dNdetas_array[idx]++;
             }
