@@ -34,7 +34,11 @@ class singleParticleSpectra
         double *tau_array, *dNdtau_array;
         int N_xpt;
         double spatial_x_min, spatial_x_max, dspatial_x;
-        double *xpt_array, *dNdx_array;
+        double *xpt_array, *dNdx1_array;
+        double *ypt_array, *dNdx2_array;
+        int N_eta_s;
+        double eta_s_min, eta_s_max, deta_s;
+        double *eta_s_array, *dNdetas_array;
 
     public:
         singleParticleSpectra(ParameterReader *paraRdr_in, string path_in, particleSamples *particle_list_in);

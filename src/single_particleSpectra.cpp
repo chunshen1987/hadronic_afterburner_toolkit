@@ -66,7 +66,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     if(check_spatial_flag == 1)
     {
         // dN/dtau
-        N_tau = 500;
+        N_tau = 30;
         tau_min = 0.6;
         tau_max = 15.0;
         dtau = (tau_max - tau_min)/(N_tau - 1);
@@ -79,17 +79,34 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         }
 
         // dN/dx
-        N_xpt = 500;
+        N_xpt = 41;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
         dspatial_x = (spatial_x_max - spatial_x_min)/(N_xpt - 1);
         xpt_array = new double [N_xpt];
-        dNdx_array = new double [N_xpt];
+        ypt_array = new double [N_xpt];
+        dNdx1_array = new double [N_xpt];
+        dNdx2_array = new double [N_xpt];
         for(int i = 0; i < N_xpt; i++)
         {
             xpt_array[i] = 0.0;
-            dNdx_array[i] = 0.0;
+            ypt_array[i] = 0.0;
+            dNdx1_array[i] = 0.0;
+            dNdx2_array[i] = 0.0;
         }
+        // dN/deta_s
+        N_eta_s = 60;
+        eta_s_min = - 2.95;
+        eta_s_max = 2.95;
+        deta_s = (eta_s_max - eta_s_min)/(N_eta_s - 1);
+        eta_s_array = new double [N_eta_s];
+        dNdetas_array = new double [N_eta_s];
+        for(int i = 0; i < N_eta_s; i++)
+        {
+            eta_s_array[i] = 0.0;
+            dNdetas_array[i] = 0.0;
+        }
+
     }
 }
 
@@ -119,7 +136,11 @@ singleParticleSpectra::~singleParticleSpectra()
         delete [] tau_array;
         delete [] dNdtau_array;
         delete [] xpt_array;
-        delete [] dNdx_array;
+        delete [] ypt_array;
+        delete [] dNdx1_array;
+        delete [] dNdx2_array;
+        delete [] eta_s_array;
+        delete [] dNdetas_array;
     }
 }
 
@@ -285,11 +306,33 @@ void singleParticleSpectra::check_dNdSV(int event_id)
             }
             // second dN/dx
             double x_local = particle_list->get_particle(event_id, i).x;
-            if(x_local > spatial_x_min && x_local < spatial_x_max)
+            double y_local = particle_list->get_particle(event_id, i).y;
+            if(fabs(y_local) < 0.5)
             {
-                int idx = (int)((x_local - spatial_x_min)/dspatial_x);
-                xpt_array[idx] += x_local;
-                dNdx_array[idx]++;
+                if(x_local > spatial_x_min && x_local < spatial_x_max)
+                {
+                    int idx = (int)((x_local - spatial_x_min)/dspatial_x);
+                    xpt_array[idx] += x_local;
+                    dNdx1_array[idx]++;
+                }
+            }
+            if(fabs(x_local) < 0.5)
+            {
+                if(y_local > spatial_x_min && y_local < spatial_x_max)
+                {
+                    int idx = (int)((y_local - spatial_x_min)/dspatial_x);
+                    ypt_array[idx] += y_local;
+                    dNdx2_array[idx]++;
+                }
+            }
+            // third dN/deta_s
+            double etas_local = 0.5*log((t_local + z_local)/(t_local - z_local));
+            double y_minus_etas = rap_local - etas_local;
+            if(y_minus_etas > eta_s_min && y_minus_etas < eta_s_max)
+            {
+                int idx = (int)((y_minus_etas - eta_s_min)/deta_s);
+                eta_s_array[idx] += y_minus_etas;
+                dNdetas_array[idx]++;
             }
         }
     }
@@ -318,13 +361,31 @@ void singleParticleSpectra::output_dNdSV()
     ofstream output2(filename2.str().c_str());
     for(int i = 0; i < N_xpt; i++)
     {
-        xpt_array[i] = xpt_array[i]/(dNdx_array[i] + 1e-15);
-        dNdx_array[i] = dNdx_array[i]/total_number_of_events;
-        double dNdx_err = sqrt(dNdx_array[i]/total_number_of_events);
+        xpt_array[i] = xpt_array[i]/(dNdx1_array[i] + 1e-15);
+        ypt_array[i] = ypt_array[i]/(dNdx2_array[i] + 1e-15);
+        dNdx1_array[i] = dNdx1_array[i]/total_number_of_events;
+        dNdx2_array[i] = dNdx2_array[i]/total_number_of_events;
+        double dNdx1_err = sqrt(dNdx1_array[i]/total_number_of_events);
+        double dNdx2_err = sqrt(dNdx2_array[i]/total_number_of_events);
         output2 << scientific << setw(18) << setprecision(8)
-                << xpt_array[i] << "   " << dNdx_array[i]/dspatial_x<< "   " 
-                << dNdx_err/dspatial_x << endl;
+                << xpt_array[i] << "   " << dNdx1_array[i]/dspatial_x << "   " << dNdx1_err/dspatial_x << "   " 
+                << ypt_array[i] << "   " << dNdx2_array[i]/dspatial_x << "   " << dNdx2_err/dspatial_x << endl;
     }
     output2.close();
+
+    // third dN/detas
+    ostringstream filename3;
+    filename3 << path << "/check_dNdetas.dat";
+    ofstream output3(filename3.str().c_str());
+    for(int i = 0; i < N_eta_s; i++)
+    {
+        eta_s_array[i] = eta_s_array[i]/(dNdetas_array[i] + 1e-15);
+        dNdetas_array[i] = dNdetas_array[i]/total_number_of_events;
+        double dNdetas_err = sqrt(dNdetas_array[i]/total_number_of_events);
+        output3 << scientific << setw(18) << setprecision(8)
+                << eta_s_array[i] << "   " << dNdetas_array[i]/deta_s << "   " 
+                << dNdetas_err/deta_s << endl;
+    }
+    output3.close();
 }
 
