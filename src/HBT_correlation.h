@@ -31,6 +31,8 @@ class HBT_correlation
         double *KT_array, *Kphi_array;
 
         double *q_out, *q_side, *q_long;
+        int number_of_mixed_events;
+        int number_pairs_num, number_pairs_denorm;
         double ****correl_3d_num, ****correl_3d_denorm;
         double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
 
@@ -41,7 +43,8 @@ class HBT_correlation
 
         void calculate_HBT_correlation_function();
         void combine_particle_pairs(int event_id, particle_pair* list);
-        void bin_into_correlation_function(int num_pair, particle_pair* pairlist);
+        void combine_particle_pairs_mixed_events(int event_id, int event_id2, particle_pair* list);
+        void bin_into_correlation_function(int type, int num_pair, particle_pair* pairlist);
 
         void output_correlation_function();
         void output_correlation_function_Kphi_differential();

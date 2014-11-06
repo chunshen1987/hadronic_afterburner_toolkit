@@ -25,6 +25,7 @@ intrinsic_dx = 0.5                # dx in the output samples
 
 
 # Parameters for HBT correlation functions
+number_of_mixed_events = 5           # number of the mixed events 
 azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
                                   # 1: compute azimuthal dependent HBT correlation function
 
