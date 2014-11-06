@@ -66,7 +66,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     if(check_spatial_flag == 1)
     {
         // dN/dtau
-        intrinsic_dtau = 0.1;
+        intrinsic_dtau = paraRdr->getVal("intrinsic_dtau");
         N_tau = 50;
         tau_min = 0.6;
         tau_max = 15.0;
@@ -80,7 +80,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         }
 
         // dN/dx
-        intrinsic_dx = 0.5;
+        intrinsic_dx = paraRdr->getVal("intrinsic_dx");
         N_xpt = 50;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
@@ -98,7 +98,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         }
 
         // dN/deta_s
-        intrinsic_detas = 0.1;
+        intrinsic_detas = paraRdr->getVal("intrinsic_detas");
         N_eta_s = 40;
         eta_s_min = - 3.0;
         eta_s_max = 3.0;

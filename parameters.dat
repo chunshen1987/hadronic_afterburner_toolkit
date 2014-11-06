@@ -19,6 +19,9 @@ rap_min = -0.5                    # minimum value of rapidity
 rap_max = 0.5                     # maximum value of rapidity
 
 check_spatial_dis = 1             # flag to check dN/dtau distribution
+intrinsic_detas = 0.1             # deta_s in the output samples
+intrinsic_dtau = 0.1              # dtau in the output samples
+intrinsic_dx = 0.5                # dx in the output samples
 
 
 # Parameters for HBT correlation functions
