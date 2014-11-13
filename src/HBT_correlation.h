@@ -36,6 +36,7 @@ class HBT_correlation
         double ****correl_3d_num, ****correl_3d_denorm;
         double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
 
+        int nevent;
 
     public:
         HBT_correlation(ParameterReader* paraRdr_in, string path_in, particleSamples *particle_list_in);
