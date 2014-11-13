@@ -175,7 +175,7 @@ void HBT_correlation::calculate_HBT_correlation_function()
             event_id++;
             // first pairs from the same event
             int number_of_particles = particle_list->get_number_of_particles(iev);
-            int num_of_pairs = number_of_particles*(number_of_particles - 1);
+            int num_of_pairs = number_of_particles*(number_of_particles - 1)/2;
             particle_pair *particle_pairs_list = new particle_pair [num_of_pairs];
             combine_particle_pairs(iev, particle_pairs_list);
             bin_into_correlation_function(0, num_of_pairs, particle_pairs_list);
@@ -200,6 +200,7 @@ void HBT_correlation::calculate_HBT_correlation_function()
             }
         }
         cout << " done!" << endl;
+        cout << number_pairs_num << "   " << number_pairs_denorm << endl;
     }
     if(azimuthal_flag == 0)
         output_correlation_function();
@@ -405,7 +406,7 @@ void HBT_correlation::output_correlation_function()
                            << q_long_local << "    "
                            << correl_3d_num[iK][iqout][iqside][iqlong] << "    " 
                            << correl_3d_denorm[iK][iqout][iqside][iqlong] << "    "
-                           << correl_3d_num[iK][iqout][iqside][iqlong]/correl_3d_denorm[iK][iqout][iqside][iqlong] << "    " 
+                           << (correl_3d_num[iK][iqout][iqside][iqlong]/number_pairs_num)/(correl_3d_denorm[iK][iqout][iqside][iqlong]/number_pairs_denorm) << "    " 
                            << error 
                            << endl;
                 }
@@ -439,7 +440,7 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                                << q_long_local << "    "
                                << correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong] << "    "
                                << correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong] << "    "
-                               << correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong]/correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong] << "    "
+                               << (correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong]/number_pairs_num)/(correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong]/number_pairs_denorm) << "    "
                                << error << endl;
                     }
                 }

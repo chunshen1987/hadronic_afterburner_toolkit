@@ -32,7 +32,7 @@ class HBT_correlation
 
         double *q_out, *q_side, *q_long;
         int number_of_mixed_events;
-        int number_pairs_num, number_pairs_denorm;
+        long int number_pairs_num, number_pairs_denorm;
         double ****correl_3d_num, ****correl_3d_denorm;
         double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
 
