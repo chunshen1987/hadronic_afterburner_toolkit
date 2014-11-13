@@ -31,7 +31,6 @@ azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correl
 
 kT_differenitial_flag = 1         # 0: integrate the pair momentum k_T over a given kT range for correlation function
                                   # 1: compute the correlation function at each specifiec kT point
-
 n_KT = 5                          # number of the pair momentum k_T to calculate
 KT_min = 0.0                      # minimum value of the pair momentum k_T (GeV)
 KT_max = 1.0                      # maximum value of the pair momentum k_T (GeV)
@@ -41,6 +40,6 @@ Krap_max = 0.5                    # maximum accept pair momentum rapidity
 
 
 qnpts = 20                        # number of points for momentum q (difference of the pair momentum) for correlaction function
-delta_q = 0.01                    # grid spacing for momentum q in particle correlation function (GeV)
+delta_q = 0.02                    # grid spacing for momentum q in particle correlation function (GeV)
 init_q = 0.0                      # minimum value for momentum q (GeV)
 
