@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdlib.h>
 #include <iomanip>
 #include "parameters.h"
 #include "single_particleSpectra.h"
