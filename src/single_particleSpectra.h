@@ -13,6 +13,8 @@ class singleParticleSpectra
         string path;
         particleSamples *particle_list;
 
+        int particle_monval;
+
         int order_max;
 
         int npT;

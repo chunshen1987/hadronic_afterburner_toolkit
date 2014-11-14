@@ -14,6 +14,8 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     path = path_in;
     particle_list = particle_list_in;
 
+    particle_monval = paraRdr->getVal("particle_monval");
+
     order_max = paraRdr->getVal("order_max");
     Qn_vector_real = new double [order_max];
     Qn_vector_imag = new double [order_max];
@@ -227,7 +229,7 @@ void singleParticleSpectra::output_Qn_vectors()
 {
     // pT-integrated flow
     ostringstream filename;
-    filename << path << "/particle_vndata.dat";
+    filename << path << "/particle_" << particle_monval << "_vndata.dat";
     ofstream output(filename.str().c_str());
 
     double dN_ev_avg = Qn_vector_real[0]/total_number_of_events;
@@ -250,7 +252,7 @@ void singleParticleSpectra::output_Qn_vectors()
     
     // pT-differential flow
     ostringstream filename_diff;
-    filename_diff << path << "/particle_vndata_diff.dat";
+    filename_diff << path << "/particle_" << particle_monval << "_vndata_diff.dat";
     ofstream output_diff(filename_diff.str().c_str());
 
     for(int ipT = 0; ipT < npT - 1; ipT++)
@@ -350,7 +352,7 @@ void singleParticleSpectra::output_dNdSV()
 {
     // first dN/dtau
     ostringstream filename;
-    filename << path << "/check_dNdtau.dat";
+    filename << path << "/check_" << particle_monval << "_dNdtau.dat";
     ofstream output(filename.str().c_str());
     for(int i = 0; i < N_tau; i++)
     {
@@ -365,7 +367,7 @@ void singleParticleSpectra::output_dNdSV()
     
     // second dN/dx
     ostringstream filename2;
-    filename2 << path << "/check_dNdx.dat";
+    filename2 << path << "/check_" << particle_monval << "_dNdx.dat";
     ofstream output2(filename2.str().c_str());
     for(int i = 0; i < N_xpt; i++)
     {
@@ -383,7 +385,7 @@ void singleParticleSpectra::output_dNdSV()
 
     // third dN/detas
     ostringstream filename3;
-    filename3 << path << "/check_dNdetas.dat";
+    filename3 << path << "/check_" << particle_monval << "_dNdetas.dat";
     ofstream output3(filename3.str().c_str());
     for(int i = 0; i < N_eta_s; i++)
     {
