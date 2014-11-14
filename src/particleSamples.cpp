@@ -25,6 +25,8 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
         num_of_particles[i] = 0;
 
     particle_list = new particle_info* [event_buffer_size];
+    for(int i = 0; i < event_buffer_size; i++)
+        particle_list[i] = new particle_info [2];
 
     ostringstream filename;
     if(read_in_mode == 0)
