@@ -54,26 +54,31 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
     {
         correl_3d_num = new double *** [n_KT];
         correl_3d_num_err = new double *** [n_KT];
+        correl_3d_num_count = new double *** [n_KT];
         correl_3d_denorm = new double *** [n_KT];
         for(int iK = 0; iK < n_KT; iK++)
         {
             correl_3d_num[iK] = new double ** [qnpts];
             correl_3d_num_err[iK] = new double ** [qnpts];
+            correl_3d_num_count[iK] = new double ** [qnpts];
             correl_3d_denorm[iK] = new double ** [qnpts];
             for(int i = 0; i < qnpts; i++)
             {
                 correl_3d_num[iK][i] = new double * [qnpts];
                 correl_3d_num_err[iK][i] = new double * [qnpts];
+                correl_3d_num_count[iK][i] = new double * [qnpts];
                 correl_3d_denorm[iK][i] = new double * [qnpts];
                 for(int j = 0; j < qnpts; j++)
                 {
                     correl_3d_num[iK][i][j] = new double [qnpts];
                     correl_3d_num_err[iK][i][j] = new double [qnpts];
+                    correl_3d_num_count[iK][i][j] = new double [qnpts];
                     correl_3d_denorm[iK][i][j] = new double [qnpts];
                     for(int k = 0; k < qnpts; k++)
                     {
                         correl_3d_num[iK][i][j][k] = 0.0;
                         correl_3d_num_err[iK][i][j][k] = 0.0;
+                        correl_3d_num_count[iK][i][j][k] = 0.0;
                         correl_3d_denorm[iK][i][j][k] = 0.0;
                     }
                 }
@@ -84,31 +89,37 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
     {
         correl_3d_Kphi_diff_num = new double **** [n_KT];
         correl_3d_Kphi_diff_num_err = new double **** [n_KT];
+        correl_3d_Kphi_diff_num_count = new double **** [n_KT];
         correl_3d_Kphi_diff_denorm = new double **** [n_KT];
         for(int iK = 0; iK < n_KT; iK++)
         {
             correl_3d_Kphi_diff_num[iK] = new double *** [n_Kphi];
             correl_3d_Kphi_diff_num_err[iK] = new double *** [n_Kphi];
+            correl_3d_Kphi_diff_num_count[iK] = new double *** [n_Kphi];
             correl_3d_Kphi_diff_denorm[iK] = new double *** [n_Kphi];
             for(int iphi = 0; iphi < n_Kphi; iphi++)
             {
                 correl_3d_Kphi_diff_num[iK][iphi] = new double ** [qnpts];
                 correl_3d_Kphi_diff_num_err[iK][iphi] = new double ** [qnpts];
+                correl_3d_Kphi_diff_num_count[iK][iphi] = new double ** [qnpts];
                 correl_3d_Kphi_diff_denorm[iK][iphi] = new double ** [qnpts];
                 for(int i = 0; i < qnpts; i++)
                 {
                     correl_3d_Kphi_diff_num[iK][iphi][i] = new double * [qnpts];
                     correl_3d_Kphi_diff_num_err[iK][iphi][i] = new double * [qnpts];
+                    correl_3d_Kphi_diff_num_count[iK][iphi][i] = new double * [qnpts];
                     correl_3d_Kphi_diff_denorm[iK][iphi][i] = new double * [qnpts];
                     for(int j = 0; j < qnpts; j++)
                     {
                         correl_3d_Kphi_diff_num[iK][iphi][i][j] = new double [qnpts];
                         correl_3d_Kphi_diff_num_err[iK][iphi][i][j] = new double [qnpts];
+                        correl_3d_Kphi_diff_num_count[iK][iphi][i][j] = new double [qnpts];
                         correl_3d_Kphi_diff_denorm[iK][iphi][i][j] = new double [qnpts];
                         for(int k = 0; k < qnpts; k++)
                         {
                             correl_3d_Kphi_diff_num[iK][iphi][i][j][k] = 0.0;
                             correl_3d_Kphi_diff_num_err[iK][iphi][i][j][k] = 0.0;
+                            correl_3d_Kphi_diff_num_count[iK][iphi][i][j][k] = 0.0;
                             correl_3d_Kphi_diff_denorm[iK][iphi][i][j][k] = 0.0;
                         }
                     }
@@ -134,18 +145,22 @@ HBT_correlation::~HBT_correlation()
                 {
                     delete [] correl_3d_num[iK][i][j];
                     delete [] correl_3d_num_err[iK][i][j];
+                    delete [] correl_3d_num_count[iK][i][j];
                     delete [] correl_3d_denorm[iK][i][j];
                 }
                 delete [] correl_3d_num[iK][i];
                 delete [] correl_3d_num_err[iK][i];
+                delete [] correl_3d_num_count[iK][i];
                 delete [] correl_3d_denorm[iK][i];
             }
             delete [] correl_3d_num[iK];
             delete [] correl_3d_num_err[iK];
+            delete [] correl_3d_num_count[iK];
             delete [] correl_3d_denorm[iK];
         }
         delete [] correl_3d_num;
         delete [] correl_3d_num_err;
+        delete [] correl_3d_num_count;
         delete [] correl_3d_denorm;
     }
     else
@@ -160,22 +175,27 @@ HBT_correlation::~HBT_correlation()
                     {
                         delete [] correl_3d_Kphi_diff_num[iK][iphi][i][j];
                         delete [] correl_3d_Kphi_diff_num_err[iK][iphi][i][j];
+                        delete [] correl_3d_Kphi_diff_num_count[iK][iphi][i][j];
                         delete [] correl_3d_Kphi_diff_denorm[iK][iphi][i][j];
                     }
                     delete [] correl_3d_Kphi_diff_num[iK][iphi][i];
                     delete [] correl_3d_Kphi_diff_num_err[iK][iphi][i];
+                    delete [] correl_3d_Kphi_diff_num_count[iK][iphi][i];
                     delete [] correl_3d_Kphi_diff_denorm[iK][iphi][i];
                 }
                 delete [] correl_3d_Kphi_diff_num[iK][iphi];
                 delete [] correl_3d_Kphi_diff_num_err[iK][iphi];
+                delete [] correl_3d_Kphi_diff_num_count[iK][iphi];
                 delete [] correl_3d_Kphi_diff_denorm[iK][iphi];
             }
             delete [] correl_3d_Kphi_diff_num[iK];
             delete [] correl_3d_Kphi_diff_num_err[iK];
+            delete [] correl_3d_Kphi_diff_num_count[iK];
             delete [] correl_3d_Kphi_diff_denorm[iK];
         }
         delete [] correl_3d_Kphi_diff_num;
         delete [] correl_3d_Kphi_diff_num_err;
+        delete [] correl_3d_Kphi_diff_num_count;
         delete [] correl_3d_Kphi_diff_denorm;
     }
     delete [] KT_array;
@@ -391,6 +411,7 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
                     {
                         correl_3d_num[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx;
                         correl_3d_num_err[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx*pairlist[ipair].cos_qx;
+                        correl_3d_num_count[Kperp_idx][qout_idx][qside_idx][qlong_idx]++;
                     }
                     else   // pairs from mixed events
                         correl_3d_denorm[Kperp_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
@@ -402,6 +423,7 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
                     {
                         correl_3d_Kphi_diff_num[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx;
                         correl_3d_Kphi_diff_num_err[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx*pairlist[ipair].cos_qx;
+                        correl_3d_Kphi_diff_num_count[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx]++;
                     }
                     else     // pairs from mixed events
                         correl_3d_Kphi_diff_denorm[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
@@ -431,8 +453,9 @@ void HBT_correlation::output_correlation_function()
                     double correl_fun_num = correl_3d_num[iK][iqout][iqside][iqlong];
                     double correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
                     double correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
-                    double num_err = sqrt((correl_3d_num_err[iK][iqout][iqside][iqlong]/nevent - correl_fun_num/nevent*correl_fun_num/nevent)/nevent);
-                    double denorm_err = sqrt(correl_fun_denorm/nevent);
+                    int npart_num = correl_3d_num_count[iK][iqout][iqside][iqlong];
+                    double num_err = sqrt((correl_3d_num_err[iK][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
+                    double denorm_err = 0.0;
                     double error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(denorm_err*correl_fun_num/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
                     output << scientific << setw(18) << setprecision(8) 
                            << q_out_local << "    " << q_side_local << "    " 
@@ -470,8 +493,9 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                         double correl_fun_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
 
                         double correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
-                        double num_err = sqrt((correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong]/nevent - correl_fun_num/nevent*correl_fun_num/nevent)/nevent);
-                        double denorm_err = sqrt(correl_fun_denorm/nevent);
+                        int npart_num = correl_3d_Kphi_diff_num_count[iK][iKphi][iqout][iqside][iqlong];
+                        double num_err = sqrt((correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
+                        double denorm_err = 0.0;
                         double error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(correl_fun_num*denorm_err/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
                         output << scientific << setw(18) << setprecision(8) 
                                << q_out_local << "    " << q_side_local << "    "

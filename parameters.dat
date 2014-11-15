@@ -3,9 +3,9 @@ read_in_mode = 0                  # mode for reading in particle information
                                   # 1: reads outputs from UrQMD outputs
                                   # 2: reads outputs from hdf5 file
 
-particle_monval = 2212             # particle Monte-Carlo number
+particle_monval = 211             # particle Monte-Carlo number
 
-event_buffer_size = 10000           # buffer size of the number of events read in at once
+event_buffer_size = 1000          # buffer size of the number of events read in at once
 
 
 # Parameters for single particle spectra and vn
@@ -38,8 +38,7 @@ n_Kphi = 48                       # number of the azimuthal angles for the pair 
 Krap_min = - 0.5                  # minimum accept pair momentum rapidity
 Krap_max = 0.5                    # maximum accept pair momentum rapidity
 
-
 qnpts = 20                        # number of points for momentum q (difference of the pair momentum) for correlaction function
 delta_q = 0.01                    # grid spacing for momentum q in particle correlation function (GeV)
-init_q = 0.0                      # minimum value for momentum q (GeV)
+init_q = 0.00                      # minimum value for momentum q (GeV)
 

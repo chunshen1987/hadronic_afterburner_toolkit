@@ -34,9 +34,9 @@ class HBT_correlation
         int number_of_mixed_events;
         long int number_pairs_num, number_pairs_denorm;
         double ****correl_3d_num, ****correl_3d_denorm;
-        double ****correl_3d_num_err;
+        double ****correl_3d_num_count, ****correl_3d_num_err;
         double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
-        double *****correl_3d_Kphi_diff_num_err;
+        double *****correl_3d_Kphi_diff_num_count, *****correl_3d_Kphi_diff_num_err;
 
         int nevent;
 
