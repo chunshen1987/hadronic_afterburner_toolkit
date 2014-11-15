@@ -11,7 +11,7 @@
 ##  
 
 CC := g++
-CFLAGS= -O3 $(shell gsl-config --cflags)
+CFLAGS= -O3 $(shell gsl-config --cflags) -Wall
 
 RM		=	rm -f
 O               =       .o

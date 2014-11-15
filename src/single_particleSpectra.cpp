@@ -164,7 +164,6 @@ void singleParticleSpectra::calculate_Qn_vector_shell()
         for(int iev = 0; iev < nev; iev++)
         {
             event_id++;
-            int number_of_particles = particle_list->get_number_of_particles(iev);
             calculate_Qn_vector(iev);
 
             if(check_spatial_flag == 1)
