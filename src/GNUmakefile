@@ -15,7 +15,7 @@ CFLAGS= -O3 -Wall
 
 RM		=	rm -f
 O               =       .o
-LDFLAGS         =       $(CFLAGS) $(shell gsl-config --libs)
+LDFLAGS         =       $(CFLAGS)
 SYSTEMFILES     =       $(SRCGNU)
 
 # --------------- Files involved ------------------
