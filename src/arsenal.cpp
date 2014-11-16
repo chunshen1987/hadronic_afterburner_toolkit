@@ -14,10 +14,6 @@ Change logs: see arsenal.h
 #include <cstdarg>
 #include <sys/time.h>
 
-#include<gsl/gsl_sf_bessel.h>
-#include<gsl/gsl_rng.h>
-#include<gsl/gsl_randist.h>
-
 #include "arsenal.h"
 
 #define OUTPUT_PRECISION 10
