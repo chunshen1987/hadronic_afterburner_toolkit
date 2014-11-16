@@ -454,12 +454,17 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
             if(KT_local > KT_min && KT_local < KT_max)
             {
                 int Kperp_idx = (int)((KT_local - KT_min)/dKT);
-                int qout_idx = abs((int)((pairlist[ipair].q_out - q_min)/delta_q));
-                if(qout_idx >= qnpts || qout_idx < 0) continue;
-                int qside_idx = abs((int)((pairlist[ipair].q_side - q_min)/delta_q));
-                if(qside_idx >= qnpts || qside_idx < 0) continue;
-                int qlong_idx = abs((int)((pairlist[ipair].q_long - q_min)/delta_q));
-                if(qlong_idx >= qnpts || qlong_idx < 0) continue;
+                double q_out_local = pairlist[ipair].q_out;
+                if(q_out_local < q_min || q_out_local > q_max) continue;
+                double q_side_local = pairlist[ipair].q_side;
+                if(q_side_local < q_min || q_side_local > q_max) continue;
+                double q_long_local = pairlist[ipair].q_long;
+                if(q_long_local < q_min || q_long_local > q_max) continue;
+
+                int qout_idx = (int)((pairlist[ipair].q_out - q_min)/delta_q);
+                int qside_idx = (int)((pairlist[ipair].q_side - q_min)/delta_q);
+                int qlong_idx = (int)((pairlist[ipair].q_long - q_min)/delta_q);
+
                 if(azimuthal_flag == 0)
                 {
                     if(type == 0)  // pairs from same event
