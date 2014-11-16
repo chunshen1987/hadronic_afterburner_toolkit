@@ -38,7 +38,7 @@ n_Kphi = 48                       # number of the azimuthal angles for the pair 
 Krap_min = - 0.5                  # minimum accept pair momentum rapidity
 Krap_max = 0.5                    # maximum accept pair momentum rapidity
 
-qnpts = 20                        # number of points for momentum q (difference of the pair momentum) for correlaction function
-delta_q = 0.01                    # grid spacing for momentum q in particle correlation function (GeV)
-init_q = 0.00                      # minimum value for momentum q (GeV)
+qnpts = 41                        # number of points for momentum q (difference of the pair momentum) for correlaction function
+q_min = -0.2                      # minimum value for momentum q (GeV)
+q_max = 0.2                       # maximum value for momentum q (GeV)
 

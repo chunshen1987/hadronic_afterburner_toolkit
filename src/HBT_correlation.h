@@ -21,7 +21,7 @@ class HBT_correlation
         particleSamples *particle_list;
 
         int qnpts;
-        double init_q, delta_q;
+        double q_min, q_max, delta_q;
 
         int azimuthal_flag;
         int n_KT, n_Kphi;

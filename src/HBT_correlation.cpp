@@ -15,17 +15,18 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
     particle_list = particle_list_in;
 
     qnpts = paraRdr->getVal("qnpts");
-    init_q = paraRdr->getVal("init_q");
-    delta_q = paraRdr->getVal("delta_q");
+    q_min = paraRdr->getVal("q_min");
+    q_max = paraRdr->getVal("q_max");
+    delta_q = (q_max - q_min)/(qnpts - 1);
     
     q_out = new double [qnpts];
     q_side = new double [qnpts];
     q_long = new double [qnpts];
     for(int i = 0; i < qnpts; i++)
     {
-        q_out[i] = init_q + i*delta_q;
-        q_side[i] = init_q + i*delta_q;
-        q_long[i] = init_q + i*delta_q;
+        q_out[i] = q_min + i*delta_q;
+        q_side[i] = q_min + i*delta_q;
+        q_long[i] = q_min + i*delta_q;
     }
 
     azimuthal_flag = paraRdr->getVal("azimuthal_flag");
@@ -453,12 +454,12 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
             if(KT_local > KT_min && KT_local < KT_max)
             {
                 int Kperp_idx = (int)((KT_local - KT_min)/dKT);
-                int qout_idx = abs((int)((pairlist[ipair].q_out - init_q)/delta_q));
-                if(qout_idx >= qnpts) continue;
-                int qside_idx = abs((int)((pairlist[ipair].q_side - init_q)/delta_q));
-                if(qside_idx >= qnpts) continue;
-                int qlong_idx = abs((int)((pairlist[ipair].q_long - init_q)/delta_q));
-                if(qlong_idx >= qnpts) continue;
+                int qout_idx = abs((int)((pairlist[ipair].q_out - q_min)/delta_q));
+                if(qout_idx >= qnpts || qout_idx < 0) continue;
+                int qside_idx = abs((int)((pairlist[ipair].q_side - q_min)/delta_q));
+                if(qside_idx >= qnpts || qside_idx < 0) continue;
+                int qlong_idx = abs((int)((pairlist[ipair].q_long - q_min)/delta_q));
+                if(qlong_idx >= qnpts || qlong_idx < 0) continue;
                 if(azimuthal_flag == 0)
                 {
                     if(type == 0)  // pairs from same event
