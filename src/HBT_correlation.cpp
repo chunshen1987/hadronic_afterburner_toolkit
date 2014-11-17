@@ -502,10 +502,10 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
 void HBT_correlation::output_correlation_function()
 {
     double npair_ratio = (double)number_pairs_num/(double)number_pairs_denorm;
-    for(int iK = 0; iK < n_KT; iK++)
+    for(int iK = 0; iK < n_KT - 1; iK++)
     {
         ostringstream filename;
-        filename << path << "/HBT_correlation_function_KT_" << KT_array[iK] << ".dat";
+        filename << path << "/HBT_correlation_function_KT_" << KT_array[iK] << "_" << KT_array[iK+1] << ".dat";
         ofstream output(filename.str().c_str());
         for(int iqlong = 0; iqlong < qnpts; iqlong++)
         {
@@ -514,16 +514,32 @@ void HBT_correlation::output_correlation_function()
                 for(int iqside = 0; iqside < qnpts; iqside++)
                 {
                     int npart_num = correl_3d_num_count[iK][iqout][iqside][iqlong];
-                    double q_out_local = q_out_mean[iK][iqout][iqside][iqlong]/npart_num;
-                    double q_side_local = q_side_mean[iK][iqout][iqside][iqlong]/npart_num;
-                    double q_long_local = q_long_mean[iK][iqout][iqside][iqlong]/npart_num;
+                    double q_out_local, q_side_local, q_long_local;
+                    double correl_fun_num, correl_fun_denorm, correl_fun_val;
+                    double num_err, denorm_err, error;
+                    if(npart_num < 2)
+                    {
+                        q_out_local = q_out[iqout];
+                        q_side_local = q_side[iqside];
+                        q_long_local = q_long[iqlong];
+                        correl_fun_num = 0.0;
+                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
+                        correl_fun_val = 0.0;
+                        error = 0.0;
+                    }
+                    else
+                    {
+                        q_out_local = q_out_mean[iK][iqout][iqside][iqlong]/npart_num;
+                        q_side_local = q_side_mean[iK][iqout][iqside][iqlong]/npart_num;
+                        q_long_local = q_long_mean[iK][iqout][iqside][iqlong]/npart_num;
 
-                    double correl_fun_num = correl_3d_num[iK][iqout][iqside][iqlong];
-                    double correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
-                    double correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
-                    double num_err = sqrt((correl_3d_num_err[iK][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
-                    double denorm_err = 0.0;
-                    double error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(denorm_err*correl_fun_num/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
+                        correl_fun_num = correl_3d_num[iK][iqout][iqside][iqlong];
+                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
+                        correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
+                        num_err = sqrt((correl_3d_num_err[iK][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
+                        denorm_err = 0.0;
+                        error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(denorm_err*correl_fun_num/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
+                    }
 
                     output << scientific << setw(18) << setprecision(8) 
                            << q_out_local << "    " << q_side_local << "    " 
@@ -555,16 +571,32 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                     for(int iqside = 0; iqside < qnpts; iqside++)
                     {
                         int npart_num = correl_3d_Kphi_diff_num_count[iK][iKphi][iqout][iqside][iqlong];
-                        double q_out_local = q_out_diff_mean[iK][iKphi][iqout][iqside][iqlong]/npart_num;
-                        double q_side_local = q_side_diff_mean[iK][iKphi][iqout][iqside][iqlong]/npart_num;
-                        double q_long_local = q_long_diff_mean[iK][iKphi][iqout][iqside][iqlong]/npart_num;
+                        double q_out_local, q_side_local, q_long_local;
+                        double correl_fun_num, correl_fun_denorm, correl_fun_val;
+                        double num_err, denorm_err, error;
+                        if(npart_num < 2)
+                        {
+                            q_out_local = q_out[iqout];
+                            q_side_local = q_side[iqside];
+                            q_long_local = q_long[iqlong];
+                            correl_fun_num = 0.0;
+                            correl_fun_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
+                            correl_fun_val = 0.0;
+                            error = 0.0;
+                        }
+                        else
+                        {
+                            q_out_local = q_out_diff_mean[iK][iKphi][iqout][iqside][iqlong]/npart_num;
+                            q_side_local = q_side_diff_mean[iK][iKphi][iqout][iqside][iqlong]/npart_num;
+                            q_long_local = q_long_diff_mean[iK][iKphi][iqout][iqside][iqlong]/npart_num;
 
-                        double correl_fun_num = correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong];
-                        double correl_fun_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
-                        double correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
-                        double num_err = sqrt((correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
-                        double denorm_err = 0.0;
-                        double error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(correl_fun_num*denorm_err/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
+                            correl_fun_num = correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong];
+                            correl_fun_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
+                            correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
+                            num_err = sqrt((correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
+                            denorm_err = 0.0;
+                            error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(correl_fun_num*denorm_err/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
+                        }
 
                         output << scientific << setw(18) << setprecision(8) 
                                << q_out_local << "    " << q_side_local << "    "
