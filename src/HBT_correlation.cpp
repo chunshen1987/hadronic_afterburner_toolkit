@@ -557,12 +557,12 @@ void HBT_correlation::output_correlation_function()
 void HBT_correlation::output_correlation_function_Kphi_differential()
 {
     double npair_ratio = (double)number_pairs_num/(double)number_pairs_denorm;
-    for(int iK = 0; iK < n_KT; iK++)
+    for(int iK = 0; iK < n_KT - 1; iK++)
     {
         for(int iKphi = 0; iKphi < n_Kphi; iKphi++)
         {
             ostringstream filename;
-            filename << path << "/HBT_correlation_function_KT_" << KT_array[iK] << "_Kphi_" << Kphi_array[iKphi] << ".dat";
+            filename << path << "/HBT_correlation_function_KT_" << KT_array[iK] << "_" << KT_array[iK+1] << "_Kphi_" << Kphi_array[iKphi] << ".dat";
             ofstream output(filename.str().c_str());
             for(int iqlong = 0; iqlong < qnpts; iqlong++)
             {
