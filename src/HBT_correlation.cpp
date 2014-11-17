@@ -49,6 +49,7 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
         Kphi_array[i] = 0.0 + i*dKphi;
 
     number_of_mixed_events = paraRdr->getVal("number_of_mixed_events");
+    number_of_oversample_events = paraRdr->getVal("number_of_oversample_events");
     number_pairs_num = 0;
     number_pairs_denorm = 0;
     if(azimuthal_flag == 0)
@@ -272,18 +273,29 @@ void HBT_correlation::calculate_HBT_correlation_function()
         particle_list->read_in_particle_samples();
         cout << " processing ..." << flush;
         int nev = particle_list->get_number_of_events();
+        // first pairs from the same event
+        for(int iev = 0; iev < nev/number_of_oversample_events; iev++)
+        {
+            int n_skip_ev = nev/number_of_oversample_events;
+            int number_of_particles = 0;
+            int *event_list = new int [number_of_oversample_events];
+            for(int isample = 0; isample < number_of_oversample_events; isample++)
+            {
+                event_list[isample] = iev + isample*n_skip_ev;
+                number_of_particles += particle_list->get_number_of_particles(iev+isample*n_skip_ev);
+            }
+            long int num_of_pairs = number_of_particles*(number_of_particles - 1)/2;
+            particle_pair *particle_pairs_list = new particle_pair [num_of_pairs];
+            combine_particle_pairs(event_list, particle_pairs_list);
+            bin_into_correlation_function(0, num_of_pairs, particle_pairs_list);
+            delete [] particle_pairs_list;
+        }
+
+        // then pairs from mixed events
         for(int iev = 0; iev < nev; iev++)
         {
             event_id++;
-            // first pairs from the same event
             int number_of_particles = particle_list->get_number_of_particles(iev);
-            int num_of_pairs = number_of_particles*(number_of_particles - 1)/2;
-            particle_pair *particle_pairs_list = new particle_pair [num_of_pairs];
-            combine_particle_pairs(iev, particle_pairs_list);
-            bin_into_correlation_function(0, num_of_pairs, particle_pairs_list);
-            delete [] particle_pairs_list;
-
-            // then pairs from mixed events
             int count = 0;
             while(1)
             {
@@ -310,21 +322,30 @@ void HBT_correlation::calculate_HBT_correlation_function()
         output_correlation_function_Kphi_differential();
 }
 
-void HBT_correlation::combine_particle_pairs(int event_id, particle_pair* list)
+void HBT_correlation::combine_particle_pairs(int* event_list, particle_pair* list)
 {
-    int number_of_particles = particle_list->get_number_of_particles(event_id);
+    int number_of_particles = 0;
+    for(int i = 0; i < number_of_oversample_events; i++)
+        number_of_particles += particle_list->get_number_of_particles(event_list[i]);
     particle_info* temp_particle_list = new particle_info [number_of_particles];
-    for(int i = 0; i < number_of_particles; i++)
+    int idx = 0;
+    for(int j = 0; j < number_of_oversample_events; j++)
     {
-        temp_particle_list[i].px = particle_list->get_particle(event_id, i).px;
-        temp_particle_list[i].py = particle_list->get_particle(event_id, i).py;
-        temp_particle_list[i].pz = particle_list->get_particle(event_id, i).pz;
-        temp_particle_list[i].E = particle_list->get_particle(event_id, i).E;
-        temp_particle_list[i].mass = particle_list->get_particle(event_id, i).mass;
-        temp_particle_list[i].x = particle_list->get_particle(event_id, i).x;
-        temp_particle_list[i].y = particle_list->get_particle(event_id, i).y;
-        temp_particle_list[i].z = particle_list->get_particle(event_id, i).z;
-        temp_particle_list[i].t = particle_list->get_particle(event_id, i).t;
+        int event_id = event_list[j];
+        int event_number_particle = particle_list->get_number_of_particles(event_list[j]);
+        for(int i = 0; i < event_number_particle; i++)
+        {
+            temp_particle_list[idx].px = particle_list->get_particle(event_id, i).px;
+            temp_particle_list[idx].py = particle_list->get_particle(event_id, i).py;
+            temp_particle_list[idx].pz = particle_list->get_particle(event_id, i).pz;
+            temp_particle_list[idx].E = particle_list->get_particle(event_id, i).E;
+            temp_particle_list[idx].mass = particle_list->get_particle(event_id, i).mass;
+            temp_particle_list[idx].x = particle_list->get_particle(event_id, i).x;
+            temp_particle_list[idx].y = particle_list->get_particle(event_id, i).y;
+            temp_particle_list[idx].z = particle_list->get_particle(event_id, i).z;
+            temp_particle_list[idx].t = particle_list->get_particle(event_id, i).t;
+            idx++;
+        }
     }
 
     // nested pair loop
