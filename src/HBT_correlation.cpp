@@ -303,7 +303,7 @@ void HBT_correlation::calculate_HBT_correlation_function()
                 if(mixed_event_id != iev)
                 {
                     int number_of_particles_2 = particle_list->get_number_of_particles(mixed_event_id);
-                    int num_of_mixed_pairs = number_of_particles*number_of_particles_2;
+                    long int num_of_mixed_pairs = number_of_particles*number_of_particles_2;
                     particle_pair *particle_mixed_pairs_list = new particle_pair [num_of_mixed_pairs];
                     combine_particle_pairs_mixed_events(iev, mixed_event_id, particle_mixed_pairs_list);
                     bin_into_correlation_function(1, num_of_mixed_pairs, particle_mixed_pairs_list);
@@ -328,7 +328,7 @@ void HBT_correlation::combine_particle_pairs(int* event_list, particle_pair* lis
     for(int i = 0; i < number_of_oversample_events; i++)
         number_of_particles += particle_list->get_number_of_particles(event_list[i]);
     particle_info* temp_particle_list = new particle_info [number_of_particles];
-    int idx = 0;
+    long int idx = 0;
     for(int j = 0; j < number_of_oversample_events; j++)
     {
         int event_id = event_list[j];
@@ -349,7 +349,7 @@ void HBT_correlation::combine_particle_pairs(int* event_list, particle_pair* lis
     }
 
     // nested pair loop
-    int pair_id = 0;
+    long int pair_id = 0;
     for(int i = 0; i < number_of_particles; i++)
     {
         for(int j = i+1; j < number_of_particles; j++)
