@@ -21,7 +21,7 @@ SYSTEMFILES     =       $(SRCGNU)
 # --------------- Files involved ------------------
 
 ifeq "$(MAIN)" ""
-MAIN		=	HBT_afterbuner.e
+MAIN		=	HBT_afterburner.e
 endif
 
 SRC		=	main.cpp arsenal.cpp gauss_quadrature.cpp \
