@@ -1,4 +1,4 @@
-HBTcorrelation_MCafterbuner
+HBTcorrelation_MCafterburner
 ===========================
 
 ### This program computes the particle pair HBT correlation from Monte-Carlo samples of emitted particles
