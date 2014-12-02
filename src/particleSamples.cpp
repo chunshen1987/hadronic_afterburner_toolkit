@@ -51,8 +51,8 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     ostringstream filename;
     if(read_in_mode == 0)
         filename << path << "/OSCAR.DAT";
-    else
-        filename << path << "/OSCAR.DAT";   // to be changed
+    else if(read_in_mode == 1)
+        filename << path << "/particle_list.dat";
 
     inputfile.open(filename.str().c_str());
     // skip the header file
@@ -135,7 +135,8 @@ int particleSamples::read_in_particle_samples_UrQMD()
 {
     string temp_string;
     
-    int n_particle, dummy;
+    int n_particle;
+    double dummy;
     int ievent;
     int urqmd_pid, urqmd_iso3;
     double temp_mass;
@@ -151,6 +152,7 @@ int particleSamples::read_in_particle_samples_UrQMD()
             getline(inputfile, temp_string);
             stringstream temp1(temp_string);
             temp1 >> n_particle;
+            getline(inputfile, temp_string);  // then get one useless line
 
             int idx = ievent;
             delete [] particle_list[idx]; // clean out the previous record
