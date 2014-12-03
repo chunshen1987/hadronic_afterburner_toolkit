@@ -44,9 +44,10 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     for(int i = 0; i < event_buffer_size; i++)
         num_of_particles[i] = 0;
 
-    particle_list = new particle_info* [event_buffer_size];
+    //particle_list = new particle_info* [event_buffer_size];
+    particle_list = new vector< vector<particle_info>* >;
     for(int i = 0; i < event_buffer_size; i++)
-        particle_list[i] = new particle_info [2];
+        particle_list->push_back(new vector<particle_info> );
 
     ostringstream filename;
     if(read_in_mode == 0)
@@ -70,9 +71,9 @@ particleSamples::~particleSamples()
     inputfile.close();
     delete [] num_of_particles;
 
-    for(int i = 0; i < event_buffer_size; i++)
-        delete [] particle_list[i];
-    delete [] particle_list;
+    for(int i = 0; i < particle_list->size(); i++)
+        delete (*particle_list)[i];
+    delete particle_list;
 }
 
 int particleSamples::read_in_particle_samples()
@@ -99,8 +100,7 @@ int particleSamples::read_in_particle_samples_OSCAR()
         if(!inputfile.eof())
         {
             int idx = ievent;
-            delete [] particle_list[idx]; // clean out the previous record
-            particle_list[idx] = new particle_info [n_particle];
+            (*particle_list)[idx]->clear(); // clean out the previous record
 
             int num_of_chosen_particle = 0;
             for(int ipart = 0; ipart < n_particle; ipart++)
@@ -110,16 +110,18 @@ int particleSamples::read_in_particle_samples_OSCAR()
                 temp2 >> dummy >> temp_monval;
                 if(temp_monval == particle_monval)
                 {
+                     particle_info *temp_particle_info = new particle_info;
                      num_of_chosen_particle++;
-                     temp2 >> particle_list[idx][ipart].px 
-                           >> particle_list[idx][ipart].py
-                           >> particle_list[idx][ipart].pz 
-                           >> particle_list[idx][ipart].E
-                           >> particle_list[idx][ipart].mass 
-                           >> particle_list[idx][ipart].x 
-                           >> particle_list[idx][ipart].y
-                           >> particle_list[idx][ipart].z 
-                           >> particle_list[idx][ipart].t;
+                     temp2 >> temp_particle_info->px 
+                           >> temp_particle_info->py
+                           >> temp_particle_info->pz 
+                           >> temp_particle_info->E
+                           >> temp_particle_info->mass 
+                           >> temp_particle_info->x 
+                           >> temp_particle_info->y
+                           >> temp_particle_info->z 
+                           >> temp_particle_info->t;
+                     (*particle_list)[idx]->push_back(*temp_particle_info);
                 }
             }
             num_of_particles[idx] = num_of_chosen_particle;
@@ -155,8 +157,7 @@ int particleSamples::read_in_particle_samples_UrQMD()
             getline(inputfile, temp_string);  // then get one useless line
 
             int idx = ievent;
-            delete [] particle_list[idx]; // clean out the previous record
-            particle_list[idx] = new particle_info [n_particle];
+            (*particle_list)[idx]->clear(); // clean out the previous record
 
             int num_of_chosen_particle = 0;
             for(int ipart = 0; ipart < n_particle; ipart++)
@@ -169,16 +170,18 @@ int particleSamples::read_in_particle_samples_UrQMD()
                 if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
                 {
                      num_of_chosen_particle++;
+                     particle_info *temp_particle_info = new particle_info;
                      temp2 >> dummy >> dummy >> dummy >> dummy;
-                     temp2 >> particle_list[idx][ipart].t
-                           >> particle_list[idx][ipart].x 
-                           >> particle_list[idx][ipart].y
-                           >> particle_list[idx][ipart].z 
-                           >> particle_list[idx][ipart].E
-                           >> particle_list[idx][ipart].px 
-                           >> particle_list[idx][ipart].py
-                           >> particle_list[idx][ipart].pz ;
-                     particle_list[idx][ipart].mass = temp_mass;
+                     temp2 >> temp_particle_info->t
+                           >> temp_particle_info->x 
+                           >> temp_particle_info->y
+                           >> temp_particle_info->z 
+                           >> temp_particle_info->E
+                           >> temp_particle_info->px 
+                           >> temp_particle_info->py
+                           >> temp_particle_info->pz ;
+                     temp_particle_info->mass = temp_mass;
+                     (*particle_list)[idx]->push_back(*temp_particle_info);
                 }
             }
             num_of_particles[idx] = num_of_chosen_particle;
