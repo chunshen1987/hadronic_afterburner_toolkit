@@ -16,35 +16,14 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     paraRdr = paraRdr_in;
     path = path_in;
 
-    particle_monval = paraRdr->getVal("particle_monval");
-    if(particle_monval == 211)
-    {
-        particle_urqmd_id = 101;
-        particle_urqmd_isospin = 2;
-    }
-    else if(particle_monval == -211)
-    {
-        particle_urqmd_id = 101;
-        particle_urqmd_isospin = -2;
-    }
-    else if(particle_monval == 321)
-    {
-        particle_urqmd_id = 106;
-        particle_urqmd_isospin = 1;
-    }
-    else if(particle_monval == 2212)
-    {
-        particle_urqmd_id = 1;
-        particle_urqmd_isospin = 1;
-    }
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
+    
+    // read in particle Monte-Carlo number
+    particle_monval = paraRdr->getVal("particle_monval");
+    if(read_in_mode == 1)
+        get_UrQMD_id(particle_monval);
 
-    num_of_particles = new int [event_buffer_size];
-    for(int i = 0; i < event_buffer_size; i++)
-        num_of_particles[i] = 0;
-
-    //particle_list = new particle_info* [event_buffer_size];
     particle_list = new vector< vector<particle_info>* >;
     for(int i = 0; i < event_buffer_size; i++)
         particle_list->push_back(new vector<particle_info> );
@@ -56,7 +35,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
         filename << path << "/particle_list.dat";
 
     inputfile.open(filename.str().c_str());
-    // skip the header file
+    // skip the header file for OSCAR
     string temp;
     if(read_in_mode == 0)
     {
@@ -69,11 +48,34 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
 particleSamples::~particleSamples()
 {
     inputfile.close();
-    delete [] num_of_particles;
-
     for(int i = 0; i < particle_list->size(); i++)
         delete (*particle_list)[i];
     delete particle_list;
+}
+
+void particleSamples::get_UrQMD_id(int monval)
+{
+    // find the corresponding UrQMD id number
+    if(monval == 211)  // pion^+
+    {
+        particle_urqmd_id = 101;
+        particle_urqmd_isospin = 2;
+    }
+    else if(monval == -211)  // pion^-
+    {
+        particle_urqmd_id = 101;
+        particle_urqmd_isospin = -2;
+    }
+    else if(monval == 321)  // Kaon^+
+    {
+        particle_urqmd_id = 106;
+        particle_urqmd_isospin = 1;
+    }
+    else if(monval == 2212)  // proton
+    {
+        particle_urqmd_id = 1;
+        particle_urqmd_isospin = 1;
+    }
 }
 
 int particleSamples::read_in_particle_samples()
@@ -102,7 +104,6 @@ int particleSamples::read_in_particle_samples_OSCAR()
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
 
-            int num_of_chosen_particle = 0;
             for(int ipart = 0; ipart < n_particle; ipart++)
             {
                 getline(inputfile, temp_string);
@@ -111,7 +112,6 @@ int particleSamples::read_in_particle_samples_OSCAR()
                 if(temp_monval == particle_monval)
                 {
                      particle_info *temp_particle_info = new particle_info;
-                     num_of_chosen_particle++;
                      temp2 >> temp_particle_info->px 
                            >> temp_particle_info->py
                            >> temp_particle_info->pz 
@@ -124,7 +124,6 @@ int particleSamples::read_in_particle_samples_OSCAR()
                      (*particle_list)[idx]->push_back(*temp_particle_info);
                 }
             }
-            num_of_particles[idx] = num_of_chosen_particle;
         }
         else
             break;
@@ -159,7 +158,6 @@ int particleSamples::read_in_particle_samples_UrQMD()
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
 
-            int num_of_chosen_particle = 0;
             for(int ipart = 0; ipart < n_particle; ipart++)
             {
                 getline(inputfile, temp_string);
@@ -169,7 +167,6 @@ int particleSamples::read_in_particle_samples_UrQMD()
                       >> temp_mass >> urqmd_pid >> urqmd_iso3;
                 if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
                 {
-                     num_of_chosen_particle++;
                      particle_info *temp_particle_info = new particle_info;
                      temp2 >> dummy >> dummy >> dummy >> dummy;
                      temp2 >> temp_particle_info->t
@@ -184,7 +181,6 @@ int particleSamples::read_in_particle_samples_UrQMD()
                      (*particle_list)[idx]->push_back(*temp_particle_info);
                 }
             }
-            num_of_particles[idx] = num_of_chosen_particle;
         }
         else
             break;
