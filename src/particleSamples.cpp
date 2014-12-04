@@ -25,8 +25,8 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
         get_UrQMD_id(particle_monval);
 
     particle_list = new vector< vector<particle_info>* >;
-    for(int i = 0; i < event_buffer_size; i++)
-        particle_list->push_back(new vector<particle_info> );
+//    for(int i = 0; i < event_buffer_size; i++)
+//        particle_list->push_back(new vector<particle_info> );
 
     ostringstream filename;
     if(read_in_mode == 0)
@@ -90,6 +90,11 @@ int particleSamples::read_in_particle_samples()
 
 int particleSamples::read_in_particle_samples_OSCAR()
 {
+    // clean out the previous record
+    for(int i = 0; i < particle_list->size(); i++)
+        (*particle_list)[i]->clear();
+    particle_list->clear();
+    
     string temp_string;
     int event_id, n_particle, dummy;
     int ievent;
@@ -101,8 +106,8 @@ int particleSamples::read_in_particle_samples_OSCAR()
         temp1 >> event_id >> n_particle;
         if(!inputfile.eof())
         {
+            particle_list->push_back(new vector<particle_info> );
             int idx = ievent;
-            (*particle_list)[idx]->clear(); // clean out the previous record
 
             for(int ipart = 0; ipart < n_particle; ipart++)
             {
@@ -128,14 +133,17 @@ int particleSamples::read_in_particle_samples_OSCAR()
         else
             break;
     }
-    end_event_idx = ievent - 1;
     return(0);
 }
 
 int particleSamples::read_in_particle_samples_UrQMD()
 {
+    // clean out the previous record
+    for(int i = 0; i < particle_list->size(); i++)
+        (*particle_list)[i]->clear();
+    particle_list->clear();
+
     string temp_string;
-    
     int n_particle;
     double dummy;
     int ievent;
@@ -146,6 +154,8 @@ int particleSamples::read_in_particle_samples_UrQMD()
         getline(inputfile, temp_string);
         if(!inputfile.eof())
         {
+            particle_list->push_back(new vector<particle_info> );
+
             // first skip the header
             for(int i = 0; i < 13; i++)
                 getline(inputfile, temp_string);
@@ -185,6 +195,5 @@ int particleSamples::read_in_particle_samples_UrQMD()
         else
             break;
     }
-    end_event_idx = ievent - 1;
     return(0);
 }
