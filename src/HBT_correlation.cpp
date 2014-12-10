@@ -273,61 +273,51 @@ void HBT_correlation::calculate_HBT_correlation_function()
         particle_list->read_in_particle_samples();
         cout << " processing ..." << flush;
         int nev = particle_list->get_number_of_events();
+        int n_skip_ev = (int)(nev/number_of_oversample_events);
         // first pairs from the same event
-        for(int iev = 0; iev < nev/number_of_oversample_events; iev++)
+        for(int iev = 0; iev < n_skip_ev; iev++)
         {
-            int n_skip_ev = nev/number_of_oversample_events;
-            int number_of_particles = 0;
             int *event_list = new int [number_of_oversample_events];
             for(int isample = 0; isample < number_of_oversample_events; isample++)
-            {
                 event_list[isample] = iev + isample*n_skip_ev;
-                number_of_particles += particle_list->get_number_of_particles(iev+isample*n_skip_ev);
-            }
-            long int num_of_pairs = number_of_particles*(number_of_particles - 1)/2;
-            particle_pair *particle_pairs_list = new particle_pair [num_of_pairs];
-            combine_particle_pairs(event_list, particle_pairs_list);
-            bin_into_correlation_function(0, num_of_pairs, particle_pairs_list);
-            delete [] particle_pairs_list;
+            combine_and_bin_particle_pairs(event_list);
+            delete [] event_list;
         }
 
         // then pairs from mixed events
         for(int iev = 0; iev < nev; iev++)
         {
-            event_id++;
-            int number_of_particles = particle_list->get_number_of_particles(iev);
+            int *mixed_event_list = new int [number_of_mixed_events];
             int count = 0;
             while(1)
             {
                 int mixed_event_id = rand() % buffer_size;
                 if(mixed_event_id != iev)
                 {
-                    int number_of_particles_2 = particle_list->get_number_of_particles(mixed_event_id);
-                    long int num_of_mixed_pairs = number_of_particles*number_of_particles_2;
-                    particle_pair *particle_mixed_pairs_list = new particle_pair [num_of_mixed_pairs];
-                    combine_particle_pairs_mixed_events(iev, mixed_event_id, particle_mixed_pairs_list);
-                    bin_into_correlation_function(1, num_of_mixed_pairs, particle_mixed_pairs_list);
-                    delete [] particle_mixed_pairs_list;
+                    mixed_event_list[count] = mixed_event_id;
                     count++;
                 }
                 if(count == number_of_mixed_events) break;
             }
+            combine_and_bin_particle_pairs_mixed_events(iev, mixed_event_list);
+            event_id++;
+            delete [] mixed_event_list;
         }
         cout << " done!" << endl;
     }
-    nevent = event_id;
     if(azimuthal_flag == 0)
         output_correlation_function();
     else
         output_correlation_function_Kphi_differential();
 }
 
-void HBT_correlation::combine_particle_pairs(int* event_list, particle_pair* list)
+void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
 {
+    double hbarC_inv = 1./hbarC;
     int number_of_particles = 0;
     for(int i = 0; i < number_of_oversample_events; i++)
         number_of_particles += particle_list->get_number_of_particles(event_list[i]);
-    particle_info* temp_particle_list = new particle_info [number_of_particles];
+    particle_info* temp_particle_list = new particle_info [number_of_particles];  // local cache
     long int idx = 0;
     for(int j = 0; j < number_of_oversample_events; j++)
     {
@@ -349,49 +339,82 @@ void HBT_correlation::combine_particle_pairs(int* event_list, particle_pair* lis
     }
 
     // nested pair loop
-    long int pair_id = 0;
     for(int i = 0; i < number_of_particles; i++)
     {
         for(int j = i+1; j < number_of_particles; j++)
         {
-            double K_x = 0.5*(temp_particle_list[i].px + temp_particle_list[j].px);
-            double K_y = 0.5*(temp_particle_list[i].py + temp_particle_list[j].py);
             double K_z = 0.5*(temp_particle_list[i].pz + temp_particle_list[j].pz);
             double K_E = 0.5*(temp_particle_list[i].E + temp_particle_list[j].E);
+            double K_rap = 0.5*log((K_E + K_z)/(K_E - K_z));
+            if(K_rap > Krap_min && K_rap < Krap_max)  // check rapidity cut
+            {
+                double K_x = 0.5*(temp_particle_list[i].px + temp_particle_list[j].px);
+                double K_y = 0.5*(temp_particle_list[i].py + temp_particle_list[j].py);
+                double K_perp = sqrt(K_x*K_x + K_y*K_y);
+                if(K_perp > KT_min && K_perp < KT_max)  // check K_T cut
+                {
+                    number_pairs_num++;
+                    int Kperp_idx = (int)((K_perp - KT_min)/dKT);
 
-            double q_x = temp_particle_list[i].px - temp_particle_list[j].px;
-            double q_y = temp_particle_list[i].py - temp_particle_list[j].py;
-            double q_z = temp_particle_list[i].pz - temp_particle_list[j].pz;
-            double q_E = temp_particle_list[i].E - temp_particle_list[j].E;
+                    double cos_K_phi = K_x/K_perp;
+                    double sin_K_phi = K_y/K_perp;
 
-            double t_diff = temp_particle_list[i].t - temp_particle_list[j].t;
-            double x_diff = temp_particle_list[i].x - temp_particle_list[j].x;
-            double y_diff = temp_particle_list[i].y - temp_particle_list[j].y;
-            double z_diff = temp_particle_list[i].z - temp_particle_list[j].z;
+                    double q_z = temp_particle_list[i].pz - temp_particle_list[j].pz;
+                    double local_q_long = q_z;
+                    if(local_q_long < (q_min - delta_q/2.) || local_q_long > (q_max + delta_q/2.)) continue;
 
-            double K_perp = sqrt(K_x*K_x + K_y*K_y);
-            double cos_K_phi = K_x/K_perp;
-            double sin_K_phi = K_y/K_perp;
-            list[pair_id].K_perp = K_perp;
-            list[pair_id].K_phi = atan2(K_y, K_x);
-            list[pair_id].K_rap = 0.5*log((K_E + K_z)/(K_E - K_z));
+                    double q_x = temp_particle_list[i].px - temp_particle_list[j].px;
+                    double q_y = temp_particle_list[i].py - temp_particle_list[j].py;
+                    double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
+                    if(local_q_out < (q_min - delta_q/2.) || local_q_out > (q_max + delta_q/2.)) continue;
+                    double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
+                    if(local_q_side < (q_min - delta_q/2.) || local_q_side > (q_max + delta_q/2.)) continue;
+                    
+                    int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))/delta_q);
+                    int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
+                    int qlong_idx = (int)((local_q_long - (q_min - delta_q/2.))/delta_q);
 
-            list[pair_id].q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-            list[pair_id].q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-            list[pair_id].q_long = q_z;
-            list[pair_id].cos_qx = cos((q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff)/hbarC);
-            pair_id++;
+                    double q_E = temp_particle_list[i].E - temp_particle_list[j].E;
+
+                    double t_diff = temp_particle_list[i].t - temp_particle_list[j].t;
+                    double x_diff = temp_particle_list[i].x - temp_particle_list[j].x;
+                    double y_diff = temp_particle_list[i].y - temp_particle_list[j].y;
+                    double z_diff = temp_particle_list[i].z - temp_particle_list[j].z;
+
+                    double cos_qx = cos((q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff)*hbarC_inv);
+
+                    // bin results
+                    if(azimuthal_flag == 0)
+                    {
+                        correl_3d_num_count[Kperp_idx][qout_idx][qside_idx][qlong_idx]++;
+                        q_out_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_out;
+                        q_side_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
+                        q_long_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
+                        correl_3d_num[Kperp_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
+                        correl_3d_num_err[Kperp_idx][qout_idx][qside_idx][qlong_idx] += cos_qx*cos_qx;
+                    }
+                    else
+                    {
+                        double local_K_phi = atan2(K_y, K_x);
+                        int Kphi_idx = (int)((local_K_phi)/dKphi);
+                        correl_3d_Kphi_diff_num_count[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx]++;
+                        q_out_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_out;
+                        q_side_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
+                        q_long_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
+                        correl_3d_Kphi_diff_num[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
+                        correl_3d_Kphi_diff_num_err[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += cos_qx*cos_qx;
+                    }
+                }
+            }
         }
     }
     delete [] temp_particle_list;
 }
 
-void HBT_correlation::combine_particle_pairs_mixed_events(int event_id1, int event_id2, particle_pair* list)
+void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1, int* mixed_event_list)
 {
     int number_of_particles_1 = particle_list->get_number_of_particles(event_id1);
-    int number_of_particles_2 = particle_list->get_number_of_particles(event_id2);
     particle_info* temp_particle_list_1 = new particle_info [number_of_particles_1];
-    particle_info* temp_particle_list_2 = new particle_info [number_of_particles_2];
     for(int i = 0; i < number_of_particles_1; i++)
     {
         temp_particle_list_1[i].px = particle_list->get_particle(event_id1, i).px;
@@ -404,55 +427,88 @@ void HBT_correlation::combine_particle_pairs_mixed_events(int event_id1, int eve
         temp_particle_list_1[i].z = particle_list->get_particle(event_id1, i).z;
         temp_particle_list_1[i].t = particle_list->get_particle(event_id1, i).t;
     }
-    // introduce a random rotation for the mixed event
-    double random_rotation = drand48()*2*M_PI;
-    double cos_phi = cos(random_rotation);
-    double sin_phi = sin(random_rotation);
-    for(int i = 0; i < number_of_particles_2; i++)
-    {
-        double px_temp = particle_list->get_particle(event_id2, i).px;
-        double py_temp = particle_list->get_particle(event_id2, i).py;
-        temp_particle_list_2[i].px = px_temp*cos_phi - py_temp*sin_phi;
-        temp_particle_list_2[i].py = px_temp*sin_phi + py_temp*cos_phi;
-        double x_temp = particle_list->get_particle(event_id2, i).x;
-        double y_temp = particle_list->get_particle(event_id2, i).y;
-        temp_particle_list_2[i].x = x_temp*cos_phi - y_temp*sin_phi;
-        temp_particle_list_2[i].y = x_temp*sin_phi + y_temp*cos_phi;
 
-        temp_particle_list_2[i].pz = particle_list->get_particle(event_id2, i).pz;
-        temp_particle_list_2[i].E = particle_list->get_particle(event_id2, i).E;
-        temp_particle_list_2[i].mass = particle_list->get_particle(event_id2, i).mass;
-        temp_particle_list_2[i].z = particle_list->get_particle(event_id2, i).z;
-        temp_particle_list_2[i].t = particle_list->get_particle(event_id2, i).t;
+    // prepare for the mixed events
+    int number_of_particles_2 = 0;
+    for(int iev = 0; iev < number_of_mixed_events; iev++)
+        number_of_particles_2 += particle_list->get_number_of_particles(mixed_event_list[iev]);
+    particle_info* temp_particle_list_2 = new particle_info [number_of_particles_2];
+    long int idx = 0;
+    for(int iev = 0; iev < number_of_mixed_events; iev++)
+    {
+        // introduce a random rotation for the mixed event
+        double random_rotation = drand48()*2*M_PI;
+        double cos_phi = cos(random_rotation);
+        double sin_phi = sin(random_rotation);
+        int mixed_event_id = mixed_event_list[iev];
+        int event_number_particle = particle_list->get_number_of_particles(mixed_event_id);
+        for(int i = 0; i < event_number_particle; i++)
+        {
+            double px_temp = particle_list->get_particle(mixed_event_id, i).px;
+            double py_temp = particle_list->get_particle(mixed_event_id, i).py;
+            temp_particle_list_2[idx].px = px_temp*cos_phi - py_temp*sin_phi;
+            temp_particle_list_2[idx].py = px_temp*sin_phi + py_temp*cos_phi;
+            double x_temp = particle_list->get_particle(mixed_event_id, i).x;
+            double y_temp = particle_list->get_particle(mixed_event_id, i).y;
+            temp_particle_list_2[idx].x = x_temp*cos_phi - y_temp*sin_phi;
+            temp_particle_list_2[idx].y = x_temp*sin_phi + y_temp*cos_phi;
+
+            temp_particle_list_2[idx].pz = particle_list->get_particle(mixed_event_id, i).pz;
+            temp_particle_list_2[idx].E = particle_list->get_particle(mixed_event_id, i).E;
+            temp_particle_list_2[idx].mass = particle_list->get_particle(mixed_event_id, i).mass;
+            temp_particle_list_2[idx].z = particle_list->get_particle(mixed_event_id, i).z;
+            temp_particle_list_2[idx].t = particle_list->get_particle(mixed_event_id, i).t;
+            idx++;
+        }
     }
 
     // nested pair loop
-    int pair_id = 0;
     for(int i = 0; i < number_of_particles_1; i++)
     {
         for(int j = 0; j < number_of_particles_2; j++)
         {
-            double K_x = 0.5*(temp_particle_list_1[i].px + temp_particle_list_2[j].px);
-            double K_y = 0.5*(temp_particle_list_1[i].py + temp_particle_list_2[j].py);
             double K_z = 0.5*(temp_particle_list_1[i].pz + temp_particle_list_2[j].pz);
             double K_E = 0.5*(temp_particle_list_1[i].E + temp_particle_list_2[j].E);
+            double K_rap = 0.5*log((K_E + K_z)/(K_E - K_z));
+            if(K_rap > Krap_min && K_rap < Krap_max)
+            {
+                double K_x = 0.5*(temp_particle_list_1[i].px + temp_particle_list_2[j].px);
+                double K_y = 0.5*(temp_particle_list_1[i].py + temp_particle_list_2[j].py);
+                double K_perp = sqrt(K_x*K_x + K_y*K_y);
+                if(K_perp > KT_min && K_perp < KT_max)
+                {
+                    number_pairs_denorm++;
+                    int Kperp_idx = (int)((K_perp - KT_min)/dKT);
+                    
+                    double cos_K_phi = K_x/K_perp;
+                    double sin_K_phi = K_y/K_perp;
+                    
+                    double q_z = temp_particle_list_1[i].pz - temp_particle_list_2[j].pz;
+                    double local_q_long = q_z;
+                    if(local_q_long < (q_min - delta_q/2.) || local_q_long > (q_max + delta_q/2.)) continue;
+                    
+                    double q_x = temp_particle_list_1[i].px - temp_particle_list_2[j].px;
+                    double q_y = temp_particle_list_1[i].py - temp_particle_list_2[j].py;
+                    double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
+                    if(local_q_out < (q_min - delta_q/2.) || local_q_out > (q_max + delta_q/2.)) continue;
+                    double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
+                    if(local_q_side < (q_min - delta_q/2.) || local_q_side > (q_max + delta_q/2.)) continue;
+                    
+                    int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))/delta_q);
+                    int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
+                    int qlong_idx = (int)((local_q_long - (q_min - delta_q/2.))/delta_q);
 
-            double q_x = temp_particle_list_1[i].px - temp_particle_list_2[j].px;
-            double q_y = temp_particle_list_1[i].py - temp_particle_list_2[j].py;
-            double q_z = temp_particle_list_1[i].pz - temp_particle_list_2[j].pz;
-
-            double K_perp = sqrt(K_x*K_x + K_y*K_y);
-            double cos_K_phi = K_x/K_perp;
-            double sin_K_phi = K_y/K_perp;
-            list[pair_id].K_perp = K_perp;
-            list[pair_id].K_phi = atan2(K_y, K_x);
-            list[pair_id].K_rap = 0.5*log((K_E + K_z)/(K_E - K_z));
-
-            list[pair_id].q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-            list[pair_id].q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-            list[pair_id].q_long = q_z;
-            list[pair_id].cos_qx = 1.0;
-            pair_id++;
+                    // bin results
+                    if(azimuthal_flag == 0)
+                        correl_3d_denorm[Kperp_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
+                    else
+                    {
+                        double local_K_phi = atan2(K_y, K_x);
+                        int Kphi_idx = (int)((local_K_phi)/dKphi);
+                        correl_3d_Kphi_diff_denorm[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
+                    }
+                }
+            }
         }
     }
     delete [] temp_particle_list_1;

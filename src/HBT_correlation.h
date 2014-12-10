@@ -41,15 +41,13 @@ class HBT_correlation
         double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
         double *****correl_3d_Kphi_diff_num_count, *****correl_3d_Kphi_diff_num_err;
 
-        int nevent;
-
     public:
         HBT_correlation(ParameterReader* paraRdr_in, string path_in, particleSamples *particle_list_in);
         ~HBT_correlation();
 
         void calculate_HBT_correlation_function();
-        void combine_particle_pairs(int* event_list, particle_pair* list);
-        void combine_particle_pairs_mixed_events(int event_id, int event_id2, particle_pair* list);
+        void combine_and_bin_particle_pairs(int* event_list);
+        void combine_and_bin_particle_pairs_mixed_events(int event_id, int* mixed_event_list);
         void bin_into_correlation_function(int type, int num_pair, particle_pair* pairlist);
 
         void output_correlation_function();

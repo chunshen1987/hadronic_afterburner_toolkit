@@ -5,7 +5,7 @@ read_in_mode = 0                  # mode for reading in particle information
 
 particle_monval = 211             # particle Monte-Carlo number
 
-event_buffer_size = 1020          # buffer size of the number of events read in at once
+event_buffer_size = 1000          # buffer size of the number of events read in at once
 
 
 # Parameters for single particle spectra and vn
@@ -25,8 +25,8 @@ intrinsic_dx = 0.5                # dx in the output samples
 
 
 # Parameters for HBT correlation functions
-number_of_mixed_events = 10       # number of the mixed events 
-number_of_oversample_events = 20  # number of the mixed events 
+number_of_mixed_events = 5       # number of the mixed events 
+number_of_oversample_events = 5  # number of the mixed events 
 azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
                                   # 1: compute azimuthal dependent HBT correlation function
 
