@@ -291,7 +291,7 @@ void HBT_correlation::calculate_HBT_correlation_function()
             int count = 0;
             while(1)
             {
-                int mixed_event_id = rand() % buffer_size;
+                int mixed_event_id = rand() % nev;
                 if(mixed_event_id != iev)
                 {
                     mixed_event_list[count] = mixed_event_id;
