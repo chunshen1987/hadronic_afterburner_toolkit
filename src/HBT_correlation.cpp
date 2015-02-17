@@ -361,14 +361,14 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
 
                     double q_z = temp_particle_list[i].pz - temp_particle_list[j].pz;
                     double local_q_long = q_z;
-                    if(local_q_long < (q_min - delta_q/2.) || local_q_long > (q_max + delta_q/2.)) continue;
+                    if(local_q_long < (q_min - delta_q/2.) || local_q_long >= (q_max + delta_q/2.)) continue;
 
                     double q_x = temp_particle_list[i].px - temp_particle_list[j].px;
                     double q_y = temp_particle_list[i].py - temp_particle_list[j].py;
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-                    if(local_q_out < (q_min - delta_q/2.) || local_q_out > (q_max + delta_q/2.)) continue;
+                    if(local_q_out < (q_min - delta_q/2.) || local_q_out >= (q_max + delta_q/2.)) continue;
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-                    if(local_q_side < (q_min - delta_q/2.) || local_q_side > (q_max + delta_q/2.)) continue;
+                    if(local_q_side < (q_min - delta_q/2.) || local_q_side >= (q_max + delta_q/2.)) continue;
                     
                     int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))/delta_q);
                     int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
@@ -485,14 +485,14 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
                     
                     double q_z = temp_particle_list_1[i].pz - temp_particle_list_2[j].pz;
                     double local_q_long = q_z;
-                    if(local_q_long < (q_min - delta_q/2.) || local_q_long > (q_max + delta_q/2.)) continue;
+                    if(local_q_long < (q_min - delta_q/2.) || local_q_long >= (q_max + delta_q/2.)) continue;
                     
                     double q_x = temp_particle_list_1[i].px - temp_particle_list_2[j].px;
                     double q_y = temp_particle_list_1[i].py - temp_particle_list_2[j].py;
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-                    if(local_q_out < (q_min - delta_q/2.) || local_q_out > (q_max + delta_q/2.)) continue;
+                    if(local_q_out < (q_min - delta_q/2.) || local_q_out >= (q_max + delta_q/2.)) continue;
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-                    if(local_q_side < (q_min - delta_q/2.) || local_q_side > (q_max + delta_q/2.)) continue;
+                    if(local_q_side < (q_min - delta_q/2.) || local_q_side >= (q_max + delta_q/2.)) continue;
                     
                     int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))/delta_q);
                     int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
@@ -532,11 +532,11 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
             {
                 int Kperp_idx = (int)((KT_local - KT_min)/dKT);
                 double q_out_local = pairlist[ipair].q_out;
-                if(q_out_local < (q_min - delta_q/2.) || q_out_local > (q_max + delta_q/2.)) continue;
+                if(q_out_local < (q_min - delta_q/2.) || q_out_local >= (q_max + delta_q/2.)) continue;
                 double q_side_local = pairlist[ipair].q_side;
-                if(q_side_local < (q_min - delta_q/2.) || q_side_local > (q_max + delta_q/2.)) continue;
+                if(q_side_local < (q_min - delta_q/2.) || q_side_local >= (q_max + delta_q/2.)) continue;
                 double q_long_local = pairlist[ipair].q_long;
-                if(q_long_local < (q_min - delta_q/2.) || q_long_local > (q_max + delta_q/2.)) continue;
+                if(q_long_local < (q_min - delta_q/2.) || q_long_local >= (q_max + delta_q/2.)) continue;
 
                 int qout_idx = (int)((pairlist[ipair].q_out - (q_min - delta_q/2.))/delta_q);
                 int qside_idx = (int)((pairlist[ipair].q_side - (q_min - delta_q/2.))/delta_q);
@@ -591,16 +591,17 @@ void HBT_correlation::output_correlation_function()
                 for(int iqside = 0; iqside < qnpts; iqside++)
                 {
                     int npart_num = correl_3d_num_count[iK][iqout][iqside][iqlong];
+                    int npart_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
                     double q_out_local, q_side_local, q_long_local;
                     double correl_fun_num, correl_fun_denorm, correl_fun_val;
                     double num_err, denorm_err, error;
-                    if(npart_num < 2)
+                    if(npart_num < 2 || npart_denorm < 2)
                     {
                         q_out_local = q_out[iqout];
                         q_side_local = q_side[iqside];
                         q_long_local = q_long[iqlong];
                         correl_fun_num = 0.0;
-                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
+                        correl_fun_denorm = npart_denorm;
                         correl_fun_val = 0.0;
                         error = 0.0;
                     }
@@ -648,16 +649,17 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                     for(int iqside = 0; iqside < qnpts; iqside++)
                     {
                         int npart_num = correl_3d_Kphi_diff_num_count[iK][iKphi][iqout][iqside][iqlong];
+                        int npart_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
                         double q_out_local, q_side_local, q_long_local;
                         double correl_fun_num, correl_fun_denorm, correl_fun_val;
                         double num_err, denorm_err, error;
-                        if(npart_num < 2)
+                        if(npart_num < 2 || npart_denorm < 2)
                         {
                             q_out_local = q_out[iqout];
                             q_side_local = q_side[iqside];
                             q_long_local = q_long[iqlong];
                             correl_fun_num = 0.0;
-                            correl_fun_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
+                            correl_fun_denorm = npart_denorm;
                             correl_fun_val = 0.0;
                             error = 0.0;
                         }
