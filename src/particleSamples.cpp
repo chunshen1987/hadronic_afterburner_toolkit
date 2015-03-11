@@ -31,7 +31,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     ostringstream filename;
     if(read_in_mode == 0)
         filename << path << "/OSCAR.DAT";
-    else if(read_in_mode == 1 || read_in_mode == 2)
+    else if(read_in_mode == 1 || read_in_mode == 3)
         filename << path << "/particle_list.dat";
 
     inputfile.open(filename.str().c_str());
@@ -84,7 +84,7 @@ int particleSamples::read_in_particle_samples()
         read_in_particle_samples_OSCAR();
     else if(read_in_mode == 1)
         read_in_particle_samples_UrQMD();
-    else if(read_in_mode == 2)
+    else if(read_in_mode == 3)
         read_in_particle_samples_Sangwook();
 
     return(0);
@@ -221,7 +221,6 @@ int particleSamples::read_in_particle_samples_Sangwook()
             particle_list->push_back(new vector<particle_info> );
 
             // get number of particles within the event
-            getline(inputfile, temp_string);
             stringstream temp1(temp_string);
             temp1 >> n_particle;
             getline(inputfile, temp_string);  // then get one useless line
