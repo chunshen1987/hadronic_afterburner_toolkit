@@ -21,7 +21,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
-    if(read_in_mode == 1)
+    if(read_in_mode == 1 || read_in_mode == 3)
         get_UrQMD_id(particle_monval);
 
     particle_list = new vector< vector<particle_info>* >;
