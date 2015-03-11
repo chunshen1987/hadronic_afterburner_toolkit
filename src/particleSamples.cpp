@@ -31,7 +31,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     ostringstream filename;
     if(read_in_mode == 0)
         filename << path << "/OSCAR.DAT";
-    else if(read_in_mode == 1)
+    else if(read_in_mode == 1 || read_in_mode == 2)
         filename << path << "/particle_list.dat";
 
     inputfile.open(filename.str().c_str());
@@ -84,6 +84,8 @@ int particleSamples::read_in_particle_samples()
         read_in_particle_samples_OSCAR();
     else if(read_in_mode == 1)
         read_in_particle_samples_UrQMD();
+    else if(read_in_mode == 2)
+        read_in_particle_samples_Sangwook();
 
     return(0);
 }
@@ -160,6 +162,65 @@ int particleSamples::read_in_particle_samples_UrQMD()
             for(int i = 0; i < 13; i++)
                 getline(inputfile, temp_string);
             // then get number of particles within the event
+            getline(inputfile, temp_string);
+            stringstream temp1(temp_string);
+            temp1 >> n_particle;
+            getline(inputfile, temp_string);  // then get one useless line
+
+            int idx = ievent;
+            (*particle_list)[idx]->clear(); // clean out the previous record
+
+            for(int ipart = 0; ipart < n_particle; ipart++)
+            {
+                getline(inputfile, temp_string);
+                stringstream temp2(temp_string);
+                temp2 >> dummy >> dummy >> dummy >> dummy
+                      >> dummy >> dummy >> dummy >> dummy
+                      >> temp_mass >> urqmd_pid >> urqmd_iso3;
+                if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
+                {
+                     particle_info *temp_particle_info = new particle_info;
+                     temp2 >> dummy >> dummy >> dummy >> dummy;
+                     temp2 >> temp_particle_info->t
+                           >> temp_particle_info->x 
+                           >> temp_particle_info->y
+                           >> temp_particle_info->z 
+                           >> temp_particle_info->E
+                           >> temp_particle_info->px 
+                           >> temp_particle_info->py
+                           >> temp_particle_info->pz ;
+                     temp_particle_info->mass = temp_mass;
+                     (*particle_list)[idx]->push_back(*temp_particle_info);
+                }
+            }
+        }
+        else
+            break;
+    }
+    return(0);
+}
+
+int particleSamples::read_in_particle_samples_Sangwook()
+{
+    // clean out the previous record
+    for(int i = 0; i < particle_list->size(); i++)
+        (*particle_list)[i]->clear();
+    particle_list->clear();
+
+    string temp_string;
+    int n_particle;
+    double dummy;
+    int ievent;
+    int urqmd_pid, urqmd_iso3;
+    double temp_mass;
+    for(ievent = 0; ievent < event_buffer_size; ievent++)
+    {
+        getline(inputfile, temp_string);
+        if(!inputfile.eof())
+        {
+            particle_list->push_back(new vector<particle_info> );
+
+            // get number of particles within the event
             getline(inputfile, temp_string);
             stringstream temp1(temp_string);
             temp1 >> n_particle;
