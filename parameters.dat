@@ -28,7 +28,7 @@ intrinsic_dx = 0.5                # dx in the output samples
 
 # Parameters for HBT correlation functions
 number_of_mixed_events = 5        # number of the mixed events 
-number_of_oversample_events = 10  # number of the mixed events 
+number_of_oversample_events = 1   # number of the mixed events 
 azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
                                   # 1: compute azimuthal dependent HBT correlation function
 
@@ -41,7 +41,7 @@ n_Kphi = 48                       # number of the azimuthal angles for the pair 
 Krap_min = -0.5                   # minimum accept pair momentum rapidity
 Krap_max = 0.5                    # maximum accept pair momentum rapidity
 
-qnpts = 11                        # number of points for momentum q (difference of the pair momentum) for correlaction function
+qnpts = 21                        # number of points for momentum q (difference of the pair momentum) for correlaction function
 q_min = -0.1                      # minimum value for momentum q (GeV)
 q_max = 0.1                       # maximum value for momentum q (GeV)
 
