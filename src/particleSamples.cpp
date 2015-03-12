@@ -21,12 +21,11 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
+    flag_isospin = paraRdr->getVal("distinguish_isospin");
     if(read_in_mode == 1 || read_in_mode == 3)
         get_UrQMD_id(particle_monval);
 
     particle_list = new vector< vector<particle_info>* >;
-//    for(int i = 0; i < event_buffer_size; i++)
-//        particle_list->push_back(new vector<particle_info> );
 
     ostringstream filename;
     if(read_in_mode == 0)
@@ -111,12 +110,27 @@ int particleSamples::read_in_particle_samples_OSCAR()
             particle_list->push_back(new vector<particle_info> );
             int idx = ievent;
 
+            int pick_flag = 0;
             for(int ipart = 0; ipart < n_particle; ipart++)
             {
                 getline(inputfile, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if(temp_monval == particle_monval)
+                if(flag_isospin == 0)
+                {
+                    if(abs(temp_monval) == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                else
+                {
+                    if(temp_monval == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                if(pick_flag == 1)
                 {
                      particle_info *temp_particle_info = new particle_info;
                      temp2 >> temp_particle_info->px 
@@ -170,6 +184,7 @@ int particleSamples::read_in_particle_samples_UrQMD()
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
 
+            int pick_flag = 0;
             for(int ipart = 0; ipart < n_particle; ipart++)
             {
                 getline(inputfile, temp_string);
@@ -177,7 +192,21 @@ int particleSamples::read_in_particle_samples_UrQMD()
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3;
-                if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
+                if(flag_isospin == 0)
+                {
+                    if(urqmd_pid == particle_urqmd_id && abs(urqmd_iso3) == abs(particle_urqmd_isospin))
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                else
+                {
+                    if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                if(pick_flag == 1)
                 {
                      particle_info *temp_particle_info = new particle_info;
                      temp2 >> dummy >> dummy >> dummy >> dummy;
@@ -228,6 +257,7 @@ int particleSamples::read_in_particle_samples_Sangwook()
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
 
+            int pick_flag = 0;
             for(int ipart = 0; ipart < n_particle; ipart++)
             {
                 getline(inputfile, temp_string);
@@ -235,7 +265,21 @@ int particleSamples::read_in_particle_samples_Sangwook()
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3;
-                if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
+                if(flag_isospin == 0)
+                {
+                    if(urqmd_pid == particle_urqmd_id && abs(urqmd_iso3) == abs(particle_urqmd_isospin))
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                else
+                {
+                    if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                if(pick_flag == 1)
                 {
                      particle_info *temp_particle_info = new particle_info;
                      temp2 >> dummy >> dummy >> dummy >> dummy;

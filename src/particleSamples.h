@@ -23,6 +23,7 @@ class particleSamples
         int event_buffer_size;
         int read_in_mode;
         int particle_monval;
+        int flag_isospin;
         int particle_urqmd_id, particle_urqmd_isospin;
 
         vector< vector<particle_info>* >* particle_list;

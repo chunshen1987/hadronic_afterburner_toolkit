@@ -5,6 +5,7 @@ read_in_mode = 3                  # mode for reading in particle information
                                   # 3: reads outputs from UrQMD outputs (future)
 
 particle_monval = 211             # particle Monte-Carlo number
+distinguish_isospin = 0           # flag whether to distinguish the isospin of particles
 
 event_buffer_size = 1000          # buffer size of the number of events read in at once
 
