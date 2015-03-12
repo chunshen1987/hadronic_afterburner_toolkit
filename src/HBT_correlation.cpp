@@ -612,16 +612,15 @@ void HBT_correlation::output_correlation_function()
                         q_long_local = q_long_mean[iK][iqout][iqside][iqlong]/npart_num;
 
                         correl_fun_num = correl_3d_num[iK][iqout][iqside][iqlong];
-                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
-                        correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
+                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong]*npair_ratio;
+                        correl_fun_val = correl_fun_num/correl_fun_denorm;
                         num_err = sqrt((correl_3d_num_err[iK][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
                         denorm_err = 0.0;
-                        error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(denorm_err*correl_fun_num/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
+                        error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(denorm_err*correl_fun_num/correl_fun_denorm/correl_fun_denorm, 2));
                     }
 
                     output << scientific << setw(18) << setprecision(8) 
-                           << q_out_local << "    " << q_side_local << "    " 
-                           << q_long_local << "    "
+                           << q_out_local << "    " << q_side_local << "    " << q_long_local << "    "
                            << correl_fun_num << "    "  << correl_fun_denorm << "    "
                            << correl_fun_val << "    "  << error 
                            << endl;

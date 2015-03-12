@@ -105,8 +105,8 @@ done
 """ % (working_folder.split('/')[-1], working_folder))
     script.close()
 
-def copy_UrQMD_events(number_of_cores, working_folder):
-    events_list = glob('UrQMD_results/particle_list_*.dat')
+def copy_UrQMD_events(number_of_cores, input_folder, working_folder):
+    events_list = glob('%s/particle_list_*.dat' % input_folder)
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
         folder_path = path.join(working_folder, 'event_%d' % folder_id)
@@ -143,8 +143,8 @@ def generate_event_folder(working_folder, event_id):
                     path.join(path.abspath(event_folder), 'urqmd'))
 
 
-def copy_OSCAR_events(number_of_cores, working_folder):
-    events_list = glob('OSCAR_events/*.dat')
+def copy_OSCAR_events(number_of_cores, input_folder, working_folder):
+    events_list = glob('%s/*.dat' % input_folder)
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
         folder_path = path.join(working_folder, 'event_%d' % folder_id)
@@ -153,17 +153,26 @@ def copy_OSCAR_events(number_of_cores, working_folder):
                       events_list[iev].split('/')[-1]))
 
 if __name__ == "__main__":
-    folder_name = str(sys.argv[1])
-    ncore = int(sys.argv[2])
-    mode = int(sys.argv[3])
-    if mode == 1:
+    try:
+        from_folder = str(sys.argv[1])
+        folder_name = str(sys.argv[2])
+        ncore = int(sys.argv[3])
+        mode = int(sys.argv[4])
+    except IOError:
+        print "./generate_jobs_guillimin.py input_folder working_folder num_of_cores mode"
+        exit(0)
+
+    if mode == 1:   # running UrQMD 
         for icore in range(ncore):
             generate_event_folder(folder_name, icore)
-        copy_OSCAR_events(ncore, folder_name)
-    elif mode == 2:
+        copy_OSCAR_events(ncore, from_folder, folder_name)
+    elif mode == 2: # running HBT afterburner
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore)
+
         # calculate HBT correlation from OSCAR files
-        #copy_OSCAR_events(ncore, folder_name)
+        #copy_OSCAR_events(ncore, from_folder, folder_name)
+
         # calculate HBT correlation from UrQMD files
-        copy_UrQMD_events(ncore, folder_name)
+        copy_UrQMD_events(ncore, from_folder, folder_name)
+
