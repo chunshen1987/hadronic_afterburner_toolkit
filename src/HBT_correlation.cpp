@@ -593,7 +593,7 @@ void HBT_correlation::output_correlation_function()
                     output << scientific << setw(18) << setprecision(8) 
                            << q_out_local << "    " << q_side_local << "    " << q_long_local << "    "
                            << npart_num << "    " << correl_fun_num << "    "  << correl_fun_denorm << "    "
-                           << correl_fun_val << endl;
+                           << correl_fun_val << "    " << 0.0 << endl;
                 }
             }
         }
@@ -646,7 +646,7 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                                << q_long_local << "    "
                                << npart_num << "    "
                                << correl_fun_num << "    " << correl_fun_denorm << "    "
-                               << correl_fun_val << endl;
+                               << correl_fun_val << "    " << 0.0 << endl;
                     }
                 }
             }
