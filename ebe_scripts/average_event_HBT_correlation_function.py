@@ -33,25 +33,30 @@ for iKT in range(len(KT_values)):
     event_avg_data = loadtxt(path.join(file_folder_list[0],
                                        'HBT_correlation_function_KT_0_0.2.dat'))*0.0
     num = zeros(len(event_avg_data[:, 0]))
-    num_err = zeros(len(event_avg_data[:, 0]))
+    sigma_num = zeros(len(event_avg_data[:, 0]))
     Npair_num = 0
-    Npair_num_err = 0
+    sigma_Npair_num = 0
+    sigma_num_Npair_num = zeros(len(event_avg_data[:, 0]))
     denorm = zeros(len(event_avg_data[:, 0]))
-    denorm_err = zeros(len(event_avg_data[:, 0]))
+    sigma_denorm = zeros(len(event_avg_data[:, 0]))
+    sigma_denorm_Npair_denorm = zeros(len(event_avg_data[:, 0]))
     Npair_denorm = 0
-    Npair_denorm_err = 0
+    sigma_Npair_denorm = 0
+
     for ifolder in range(nev):
         results_folder = path.abspath(file_folder_list[ifolder])
         print "processing %s ..." % file_name
         temp_data = loadtxt(path.join(results_folder, file_name))
         num += temp_data[:, 4]
-        num_err += temp_data[:, 4]**2.
+        sigma_num += temp_data[:, 4]**2.
         Npair_num += sum(temp_data[:, 3])
-        Npair_num_err += sum(temp_data[:, 3])**2.
+        sigma_Npair_num += sum(temp_data[:, 3])**2.
+        sigma_num_Npair_num += temp_data[:, 4]*sum(temp_data[:, 3])
         denorm += temp_data[:, 5]
-        denorm_err += temp_data[:, 5]**2.
+        sigma_denorm += temp_data[:, 5]**2.
         Npair_denorm += sum(temp_data[:, 5])
-        Npair_denorm_err += sum(temp_data[:, 5])**2.
+        sigma_Npair_denorm += sum(temp_data[:, 5])**2.
+        sigma_denorm_Npair_denorm += temp_data[:, 5]*sum(temp_data[:, 5])
         event_avg_data += temp_data
 
     event_avg_data = event_avg_data/nev
@@ -59,13 +64,20 @@ for iKT in range(len(KT_values)):
     denorm = denorm/nev
     Npair_num = Npair_num/nev
     Npair_denorm = Npair_denorm/nev
-    num_err = (num_err/nev - num**2)/sqrt(nev)
-    denorm_err = (denorm_err/nev - denorm**2)/sqrt(nev)
-    Npair_num_err = (Npair_num_err/nev - Npair_num**2.)/sqrt(nev)
-    Npair_denorm_err = (Npair_denorm_err/nev - Npair_denorm**2.)/sqrt(nev)
+    sigma_num = sigma_num/nev - num**2
+    sigma_denorm = sigma_denorm/nev - denorm**2
+    sigma_Npair_num = sigma_Npair_num/nev - Npair_num**2.
+    sigma_Npair_denorm = sigma_Npair_denorm/nev - Npair_denorm**2.
+    sigma_num_Npair_num = sigma_num_Npair_num/nev - num*Npair_num
+    sigma_denorm_Npair_denorm = sigma_denorm_Npair_denorm/nev - denorm*Npair_denorm
+
     correlation = num/(Npair_num/Npair_denorm*denorm)
-    correlation_err = sqrt((num_err/(Npair_num/Npair_denorm*denorm))**2. 
-        + ((num*denorm_err)/((Npair_num/Npair_denorm)*denorm*denorm))**2.)
+
+    err_numerator = num/Npair_num*sqrt(sigma_num/(num**2.) + sigma_Npair_num/(Npair_num**2.) - 2.*sigma_num_Npair_num/(num*Npair_num))/sqrt(nev)
+    err_denormator = denorm/Npair_denorm*sqrt(sigma_denorm/(denorm**2.) + sigma_Npair_denorm/(Npair_denorm**2.) - 2.*sigma_denorm_Npair_denorm/(denorm*Npair_denorm))/sqrt(nev)
+
+    correlation_err = sqrt((err_numerator/(denorm/Npair_denorm))**2.
+        + ((num/Npair_num)*err_denormator/((denorm/Npair_denorm)**2.))**2.)
     event_avg_data[:, 4] = num
     event_avg_data[:, 5] = denorm
     event_avg_data[:, 6] = correlation
