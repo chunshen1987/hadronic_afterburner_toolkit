@@ -58,7 +58,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
         q_side_mean = new double ***[n_KT];
         q_long_mean = new double ***[n_KT];
         correl_3d_num = new double *** [n_KT];
-        correl_3d_num_err = new double *** [n_KT];
         correl_3d_num_count = new double *** [n_KT];
         correl_3d_denorm = new double *** [n_KT];
         for(int iK = 0; iK < n_KT; iK++)
@@ -67,7 +66,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
             q_side_mean[iK] = new double ** [qnpts];
             q_long_mean[iK] = new double ** [qnpts];
             correl_3d_num[iK] = new double ** [qnpts];
-            correl_3d_num_err[iK] = new double ** [qnpts];
             correl_3d_num_count[iK] = new double ** [qnpts];
             correl_3d_denorm[iK] = new double ** [qnpts];
             for(int i = 0; i < qnpts; i++)
@@ -76,7 +74,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
                 q_side_mean[iK][i] = new double * [qnpts];
                 q_long_mean[iK][i] = new double * [qnpts];
                 correl_3d_num[iK][i] = new double * [qnpts];
-                correl_3d_num_err[iK][i] = new double * [qnpts];
                 correl_3d_num_count[iK][i] = new double * [qnpts];
                 correl_3d_denorm[iK][i] = new double * [qnpts];
                 for(int j = 0; j < qnpts; j++)
@@ -85,7 +82,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
                     q_side_mean[iK][i][j] = new double [qnpts];
                     q_long_mean[iK][i][j] = new double [qnpts];
                     correl_3d_num[iK][i][j] = new double [qnpts];
-                    correl_3d_num_err[iK][i][j] = new double [qnpts];
                     correl_3d_num_count[iK][i][j] = new double [qnpts];
                     correl_3d_denorm[iK][i][j] = new double [qnpts];
                     for(int k = 0; k < qnpts; k++)
@@ -94,7 +90,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
                         q_side_mean[iK][i][j][k] = 0.0;
                         q_long_mean[iK][i][j][k] = 0.0;
                         correl_3d_num[iK][i][j][k] = 0.0;
-                        correl_3d_num_err[iK][i][j][k] = 0.0;
                         correl_3d_num_count[iK][i][j][k] = 0.0;
                         correl_3d_denorm[iK][i][j][k] = 0.0;
                     }
@@ -108,7 +103,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
         q_side_diff_mean = new double **** [n_KT];
         q_long_diff_mean = new double **** [n_KT];
         correl_3d_Kphi_diff_num = new double **** [n_KT];
-        correl_3d_Kphi_diff_num_err = new double **** [n_KT];
         correl_3d_Kphi_diff_num_count = new double **** [n_KT];
         correl_3d_Kphi_diff_denorm = new double **** [n_KT];
         for(int iK = 0; iK < n_KT; iK++)
@@ -117,7 +111,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
             q_side_diff_mean[iK] = new double *** [n_Kphi];
             q_long_diff_mean[iK] = new double *** [n_Kphi];
             correl_3d_Kphi_diff_num[iK] = new double *** [n_Kphi];
-            correl_3d_Kphi_diff_num_err[iK] = new double *** [n_Kphi];
             correl_3d_Kphi_diff_num_count[iK] = new double *** [n_Kphi];
             correl_3d_Kphi_diff_denorm[iK] = new double *** [n_Kphi];
             for(int iphi = 0; iphi < n_Kphi; iphi++)
@@ -126,7 +119,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
                 q_side_diff_mean[iK][iphi] = new double ** [qnpts];
                 q_long_diff_mean[iK][iphi] = new double ** [qnpts];
                 correl_3d_Kphi_diff_num[iK][iphi] = new double ** [qnpts];
-                correl_3d_Kphi_diff_num_err[iK][iphi] = new double ** [qnpts];
                 correl_3d_Kphi_diff_num_count[iK][iphi] = new double ** [qnpts];
                 correl_3d_Kphi_diff_denorm[iK][iphi] = new double ** [qnpts];
                 for(int i = 0; i < qnpts; i++)
@@ -135,7 +127,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
                     q_side_diff_mean[iK][iphi][i] = new double * [qnpts];
                     q_long_diff_mean[iK][iphi][i] = new double * [qnpts];
                     correl_3d_Kphi_diff_num[iK][iphi][i] = new double * [qnpts];
-                    correl_3d_Kphi_diff_num_err[iK][iphi][i] = new double * [qnpts];
                     correl_3d_Kphi_diff_num_count[iK][iphi][i] = new double * [qnpts];
                     correl_3d_Kphi_diff_denorm[iK][iphi][i] = new double * [qnpts];
                     for(int j = 0; j < qnpts; j++)
@@ -144,7 +135,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
                         q_side_diff_mean[iK][iphi][i][j] = new double [qnpts];
                         q_long_diff_mean[iK][iphi][i][j] = new double [qnpts];
                         correl_3d_Kphi_diff_num[iK][iphi][i][j] = new double [qnpts];
-                        correl_3d_Kphi_diff_num_err[iK][iphi][i][j] = new double [qnpts];
                         correl_3d_Kphi_diff_num_count[iK][iphi][i][j] = new double [qnpts];
                         correl_3d_Kphi_diff_denorm[iK][iphi][i][j] = new double [qnpts];
                         for(int k = 0; k < qnpts; k++)
@@ -153,7 +143,6 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
                             q_side_diff_mean[iK][iphi][i][j][k] = 0.0;
                             q_long_diff_mean[iK][iphi][i][j][k] = 0.0;
                             correl_3d_Kphi_diff_num[iK][iphi][i][j][k] = 0.0;
-                            correl_3d_Kphi_diff_num_err[iK][iphi][i][j][k] = 0.0;
                             correl_3d_Kphi_diff_num_count[iK][iphi][i][j][k] = 0.0;
                             correl_3d_Kphi_diff_denorm[iK][iphi][i][j][k] = 0.0;
                         }
@@ -182,7 +171,6 @@ HBT_correlation::~HBT_correlation()
                     delete [] q_side_mean[iK][i][j];
                     delete [] q_long_mean[iK][i][j];
                     delete [] correl_3d_num[iK][i][j];
-                    delete [] correl_3d_num_err[iK][i][j];
                     delete [] correl_3d_num_count[iK][i][j];
                     delete [] correl_3d_denorm[iK][i][j];
                 }
@@ -190,7 +178,6 @@ HBT_correlation::~HBT_correlation()
                 delete [] q_side_mean[iK][i];
                 delete [] q_long_mean[iK][i];
                 delete [] correl_3d_num[iK][i];
-                delete [] correl_3d_num_err[iK][i];
                 delete [] correl_3d_num_count[iK][i];
                 delete [] correl_3d_denorm[iK][i];
             }
@@ -198,7 +185,6 @@ HBT_correlation::~HBT_correlation()
             delete [] q_side_mean[iK];
             delete [] q_long_mean[iK];
             delete [] correl_3d_num[iK];
-            delete [] correl_3d_num_err[iK];
             delete [] correl_3d_num_count[iK];
             delete [] correl_3d_denorm[iK];
         }
@@ -206,7 +192,6 @@ HBT_correlation::~HBT_correlation()
         delete [] q_side_mean;
         delete [] q_long_mean;
         delete [] correl_3d_num;
-        delete [] correl_3d_num_err;
         delete [] correl_3d_num_count;
         delete [] correl_3d_denorm;
     }
@@ -224,7 +209,6 @@ HBT_correlation::~HBT_correlation()
                         delete [] q_side_diff_mean[iK][iphi][i][j];
                         delete [] q_long_diff_mean[iK][iphi][i][j];
                         delete [] correl_3d_Kphi_diff_num[iK][iphi][i][j];
-                        delete [] correl_3d_Kphi_diff_num_err[iK][iphi][i][j];
                         delete [] correl_3d_Kphi_diff_num_count[iK][iphi][i][j];
                         delete [] correl_3d_Kphi_diff_denorm[iK][iphi][i][j];
                     }
@@ -232,7 +216,6 @@ HBT_correlation::~HBT_correlation()
                     delete [] q_side_diff_mean[iK][iphi][i];
                     delete [] q_long_diff_mean[iK][iphi][i];
                     delete [] correl_3d_Kphi_diff_num[iK][iphi][i];
-                    delete [] correl_3d_Kphi_diff_num_err[iK][iphi][i];
                     delete [] correl_3d_Kphi_diff_num_count[iK][iphi][i];
                     delete [] correl_3d_Kphi_diff_denorm[iK][iphi][i];
                 }
@@ -240,7 +223,6 @@ HBT_correlation::~HBT_correlation()
                 delete [] q_side_diff_mean[iK][iphi];
                 delete [] q_long_diff_mean[iK][iphi];
                 delete [] correl_3d_Kphi_diff_num[iK][iphi];
-                delete [] correl_3d_Kphi_diff_num_err[iK][iphi];
                 delete [] correl_3d_Kphi_diff_num_count[iK][iphi];
                 delete [] correl_3d_Kphi_diff_denorm[iK][iphi];
             }
@@ -248,7 +230,6 @@ HBT_correlation::~HBT_correlation()
             delete [] q_side_diff_mean[iK];
             delete [] q_long_diff_mean[iK];
             delete [] correl_3d_Kphi_diff_num[iK];
-            delete [] correl_3d_Kphi_diff_num_err[iK];
             delete [] correl_3d_Kphi_diff_num_count[iK];
             delete [] correl_3d_Kphi_diff_denorm[iK];
         }
@@ -256,7 +237,6 @@ HBT_correlation::~HBT_correlation()
         delete [] q_side_diff_mean;
         delete [] q_long_diff_mean;
         delete [] correl_3d_Kphi_diff_num;
-        delete [] correl_3d_Kphi_diff_num_err;
         delete [] correl_3d_Kphi_diff_num_count;
         delete [] correl_3d_Kphi_diff_denorm;
     }
@@ -391,7 +371,6 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                         q_side_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
                         q_long_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
                         correl_3d_num[Kperp_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
-                        correl_3d_num_err[Kperp_idx][qout_idx][qside_idx][qlong_idx] += cos_qx*cos_qx;
                     }
                     else
                     {
@@ -402,7 +381,6 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                         q_side_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
                         q_long_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
                         correl_3d_Kphi_diff_num[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
-                        correl_3d_Kphi_diff_num_err[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += cos_qx*cos_qx;
                     }
                 }
             }
@@ -551,7 +529,6 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
                         q_side_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_side;
                         q_long_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_long;
                         correl_3d_num[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx;
-                        correl_3d_num_err[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx*pairlist[ipair].cos_qx;
                     }
                     else   // pairs from mixed events
                         correl_3d_denorm[Kperp_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
@@ -566,7 +543,6 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
                         q_side_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_side;
                         q_long_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_long;
                         correl_3d_Kphi_diff_num[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx;
-                        correl_3d_Kphi_diff_num_err[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx*pairlist[ipair].cos_qx;
                     }
                     else     // pairs from mixed events
                         correl_3d_Kphi_diff_denorm[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
@@ -594,7 +570,6 @@ void HBT_correlation::output_correlation_function()
                     int npart_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
                     double q_out_local, q_side_local, q_long_local;
                     double correl_fun_num, correl_fun_denorm, correl_fun_val;
-                    double num_err, denorm_err, error;
                     if(npart_num < 2 || npart_denorm < 2)
                     {
                         q_out_local = q_out[iqout];
@@ -603,7 +578,6 @@ void HBT_correlation::output_correlation_function()
                         correl_fun_num = 0.0;
                         correl_fun_denorm = npart_denorm;
                         correl_fun_val = 0.0;
-                        error = 0.0;
                     }
                     else
                     {
@@ -612,18 +586,14 @@ void HBT_correlation::output_correlation_function()
                         q_long_local = q_long_mean[iK][iqout][iqside][iqlong]/npart_num;
 
                         correl_fun_num = correl_3d_num[iK][iqout][iqside][iqlong];
-                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong]*npair_ratio;
-                        correl_fun_val = correl_fun_num/correl_fun_denorm;
-                        num_err = sqrt((correl_3d_num_err[iK][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
-                        denorm_err = 0.0;
-                        error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(denorm_err*correl_fun_num/correl_fun_denorm/correl_fun_denorm, 2));
+                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
+                        correl_fun_val = correl_fun_num/(correl_fun_denorm*npair_ratio);
                     }
 
                     output << scientific << setw(18) << setprecision(8) 
                            << q_out_local << "    " << q_side_local << "    " << q_long_local << "    "
-                           << correl_fun_num << "    "  << correl_fun_denorm << "    "
-                           << correl_fun_val << "    "  << error 
-                           << endl;
+                           << npart_num << "    " << correl_fun_num << "    "  << correl_fun_denorm << "    "
+                           << correl_fun_val << endl;
                 }
             }
         }
@@ -651,7 +621,6 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                         int npart_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
                         double q_out_local, q_side_local, q_long_local;
                         double correl_fun_num, correl_fun_denorm, correl_fun_val;
-                        double num_err, denorm_err, error;
                         if(npart_num < 2 || npart_denorm < 2)
                         {
                             q_out_local = q_out[iqout];
@@ -660,7 +629,6 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                             correl_fun_num = 0.0;
                             correl_fun_denorm = npart_denorm;
                             correl_fun_val = 0.0;
-                            error = 0.0;
                         }
                         else
                         {
@@ -671,17 +639,14 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                             correl_fun_num = correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong];
                             correl_fun_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
                             correl_fun_val = correl_fun_num/correl_fun_denorm/npair_ratio;
-                            num_err = sqrt((correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong]/npart_num - correl_fun_num/npart_num*correl_fun_num/npart_num)/npart_num);
-                            denorm_err = 0.0;
-                            error = sqrt(pow(num_err/correl_fun_denorm, 2) + pow(correl_fun_num*denorm_err/correl_fun_denorm/correl_fun_denorm, 2))/npair_ratio;
                         }
 
                         output << scientific << setw(18) << setprecision(8) 
                                << q_out_local << "    " << q_side_local << "    "
                                << q_long_local << "    "
+                               << npart_num << "    "
                                << correl_fun_num << "    " << correl_fun_denorm << "    "
-                               << correl_fun_val<< "    " << error 
-                               << endl;
+                               << correl_fun_val << endl;
                     }
                 }
             }
