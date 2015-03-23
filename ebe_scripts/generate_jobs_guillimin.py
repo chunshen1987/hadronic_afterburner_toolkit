@@ -7,7 +7,7 @@ from glob import glob
 
 def generate_script(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '1:00:00'
+    walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
@@ -41,7 +41,7 @@ done
 
 def generate_script_HBT(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '2:00:00'
+    walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
@@ -76,15 +76,19 @@ done
 
 def generate_script_HBT_with_OSCAR(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
 """#!/usr/bin/env bash
 #PBS -N HBT_%s
-#PBS -l nodes=1:ppn=1:shai-hulud
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
 #PBS -S /bin/bash
+#PBS -A cqn-654-ad
 #PBS -e test.err
 #PBS -o test.log
+#PBS -q sw
 #PBS -m bea
 #PBS -M chunshen1987@gmail.com
 #PBS -d %s
@@ -102,7 +106,7 @@ do
     cd ..
 done
 
-""" % (working_folder.split('/')[-1], working_folder))
+""" % (working_folder.split('/')[-1], walltime, working_folder))
     script.close()
 
 def copy_UrQMD_events(number_of_cores, input_folder, working_folder):
