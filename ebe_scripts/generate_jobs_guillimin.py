@@ -163,7 +163,7 @@ if __name__ == "__main__":
         folder_name = str(sys.argv[2])
         ncore = int(sys.argv[3])
         mode = int(sys.argv[4])
-    except IOError:
+    except IndexError:
         print "./generate_jobs_guillimin.py input_folder working_folder num_of_cores mode"
         exit(0)
 
