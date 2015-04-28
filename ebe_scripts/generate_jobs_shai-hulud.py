@@ -111,13 +111,14 @@ def generate_event_folder_UrQMD(working_folder, event_id):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
 
-    # calucalte HBT correlation with OSCAR outputs
-    mkdir(path.join(event_folder, 'OSCAR_events'))
-    generate_script_HBT_with_OSCAR(event_folder)
-
-    # calculate HBT correlation with UrQMD outputs
-    #mkdir(path.join(event_folder, 'UrQMD_events'))
-    #generate_script_HBT(event_folder)
+    if mode == 2:
+        # calculate HBT correlation with OSCAR outputs
+        mkdir(path.join(event_folder, 'OSCAR_events'))
+        generate_script_HBT_with_OSCAR(event_folder)
+    elif mode == 3:
+        # calculate HBT correlation with UrQMD outputs
+        mkdir(path.join(event_folder, 'UrQMD_events'))
+        generate_script_HBT(event_folder)
 
     shutil.copytree('codes/HBTcorrelation_MCafterburner', 
                     path.join(path.abspath(event_folder), 
@@ -158,14 +159,15 @@ if __name__ == "__main__":
         for icore in range(ncore):
             generate_event_folder(folder_name, icore)
         copy_OSCAR_events(ncore, from_folder, folder_name)
-    elif mode == 2:  # running HBT afterburner
+    elif mode == 2: # running HBT afterburner with OSCAR
         for icore in range(ncore):
-            generate_event_folder_UrQMD(folder_name, icore)
+            generate_event_folder_UrQMD(folder_name, icore, mode)
 
         # calculate HBT correlation from OSCAR files
         copy_OSCAR_events(ncore, from_folder, folder_name)
+    elif mode == 3: # running HBT afterburner with UrQMD
+        for icore in range(ncore):
+            generate_event_folder_UrQMD(folder_name, icore, mode)
 
         # calculate HBT correlation from UrQMD files
-        #copy_UrQMD_events(ncore, from_folder, folder_name)
-
-
+        copy_UrQMD_events(ncore, from_folder, folder_name)
