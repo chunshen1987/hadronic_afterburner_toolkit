@@ -4,6 +4,8 @@ import sys
 from os import path, mkdir
 import shutil
 from glob import glob
+import subprocess
+
 
 def generate_script(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
@@ -38,6 +40,7 @@ done
 
 """ % (working_folder.split('/')[-1], walltime, working_folder))
     script.close()
+
 
 def generate_script_HBT(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
@@ -74,6 +77,7 @@ done
 """ % (working_folder.split('/')[-1], walltime, working_folder))
     script.close()
 
+
 def generate_script_HBT_with_OSCAR(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
     walltime = '10:00:00'
@@ -109,14 +113,17 @@ done
 """ % (working_folder.split('/')[-1], walltime, working_folder))
     script.close()
 
+
 def copy_UrQMD_events(number_of_cores, input_folder, working_folder):
     events_list = glob('%s/particle_list_*.dat' % input_folder)
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
-        folder_path = path.join(working_folder, 'event_%d' % folder_id)
-        shutil.move(events_list[iev], 
-                    path.join(folder_path, 'UrQMD_events', 
-                              events_list[iev].split('/')[-1]))
+        folder_path = path.join(
+            working_folder, 'event_%d' % folder_id, 
+            'UrQMD_events', events_list[iev].split('/')[-1])
+        bashCommand = "ln -s %s %s" % (
+            path.abspath(events_list[iev]), folder_path)
+        subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
 
 
 def generate_event_folder_UrQMD(working_folder, event_id, mode):
@@ -152,10 +159,13 @@ def copy_OSCAR_events(number_of_cores, input_folder, working_folder):
     events_list = glob('%s/*.dat' % input_folder)
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
-        folder_path = path.join(working_folder, 'event_%d' % folder_id)
-        shutil.move(events_list[iev], 
-            path.join(folder_path, 'OSCAR_events', 
-                      events_list[iev].split('/')[-1]))
+        folder_path = path.join(
+            working_folder, 'event_%d' % folder_id, 
+            'OSCAR_events', events_list[iev].split('/')[-1])
+        bashCommand = "ln -s %s %s" % (
+            path.abspath(events_list[iev]), folder_path)
+        subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
+
 
 if __name__ == "__main__":
     try:
