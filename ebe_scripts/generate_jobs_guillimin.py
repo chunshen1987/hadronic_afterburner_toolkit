@@ -109,6 +109,7 @@ do
     ./HBT_afterburner.e particle_monval=-321 distinguish_isospin=1 >> output.log
     ./HBT_afterburner.e particle_monval=2212 distinguish_isospin=1 >> output.log
     ./HBT_afterburner.e particle_monval=-2212 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e particle_monval=9999 rap_type=0 >> output.log
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..
