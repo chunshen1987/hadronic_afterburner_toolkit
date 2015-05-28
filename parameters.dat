@@ -5,6 +5,10 @@ read_in_mode = 3                  # mode for reading in particle information
                                   # 3: reads outputs from Sangwook's UrQMD outputs 
                                   #    (without header lines)
 
+run_mode = 0                      # running mode for the program
+                                  # 0: collect single particle spectra and vn
+                                  # 1: compute HBT correlation function
+
 particle_monval = 211             # particle Monte-Carlo number
 distinguish_isospin = 0           # flag whether to distinguish the isospin of particles
 
