@@ -26,13 +26,17 @@ class particleSamples
         int flag_isospin;
         int particle_urqmd_id, particle_urqmd_isospin;
 
+        int charged_hadron_urqmd_id_list[5];
+
         vector< vector<particle_info>* >* particle_list;
 
     public:
         particleSamples(ParameterReader* paraRdr_in, string path_in);
         ~particleSamples();
 
+        void initialize_charged_hadron_urqmd_id_list();
         void get_UrQMD_id(int monval);
+        int decide_to_pick_UrQMD(int pid, int iso3, int charge);
         int read_in_particle_samples();
         int read_in_particle_samples_OSCAR();
         int read_in_particle_samples_UrQMD();
@@ -42,6 +46,7 @@ class particleSamples
         int get_number_of_events() {return(particle_list->size());};
         int get_number_of_particles(int event_id) {return((*particle_list)[event_id]->size());};
         particle_info get_particle(int event_id, int part_id) {return((*(*particle_list)[event_id])[part_id]);};
+
 
 };
 

@@ -42,6 +42,8 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
         getline(inputfile, temp);
         getline(inputfile, temp);
     }
+
+    initialize_charged_hadron_urqmd_id_list();
 }
 
 particleSamples::~particleSamples()
@@ -50,6 +52,15 @@ particleSamples::~particleSamples()
     for(int i = 0; i < particle_list->size(); i++)
         delete (*particle_list)[i];
     delete particle_list;
+}
+
+void particleSamples::initialize_charged_hadron_urqmd_id_list()
+{
+    charged_hadron_urqmd_id_list[0] = 101;   // pion
+    charged_hadron_urqmd_id_list[1] = 106;   // kaon
+    charged_hadron_urqmd_id_list[2] = 1;     // proton
+    charged_hadron_urqmd_id_list[3] = 40;    // Sigma^+ and Sigma^-
+    charged_hadron_urqmd_id_list[4] = 49;    // Xi^-
 }
 
 void particleSamples::get_UrQMD_id(int monval)
@@ -70,10 +81,75 @@ void particleSamples::get_UrQMD_id(int monval)
         particle_urqmd_id = 106;
         particle_urqmd_isospin = 1;
     }
+    else if(monval == -321)  // Kaon^+
+    {
+        particle_urqmd_id = -106;
+        particle_urqmd_isospin = 1;
+    }
     else if(monval == 2212)  // proton
     {
         particle_urqmd_id = 1;
         particle_urqmd_isospin = 1;
+    }
+    else if(monval == -2212)  // anti-proton
+    {
+        particle_urqmd_id = -1;
+        particle_urqmd_isospin = 1;
+    }
+    else if(monval == 3222)  // Sigma^+
+    {
+        particle_urqmd_id = 40;
+        particle_urqmd_isospin = 2;
+    }
+    else if(monval == -3222)  // anti-Sigma^+
+    {
+        particle_urqmd_id = -40;
+        particle_urqmd_isospin = 2;
+    }
+    else if(monval == 3112)  // Sigma^-
+    {
+        particle_urqmd_id = 40;
+        particle_urqmd_isospin = -2;
+    }
+    else if(monval == -3112)  // anti-Sigma^-
+    {
+        particle_urqmd_id = -40;
+        particle_urqmd_isospin = -2;
+    }
+    else if(monval == 3312)  // Xi^-
+    {
+        particle_urqmd_id = 49;
+        particle_urqmd_isospin = -1;
+    }
+    else if(monval == -3312)  // anti-Xi^-
+    {
+        particle_urqmd_id = -49;
+        particle_urqmd_isospin = -1;
+    }
+    else if(monval == 3122)  // Lambda
+    {
+        particle_urqmd_id = 27;
+        particle_urqmd_isospin = 0;
+    }
+    else if(monval == -3122)  // anti-Lambda
+    {
+        particle_urqmd_id = -27;
+        particle_urqmd_isospin = 0;
+    }
+    else if(monval == 3334)  // Omega
+    {
+        particle_urqmd_id = 55;
+        particle_urqmd_isospin = 0;
+    }
+    else if(monval == -3334)  // anti-Omega
+    {
+        particle_urqmd_id = -55;
+        particle_urqmd_isospin = 0;
+    }
+    else if(monval == 9999)  // charged hadrons
+    {
+        particle_urqmd_id = 9999;
+        particle_urqmd_isospin = 0;
     }
 }
 
@@ -87,6 +163,41 @@ int particleSamples::read_in_particle_samples()
         read_in_particle_samples_Sangwook();
 
     return(0);
+}
+
+int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge)
+{
+    int pick_flag = 0;
+    if(particle_urqmd_id == 9999)  // charged hadrons
+    {
+        int in_flag = 0;
+        for(int i = 0; i < 5; i++)
+        {
+            if(pid == charged_hadron_urqmd_id_list[i])
+            {
+                in_flag = 1;
+                break;
+            }
+        }
+        if(in_flag == 1 && charge != 0)
+            pick_flag = 1;
+    }
+    else
+    {
+        if(flag_isospin == 0)
+        {
+            if(pid == particle_urqmd_id 
+               && abs(iso3) == abs(particle_urqmd_isospin))
+                pick_flag = 1;
+        }
+        else
+        {
+            if(pid == particle_urqmd_id && iso3 == particle_urqmd_isospin)
+                pick_flag = 1;
+        }
+
+    }
+    return(pick_flag);
 }
 
 int particleSamples::read_in_particle_samples_OSCAR()
@@ -163,7 +274,7 @@ int particleSamples::read_in_particle_samples_UrQMD()
     int n_particle;
     double dummy;
     int ievent;
-    int urqmd_pid, urqmd_iso3;
+    int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
     for(ievent = 0; ievent < event_buffer_size; ievent++)
     {
@@ -191,25 +302,12 @@ int particleSamples::read_in_particle_samples_UrQMD()
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
-                      >> temp_mass >> urqmd_pid >> urqmd_iso3;
-                if(flag_isospin == 0)
-                {
-                    if(urqmd_pid == particle_urqmd_id && abs(urqmd_iso3) == abs(particle_urqmd_isospin))
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                }
-                else
-                {
-                    if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                }
+                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge;
+                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, urqmd_charge);
                 if(pick_flag == 1)
                 {
                      particle_info *temp_particle_info = new particle_info;
-                     temp2 >> dummy >> dummy >> dummy >> dummy;
+                     temp2 >> dummy >> dummy >> dummy;
                      temp2 >> temp_particle_info->t
                            >> temp_particle_info->x 
                            >> temp_particle_info->y
@@ -240,7 +338,7 @@ int particleSamples::read_in_particle_samples_Sangwook()
     int n_particle;
     double dummy;
     int ievent;
-    int urqmd_pid, urqmd_iso3;
+    int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
     for(ievent = 0; ievent < event_buffer_size; ievent++)
     {
@@ -264,25 +362,12 @@ int particleSamples::read_in_particle_samples_Sangwook()
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
-                      >> temp_mass >> urqmd_pid >> urqmd_iso3;
-                if(flag_isospin == 0)
-                {
-                    if(urqmd_pid == particle_urqmd_id && abs(urqmd_iso3) == abs(particle_urqmd_isospin))
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                }
-                else
-                {
-                    if(urqmd_pid == particle_urqmd_id && urqmd_iso3 == particle_urqmd_isospin)
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                }
+                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge;
+                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, urqmd_charge);
                 if(pick_flag == 1)
                 {
                      particle_info *temp_particle_info = new particle_info;
-                     temp2 >> dummy >> dummy >> dummy >> dummy;
+                     temp2 >> dummy >> dummy >> dummy;
                      temp2 >> temp_particle_info->t
                            >> temp_particle_info->x 
                            >> temp_particle_info->y

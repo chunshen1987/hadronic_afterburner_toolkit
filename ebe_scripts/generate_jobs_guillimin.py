@@ -77,6 +77,46 @@ done
 """ % (working_folder.split('/')[-1], walltime, working_folder))
     script.close()
 
+def generate_script_spectra_and_vn(folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    walltime = '1:00:00'
+
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    script.write(
+"""#!/usr/bin/env bash
+#PBS -N HBT_spvn_%s
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -A cqn-654-ad
+#PBS -e test.err
+#PBS -o test.log
+#PBS -q sw
+#PBS -m bea
+#PBS -M chunshen1987@gmail.com
+#PBS -d %s
+
+mkdir spvn_results
+for iev in `ls UrQMD_events`
+do
+    cd HBTcorrelation_MCafterburner
+    rm -fr results
+    mkdir results
+    mv ../UrQMD_events/$iev results/particle_list.dat
+    ./HBT_afterburner.e particle_monval=211 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e particle_monval=-211 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e particle_monval=321 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e particle_monval=-321 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e particle_monval=2212 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e particle_monval=-2212 distinguish_isospin=1 >> output.log
+    mv results/particle_list.dat ../UrQMD_events/$iev
+    mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    cd ..
+done
+
+""" % (working_folder.split('/')[-1], walltime, working_folder))
+    script.close()
+
 
 def generate_script_HBT_with_OSCAR(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
@@ -138,6 +178,10 @@ def generate_event_folder_UrQMD(working_folder, event_id, mode):
         # calculate HBT correlation with UrQMD outputs
         mkdir(path.join(event_folder, 'UrQMD_events'))
         generate_script_HBT(event_folder)
+    elif mode == 4:
+        # calculate HBT correlation with UrQMD outputs
+        mkdir(path.join(event_folder, 'UrQMD_events'))
+        generate_script_spectra_and_vn(event_folder)
 
     shutil.copytree('codes/HBTcorrelation_MCafterburner', 
                     path.join(path.abspath(event_folder), 
@@ -188,6 +232,12 @@ if __name__ == "__main__":
         # calculate HBT correlation from OSCAR files
         copy_OSCAR_events(ncore, from_folder, folder_name)
     elif mode == 3: # running HBT afterburner with UrQMD
+        for icore in range(ncore):
+            generate_event_folder_UrQMD(folder_name, icore, mode)
+
+        # calculate HBT correlation from UrQMD files
+        copy_UrQMD_events(ncore, from_folder, folder_name)
+    elif mode == 4: # collect spectra and flow observables with UrQMD
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore, mode)
 
