@@ -64,6 +64,9 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     rap_min = paraRdr->getVal("rap_min");
     rap_max = paraRdr->getVal("rap_max");
 
+    if(particle_monval == 9999)  // use pseudo-rapidity for all charged hadrons
+        rap_type = 0;
+
     // check dN/dtau distribution
     check_spatial_flag = paraRdr->getVal("check_spatial_dis");
     if(check_spatial_flag == 1)
