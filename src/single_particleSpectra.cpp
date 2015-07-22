@@ -103,6 +103,20 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
             dNdx2_array[i] = 0.0;
         }
 
+        // dN/(dtau dx)
+        dNdtaudx1_array = new double * [N_tau];
+        dNdtaudx2_array = new double * [N_tau];
+        for(int i = 0; i < N_tau; i++)
+        {
+            dNdtaudx1_array[i] = new double [N_xpt];
+            dNdtaudx2_array[i] = new double [N_xpt];
+            for(int j = 0; j < N_xpt; j++)
+            {
+                dNdtaudx1_array[i][j] = 0.0;
+                dNdtaudx2_array[i][j] = 0.0;
+            }
+        }
+
         // dN/deta_s
         intrinsic_detas = paraRdr->getVal("intrinsic_detas");
         N_eta_s = 40;
@@ -116,7 +130,6 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
             eta_s_array[i] = 0.0;
             dNdetas_array[i] = 0.0;
         }
-
     }
 }
 
@@ -151,6 +164,13 @@ singleParticleSpectra::~singleParticleSpectra()
         delete [] dNdx2_array;
         delete [] eta_s_array;
         delete [] dNdetas_array;
+        for(int i = 0; i < N_tau; i++)
+        {
+            delete [] dNdtaudx1_array[i];
+            delete [] dNdtaudx2_array[i];
+        }
+        delete [] dNdtaudx1_array;
+        delete [] dNdtaudx2_array;
     }
 }
 
@@ -314,6 +334,7 @@ void singleParticleSpectra::check_dNdSV(int event_id)
                 tau_array[idx] += tau_local;
                 dNdtau_array[idx]++;
             }
+
             // second dN/dx
             double x_local = particle_list->get_particle(event_id, i).x;
             double y_local = particle_list->get_particle(event_id, i).y;
@@ -337,6 +358,37 @@ void singleParticleSpectra::check_dNdSV(int event_id)
                     dNdx2_array[idx]++;
                 }
             }
+
+            // dN/(dtau dx)
+            if(fabs(y_local) < 0.5)
+            {
+                if(tau_local > tau_min && tau_local < tau_max)
+                {
+                    double random = drand48()*intrinsic_dtau;
+                    int idx_tau = (int)((tau_local + random - tau_min)/dtau);
+                    if(x_local > spatial_x_min && x_local < spatial_x_max)
+                    {
+                        double random = drand48()*intrinsic_dx;
+                        int idx_x = (int)((x_local + random - spatial_x_min)/dspatial_x);
+                        dNdtaudx1_array[idx_tau][idx_x]++;
+                    }
+                }
+            }
+            if(fabs(x_local) < 0.5)
+            {
+                if(tau_local > tau_min && tau_local < tau_max)
+                {
+                    double random = drand48()*intrinsic_dtau;
+                    int idx_tau = (int)((tau_local + random - tau_min)/dtau);
+                    if(y_local > spatial_x_min && y_local < spatial_x_max)
+                    {
+                        double random = drand48()*intrinsic_dx;
+                        int idx_x = (int)((y_local + random - spatial_x_min)/dspatial_x);
+                        dNdtaudx2_array[idx_tau][idx_x]++;
+                    }
+                }
+            }
+
             // third dN/deta_s
             double etas_local = 0.5*log((t_local + z_local)/(t_local - z_local));
             double y_minus_etas = rap_local - etas_local;
@@ -385,6 +437,29 @@ void singleParticleSpectra::output_dNdSV()
                 << ypt_array[i] << "   " << dNdx2_array[i]/dspatial_x << "   " << dNdx2_err/dspatial_x << endl;
     }
     output2.close();
+    
+    // dN/(dtau dx)
+    ostringstream filename2_1, filename2_2;
+    filename2_1 << path << "/check_" << particle_monval << "_dNdtaudx1.dat";
+    filename2_2 << path << "/check_" << particle_monval << "_dNdtaudx2.dat";
+    ofstream output2_1(filename2_1.str().c_str());
+    ofstream output2_2(filename2_2.str().c_str());
+    for(int i = 0; i < N_tau; i++)
+    {
+        for(int j = 0; j < N_xpt; j++)
+        {
+            dNdtaudx1_array[i][j] = dNdtaudx1_array[i][j]/total_number_of_events;
+            dNdtaudx2_array[i][j] = dNdtaudx2_array[i][j]/total_number_of_events;
+            output2_1 << scientific << setw(18) << setprecision(8)
+                      << dNdtaudx1_array[i][j]/dspatial_x/dtau << "   ";
+            output2_2 << scientific << setw(18) << setprecision(8)
+                      << dNdtaudx2_array[i][j]/dspatial_x/dtau << "   ";
+        }
+        output2_1 << endl;
+        output2_2 << endl;
+    }
+    output2_1.close();
+    output2_2.close();
 
     // third dN/detas
     ostringstream filename3;

@@ -38,6 +38,7 @@ class singleParticleSpectra
         double spatial_x_min, spatial_x_max, dspatial_x, intrinsic_dx;
         double *xpt_array, *dNdx1_array;
         double *ypt_array, *dNdx2_array;
+        double **dNdtaudx1_array, **dNdtaudx2_array;
         int N_eta_s;
         double eta_s_min, eta_s_max, deta_s, intrinsic_detas;
         double *eta_s_array, *dNdetas_array;
