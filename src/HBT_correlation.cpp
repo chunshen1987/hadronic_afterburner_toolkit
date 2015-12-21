@@ -29,6 +29,8 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
         q_long[i] = q_min + i*delta_q;
     }
 
+    needed_number_of_pairs = paraRdr->getVal("needed_number_of_pairs");
+
     azimuthal_flag = paraRdr->getVal("azimuthal_flag");
     n_KT = paraRdr->getVal("n_KT");
     n_Kphi = paraRdr->getVal("n_Kphi");
@@ -41,12 +43,32 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
     dKphi = 2*M_PI/(n_Kphi - 1);
     
     KT_array = new double [n_KT];
+    number_of_pairs_numerator_KTdiff = new unsigned long long int [n_KT];
+    number_of_pairs_denormenator_KTdiff = new unsigned long long int [n_KT];
     for(int i = 0; i < n_KT; i++)
+    {
         KT_array[i] = KT_min + i*dKT;
+        number_of_pairs_numerator_KTdiff[i] = 0;
+        number_of_pairs_denormenator_KTdiff[i] = 0;
+    }
 
     Kphi_array = new double [n_Kphi];
     for(int i = 0; i < n_Kphi; i++)
         Kphi_array[i] = 0.0 + i*dKphi;
+
+    number_of_pairs_numerator_KTKphidiff = new unsigned long long int* [n_KT];
+    number_of_pairs_denormenator_KTKphidiff = new unsigned long long int* [n_KT];
+    for(int i = 0; i < n_KT; i++)
+    {
+        number_of_pairs_numerator_KTKphidiff[i] = new unsigned long long int [n_Kphi];
+        number_of_pairs_denormenator_KTKphidiff[i] = new unsigned long long int [n_Kphi];
+        for(int j = 0; j < n_Kphi; j++)
+        {
+            number_of_pairs_numerator_KTKphidiff[i] = 0;
+            number_of_pairs_denormenator_KTKphidiff[i] = 0;
+        }
+    }
+    
 
     number_of_mixed_events = paraRdr->getVal("number_of_mixed_events");
     number_of_oversample_events = paraRdr->getVal("number_of_oversample_events");
@@ -241,6 +263,15 @@ HBT_correlation::~HBT_correlation()
         delete [] correl_3d_Kphi_diff_denorm;
     }
     delete [] KT_array;
+    for(int i = 0; i < n_KT; i++)
+    {
+        delete [] number_of_pairs_numerator_KTKphidiff[i];
+        delete [] number_of_pairs_denormenator_KTKphidiff[i];
+    }
+    delete [] number_of_pairs_numerator_KTKphidiff;
+    delete [] number_of_pairs_denormenator_KTKphidiff;
+    delete [] number_of_pairs_numerator_KTdiff;
+    delete [] number_of_pairs_denormenator_KTdiff;
 }
 
 void HBT_correlation::calculate_HBT_correlation_function()
@@ -333,8 +364,23 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                 double K_perp = sqrt(K_x*K_x + K_y*K_y);
                 if(K_perp > KT_min && K_perp < KT_max)  // check K_T cut
                 {
-                    number_pairs_num++;
                     int Kperp_idx = (int)((K_perp - KT_min)/dKT);
+                    double local_K_phi;
+                    int Kphi_idx;
+                    if(azimuthal_flag == 0)
+                    {
+                        if(number_of_pairs_numerator_KTdiff[Kperp_idx] > needed_number_of_pairs)
+                            continue;
+                        number_of_pairs_numerator_KTdiff[Kperp_idx]++;
+                    }
+                    else
+                    {
+                        local_K_phi = atan2(K_y, K_x);
+                        Kphi_idx = (int)((local_K_phi)/dKphi);
+                        if(number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx] > needed_number_of_pairs)
+                            continue;
+                        number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]++;
+                    }
 
                     double cos_K_phi = K_x/K_perp;
                     double sin_K_phi = K_y/K_perp;
@@ -374,8 +420,6 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                     }
                     else
                     {
-                        double local_K_phi = atan2(K_y, K_x);
-                        int Kphi_idx = (int)((local_K_phi)/dKphi);
                         correl_3d_Kphi_diff_num_count[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx]++;
                         q_out_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_out;
                         q_side_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
@@ -455,8 +499,23 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
                 double K_perp = sqrt(K_x*K_x + K_y*K_y);
                 if(K_perp > KT_min && K_perp < KT_max)
                 {
-                    number_pairs_denorm++;
                     int Kperp_idx = (int)((K_perp - KT_min)/dKT);
+                    double local_K_phi;
+                    int Kphi_idx;
+                    if(azimuthal_flag == 0)
+                    {
+                        if(number_of_pairs_denormenator_KTdiff[Kperp_idx] > needed_number_of_pairs)
+                            continue;
+                        number_of_pairs_denormenator_KTdiff[Kperp_idx]++;
+                    }
+                    else
+                    {
+                        local_K_phi = atan2(K_y, K_x);
+                        Kphi_idx = (int)((local_K_phi)/dKphi);
+                        if(number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx] > needed_number_of_pairs)
+                            continue;
+                        number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx]++;
+                    }
                     
                     double cos_K_phi = K_x/K_perp;
                     double sin_K_phi = K_y/K_perp;
@@ -472,19 +531,13 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
                     if(local_q_side < (q_min - delta_q/2.) || local_q_side >= (q_max + delta_q/2.)) continue;
                     
-                    int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))/delta_q);
-                    int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
+                    int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))/delta_q); int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
                     int qlong_idx = (int)((local_q_long - (q_min - delta_q/2.))/delta_q);
-
-                    // bin results
+// bin results
                     if(azimuthal_flag == 0)
                         correl_3d_denorm[Kperp_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
                     else
-                    {
-                        double local_K_phi = atan2(K_y, K_x);
-                        int Kphi_idx = (int)((local_K_phi)/dKphi);
                         correl_3d_Kphi_diff_denorm[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
-                    }
                 }
             }
         }
@@ -554,7 +607,8 @@ void HBT_correlation::bin_into_correlation_function(int type, int num_pair, part
 
 void HBT_correlation::output_correlation_function()
 {
-    double npair_ratio = (double)number_pairs_num/(double)number_pairs_denorm;
+    //double npair_ratio = (double)number_pairs_num/(double)number_pairs_denorm;
+    double npair_ratio = 1.0;
     for(int iK = 0; iK < n_KT - 1; iK++)
     {
         ostringstream filename;
@@ -603,7 +657,8 @@ void HBT_correlation::output_correlation_function()
 
 void HBT_correlation::output_correlation_function_Kphi_differential()
 {
-    double npair_ratio = (double)number_pairs_num/(double)number_pairs_denorm;
+    //double npair_ratio = (double)number_pairs_num/(double)number_pairs_denorm;
+    double npair_ratio = 1.0;
     for(int iK = 0; iK < n_KT - 1; iK++)
     {
         for(int iKphi = 0; iKphi < n_Kphi; iKphi++)

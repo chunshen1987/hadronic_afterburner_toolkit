@@ -5,12 +5,12 @@ read_in_mode = 3                  # mode for reading in particle information
                                   # 3: reads outputs from Sangwook's UrQMD outputs 
                                   #    (without header lines)
 
-run_mode = 0                      # running mode for the program
+run_mode = 1                      # running mode for the program
                                   # 0: collect single particle spectra and vn
                                   # 1: compute HBT correlation function
 
 particle_monval = 211             # particle Monte-Carlo number
-distinguish_isospin = 1           # flag whether to distinguish the isospin of particles
+distinguish_isospin = 0           # flag whether to distinguish the isospin of particles
 
 event_buffer_size = 1000          # buffer size of the number of events read in at once
 
@@ -32,8 +32,9 @@ intrinsic_dx = 0.5                # dx in the output samples
 
 
 # Parameters for HBT correlation functions
-number_of_mixed_events = 5        # number of the mixed events in the denorminator
-number_of_oversample_events = 10  # number of the combined events in the numerator
+needed_number_of_pairs = 10000    # number of pairs for eack K point
+number_of_mixed_events = 20       # number of the mixed events in the denorminator
+number_of_oversample_events = 40  # number of the combined events in the numerator
 azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
                                   # 1: compute azimuthal dependent HBT correlation function
 
