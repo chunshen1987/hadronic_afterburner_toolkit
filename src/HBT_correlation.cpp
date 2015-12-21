@@ -325,29 +325,36 @@ void HBT_correlation::calculate_HBT_correlation_function()
 void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
 {
     double hbarC_inv = 1./hbarC;
-    int number_of_particles = 0;
-    for(int i = 0; i < number_of_oversample_events; i++)
-        number_of_particles += particle_list->get_number_of_particles(event_list[i]);
-    particle_info* temp_particle_list = new particle_info [number_of_particles];  // local cache
-    long int idx = 0;
+    double buffer_rapidity = 2.0;
+    vector<particle_info> temp_particle_list;
+    double particle_list_rapidity_cut_max = tanh(Krap_max + buffer_rapidity);
+    double particle_list_rapidity_cut_min = tanh(Krap_min - buffer_rapidity);
     for(int j = 0; j < number_of_oversample_events; j++)
     {
         int event_id = event_list[j];
         int event_number_particle = particle_list->get_number_of_particles(event_list[j]);
         for(int i = 0; i < event_number_particle; i++)
         {
-            temp_particle_list[idx].px = particle_list->get_particle(event_id, i).px;
-            temp_particle_list[idx].py = particle_list->get_particle(event_id, i).py;
-            temp_particle_list[idx].pz = particle_list->get_particle(event_id, i).pz;
-            temp_particle_list[idx].E = particle_list->get_particle(event_id, i).E;
-            temp_particle_list[idx].mass = particle_list->get_particle(event_id, i).mass;
-            temp_particle_list[idx].x = particle_list->get_particle(event_id, i).x;
-            temp_particle_list[idx].y = particle_list->get_particle(event_id, i).y;
-            temp_particle_list[idx].z = particle_list->get_particle(event_id, i).z;
-            temp_particle_list[idx].t = particle_list->get_particle(event_id, i).t;
-            idx++;
+            double temp_E = particle_list->get_particle(event_id, i).E;
+            double temp_pz = particle_list->get_particle(event_id, i).pz;
+            double temp_ratio = temp_pz/temp_E;
+            if(temp_ratio > particle_list_rapidity_cut_min && temp_ratio < particle_list_rapidity_cut_max)
+            {
+                particle_info temp_particle;
+                temp_particle.E = temp_E;
+                temp_particle.pz = temp_pz;
+                temp_particle.px = particle_list->get_particle(event_id, i).px;
+                temp_particle.py = particle_list->get_particle(event_id, i).py;
+                temp_particle.mass = particle_list->get_particle(event_id, i).mass;
+                temp_particle.x = particle_list->get_particle(event_id, i).x;
+                temp_particle.y = particle_list->get_particle(event_id, i).y;
+                temp_particle.z = particle_list->get_particle(event_id, i).z;
+                temp_particle.t = particle_list->get_particle(event_id, i).t;
+                temp_particle_list.push_back(temp_particle);
+            }
         }
     }
+    int number_of_particles = temp_particle_list.size();
 
     // nested pair loop
     cout << "number of pairs: " << number_of_particles*(number_of_particles - 1)/2. << endl;
@@ -431,32 +438,39 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
             }
         }
     }
-    delete [] temp_particle_list;
+    temp_particle_list.clear();
 }
 
 void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1, int* mixed_event_list)
 {
     int number_of_particles_1 = particle_list->get_number_of_particles(event_id1);
-    particle_info* temp_particle_list_1 = new particle_info [number_of_particles_1];
+    double buffer_rapidity = 2.0;
+    double particle_list_rapidity_cut_max = tanh(Krap_max + buffer_rapidity);
+    double particle_list_rapidity_cut_min = tanh(Krap_min - buffer_rapidity);
+    vector<particle_info> temp_particle_list_1;
     for(int i = 0; i < number_of_particles_1; i++)
     {
-        temp_particle_list_1[i].px = particle_list->get_particle(event_id1, i).px;
-        temp_particle_list_1[i].py = particle_list->get_particle(event_id1, i).py;
-        temp_particle_list_1[i].pz = particle_list->get_particle(event_id1, i).pz;
-        temp_particle_list_1[i].E = particle_list->get_particle(event_id1, i).E;
-        temp_particle_list_1[i].mass = particle_list->get_particle(event_id1, i).mass;
-        temp_particle_list_1[i].x = particle_list->get_particle(event_id1, i).x;
-        temp_particle_list_1[i].y = particle_list->get_particle(event_id1, i).y;
-        temp_particle_list_1[i].z = particle_list->get_particle(event_id1, i).z;
-        temp_particle_list_1[i].t = particle_list->get_particle(event_id1, i).t;
+        double temp_E = particle_list->get_particle(event_id1, i).E;
+        double temp_pz = particle_list->get_particle(event_id1, i).pz;
+        double temp_ratio = temp_pz/temp_E;
+        if(temp_ratio > particle_list_rapidity_cut_min && temp_ratio < particle_list_rapidity_cut_max)
+        {
+            particle_info temp_particle;
+            temp_particle.E = temp_E;
+            temp_particle.pz = temp_pz;
+            temp_particle.px = particle_list->get_particle(event_id1, i).px;
+            temp_particle.py = particle_list->get_particle(event_id1, i).py;
+            temp_particle.mass = particle_list->get_particle(event_id1, i).mass;
+            temp_particle.x = particle_list->get_particle(event_id1, i).x;
+            temp_particle.y = particle_list->get_particle(event_id1, i).y;
+            temp_particle.t = particle_list->get_particle(event_id1, i).t;
+            temp_particle.z = particle_list->get_particle(event_id1, i).z;
+            temp_particle_list_1.push_back(temp_particle);
+        }
     }
 
     // prepare for the mixed events
-    int number_of_particles_2 = 0;
-    for(int iev = 0; iev < number_of_mixed_events; iev++)
-        number_of_particles_2 += particle_list->get_number_of_particles_mixed_event(mixed_event_list[iev]);
-    particle_info* temp_particle_list_2 = new particle_info [number_of_particles_2];
-    long int idx = 0;
+    vector<particle_info> temp_particle_list_2;
     for(int iev = 0; iev < number_of_mixed_events; iev++)
     {
         // introduce a random rotation for the mixed event
@@ -467,25 +481,36 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
         int event_number_particle = particle_list->get_number_of_particles_mixed_event(mixed_event_id);
         for(int i = 0; i < event_number_particle; i++)
         {
-            double px_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).px;
-            double py_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).py;
-            temp_particle_list_2[idx].px = px_temp*cos_phi - py_temp*sin_phi;
-            temp_particle_list_2[idx].py = px_temp*sin_phi + py_temp*cos_phi;
-            double x_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).x;
-            double y_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).y;
-            temp_particle_list_2[idx].x = x_temp*cos_phi - y_temp*sin_phi;
-            temp_particle_list_2[idx].y = x_temp*sin_phi + y_temp*cos_phi;
+            double temp_E = particle_list->get_particle_from_mixed_event(event_id1, i).E;
+            double temp_pz = particle_list->get_particle_from_mixed_event(event_id1, i).pz;
+            double temp_ratio = temp_pz/temp_E;
+            if(temp_ratio > particle_list_rapidity_cut_min && temp_ratio < particle_list_rapidity_cut_max)
+            {
+                particle_info temp_particle;
+                
+                double px_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).px;
+                double py_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).py;
+                temp_particle.px = px_temp*cos_phi - py_temp*sin_phi;
+                temp_particle.py = px_temp*sin_phi + py_temp*cos_phi;
+                double x_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).x;
+                double y_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).y;
+                temp_particle.x = x_temp*cos_phi - y_temp*sin_phi;
+                temp_particle.y = x_temp*sin_phi + y_temp*cos_phi;
 
-            temp_particle_list_2[idx].pz = particle_list->get_particle_from_mixed_event(mixed_event_id, i).pz;
-            temp_particle_list_2[idx].E = particle_list->get_particle_from_mixed_event(mixed_event_id, i).E;
-            temp_particle_list_2[idx].mass = particle_list->get_particle_from_mixed_event(mixed_event_id, i).mass;
-            temp_particle_list_2[idx].z = particle_list->get_particle_from_mixed_event(mixed_event_id, i).z;
-            temp_particle_list_2[idx].t = particle_list->get_particle_from_mixed_event(mixed_event_id, i).t;
-            idx++;
+                temp_particle.pz = temp_pz;
+                temp_particle.E = temp_E;
+                temp_particle.mass = particle_list->get_particle_from_mixed_event(mixed_event_id, i).mass;
+                temp_particle.z = particle_list->get_particle_from_mixed_event(mixed_event_id, i).z;
+                temp_particle.t = particle_list->get_particle_from_mixed_event(mixed_event_id, i).t;
+
+                temp_particle_list_2.push_back(temp_particle);
+            }
         }
     }
 
     // nested pair loop
+    number_of_particles_1 = temp_particle_list_1.size();
+    int number_of_particles_2 = temp_particle_list_2.size();
     cout << "number of mixed pairs: " << number_of_particles_1*number_of_particles_2 << endl;
     double rapidity_cut_min = tanh(Krap_min);
     double rapidity_cut_max = tanh(Krap_max);
@@ -544,8 +569,8 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
             }
         }
     }
-    delete [] temp_particle_list_1;
-    delete [] temp_particle_list_2;
+    temp_particle_list_1.clear();
+    temp_particle_list_2.clear();
 }
 
 void HBT_correlation::bin_into_correlation_function(int type, int num_pair, particle_pair* pairlist)
