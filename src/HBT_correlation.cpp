@@ -283,12 +283,14 @@ void HBT_correlation::calculate_HBT_correlation_function()
         cout << "Reading event: " << event_id+1 << "-" << event_id + buffer_size << " ... " << flush;
         particle_list->read_in_particle_samples();
         particle_list->read_in_particle_samples_mixed_event();
-        cout << " processing ..." << flush;
+        cout << " processing ..." << endl;
         int nev = particle_list->get_number_of_events();
         int n_skip_ev = (int)(nev/number_of_oversample_events);
         // first pairs from the same event
+        cout << "Compute pairs from the same event ..." << endl;
         for(int iev = 0; iev < n_skip_ev; iev++)
         {
+            cout << "progess: " << iev << "/" << n_skip_ev << endl;
             int *event_list = new int [number_of_oversample_events];
             for(int isample = 0; isample < number_of_oversample_events; isample++)
                 event_list[isample] = iev + isample*n_skip_ev;
@@ -297,9 +299,10 @@ void HBT_correlation::calculate_HBT_correlation_function()
         }
 
         // then pairs from mixed events
-        int nev_mixed_event = particle_list->get_number_of_mixed_events();
-        for(int iev = 0; iev < nev_mixed_event; iev++)
+        cout << "Compute pairs from the mixed event ..." << endl;
+        for(int iev = 0; iev < nev; iev++)
         {
+            cout << "progess: " << iev << "/" << nev << endl;
             int *mixed_event_list = new int [number_of_mixed_events];
             int count = 0;
             while(count < number_of_mixed_events)
@@ -312,7 +315,6 @@ void HBT_correlation::calculate_HBT_correlation_function()
             event_id++;
             delete [] mixed_event_list;
         }
-        cout << " done!" << endl;
     }
     if(azimuthal_flag == 0)
         output_correlation_function();
@@ -348,14 +350,15 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
     }
 
     // nested pair loop
+    cout << "number of pairs: " << number_of_particles*(number_of_particles - 1)/2. << endl;
+    double rapidity_cut_max = tanh(Krap_max);
+    double rapidity_cut_min = tanh(Krap_min);
     for(int i = 0; i < number_of_particles; i++)
     {
         for(int j = i+1; j < number_of_particles; j++)
         {
-            double K_z = 0.5*(temp_particle_list[i].pz + temp_particle_list[j].pz);
-            double K_E = 0.5*(temp_particle_list[i].E + temp_particle_list[j].E);
-            double K_rap = 0.5*log((K_E + K_z)/(K_E - K_z));
-            if(K_rap > Krap_min && K_rap < Krap_max)  // check rapidity cut
+            double K_z_over_K_E = (temp_particle_list[i].pz + temp_particle_list[j].pz)/(temp_particle_list[i].E + temp_particle_list[j].E);
+            if(K_z_over_K_E > rapidity_cut_min && K_z_over_K_E < rapidity_cut_max)  // check rapidity cut
             {
                 double K_x = 0.5*(temp_particle_list[i].px + temp_particle_list[j].px);
                 double K_y = 0.5*(temp_particle_list[i].py + temp_particle_list[j].py);
@@ -483,14 +486,15 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
     }
 
     // nested pair loop
+    cout << "number of mixed pairs: " << number_of_particles_1*number_of_particles_2 << endl;
+    double rapidity_cut_min = tanh(Krap_min);
+    double rapidity_cut_max = tanh(Krap_max);
     for(int i = 0; i < number_of_particles_1; i++)
     {
         for(int j = 0; j < number_of_particles_2; j++)
         {
-            double K_z = 0.5*(temp_particle_list_1[i].pz + temp_particle_list_2[j].pz);
-            double K_E = 0.5*(temp_particle_list_1[i].E + temp_particle_list_2[j].E);
-            double K_rap = 0.5*log((K_E + K_z)/(K_E - K_z));
-            if(K_rap > Krap_min && K_rap < Krap_max)
+            double K_z_over_K_E = (temp_particle_list_1[i].pz + temp_particle_list_2[j].pz)/(temp_particle_list_1[i].E + temp_particle_list_2[j].E);
+            if(K_z_over_K_E > rapidity_cut_min && K_z_over_K_E < rapidity_cut_max)
             {
                 double K_x = 0.5*(temp_particle_list_1[i].px + temp_particle_list_2[j].px);
                 double K_y = 0.5*(temp_particle_list_1[i].py + temp_particle_list_2[j].py);

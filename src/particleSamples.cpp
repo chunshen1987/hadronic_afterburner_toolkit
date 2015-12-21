@@ -42,7 +42,19 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     }
 
     inputfile.open(filename.str().c_str());
+    if(!inputfile.is_open())
+    {
+        cout << "particleSamples:: Error: input file: " << filename.str() 
+             << " can not open!" << endl;
+        exit(1);
+    }
     inputfile_mixed_event.open(filename_mixed_event.str().c_str());
+    if(!inputfile_mixed_event.is_open())
+    {
+        cout << "particleSamples:: Error: input file: " 
+             << filename_mixed_event.str() << " can not open!" << endl;
+        exit(1);
+    }
 
     // skip the header file for OSCAR
     string temp;
