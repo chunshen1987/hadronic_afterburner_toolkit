@@ -282,6 +282,7 @@ void HBT_correlation::calculate_HBT_correlation_function()
     {
         cout << "Reading event: " << event_id+1 << "-" << event_id + buffer_size << " ... " << flush;
         particle_list->read_in_particle_samples();
+        particle_list->read_in_particle_samples_mixed_event();
         cout << " processing ..." << flush;
         int nev = particle_list->get_number_of_events();
         int n_skip_ev = (int)(nev/number_of_oversample_events);
@@ -296,19 +297,16 @@ void HBT_correlation::calculate_HBT_correlation_function()
         }
 
         // then pairs from mixed events
-        for(int iev = 0; iev < nev; iev++)
+        int nev_mixed_event = particle_list->get_number_of_mixed_events();
+        for(int iev = 0; iev < nev_mixed_event; iev++)
         {
             int *mixed_event_list = new int [number_of_mixed_events];
             int count = 0;
-            while(1)
+            while(count < number_of_mixed_events)
             {
                 int mixed_event_id = rand() % nev;
-                if(mixed_event_id != iev)
-                {
-                    mixed_event_list[count] = mixed_event_id;
-                    count++;
-                }
-                if(count == number_of_mixed_events) break;
+                mixed_event_list[count] = mixed_event_id;
+                count++;
             }
             combine_and_bin_particle_pairs_mixed_events(iev, mixed_event_list);
             event_id++;
@@ -453,7 +451,7 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
     // prepare for the mixed events
     int number_of_particles_2 = 0;
     for(int iev = 0; iev < number_of_mixed_events; iev++)
-        number_of_particles_2 += particle_list->get_number_of_particles(mixed_event_list[iev]);
+        number_of_particles_2 += particle_list->get_number_of_particles_mixed_event(mixed_event_list[iev]);
     particle_info* temp_particle_list_2 = new particle_info [number_of_particles_2];
     long int idx = 0;
     for(int iev = 0; iev < number_of_mixed_events; iev++)
@@ -463,23 +461,23 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
         double cos_phi = cos(random_rotation);
         double sin_phi = sin(random_rotation);
         int mixed_event_id = mixed_event_list[iev];
-        int event_number_particle = particle_list->get_number_of_particles(mixed_event_id);
+        int event_number_particle = particle_list->get_number_of_particles_mixed_event(mixed_event_id);
         for(int i = 0; i < event_number_particle; i++)
         {
-            double px_temp = particle_list->get_particle(mixed_event_id, i).px;
-            double py_temp = particle_list->get_particle(mixed_event_id, i).py;
+            double px_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).px;
+            double py_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).py;
             temp_particle_list_2[idx].px = px_temp*cos_phi - py_temp*sin_phi;
             temp_particle_list_2[idx].py = px_temp*sin_phi + py_temp*cos_phi;
-            double x_temp = particle_list->get_particle(mixed_event_id, i).x;
-            double y_temp = particle_list->get_particle(mixed_event_id, i).y;
+            double x_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).x;
+            double y_temp = particle_list->get_particle_from_mixed_event(mixed_event_id, i).y;
             temp_particle_list_2[idx].x = x_temp*cos_phi - y_temp*sin_phi;
             temp_particle_list_2[idx].y = x_temp*sin_phi + y_temp*cos_phi;
 
-            temp_particle_list_2[idx].pz = particle_list->get_particle(mixed_event_id, i).pz;
-            temp_particle_list_2[idx].E = particle_list->get_particle(mixed_event_id, i).E;
-            temp_particle_list_2[idx].mass = particle_list->get_particle(mixed_event_id, i).mass;
-            temp_particle_list_2[idx].z = particle_list->get_particle(mixed_event_id, i).z;
-            temp_particle_list_2[idx].t = particle_list->get_particle(mixed_event_id, i).t;
+            temp_particle_list_2[idx].pz = particle_list->get_particle_from_mixed_event(mixed_event_id, i).pz;
+            temp_particle_list_2[idx].E = particle_list->get_particle_from_mixed_event(mixed_event_id, i).E;
+            temp_particle_list_2[idx].mass = particle_list->get_particle_from_mixed_event(mixed_event_id, i).mass;
+            temp_particle_list_2[idx].z = particle_list->get_particle_from_mixed_event(mixed_event_id, i).z;
+            temp_particle_list_2[idx].t = particle_list->get_particle_from_mixed_event(mixed_event_id, i).t;
             idx++;
         }
     }
