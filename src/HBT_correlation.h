@@ -28,6 +28,7 @@ class HBT_correlation
         double dKT, dKphi;
         double KT_min, KT_max;
         double Krap_min, Krap_max;
+        double buffer_rapidity;
         double *KT_array, *Kphi_array;
 
         double *q_out, *q_side, *q_long;
