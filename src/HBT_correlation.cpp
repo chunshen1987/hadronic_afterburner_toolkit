@@ -338,7 +338,8 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
             double temp_E = particle_list->get_particle(event_id, i).E;
             double temp_pz = particle_list->get_particle(event_id, i).pz;
             double temp_ratio = temp_pz/temp_E;
-            if(temp_ratio > particle_list_rapidity_cut_min && temp_ratio < particle_list_rapidity_cut_max)
+            if(temp_ratio > particle_list_rapidity_cut_min 
+               && temp_ratio < particle_list_rapidity_cut_max)
             {
                 particle_info temp_particle;
                 temp_particle.E = temp_E;
@@ -355,7 +356,8 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
         }
     }
     long long int number_of_particles = temp_particle_list.size();
-    unsigned long long int number_of_pairs = number_of_particles*(number_of_particles - 1)/2;
+    unsigned long long int number_of_pairs = (
+                    number_of_particles*(number_of_particles - 1)/2);
 
     // nested pair loop
     cout << "number of pairs: " << number_of_pairs << endl;
@@ -365,13 +367,24 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
     double KT_max_sq = KT_max*KT_max;
     for(int i = 0; i < number_of_particles; i++)
     {
+        double particle_1_px = temp_particle_list[i].px;
+        double particle_1_py = temp_particle_list[i].py;
+        double particle_1_pz = temp_particle_list[i].pz;
+        double particle_1_E = temp_particle_list[i].E;
+        double particle_1_x = temp_particle_list[i].x;
+        double particle_1_y = temp_particle_list[i].y;
+        double particle_1_z = temp_particle_list[i].z;
+        double particle_1_t = temp_particle_list[i].t;
+
         for(int j = i+1; j < number_of_particles; j++)
         {
-            double K_z_over_K_E = (temp_particle_list[i].pz + temp_particle_list[j].pz)/(temp_particle_list[i].E + temp_particle_list[j].E);
-            if(K_z_over_K_E > rapidity_cut_min && K_z_over_K_E < rapidity_cut_max)  // check rapidity cut
+            double K_z_over_K_E = ((particle_1_pz + temp_particle_list[j].pz)
+                                   /(particle_1_E + temp_particle_list[j].E));
+            if(K_z_over_K_E > rapidity_cut_min 
+               && K_z_over_K_E < rapidity_cut_max)  // check rapidity cut
             {
-                double K_x = 0.5*(temp_particle_list[i].px + temp_particle_list[j].px);
-                double K_y = 0.5*(temp_particle_list[i].py + temp_particle_list[j].py);
+                double K_x = 0.5*(particle_1_px + temp_particle_list[j].px);
+                double K_y = 0.5*(particle_1_py + temp_particle_list[j].py);
                 double K_perp_sq = K_x*K_x + K_y*K_y;
                 if(K_perp_sq > KT_min_sq && K_perp_sq < KT_max_sq)  // check K_T cut
                 {
@@ -383,20 +396,26 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                     double cos_K_phi = K_x/K_perp;
                     double sin_K_phi = K_y/K_perp;
 
-                    double q_z = temp_particle_list[i].pz - temp_particle_list[j].pz;
+                    double q_z = particle_1_pz - temp_particle_list[j].pz;
                     double local_q_long = q_z;
-                    if(local_q_long < (q_min - delta_q/2.) || local_q_long >= (q_max + delta_q/2.)) continue;
+                    if(local_q_long < (q_min - delta_q/2.) 
+                       || local_q_long >= (q_max + delta_q/2.)) continue;
 
-                    double q_x = temp_particle_list[i].px - temp_particle_list[j].px;
-                    double q_y = temp_particle_list[i].py - temp_particle_list[j].py;
+                    double q_x = particle_1_px - temp_particle_list[j].px;
+                    double q_y = particle_1_py - temp_particle_list[j].py;
+
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-                    if(local_q_out < (q_min - delta_q/2.) || local_q_out >= (q_max + delta_q/2.)) continue;
+                    if(local_q_out < (q_min - delta_q/2.) 
+                       || local_q_out >= (q_max + delta_q/2.)) continue;
+
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-                    if(local_q_side < (q_min - delta_q/2.) || local_q_side >= (q_max + delta_q/2.)) continue;
+                    if(local_q_side < (q_min - delta_q/2.) 
+                       || local_q_side >= (q_max + delta_q/2.)) continue;
                     
                     if(azimuthal_flag == 0)
                     {
-                        if(number_of_pairs_numerator_KTdiff[Kperp_idx] > needed_number_of_pairs)
+                        if(number_of_pairs_numerator_KTdiff[Kperp_idx] 
+                           > needed_number_of_pairs)
                             continue;
                         number_of_pairs_numerator_KTdiff[Kperp_idx]++;
                     }
@@ -404,7 +423,8 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                     {
                         local_K_phi = atan2(K_y, K_x);
                         Kphi_idx = (int)((local_K_phi)/dKphi);
-                        if(number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx] > needed_number_of_pairs)
+                        if(number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx] 
+                           > needed_number_of_pairs)
                             continue;
                         number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]++;
                     }
@@ -413,14 +433,15 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                     int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
                     int qlong_idx = (int)((local_q_long - (q_min - delta_q/2.))/delta_q);
 
-                    double q_E = temp_particle_list[i].E - temp_particle_list[j].E;
+                    double q_E = particle_1_E - temp_particle_list[j].E;
 
-                    double t_diff = temp_particle_list[i].t - temp_particle_list[j].t;
-                    double x_diff = temp_particle_list[i].x - temp_particle_list[j].x;
-                    double y_diff = temp_particle_list[i].y - temp_particle_list[j].y;
-                    double z_diff = temp_particle_list[i].z - temp_particle_list[j].z;
+                    double t_diff = particle_1_t - temp_particle_list[j].t;
+                    double x_diff = particle_1_x - temp_particle_list[j].x;
+                    double y_diff = particle_1_y - temp_particle_list[j].y;
+                    double z_diff = particle_1_z - temp_particle_list[j].z;
 
-                    double cos_qx = cos((q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff)*hbarC_inv);
+                    double cos_qx = cos(hbarC_inv*
+                        (q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff));
 
                     // bin results
                     if(azimuthal_flag == 0)
@@ -523,13 +544,19 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
     double KT_max_sq = KT_max*KT_max;
     for(int i = 0; i < number_of_particles_1; i++)
     {
+        double particle_1_pz = temp_particle_list_1[i].pz;
+        double particle_1_px = temp_particle_list_1[i].px;
+        double particle_1_py = temp_particle_list_1[i].py;
+        double particle_1_E = temp_particle_list_1[i].E;
         for(int j = 0; j < number_of_particles_2; j++)
         {
-            double K_z_over_K_E = (temp_particle_list_1[i].pz + temp_particle_list_2[j].pz)/(temp_particle_list_1[i].E + temp_particle_list_2[j].E);
-            if(K_z_over_K_E > rapidity_cut_min && K_z_over_K_E < rapidity_cut_max)
+            double K_z_over_K_E = ((particle_1_pz + temp_particle_list_2[j].pz)
+                            /(particle_1_E + temp_particle_list_2[j].E));
+            if(K_z_over_K_E > rapidity_cut_min 
+               && K_z_over_K_E < rapidity_cut_max)
             {
-                double K_x = 0.5*(temp_particle_list_1[i].px + temp_particle_list_2[j].px);
-                double K_y = 0.5*(temp_particle_list_1[i].py + temp_particle_list_2[j].py);
+                double K_x = 0.5*(particle_1_px + temp_particle_list_2[j].px);
+                double K_y = 0.5*(particle_1_py + temp_particle_list_2[j].py);
                 double K_perp_sq = K_x*K_x + K_y*K_y;
                 if(K_perp_sq > KT_min_sq && K_perp_sq < KT_max_sq)
                 {
@@ -539,22 +566,28 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
                     double cos_K_phi = K_x/K_perp;
                     double sin_K_phi = K_y/K_perp;
                     
-                    double q_z = temp_particle_list_1[i].pz - temp_particle_list_2[j].pz;
+                    double q_z = particle_1_pz - temp_particle_list_2[j].pz;
                     double local_q_long = q_z;
-                    if(local_q_long < (q_min - delta_q/2.) || local_q_long >= (q_max + delta_q/2.)) continue;
+                    if(local_q_long < (q_min - delta_q/2.) 
+                       || local_q_long >= (q_max + delta_q/2.)) continue;
                     
-                    double q_x = temp_particle_list_1[i].px - temp_particle_list_2[j].px;
-                    double q_y = temp_particle_list_1[i].py - temp_particle_list_2[j].py;
+                    double q_x = particle_1_px - temp_particle_list_2[j].px;
+                    double q_y = particle_1_py - temp_particle_list_2[j].py;
+
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-                    if(local_q_out < (q_min - delta_q/2.) || local_q_out >= (q_max + delta_q/2.)) continue;
+                    if(local_q_out < (q_min - delta_q/2.) 
+                       || local_q_out >= (q_max + delta_q/2.)) continue;
+
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-                    if(local_q_side < (q_min - delta_q/2.) || local_q_side >= (q_max + delta_q/2.)) continue;
+                    if(local_q_side < (q_min - delta_q/2.) 
+                       || local_q_side >= (q_max + delta_q/2.)) continue;
                     
                     double local_K_phi;
                     int Kphi_idx;
                     if(azimuthal_flag == 0)
                     {
-                        if(number_of_pairs_denormenator_KTdiff[Kperp_idx] > needed_number_of_pairs)
+                        if(number_of_pairs_denormenator_KTdiff[Kperp_idx] 
+                                        > needed_number_of_pairs)
                             continue;
                         number_of_pairs_denormenator_KTdiff[Kperp_idx]++;
                     }
@@ -562,7 +595,8 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
                     {
                         local_K_phi = atan2(K_y, K_x);
                         Kphi_idx = (int)((local_K_phi)/dKphi);
-                        if(number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx] > needed_number_of_pairs)
+                        if(number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx] 
+                                        > needed_number_of_pairs)
                             continue;
                         number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx]++;
                     }
