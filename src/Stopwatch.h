@@ -9,9 +9,9 @@ class Stopwatch
     time_t start, end;
   public:
     Stopwatch() {start=clock(); end=0;}
-    void tic() {start=clock();}
-    void toc() {end=clock();}
-    double takeTime() {return ((double)(end - start)) / CLOCKS_PER_SEC;}
+    void tic() {start=clock();}    // record the start time
+    void toc() {end=clock();}      // record the end time
+    double takeTime() {return ((double)(end - start)) / CLOCKS_PER_SEC;} // return the time interval
 };
 
 #endif
