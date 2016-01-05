@@ -5,9 +5,10 @@
 """
 
 from sys import argv, exit
-from os import path
+from os import path, mkdir
 from glob import glob
 from numpy import *
+import shutil
 
 # define colors
 purple = "\033[95m"
@@ -19,8 +20,10 @@ normal = "\033[0m"
 
 try:
     working_folder = path.abspath(argv[1])
+    avg_folder = path.join(path.abspath(argv[2]), working_folder.split('/')[-1])
+    mkdir(avg_folder)
 except(IndexError):
-    print("Usage: average_event_HBT_correlation_function.py working_folder")
+    print("Usage: average_event_HBT_correlation_function.py working_folder results_folder")
     exit(1)
 
 file_folder_list = glob(path.join(working_folder, '*'))
@@ -45,7 +48,7 @@ for iKT in range(len(KT_values)):
 
     for ifolder in range(nev):
         results_folder = path.abspath(file_folder_list[ifolder])
-        print "processing %s ..." % file_name
+        print "processing %s/%s ..." % (results_folder, file_name)
         temp_data = loadtxt(path.join(results_folder, file_name))
         num += temp_data[:, 4]
         sigma_num += temp_data[:, 4]**2.
@@ -84,4 +87,7 @@ for iKT in range(len(KT_values)):
     event_avg_data[:, 7] = correlation_err
     savetxt(file_name, event_avg_data, fmt='%.10e', delimiter='  ')
 
+    shutil.move(file_name, avg_folder)
+
 print "Analysis is done."
+
