@@ -2,6 +2,12 @@
 """
      This script performs event averaging for the HBT correlation function
      calculated from event-by-event simulations
+
+     Format from HBT correlation function file:
+     col 0-2: q_out(GeV), q_side(GeV), q_long (GeV)
+     col 3: numerator number of pairs in the q bin
+     col 4: numerator <cos(q*r)> in the q bin
+     col 5: denominator number of pairs in the q bin
 """
 
 from sys import argv, exit
@@ -22,7 +28,7 @@ try:
     working_folder = path.abspath(argv[1])
     avg_folder = path.join(path.abspath(argv[2]), working_folder.split('/')[-1])
     mkdir(avg_folder)
-except(IndexError):
+except IndexError:
     print("Usage: average_event_HBT_correlation_function.py working_folder results_folder")
     exit(1)
 
@@ -76,8 +82,10 @@ for iKT in range(len(KT_values)):
 
     correlation = num/(Npair_num/Npair_denorm*denorm)
 
-    err_numerator = num/Npair_num*sqrt(sigma_num/(num**2.) + sigma_Npair_num/(Npair_num**2.) - 2.*sigma_num_Npair_num/(num*Npair_num))/sqrt(nev)
-    err_denormator = denorm/Npair_denorm*sqrt(sigma_denorm/(denorm**2.) + sigma_Npair_denorm/(Npair_denorm**2.) - 2.*sigma_denorm_Npair_denorm/(denorm*Npair_denorm))/sqrt(nev)
+    err_numerator = (num/Npair_num*sqrt(sigma_num/(num**2.) + sigma_Npair_num/(Npair_num**2.)
+                     - 2.*sigma_num_Npair_num/(num*Npair_num))/sqrt(nev))
+    err_denormator = (denorm/Npair_denorm*sqrt(sigma_denorm/(denorm**2.) + sigma_Npair_denorm/(Npair_denorm**2.)
+                      - 2.*sigma_denorm_Npair_denorm/(denorm*Npair_denorm))/sqrt(nev))
 
     correlation_err = sqrt((err_numerator/(denorm/Npair_denorm))**2.
         + ((num/Npair_num)*err_denormator/((denorm/Npair_denorm)**2.))**2.)
