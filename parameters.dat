@@ -12,7 +12,7 @@ run_mode = 1                      # running mode for the program
 particle_monval = 211             # particle Monte-Carlo number
 distinguish_isospin = 0           # flag whether to distinguish the isospin of particles
 
-event_buffer_size = 1000          # buffer size of the number of events read in at once
+event_buffer_size = 2000          # buffer size of the number of events read in at once
 
 
 # Parameters for single particle spectra and vn
@@ -32,9 +32,9 @@ intrinsic_dx = 0.5                # dx in the output samples
 
 
 # Parameters for HBT correlation functions
-needed_number_of_pairs = 40000000 # number of pairs for eack K point
-number_of_mixed_events = 125      # number of the mixed events in the denorminator
-number_of_oversample_events = 250 # number of the combined events in the numerator
+needed_number_of_pairs = 30000000 # number of pairs for eack K point
+number_of_mixed_events = 500      # number of the mixed events in the denorminator
+number_of_oversample_events = 1000 # number of the combined events in the numerator
 azimuthal_flag = 0                # 0: compute the azimuthal averaged HBT correlation function
                                   # 1: compute azimuthal dependent HBT correlation function
 
@@ -50,7 +50,7 @@ Krap_max = 0.5                    # maximum accept pair momentum rapidity
 buffer_rapidity = 5.0             # collect particles with rapidity from 
                                   # [Krap_min - buffer_rapidity, Krap_max + buffer_rapidity]
 
-qnpts = 41                        # number of points for momentum q (difference of the pair momentum) for correlaction function
-q_min = -0.20                     # minimum value for momentum q (GeV)
-q_max = 0.20                      # maximum value for momentum q (GeV)
+qnpts = 31                        # number of points for momentum q (difference of the pair momentum) for correlaction function
+q_min = -0.15                     # minimum value for momentum q (GeV)
+q_max = 0.15                      # maximum value for momentum q (GeV)
 
