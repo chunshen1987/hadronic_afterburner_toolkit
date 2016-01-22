@@ -1,4 +1,4 @@
-read_in_mode = 3                  # mode for reading in particle information 
+read_in_mode = 1                  # mode for reading in particle information 
                                   # 0: reads outputs from OSCAR outputs
                                   # 1: reads outputs from UrQMD outputs
                                   # 2: reads outputs from hdf5 file (future)

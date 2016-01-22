@@ -388,7 +388,7 @@ int particleSamples::read_in_particle_samples_UrQMD()
             particle_list->push_back(new vector<particle_info> );
 
             // first skip the header
-            for(int i = 0; i < 17; i++)
+            for(int i = 0; i < 16; i++)
                 getline(inputfile, temp_string);
             // then get number of particles within the event
             getline(inputfile, temp_string);
@@ -452,7 +452,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event()
             particle_list_mixed_event->push_back(new vector<particle_info> );
 
             // first skip the header
-            for(int i = 0; i < 17; i++)
+            for(int i = 0; i < 16; i++)
                 getline(inputfile_mixed_event, temp_string);
             // then get number of particles within the event
             getline(inputfile_mixed_event, temp_string);
