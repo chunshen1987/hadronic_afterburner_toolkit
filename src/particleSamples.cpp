@@ -222,7 +222,7 @@ int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge)
         int in_flag = 0;
         for(int i = 0; i < 5; i++)
         {
-            if(pid == charged_hadron_urqmd_id_list[i])
+            if(abs(pid) == charged_hadron_urqmd_id_list[i])
             {
                 in_flag = 1;
                 break;
