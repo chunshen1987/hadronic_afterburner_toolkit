@@ -5,7 +5,7 @@ read_in_mode = 1                  # mode for reading in particle information
                                   # 3: reads outputs from Sangwook's UrQMD outputs 
                                   #    (without header lines)
 
-run_mode = 1                      # running mode for the program
+run_mode = 0                      # running mode for the program
                                   # 0: collect single particle spectra and vn
                                   # 1: compute HBT correlation function
 

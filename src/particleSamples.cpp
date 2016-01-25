@@ -49,7 +49,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
              << " can not open!" << endl;
         exit(1);
     }
-    if(run_mode == 0)
+    if(run_mode == 1)
     {
         inputfile_mixed_event.open(filename_mixed_event.str().c_str());
         if(!inputfile_mixed_event.is_open())
@@ -67,7 +67,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
         getline(inputfile, temp);
         getline(inputfile, temp);
         getline(inputfile, temp);
-        if(run_mode == 0)
+        if(run_mode == 1)
         {
             getline(inputfile_mixed_event, temp);
             getline(inputfile_mixed_event, temp);
@@ -81,7 +81,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
 particleSamples::~particleSamples()
 {
     inputfile.close();
-    if(run_mode == 0)
+    if(run_mode == 1)
         inputfile_mixed_event.close();
     for(int i = 0; i < particle_list->size(); i++)
         delete (*particle_list)[i];
