@@ -18,6 +18,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
 
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
+    run_mode = paraRdr->getVal("run_mode");
     
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
@@ -48,12 +49,15 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
              << " can not open!" << endl;
         exit(1);
     }
-    inputfile_mixed_event.open(filename_mixed_event.str().c_str());
-    if(!inputfile_mixed_event.is_open())
+    if(run_mode == 0)
     {
-        cout << "particleSamples:: Error: input file: " 
-             << filename_mixed_event.str() << " can not open!" << endl;
-        exit(1);
+        inputfile_mixed_event.open(filename_mixed_event.str().c_str());
+        if(!inputfile_mixed_event.is_open())
+        {
+            cout << "particleSamples:: Error: input file: " 
+                 << filename_mixed_event.str() << " can not open!" << endl;
+            exit(1);
+        }
     }
 
     // skip the header file for OSCAR
@@ -63,9 +67,12 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
         getline(inputfile, temp);
         getline(inputfile, temp);
         getline(inputfile, temp);
-        getline(inputfile_mixed_event, temp);
-        getline(inputfile_mixed_event, temp);
-        getline(inputfile_mixed_event, temp);
+        if(run_mode == 0)
+        {
+            getline(inputfile_mixed_event, temp);
+            getline(inputfile_mixed_event, temp);
+            getline(inputfile_mixed_event, temp);
+        }
     }
 
     initialize_charged_hadron_urqmd_id_list();
@@ -74,7 +81,8 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
 particleSamples::~particleSamples()
 {
     inputfile.close();
-    inputfile_mixed_event.close();
+    if(run_mode == 0)
+        inputfile_mixed_event.close();
     for(int i = 0; i < particle_list->size(); i++)
         delete (*particle_list)[i];
     delete particle_list;
