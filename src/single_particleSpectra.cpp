@@ -264,8 +264,10 @@ void singleParticleSpectra::output_Qn_vectors()
     {
         double vn_evavg_real = Qn_vector_real[iorder]/Qn_vector_real[0];
         double vn_evavg_imag = Qn_vector_imag[iorder]/Qn_vector_real[0];
-        double vn_real_err = sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] - vn_evavg_real*vn_evavg_real)/sqrt(Qn_vector_real[0]);
-        double vn_imag_err = sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_vector_real[0]);
+        double vn_real_err = sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] 
+                                  - vn_evavg_real*vn_evavg_real)/sqrt(Qn_vector_real[0]);
+        double vn_imag_err = sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] 
+                                  - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_vector_real[0]);
 
         output << scientific << setw(18) << setprecision(8) << iorder << "   " 
                << vn_evavg_real << "   " << vn_real_err << "   " 
@@ -282,21 +284,42 @@ void singleParticleSpectra::output_Qn_vectors()
     {
         double dNpT_ev_avg = Qn_diff_vector_real[0][ipT]/total_number_of_events;
         double dNpT_ev_avg_err = sqrt(dNpT_ev_avg/total_number_of_events);
-        double mean_pT = pT_mean_array[ipT]/Qn_diff_vector_real[0][ipT];
-        double mean_pT_err = (pT_mean_array_err[ipT]/Qn_diff_vector_real[0][ipT] - mean_pT*mean_pT)/sqrt(Qn_diff_vector_real[0][ipT]);
+        double mean_pT, mean_pT_err;
+        if(dNpT_ev_avg > 0.)
+        {
+            mean_pT = pT_mean_array[ipT]/Qn_diff_vector_real[0][ipT];
+            mean_pT_err = ((pT_mean_array_err[ipT]/Qn_diff_vector_real[0][ipT] 
+                           - mean_pT*mean_pT)/sqrt(Qn_diff_vector_real[0][ipT]));
+        }
+        else
+        {
+            mean_pT = pT_array[ipT];
+            mean_pT_err = 0.0;
+        }
         output_diff << scientific << setw(18) << setprecision(8) 
                     << mean_pT << "   " << mean_pT_err << "   " 
                     << dNpT_ev_avg/mean_pT/dpT/(2*M_PI) << "   " 
                     << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI);
         for(int iorder = 1; iorder < order_max; iorder++)
         {
-            double vn_evavg_real = Qn_diff_vector_real[iorder][ipT]/Qn_diff_vector_real[0][ipT];
-            double vn_evavg_imag = Qn_diff_vector_imag[iorder][ipT]/Qn_diff_vector_real[0][ipT];
-            double vn_evavg_real_err = sqrt(Qn_diff_vector_real_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] - vn_evavg_real*vn_evavg_real)/sqrt(Qn_diff_vector_real[0][ipT]);
-            double vn_evavg_imag_err = sqrt(Qn_diff_vector_imag_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_diff_vector_real[0][ipT]);
-            output_diff << scientific << setw(18) << setprecision(8) 
-                        << vn_evavg_real << "   " << vn_evavg_real_err << "   " 
-                        << vn_evavg_imag << "   " << vn_evavg_imag_err;
+            if(dNpT_ev_avg > 0.)
+            {
+                double vn_evavg_real = Qn_diff_vector_real[iorder][ipT]/Qn_diff_vector_real[0][ipT];
+                double vn_evavg_imag = Qn_diff_vector_imag[iorder][ipT]/Qn_diff_vector_real[0][ipT];
+                double vn_evavg_real_err = sqrt(Qn_diff_vector_real_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] 
+                                                - vn_evavg_real*vn_evavg_real)/sqrt(Qn_diff_vector_real[0][ipT]);
+                double vn_evavg_imag_err = sqrt(Qn_diff_vector_imag_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] 
+                                                - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_diff_vector_real[0][ipT]);
+                output_diff << scientific << setw(18) << setprecision(8) 
+                            << vn_evavg_real << "   " << vn_evavg_real_err << "   " 
+                            << vn_evavg_imag << "   " << vn_evavg_imag_err;
+            }
+            else
+            {
+                output_diff << scientific << setw(18) << setprecision(8) 
+                            << 0.0e0 << "   " << 0.0e0 << "   " 
+                            << 0.0e0 << "   " << 0.0e0;
+            }
         }
         output_diff << endl;
     }
