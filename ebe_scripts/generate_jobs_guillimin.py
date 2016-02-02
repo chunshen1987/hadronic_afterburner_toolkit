@@ -5,7 +5,7 @@ from os import path, mkdir
 import shutil
 from glob import glob
 import subprocess
-
+import random
 
 def generate_script(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
@@ -22,8 +22,6 @@ def generate_script(folder_name):
 #PBS -o test.log
 #PBS -A cqn-654-ad
 #PBS -q sw
-#PBS -m bea
-#PBS -M chunshen1987@gmail.com
 #PBS -d %s
 
 mkdir UrQMD_results
@@ -44,7 +42,7 @@ done
 
 def generate_script_HBT(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '10:00:00'
+    walltime = '35:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
@@ -57,20 +55,21 @@ def generate_script_HBT(folder_name):
 #PBS -e test.err
 #PBS -o test.log
 #PBS -q sw
-#PBS -m bea
-#PBS -M chunshen1987@gmail.com
 #PBS -d %s
 
 mkdir HBT_results
-for iev in `ls UrQMD_events`
+for iev in `ls UrQMD_events | grep "particle_list"`
 do
+    eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd HBTcorrelation_MCafterburner
     rm -fr results
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
+    mv ../UrQMD_events/mixed_event_$eventid.dat results/particle_list_mixed_event.dat
     ./HBT_afterburner.e > output.log
     mv results/particle_list.dat ../UrQMD_events/$iev
-    mv results ../HBT_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    mv results/particle_list_mixed_event.dat ../UrQMD_events/mixed_event_$eventid.dat
+    mv results ../HBT_results/event_$eventid
     cd ..
 done
 
@@ -79,7 +78,7 @@ done
 
 def generate_script_spectra_and_vn(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '1:00:00'
+    walltime = '0:30:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
@@ -92,24 +91,22 @@ def generate_script_spectra_and_vn(folder_name):
 #PBS -e test.err
 #PBS -o test.log
 #PBS -q sw
-#PBS -m bea
-#PBS -M chunshen1987@gmail.com
 #PBS -d %s
 
 mkdir spvn_results
-for iev in `ls UrQMD_events`
+for iev in `ls UrQMD_events | grep "particle_list"`
 do
     cd HBTcorrelation_MCafterburner
     rm -fr results
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
-    ./HBT_afterburner.e particle_monval=211 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e particle_monval=-211 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e particle_monval=321 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e particle_monval=-321 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e particle_monval=2212 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e particle_monval=-2212 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e particle_monval=9999 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=9999 rap_type=0 >> output.log
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..
@@ -134,8 +131,6 @@ def generate_script_HBT_with_OSCAR(folder_name):
 #PBS -e test.err
 #PBS -o test.log
 #PBS -q sw
-#PBS -m bea
-#PBS -M chunshen1987@gmail.com
 #PBS -d %s
 
 mkdir HBT_results
@@ -159,11 +154,21 @@ def copy_UrQMD_events(number_of_cores, input_folder, working_folder):
     events_list = glob('%s/particle_list_*.dat' % input_folder)
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
+        event_id = events_list[iev].split('/')[-1].split('_')[-1].split('.')[0]
         folder_path = path.join(
             working_folder, 'event_%d' % folder_id, 
             'UrQMD_events', events_list[iev].split('/')[-1])
         bashCommand = "ln -s %s %s" % (
             path.abspath(events_list[iev]), folder_path)
+        subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
+        mixed_event_id = random.randint(0, len(events_list)-1)
+        while(mixed_event_id == iev):
+            mixed_event_id = random.randint(0, len(events_list)-1)
+        folder_path = path.join(
+            working_folder, 'event_%d' % folder_id, 
+            'UrQMD_events', 'mixed_event_%s.dat' % event_id)
+        bashCommand = "ln -s %s %s" % (
+            path.abspath(events_list[mixed_event_id]), folder_path)
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
 
 
