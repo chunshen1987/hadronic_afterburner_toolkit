@@ -23,6 +23,10 @@ class singleParticleSpectra
 
         int rap_type;
         double rap_min, rap_max;
+        int rapidity_distribution_flag;
+        int N_rap;
+        double rapidity_dis_min, rapidity_dis_max, drap;
+        double *rapidity_array, *dNdy_array;
 
         int total_number_of_events;
         double *Qn_vector_real, *Qn_vector_imag;
@@ -44,12 +48,16 @@ class singleParticleSpectra
         double *eta_s_array, *dNdetas_array;
 
     public:
-        singleParticleSpectra(ParameterReader *paraRdr_in, string path_in, particleSamples *particle_list_in);
+        singleParticleSpectra(ParameterReader *paraRdr_in, string path_in, 
+                              particleSamples *particle_list_in);
         ~singleParticleSpectra();
 
         void calculate_Qn_vector_shell();
         void calculate_Qn_vector(int event_id);
         void output_Qn_vectors();
+
+        void calculate_rapidity_distribution(int event_id);
+        void output_rapidity_distribution();
         
         void check_dNdSV(int event_id);
         void output_dNdSV();

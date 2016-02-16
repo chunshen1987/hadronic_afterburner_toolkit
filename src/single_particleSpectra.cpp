@@ -9,7 +9,9 @@
 
 using namespace std;
 
-singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string path_in, particleSamples *particle_list_in)
+singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, 
+                                             string path_in, 
+                                             particleSamples *particle_list_in)
 {
     paraRdr = paraRdr_in;
     path = path_in;
@@ -67,6 +69,19 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
     if(particle_monval == 9999)  // use pseudo-rapidity for all charged hadrons
         rap_type = 0;
 
+    rapidity_distribution_flag = paraRdr->getVal("rapidity_distribution");
+    N_rap = paraRdr->getVal("n_rap");
+    rapidity_dis_min = paraRdr->getVal("rapidity_dis_min");
+    rapidity_dis_max = paraRdr->getVal("rapidity_dis_max");
+    drap = (rapidity_dis_max - rapidity_dis_min)/(N_rap - 1.);
+    rapidity_array = new double [N_rap];
+    dNdy_array = new double [N_rap];
+    for(int i = 0; i < N_rap; i++)
+    {
+        rapidity_array[i] = rapidity_dis_min + i*drap;
+        dNdy_array[i] = 0.0;
+    }
+
     // check dN/dtau distribution
     check_spatial_flag = paraRdr->getVal("check_spatial_dis");
     if(check_spatial_flag == 1)
@@ -81,7 +96,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         dNdtau_array = new double [N_tau];
         for(int i = 0; i < N_tau; i++)
         {
-            tau_array[i] = 0.0;
+            tau_array[i] = tau_min + i*dtau;
             dNdtau_array[i] = 0.0;
         }
 
@@ -97,8 +112,8 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         dNdx2_array = new double [N_xpt];
         for(int i = 0; i < N_xpt; i++)
         {
-            xpt_array[i] = 0.0;
-            ypt_array[i] = 0.0;
+            xpt_array[i] = spatial_x_min + i*dspatial_x;
+            ypt_array[i] = spatial_x_min + i*dspatial_x;
             dNdx1_array[i] = 0.0;
             dNdx2_array[i] = 0.0;
         }
@@ -127,7 +142,7 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in, string
         dNdetas_array = new double [N_eta_s];
         for(int i = 0; i < N_eta_s; i++)
         {
-            eta_s_array[i] = 0.0;
+            eta_s_array[i] = eta_s_min + i*deta_s;
             dNdetas_array[i] = 0.0;
         }
     }
@@ -153,6 +168,12 @@ singleParticleSpectra::~singleParticleSpectra()
     delete [] Qn_diff_vector_imag;
     delete [] Qn_diff_vector_real_err;
     delete [] Qn_diff_vector_imag_err;
+
+    if(rapidity_distribution_flag == 1)
+    {
+        delete [] rapidity_array;
+        delete [] dNdy_array;
+    }
 
     if(check_spatial_flag == 1)
     {
@@ -180,7 +201,8 @@ void singleParticleSpectra::calculate_Qn_vector_shell()
     int buffer_size = particle_list->get_event_buffer_size();
     while(!particle_list->end_of_file())
     {
-        cout << "Reading event: " << event_id+1 << "-" << event_id + buffer_size << " ... " << flush;
+        cout << "Reading event: " << event_id+1 
+             << "-" << event_id + buffer_size << " ... " << flush;
         particle_list->read_in_particle_samples();
         cout << " processing ..." << flush;
         int nev = particle_list->get_number_of_events();
@@ -189,6 +211,9 @@ void singleParticleSpectra::calculate_Qn_vector_shell()
             event_id++;
             calculate_Qn_vector(iev);
 
+            if(rapidity_distribution_flag == 1)
+                calculate_rapidity_distribution(iev);
+
             if(check_spatial_flag == 1)
                 check_dNdSV(iev);
         }
@@ -196,6 +221,8 @@ void singleParticleSpectra::calculate_Qn_vector_shell()
     }
     total_number_of_events = event_id;
     output_Qn_vectors();
+    if(rapidity_distribution_flag == 1)
+        output_rapidity_distribution();
     if(check_spatial_flag == 1)
         output_dNdSV();
 }
@@ -265,9 +292,11 @@ void singleParticleSpectra::output_Qn_vectors()
         double vn_evavg_real = Qn_vector_real[iorder]/Qn_vector_real[0];
         double vn_evavg_imag = Qn_vector_imag[iorder]/Qn_vector_real[0];
         double vn_real_err = sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] 
-                                  - vn_evavg_real*vn_evavg_real)/sqrt(Qn_vector_real[0]);
+                                  - vn_evavg_real*vn_evavg_real)
+                             /sqrt(Qn_vector_real[0]);
         double vn_imag_err = sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] 
-                                  - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_vector_real[0]);
+                                  - vn_evavg_imag*vn_evavg_imag)
+                             /sqrt(Qn_vector_real[0]);
 
         output << scientific << setw(18) << setprecision(8) << iorder << "   " 
                << vn_evavg_real << "   " << vn_real_err << "   " 
@@ -277,7 +306,8 @@ void singleParticleSpectra::output_Qn_vectors()
     
     // pT-differential flow
     ostringstream filename_diff;
-    filename_diff << path << "/particle_" << particle_monval << "_vndata_diff.dat";
+    filename_diff << path 
+                  << "/particle_" << particle_monval << "_vndata_diff.dat";
     ofstream output_diff(filename_diff.str().c_str());
 
     for(int ipT = 0; ipT < npT - 1; ipT++)
@@ -289,7 +319,8 @@ void singleParticleSpectra::output_Qn_vectors()
         {
             mean_pT = pT_mean_array[ipT]/Qn_diff_vector_real[0][ipT];
             mean_pT_err = ((pT_mean_array_err[ipT]/Qn_diff_vector_real[0][ipT] 
-                           - mean_pT*mean_pT)/sqrt(Qn_diff_vector_real[0][ipT]));
+                           - mean_pT*mean_pT)
+                          /sqrt(Qn_diff_vector_real[0][ipT]));
         }
         else
         {
@@ -304,14 +335,23 @@ void singleParticleSpectra::output_Qn_vectors()
         {
             if(dNpT_ev_avg > 0.)
             {
-                double vn_evavg_real = Qn_diff_vector_real[iorder][ipT]/Qn_diff_vector_real[0][ipT];
-                double vn_evavg_imag = Qn_diff_vector_imag[iorder][ipT]/Qn_diff_vector_real[0][ipT];
-                double vn_evavg_real_err = sqrt(Qn_diff_vector_real_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] 
-                                                - vn_evavg_real*vn_evavg_real)/sqrt(Qn_diff_vector_real[0][ipT]);
-                double vn_evavg_imag_err = sqrt(Qn_diff_vector_imag_err[iorder][ipT]/Qn_diff_vector_real[0][ipT] 
-                                                - vn_evavg_imag*vn_evavg_imag)/sqrt(Qn_diff_vector_real[0][ipT]);
+                double vn_evavg_real = (Qn_diff_vector_real[iorder][ipT]
+                                        /Qn_diff_vector_real[0][ipT]);
+                double vn_evavg_imag = (Qn_diff_vector_imag[iorder][ipT]
+                                        /Qn_diff_vector_real[0][ipT]);
+                double vn_evavg_real_err = (
+                        sqrt(Qn_diff_vector_real_err[iorder][ipT]
+                                /Qn_diff_vector_real[0][ipT] 
+                             - vn_evavg_real*vn_evavg_real)
+                        /sqrt(Qn_diff_vector_real[0][ipT]));
+                double vn_evavg_imag_err = (
+                        sqrt(Qn_diff_vector_imag_err[iorder][ipT]
+                                /Qn_diff_vector_real[0][ipT] 
+                             - vn_evavg_imag*vn_evavg_imag)
+                        /sqrt(Qn_diff_vector_real[0][ipT]));
                 output_diff << scientific << setw(18) << setprecision(8) 
-                            << vn_evavg_real << "   " << vn_evavg_real_err << "   " 
+                            << vn_evavg_real << "   " 
+                            << vn_evavg_real_err << "   " 
                             << vn_evavg_imag << "   " << vn_evavg_imag_err;
             }
             else
@@ -324,6 +364,55 @@ void singleParticleSpectra::output_Qn_vectors()
         output_diff << endl;
     }
     output_diff.close();
+}
+
+void singleParticleSpectra::calculate_rapidity_distribution(int event_id)
+{
+    int number_of_particles = particle_list->get_number_of_particles(event_id);
+
+    for(int i = 0; i < number_of_particles; i++)
+    {
+        double pz_local = particle_list->get_particle(event_id, i).pz;
+        double E_local = particle_list->get_particle(event_id, i).E;
+
+        double rap_local;
+        if(rap_type == 0)
+        {
+            double mass = particle_list->get_particle(event_id, i).mass;
+            double pmag = sqrt(E_local*E_local - mass*mass);
+            rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
+        }
+        else
+            rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
+        
+        if(rap_local > rapidity_dis_min && rap_local < rapidity_dis_max)
+        {
+            int rap_idx = (int)((rap_local - rapidity_dis_min)/drap);
+            rapidity_array[rap_idx] += rap_local;
+            dNdy_array[rap_idx]++;
+        }
+    }
+}
+
+void singleParticleSpectra::output_rapidity_distribution()
+{
+    // first dN/dtau
+    ostringstream filename;
+    if(rap_type == 0)
+        filename << path << "/particle_" << particle_monval << "_dNdeta.dat";
+    else
+        filename << path << "/particle_" << particle_monval << "_dNdy.dat";
+    ofstream output(filename.str().c_str());
+    for(int i = 0; i < N_rap; i++)
+    {
+        rapidity_array[i] = rapidity_array[i]/(dNdy_array[i] + 1.);
+        dNdy_array[i] = dNdy_array[i]/total_number_of_events;
+        double dNdy_err = sqrt(dNdy_array[i]/total_number_of_events);
+        output << scientific << setw(18) << setprecision(8)
+               << rapidity_array[i] << "   " << dNdy_array[i]/drap << "   " 
+               << dNdy_err/drap << endl;
+    }
+    output.close();
 }
 
 void singleParticleSpectra::check_dNdSV(int event_id)
@@ -366,7 +455,8 @@ void singleParticleSpectra::check_dNdSV(int event_id)
                 if(x_local > spatial_x_min && x_local < spatial_x_max)
                 {
                     double random = drand48()*intrinsic_dx;
-                    int idx = (int)((x_local + random - spatial_x_min)/dspatial_x);
+                    int idx = (int)((x_local + random - spatial_x_min)
+                                    /dspatial_x);
                     xpt_array[idx] += x_local;
                     dNdx1_array[idx]++;
                 }
@@ -376,7 +466,8 @@ void singleParticleSpectra::check_dNdSV(int event_id)
                 if(y_local > spatial_x_min && y_local < spatial_x_max)
                 {
                     double random = drand48()*intrinsic_dx;
-                    int idx = (int)((y_local + random - spatial_x_min)/dspatial_x);
+                    int idx = (int)((y_local + random - spatial_x_min)
+                                    /dspatial_x);
                     ypt_array[idx] += y_local;
                     dNdx2_array[idx]++;
                 }
@@ -392,7 +483,8 @@ void singleParticleSpectra::check_dNdSV(int event_id)
                     if(x_local > spatial_x_min && x_local < spatial_x_max)
                     {
                         double random = drand48()*intrinsic_dx;
-                        int idx_x = (int)((x_local + random - spatial_x_min)/dspatial_x);
+                        int idx_x = (int)((x_local + random - spatial_x_min)
+                                          /dspatial_x);
                         dNdtaudx1_array[idx_tau][idx_x]++;
                     }
                 }
@@ -406,14 +498,16 @@ void singleParticleSpectra::check_dNdSV(int event_id)
                     if(y_local > spatial_x_min && y_local < spatial_x_max)
                     {
                         double random = drand48()*intrinsic_dx;
-                        int idx_x = (int)((y_local + random - spatial_x_min)/dspatial_x);
+                        int idx_x = (int)((y_local + random - spatial_x_min)
+                                          /dspatial_x);
                         dNdtaudx2_array[idx_tau][idx_x]++;
                     }
                 }
             }
 
             // third dN/deta_s
-            double etas_local = 0.5*log((t_local + z_local)/(t_local - z_local));
+            double etas_local = (0.5*log((t_local + z_local)
+                                         /(t_local - z_local)));
             double y_minus_etas = rap_local - etas_local;
             if(y_minus_etas > eta_s_min && y_minus_etas < eta_s_max)
             {
@@ -434,7 +528,7 @@ void singleParticleSpectra::output_dNdSV()
     ofstream output(filename.str().c_str());
     for(int i = 0; i < N_tau; i++)
     {
-        tau_array[i] = tau_array[i]/(dNdtau_array[i] + 1e-15);
+        tau_array[i] = tau_array[i]/(dNdtau_array[i] + 1.);
         dNdtau_array[i] = dNdtau_array[i]/total_number_of_events;
         double dNdtau_err = sqrt(dNdtau_array[i]/total_number_of_events);
         output << scientific << setw(18) << setprecision(8)
@@ -449,15 +543,17 @@ void singleParticleSpectra::output_dNdSV()
     ofstream output2(filename2.str().c_str());
     for(int i = 0; i < N_xpt; i++)
     {
-        xpt_array[i] = xpt_array[i]/(dNdx1_array[i] + 1e-15);
-        ypt_array[i] = ypt_array[i]/(dNdx2_array[i] + 1e-15);
+        xpt_array[i] = xpt_array[i]/(dNdx1_array[i] + 1.);
+        ypt_array[i] = ypt_array[i]/(dNdx2_array[i] + 1.);
         dNdx1_array[i] = dNdx1_array[i]/total_number_of_events;
         dNdx2_array[i] = dNdx2_array[i]/total_number_of_events;
         double dNdx1_err = sqrt(dNdx1_array[i]/total_number_of_events);
         double dNdx2_err = sqrt(dNdx2_array[i]/total_number_of_events);
         output2 << scientific << setw(18) << setprecision(8)
-                << xpt_array[i] << "   " << dNdx1_array[i]/dspatial_x << "   " << dNdx1_err/dspatial_x << "   " 
-                << ypt_array[i] << "   " << dNdx2_array[i]/dspatial_x << "   " << dNdx2_err/dspatial_x << endl;
+                << xpt_array[i] << "   " << dNdx1_array[i]/dspatial_x << "   " 
+                << dNdx1_err/dspatial_x << "   " 
+                << ypt_array[i] << "   " << dNdx2_array[i]/dspatial_x << "   " 
+                << dNdx2_err/dspatial_x << endl;
     }
     output2.close();
     
@@ -471,8 +567,10 @@ void singleParticleSpectra::output_dNdSV()
     {
         for(int j = 0; j < N_xpt; j++)
         {
-            dNdtaudx1_array[i][j] = dNdtaudx1_array[i][j]/total_number_of_events;
-            dNdtaudx2_array[i][j] = dNdtaudx2_array[i][j]/total_number_of_events;
+            dNdtaudx1_array[i][j] = (
+                            dNdtaudx1_array[i][j]/total_number_of_events);
+            dNdtaudx2_array[i][j] = (
+                            dNdtaudx2_array[i][j]/total_number_of_events);
             output2_1 << scientific << setw(18) << setprecision(8)
                       << dNdtaudx1_array[i][j]/dspatial_x/dtau << "   ";
             output2_2 << scientific << setw(18) << setprecision(8)
@@ -490,7 +588,7 @@ void singleParticleSpectra::output_dNdSV()
     ofstream output3(filename3.str().c_str());
     for(int i = 0; i < N_eta_s; i++)
     {
-        eta_s_array[i] = eta_s_array[i]/(dNdetas_array[i] + 1e-15);
+        eta_s_array[i] = eta_s_array[i]/(dNdetas_array[i] + 1.);
         dNdetas_array[i] = dNdetas_array[i]/total_number_of_events;
         double dNdetas_err = sqrt(dNdetas_array[i]/total_number_of_events);
         output3 << scientific << setw(18) << setprecision(8)
