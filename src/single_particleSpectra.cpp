@@ -70,16 +70,39 @@ singleParticleSpectra::singleParticleSpectra(ParameterReader *paraRdr_in,
         rap_type = 0;
 
     rapidity_distribution_flag = paraRdr->getVal("rapidity_distribution");
-    N_rap = paraRdr->getVal("n_rap");
-    rapidity_dis_min = paraRdr->getVal("rapidity_dis_min");
-    rapidity_dis_max = paraRdr->getVal("rapidity_dis_max");
-    drap = (rapidity_dis_max - rapidity_dis_min)/(N_rap - 1.);
-    rapidity_array = new double [N_rap];
-    dNdy_array = new double [N_rap];
-    for(int i = 0; i < N_rap; i++)
+    if(rapidity_distribution_flag == 1)
     {
-        rapidity_array[i] = rapidity_dis_min + i*drap;
-        dNdy_array[i] = 0.0;
+        N_rap = paraRdr->getVal("n_rap");
+        rapidity_dis_min = paraRdr->getVal("rapidity_dis_min");
+        rapidity_dis_max = paraRdr->getVal("rapidity_dis_max");
+        drap = (rapidity_dis_max - rapidity_dis_min)/(N_rap - 1.);
+        rapidity_array = new double [N_rap];
+        dNdy_array = new double [N_rap];
+        for(int i = 0; i < N_rap; i++)
+        {
+            rapidity_array[i] = rapidity_dis_min + i*drap;
+            dNdy_array[i] = 0.0;
+        }
+        vn_rapidity_dis_pT_min = paraRdr->getVal("vn_rapidity_dis_pT_min");
+        vn_rapidity_dis_pT_max = paraRdr->getVal("vn_rapidity_dis_pT_max");
+        vn_real_rapidity_dis_array = new double* [N_rap];
+        vn_imag_rapidity_dis_array = new double* [N_rap];
+        vn_real_rapidity_dis_array_err = new double* [N_rap];
+        vn_imag_rapidity_dis_array_err = new double* [N_rap];
+        for(int i = 0; i < N_rap; i++)
+        {
+            vn_real_rapidity_dis_array[i] = new double [order_max];
+            vn_imag_rapidity_dis_array[i] = new double [order_max];
+            vn_real_rapidity_dis_array_err[i] = new double [order_max];
+            vn_imag_rapidity_dis_array_err[i] = new double [order_max];
+            for(int j = 0; j < order_max; j++)
+            {
+                vn_real_rapidity_dis_array[i][j] = 0.0;
+                vn_imag_rapidity_dis_array[i][j] = 0.0;
+                vn_real_rapidity_dis_array_err[i][j] = 0.0;
+                vn_imag_rapidity_dis_array_err[i][j] = 0.0;
+            }
+        }
     }
 
     // check dN/dtau distribution
@@ -173,6 +196,17 @@ singleParticleSpectra::~singleParticleSpectra()
     {
         delete [] rapidity_array;
         delete [] dNdy_array;
+        for(int i = 0; i < N_rap; i++)
+        {
+            delete [] vn_real_rapidity_dis_array[i];
+            delete [] vn_imag_rapidity_dis_array[i];
+            delete [] vn_real_rapidity_dis_array_err[i];
+            delete [] vn_imag_rapidity_dis_array_err[i];
+        }
+        delete [] vn_real_rapidity_dis_array;
+        delete [] vn_imag_rapidity_dis_array;
+        delete [] vn_real_rapidity_dis_array_err;
+        delete [] vn_imag_rapidity_dis_array_err;
     }
 
     if(check_spatial_flag == 1)
@@ -390,19 +424,42 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id)
             int rap_idx = (int)((rap_local - rapidity_dis_min)/drap);
             rapidity_array[rap_idx] += rap_local;
             dNdy_array[rap_idx]++;
+            
+            // calcualte vn
+            double px_local = particle_list->get_particle(event_id, i).px;
+            double py_local = particle_list->get_particle(event_id, i).py;
+            double p_perp = sqrt(px_local*px_local + py_local*py_local);
+            if(p_perp > vn_rapidity_dis_pT_min 
+               && p_perp < vn_rapidity_dis_pT_max)
+            {
+                double p_phi = atan2(py_local, px_local);
+                for(int iorder = 0; iorder < order_max; iorder++)
+                {
+                    double cos_nphi = cos(iorder*p_phi);
+                    double sin_nphi = sin(iorder*p_phi);
+                    vn_real_rapidity_dis_array[rap_idx][iorder] += cos_nphi;
+                    vn_imag_rapidity_dis_array[rap_idx][iorder] += sin_nphi;
+                    vn_real_rapidity_dis_array_err[rap_idx][iorder] += (
+                                                            cos_nphi*cos_nphi);
+                    vn_imag_rapidity_dis_array_err[rap_idx][iorder] += (
+                                                            sin_nphi*sin_nphi);
+                }
+            }
         }
     }
 }
 
 void singleParticleSpectra::output_rapidity_distribution()
 {
-    // first dN/dtau
     ostringstream filename;
     if(rap_type == 0)
         filename << path << "/particle_" << particle_monval << "_dNdeta.dat";
     else
         filename << path << "/particle_" << particle_monval << "_dNdy.dat";
     ofstream output(filename.str().c_str());
+    output << "#y  dN/dy  dN/dy_err  vn_real  vn_real_err  " 
+           << "vn_imag  vn_imag_err  vn_rms   vn_rms_err"
+           << endl;
     for(int i = 0; i < N_rap; i++)
     {
         rapidity_array[i] = rapidity_array[i]/(dNdy_array[i] + 1.);
@@ -410,7 +467,36 @@ void singleParticleSpectra::output_rapidity_distribution()
         double dNdy_err = sqrt(dNdy_array[i]/total_number_of_events);
         output << scientific << setw(18) << setprecision(8)
                << rapidity_array[i] << "   " << dNdy_array[i]/drap << "   " 
-               << dNdy_err/drap << endl;
+               << dNdy_err/drap << "   ";
+        for(int iorder = 1; iorder < order_max; iorder++)
+        {
+            double vn_evavg_real = (vn_real_rapidity_dis_array[i][iorder]
+                              /(vn_real_rapidity_dis_array[i][0] + 1e-30));
+            double vn_evavg_imag = (vn_imag_rapidity_dis_array[i][iorder]
+                              /(vn_real_rapidity_dis_array[i][0] + 1e-30));
+            double vn_real_err = (
+                sqrt(vn_real_rapidity_dis_array_err[i][iorder]
+                     /(vn_real_rapidity_dis_array[i][0] + 1e-30)
+                     - vn_evavg_real*vn_evavg_real)
+                /sqrt(vn_real_rapidity_dis_array[i][0] + 1e-30));
+            double vn_imag_err = (
+                sqrt(vn_imag_rapidity_dis_array_err[i][iorder]
+                     /(vn_real_rapidity_dis_array[i][0] + 1e-30)
+                     - vn_evavg_imag*vn_evavg_imag)
+                /sqrt(vn_real_rapidity_dis_array[i][0] + 1e-30));
+
+            double vn_rms = sqrt(vn_evavg_real*vn_evavg_real 
+                                 + vn_evavg_imag*vn_evavg_imag);
+            double vn_rms_err = (sqrt(pow(vn_evavg_real*vn_real_err, 2)
+                                      + pow(vn_evavg_imag*vn_imag_err, 2))
+                                 /(vn_rms + 1e-30));
+         
+            output << scientific << setw(18) << setprecision(8) 
+                   << vn_evavg_real << "   " << vn_real_err << "   " 
+                   << vn_evavg_imag << "   " << vn_imag_err << "   "
+                   << vn_rms << "   " << vn_rms_err;
+        }
+        output << endl;
     }
     output.close();
 }

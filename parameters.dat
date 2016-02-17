@@ -18,28 +18,30 @@ event_buffer_size = 2000      # the number of events read in at once
 
 # Parameters for single particle spectra and vn
 order_max = 6                 # the maximum harmonic order of anisotropic flow
+
 npT = 30                      # number of pT points for pT-differential 
                               # spectra and vn
 pT_min = 0.1                  # the minimum value of transverse momentum (GeV)
 pT_max = 3.0                  # the maximum value of transverse momentum (GeV)
-
-rap_type = 1                  # 0: for pseudo-rapidity; 1: for rapidity
 rap_min = -0.5                # minimum value of rapidity integration 
                               # range for mid-rapidity observables 
 rap_max = 0.5                 # maximum value of rapidity integration
                               # range for mid-rapidity observables 
+
+rap_type = 0                  # 0: for pseudo-rapidity; 1: for rapidity
 rapidity_distribution = 1     # 1: output particle rapidity distribution 
 n_rap = 60                    # numpber of points in rapidity distr.
 rapidity_dis_min = -2.95      # minimum value of particle rapidity 
                               # distribution
 rapidity_dis_max = 2.95       # maximum value of particle rapidity 
                               # distribution
+vn_rapidity_dis_pT_min = 0.3  # the minimum value of pT for vn rap. distr.
+vn_rapidity_dis_pT_max = 3.0  # the maximum value of pT for vn rap. distr.
 
 check_spatial_dis = 1         # flag to check dN/dtau distribution
 intrinsic_detas = 0.1         # deta_s in the output samples
 intrinsic_dtau = 0.01         # dtau in the output samples
 intrinsic_dx = 0.1            # dx in the output samples
-
 
 # Parameters for HBT correlation functions
 needed_number_of_pairs = 30000000    # number of pairs for eack K point

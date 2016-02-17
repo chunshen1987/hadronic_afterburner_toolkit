@@ -27,6 +27,10 @@ class singleParticleSpectra
         int N_rap;
         double rapidity_dis_min, rapidity_dis_max, drap;
         double *rapidity_array, *dNdy_array;
+        double vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max;
+        double **vn_real_rapidity_dis_array, **vn_imag_rapidity_dis_array;
+        double **vn_real_rapidity_dis_array_err;
+        double **vn_imag_rapidity_dis_array_err;
 
         int total_number_of_events;
         double *Qn_vector_real, *Qn_vector_imag;
