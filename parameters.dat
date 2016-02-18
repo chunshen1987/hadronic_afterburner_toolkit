@@ -1,16 +1,16 @@
-read_in_mode = 0              # mode for reading in particle information 
+read_in_mode = 1              # mode for reading in particle information 
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from hdf5 file (future)
                               # 3: reads outputs from Sangwook's UrQMD outputs 
                               #    (without header lines)
 
-run_mode = 0                  # running mode for the program
+run_mode = 1                  # running mode for the program
                               # 0: collect single particle spectra and vn
                               # 1: compute HBT correlation function
 
 particle_monval = 211         # particle Monte-Carlo number
-distinguish_isospin = 0       # flag whether to distinguish the isospin of 
+distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 
 event_buffer_size = 2000      # the number of events read in at once
@@ -19,24 +19,24 @@ event_buffer_size = 2000      # the number of events read in at once
 # Parameters for single particle spectra and vn
 order_max = 6                 # the maximum harmonic order of anisotropic flow
 
-npT = 30                      # number of pT points for pT-differential 
+npT = 31                      # number of pT points for pT-differential 
                               # spectra and vn
-pT_min = 0.1                  # the minimum value of transverse momentum (GeV)
-pT_max = 3.0                  # the maximum value of transverse momentum (GeV)
+pT_min = 0.05                 # the minimum value of transverse momentum (GeV)
+pT_max = 3.05                 # the maximum value of transverse momentum (GeV)
 rap_min = -0.5                # minimum value of rapidity integration 
                               # range for mid-rapidity observables 
 rap_max = 0.5                 # maximum value of rapidity integration
                               # range for mid-rapidity observables 
 
-rap_type = 0                  # 0: for pseudo-rapidity; 1: for rapidity
+rap_type = 1                  # 0: for pseudo-rapidity; 1: for rapidity
 rapidity_distribution = 1     # 1: output particle rapidity distribution 
-n_rap = 60                    # numpber of points in rapidity distr.
-rapidity_dis_min = -2.95      # minimum value of particle rapidity 
+n_rap = 50                    # numpber of points in rapidity distr.
+rapidity_dis_min = -4.90      # minimum value of particle rapidity 
                               # distribution
-rapidity_dis_max = 2.95       # maximum value of particle rapidity 
+rapidity_dis_max = 4.90       # maximum value of particle rapidity 
                               # distribution
-vn_rapidity_dis_pT_min = 0.3  # the minimum value of pT for vn rap. distr.
-vn_rapidity_dis_pT_max = 3.0  # the maximum value of pT for vn rap. distr.
+vn_rapidity_dis_pT_min = 0.15 # the minimum value of pT for vn rap. distr.
+vn_rapidity_dis_pT_max = 2.0  # the maximum value of pT for vn rap. distr.
 
 check_spatial_dis = 1         # flag to check dN/dtau distribution
 intrinsic_detas = 0.1         # deta_s in the output samples
@@ -45,9 +45,9 @@ intrinsic_dx = 0.1            # dx in the output samples
 
 # Parameters for HBT correlation functions
 needed_number_of_pairs = 30000000    # number of pairs for eack K point
-number_of_mixed_events = 1000        # number of the mixed events in the 
+number_of_mixed_events = 250         # number of the mixed events in the 
                                      # denorminator
-number_of_oversample_events = 2000   # number of the combined events in the 
+number_of_oversample_events = 500    # number of the combined events in the 
                                      # numerator
 azimuthal_flag = 0                   # 0: compute the azimuthal averaged HBT 
                                      #    correlation function
