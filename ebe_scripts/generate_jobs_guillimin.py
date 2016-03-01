@@ -86,7 +86,7 @@ done
 
 def generate_script_HBT(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '35:00:00'
+    walltime = '20:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
@@ -144,13 +144,19 @@ do
     rm -fr results
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
-    ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=9999 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..

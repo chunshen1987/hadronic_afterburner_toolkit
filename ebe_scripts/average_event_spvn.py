@@ -218,11 +218,14 @@ for ipart, particle_id in enumerate(particle_list):
     dN_spectra_err = std(pT_array*dN_array, 0)/pT_spectra/sqrt(nev)
 
     # calculate mean pT
-    mean_pT = sum(pT_spectra**2.*dN_spectra)/sum(pT_spectra*dN_spectra)
-    mean_pT_upper = (sum(pT_spectra**2.*(dN_spectra+dN_spectra_err))
-                     /sum(pT_spectra*(dN_spectra+dN_spectra_err)))
-    mean_pT_lower = (sum(pT_spectra**2.*(dN_spectra-dN_spectra_err))
-                     /sum(pT_spectra*(dN_spectra-dN_spectra_err)))
+    pT_interp = linspace(0.05, 2.95, 30)
+    dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra)))
+    dN_interp_err = interp(pT_interp, pT_spectra, dN_spectra_err)
+    mean_pT = sum(pT_interp**2.*dN_interp)/sum(pT_interp*dN_interp)
+    mean_pT_upper = (sum(pT_interp**2.*(dN_interp+dN_interp_err))
+                     /sum(pT_interp*(dN_interp+dN_interp_err)))
+    mean_pT_lower = (sum(pT_interp**2.*(dN_interp-dN_interp_err))
+                     /sum(pT_interp*(dN_interp-dN_interp_err)))
     mean_pT_err = max(abs(mean_pT_upper - mean_pT), 
                       abs(mean_pT - mean_pT_lower))
 
@@ -307,7 +310,40 @@ for ipart, particle_id in enumerate(particle_list):
         ( std(vn_diff_atlas_real, 0)/sqrt(nev)/mean(vn_diff_atlas_denorm, 0)
           /vn_denorm)**2.
         + (vn_diff_SP_atlas*vn_denorm_err/vn_denorm)**2.)
+    
+    # then particle rapidity distribution
+    if particle_id == '9999':
+        file_name = 'particle_%s_dNdeta.dat' % particle_id
+    else:
+        file_name = 'particle_%s_dNdy.dat' % particle_id
 
+    eta_array = []
+    dN_array = []
+    vn_array = []
+    for ifolder in range(nev):
+        results_folder = path.abspath(file_folder_list[ifolder])
+        temp_data = loadtxt(path.join(results_folder, file_name))
+
+        eta_array.append(temp_data[:, 0])
+        dN_array.append(temp_data[:, 1])
+        temp_vn_array = []
+        for iorder in range(1, n_order):
+            vn_real = temp_data[:, 6*iorder-3]
+            vn_imag = temp_data[:, 6*iorder-1]
+            vn = vn_real + 1j*vn_imag
+            temp_vn_array.append(vn)
+        vn_array.append(temp_vn_array)
+
+    eta_array = array(eta_array)
+    dN_array = array(dN_array)
+    vn_array = array(vn_array)
+
+    eta_point = mean(eta_array, 0)
+    dNdeta = mean(dN_array, 0)
+    dNdeta_err = std(dN_array, 0)/sqrt(nev)
+    vn_eta = sqrt(mean(abs(vn_array)**2., 0))
+    vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
+    
     # finally, output all the results
     output_filename = "%s_integrated_observables.dat" % particle_name_list[ipart]
     f = open(output_filename, 'w')
@@ -393,6 +429,23 @@ for ipart, particle_id in enumerate(particle_list):
         for iorder in range(1, n_order):
             f.write("%.10e  %.10e  " % (vn_diff_SP_atlas[iorder-1, ipT], 
                                         vn_diff_SP_atlas_err[iorder-1, ipT]))
+        f.write("\n")
+    f.close()
+    shutil.move(output_filename, avg_folder)
+
+    output_filename = ("%s_rapidity_distribution.dat" 
+                       % particle_name_list[ipart])
+    f = open(output_filename, 'w')
+    if(particle_id == '9999'):
+        f.write("#eta  dN/deta  dN/deta_err  vn{2}(eta)  vn{2}(eta)_err\n")
+    else:
+        f.write("#y  dN/dy  dN/dy_err  vn{2}(y)  vn{2}(y)_err\n")
+    for ieta in range(len(eta_point)):
+        f.write("%.10e  %.10e  %.10e  "
+                % (eta_point[ieta], dNdeta[ieta], dNdeta_err[ieta]))
+        for iorder in range(1, n_order):
+            f.write("%.10e  %.10e  " % (vn_eta[iorder-1, ieta], 
+                                        vn_eta_err[iorder-1, ieta]))
         f.write("\n")
     f.close()
     shutil.move(output_filename, avg_folder)
