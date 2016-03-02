@@ -19,6 +19,10 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
     run_mode = paraRdr->getVal("run_mode");
+    if(run_mode == 1)
+        reject_decay_flag = paraRdr->getVal("reject_decay_flag");
+    else
+        reject_decay_flag = 0;
     
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
@@ -118,7 +122,7 @@ void particleSamples::get_UrQMD_id(int monval)
         particle_urqmd_id = 106;
         particle_urqmd_isospin = 1;
     }
-    else if(monval == -321)  // Kaon^+
+    else if(monval == -321)  // Kaon^-
     {
         particle_urqmd_id = -106;
         particle_urqmd_isospin = 1;
@@ -214,7 +218,8 @@ int particleSamples::read_in_particle_samples_mixed_event()
     return(0);
 }
 
-int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge)
+int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge, 
+                                          int parent_proc_type)
 {
     int pick_flag = 0;
     if(particle_urqmd_id == 9999)  // charged hadrons
@@ -235,14 +240,22 @@ int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge)
     {
         if(flag_isospin == 0)
         {
-            if(pid == particle_urqmd_id 
-               && abs(iso3) == abs(particle_urqmd_isospin))
+            if(pid == particle_urqmd_id)
                 pick_flag = 1;
         }
         else
         {
             if(pid == particle_urqmd_id && iso3 == particle_urqmd_isospin)
-                pick_flag = 1;
+            {
+                if(reject_decay_flag == 1 && parent_proc_type == 20)
+                {
+                    pick_flag = 0;
+                }
+                else
+                {
+                    pick_flag = 1;
+                }
+            }
         }
 
     }
@@ -385,6 +398,7 @@ int particleSamples::read_in_particle_samples_UrQMD()
     string temp_string;
     int n_particle;
     double dummy;
+    int parent_proc_type;
     int ievent;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
@@ -414,12 +428,13 @@ int particleSamples::read_in_particle_samples_UrQMD()
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
-                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge;
-                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, urqmd_charge);
+                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
+                      >> dummy >> dummy >> parent_proc_type;
+                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, 
+                                                 urqmd_charge, parent_proc_type);
                 if(pick_flag == 1)
                 {
                      particle_info *temp_particle_info = new particle_info;
-                     temp2 >> dummy >> dummy >> dummy;
                      temp2 >> temp_particle_info->t
                            >> temp_particle_info->x 
                            >> temp_particle_info->y
@@ -449,6 +464,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event()
     string temp_string;
     int n_particle;
     double dummy;
+    int parent_proc_type;
     int ievent;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
@@ -478,12 +494,13 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event()
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
-                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge;
-                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, urqmd_charge);
+                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
+                      >> dummy >> dummy >> parent_proc_type;
+                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, 
+                                                 urqmd_charge, parent_proc_type);
                 if(pick_flag == 1)
                 {
                      particle_info *temp_particle_info = new particle_info;
-                     temp2 >> dummy >> dummy >> dummy;
                      temp2 >> temp_particle_info->t
                            >> temp_particle_info->x 
                            >> temp_particle_info->y
@@ -513,6 +530,7 @@ int particleSamples::read_in_particle_samples_Sangwook()
     string temp_string;
     int n_particle;
     double dummy;
+    int parent_proc_type;
     int ievent;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
@@ -538,22 +556,24 @@ int particleSamples::read_in_particle_samples_Sangwook()
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
-                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge;
-                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, urqmd_charge);
+                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
+                      >> dummy >> dummy >> parent_proc_type;
+
+                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, 
+                                                 urqmd_charge, parent_proc_type);
                 if(pick_flag == 1)
                 {
-                     particle_info *temp_particle_info = new particle_info;
-                     temp2 >> dummy >> dummy >> dummy;
-                     temp2 >> temp_particle_info->t
-                           >> temp_particle_info->x 
-                           >> temp_particle_info->y
-                           >> temp_particle_info->z 
-                           >> temp_particle_info->E
-                           >> temp_particle_info->px 
-                           >> temp_particle_info->py
-                           >> temp_particle_info->pz ;
-                     temp_particle_info->mass = temp_mass;
-                     (*particle_list)[idx]->push_back(*temp_particle_info);
+                    particle_info *temp_particle_info = new particle_info;
+                    temp2 >> temp_particle_info->t
+                          >> temp_particle_info->x 
+                          >> temp_particle_info->y
+                          >> temp_particle_info->z 
+                          >> temp_particle_info->E
+                          >> temp_particle_info->px 
+                          >> temp_particle_info->py
+                          >> temp_particle_info->pz ;
+                    temp_particle_info->mass = temp_mass;
+                    (*particle_list)[idx]->push_back(*temp_particle_info);
                 }
             }
         }
@@ -573,6 +593,7 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook()
     string temp_string;
     int n_particle;
     double dummy;
+    int parent_proc_type;
     int ievent;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
@@ -598,22 +619,23 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook()
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
-                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge;
-                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, urqmd_charge);
+                      >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
+                      >> dummy >> dummy >> parent_proc_type;
+                pick_flag = decide_to_pick_UrQMD(urqmd_pid, urqmd_iso3, 
+                                                 urqmd_charge, parent_proc_type);
                 if(pick_flag == 1)
                 {
-                     particle_info *temp_particle_info = new particle_info;
-                     temp2 >> dummy >> dummy >> dummy;
-                     temp2 >> temp_particle_info->t
-                           >> temp_particle_info->x 
-                           >> temp_particle_info->y
-                           >> temp_particle_info->z 
-                           >> temp_particle_info->E
-                           >> temp_particle_info->px 
-                           >> temp_particle_info->py
-                           >> temp_particle_info->pz ;
-                     temp_particle_info->mass = temp_mass;
-                     (*particle_list_mixed_event)[idx]->push_back(*temp_particle_info);
+                    particle_info *temp_particle_info = new particle_info;
+                    temp2 >> temp_particle_info->t
+                          >> temp_particle_info->x 
+                          >> temp_particle_info->y
+                          >> temp_particle_info->z 
+                          >> temp_particle_info->E
+                          >> temp_particle_info->px 
+                          >> temp_particle_info->py
+                          >> temp_particle_info->pz ;
+                    temp_particle_info->mass = temp_mass;
+                    (*particle_list_mixed_event)[idx]->push_back(*temp_particle_info);
                 }
             }
         }

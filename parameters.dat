@@ -44,6 +44,11 @@ intrinsic_dtau = 0.01         # dtau in the output samples
 intrinsic_dx = 0.1            # dx in the output samples
 
 # Parameters for HBT correlation functions
+reject_decay_flag = 0         # reject particles from resonance decays
+                              # 0: no rejection
+                              # 1: reject particles from all decay channels
+                              # 2: reject particles only from 
+                              #    long lived resonance decays (future)
 needed_number_of_pairs = 30000000    # number of pairs for eack K point
 number_of_mixed_events = 500         # number of the mixed events in the 
                                      # denorminator
