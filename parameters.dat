@@ -49,6 +49,8 @@ reject_decay_flag = 0         # reject particles from resonance decays
                               # 1: reject particles from all decay channels
                               # 2: reject particles only from 
                               #    long lived resonance decays (future)
+tau_reject = 10.              # reject decay particle whose tau_f > tau_reject
+                              # only effective when reject_decay_flag == 2
 needed_number_of_pairs = 30000000    # number of pairs for eack K point
 number_of_mixed_events = 500         # number of the mixed events in the 
                                      # denorminator

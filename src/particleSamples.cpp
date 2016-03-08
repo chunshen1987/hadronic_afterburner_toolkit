@@ -20,9 +20,15 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     read_in_mode = paraRdr->getVal("read_in_mode");
     run_mode = paraRdr->getVal("run_mode");
     if(run_mode == 1)
+    {
         reject_decay_flag = paraRdr->getVal("reject_decay_flag");
+        tau_reject = paraRdr->getVal("tau_reject");
+    }
     else
+    {
         reject_decay_flag = 0;
+        tau_reject = 10000.;
+    }
     
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
@@ -241,7 +247,16 @@ int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge,
         if(flag_isospin == 0)
         {
             if(pid == particle_urqmd_id)
-                pick_flag = 1;
+            {
+                if(reject_decay_flag == 1 && parent_proc_type == 20)
+                {
+                    pick_flag = 0;
+                }
+                else
+                {
+                    pick_flag = 1;
+                }
+            }
         }
         else
         {
@@ -442,9 +457,30 @@ int particleSamples::read_in_particle_samples_UrQMD()
                            >> temp_particle_info->E
                            >> temp_particle_info->px 
                            >> temp_particle_info->py
-                           >> temp_particle_info->pz ;
+                           >> temp_particle_info->pz;
                      temp_particle_info->mass = temp_mass;
-                     (*particle_list)[idx]->push_back(*temp_particle_info);
+                     if(reject_decay_flag == 2 && parent_proc_type == 20)
+                     {
+                         double tau = sqrt(
+                             temp_particle_info->t*temp_particle_info->t
+                             - temp_particle_info->z*temp_particle_info->z);
+                         if(tau > tau_reject)
+                         {
+                             pick_flag = 0;
+                         }
+                         else
+                         {
+                             pick_flag = 1;
+                         }
+                     }
+                     if(pick_flag == 1)
+                     {
+                         (*particle_list)[idx]->push_back(*temp_particle_info);
+                     }
+                     else
+                     {
+                         delete temp_particle_info;
+                     }
                 }
             }
         }
@@ -510,7 +546,28 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event()
                            >> temp_particle_info->py
                            >> temp_particle_info->pz ;
                      temp_particle_info->mass = temp_mass;
-                     (*particle_list_mixed_event)[idx]->push_back(*temp_particle_info);
+                     if(reject_decay_flag == 2 && parent_proc_type == 20)
+                     {
+                         double tau = sqrt(
+                             temp_particle_info->t*temp_particle_info->t
+                             - temp_particle_info->z*temp_particle_info->z);
+                         if(tau > tau_reject)
+                         {
+                             pick_flag = 0;
+                         }
+                         else
+                         {
+                             pick_flag = 1;
+                         }
+                     }
+                     if(pick_flag == 1)
+                     {
+                         (*particle_list_mixed_event)[idx]->push_back(*temp_particle_info);
+                     }
+                     else
+                     {
+                         delete temp_particle_info;
+                     }
                 }
             }
         }
@@ -573,7 +630,28 @@ int particleSamples::read_in_particle_samples_Sangwook()
                           >> temp_particle_info->py
                           >> temp_particle_info->pz ;
                     temp_particle_info->mass = temp_mass;
-                    (*particle_list)[idx]->push_back(*temp_particle_info);
+                    if(reject_decay_flag == 2 && parent_proc_type == 20)
+                    {
+                        double tau = sqrt(
+                            temp_particle_info->t*temp_particle_info->t
+                            - temp_particle_info->z*temp_particle_info->z);
+                        if(tau > tau_reject)
+                        {
+                            pick_flag = 0;
+                        }
+                        else
+                        {
+                            pick_flag = 1;
+                        }
+                    }
+                    if(pick_flag == 1)
+                    {
+                        (*particle_list)[idx]->push_back(*temp_particle_info);
+                    }
+                    else
+                    {
+                        delete temp_particle_info;
+                    }
                 }
             }
         }
@@ -635,7 +713,28 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook()
                           >> temp_particle_info->py
                           >> temp_particle_info->pz ;
                     temp_particle_info->mass = temp_mass;
-                    (*particle_list_mixed_event)[idx]->push_back(*temp_particle_info);
+                    if(reject_decay_flag == 2 && parent_proc_type == 20)
+                    {
+                        double tau = sqrt(
+                            temp_particle_info->t*temp_particle_info->t
+                            - temp_particle_info->z*temp_particle_info->z);
+                        if(tau > tau_reject)
+                        {
+                            pick_flag = 0;
+                        }
+                        else
+                        {
+                            pick_flag = 1;
+                        }
+                    }
+                    if(pick_flag == 1)
+                    {
+                        (*particle_list_mixed_event)[idx]->push_back(*temp_particle_info);
+                    }
+                    else
+                    {
+                        delete temp_particle_info;
+                    }
                 }
             }
         }

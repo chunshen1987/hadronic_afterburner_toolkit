@@ -27,6 +27,7 @@ class particleSamples
         int particle_monval;
         int flag_isospin;
         int reject_decay_flag;
+        double tau_reject;
         int particle_urqmd_id, particle_urqmd_isospin;
 
         int charged_hadron_urqmd_id_list[5];
