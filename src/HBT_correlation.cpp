@@ -70,9 +70,9 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, pa
         }
     }
     
-
     number_of_mixed_events = paraRdr->getVal("number_of_mixed_events");
-    number_of_oversample_events = paraRdr->getVal("number_of_oversample_events");
+    number_of_oversample_events = paraRdr->getVal(
+                                                "number_of_oversample_events");
     number_pairs_num = 0;
     number_pairs_denorm = 0;
     if(azimuthal_flag == 0)
@@ -281,7 +281,8 @@ void HBT_correlation::calculate_HBT_correlation_function()
     int buffer_size = particle_list->get_event_buffer_size();
     while(!particle_list->end_of_file())
     {
-        cout << "Reading event: " << event_id+1 << "-" << event_id + buffer_size << " ... " << flush;
+        cout << "Reading event: " << event_id+1 << "-" 
+             << event_id + buffer_size << " ... " << flush;
         particle_list->read_in_particle_samples();
         particle_list->read_in_particle_samples_mixed_event();
         cout << " processing ..." << endl;
@@ -332,7 +333,8 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
     for(int j = 0; j < number_of_oversample_events; j++)
     {
         int event_id = event_list[j];
-        int event_number_particle = particle_list->get_number_of_particles(event_list[j]);
+        int event_number_particle = (
+                        particle_list->get_number_of_particles(event_list[j]));
         for(int i = 0; i < event_number_particle; i++)
         {
             double temp_E = particle_list->get_particle(event_id, i).E;
@@ -378,15 +380,26 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
 
         for(int j = i+1; j < number_of_particles; j++)
         {
-            double K_z_over_K_E = ((particle_1_pz + temp_particle_list[j].pz)
-                                   /(particle_1_E + temp_particle_list[j].E));
+            double particle_2_px = temp_particle_list[j].px;
+            double particle_2_py = temp_particle_list[j].py;
+            double particle_2_pz = temp_particle_list[j].pz;
+            double particle_2_E = temp_particle_list[j].E;
+            double particle_2_x = temp_particle_list[j].x;
+            double particle_2_y = temp_particle_list[j].y;
+            double particle_2_z = temp_particle_list[j].z;
+            double particle_2_t = temp_particle_list[j].t;
+
+            double K_z_over_K_E = ((particle_1_pz + particle_2_pz)
+                                   /(particle_1_E + particle_1_E));
             if(K_z_over_K_E > rapidity_cut_min 
-               && K_z_over_K_E < rapidity_cut_max)  // check rapidity cut
+               && K_z_over_K_E < rapidity_cut_max)  // rapidity cut
             {
-                double K_x = 0.5*(particle_1_px + temp_particle_list[j].px);
-                double K_y = 0.5*(particle_1_py + temp_particle_list[j].py);
+                double K_x = 0.5*(particle_1_px + particle_2_px);
+                double K_y = 0.5*(particle_1_py + particle_2_py);
+                double K_z = 0.5*(particle_1_pz + particle_2_pz);
+                double K_E = 0.5*(particle_1_E + particle_2_E);
                 double K_perp_sq = K_x*K_x + K_y*K_y;
-                if(K_perp_sq > KT_min_sq && K_perp_sq < KT_max_sq)  // check K_T cut
+                if(K_perp_sq > KT_min_sq && K_perp_sq < KT_max_sq)  // K_T cut
                 {
                     double K_perp = sqrt(K_perp_sq);
                     int Kperp_idx = (int)((K_perp - KT_min)/dKT);
@@ -396,13 +409,23 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                     double cos_K_phi = K_x/K_perp;
                     double sin_K_phi = K_y/K_perp;
 
-                    double q_z = particle_1_pz - temp_particle_list[j].pz;
-                    double local_q_long = q_z;
+                    double q_z = particle_1_pz - particle_2_pz;
+                    double q_E = particle_1_E - particle_2_E;
+
+                    // calcualte qlong in the lcms
+                    double Mt = sqrt(K_E*K_E - K_z*K_z);
+                    double boost_gamma = K_E/Mt;
+                    double boost_beta = K_z_over_K_E;
+                    // boost qz to lcms
+                    double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
+
                     if(local_q_long < (q_min - delta_q/2.) 
                        || local_q_long >= (q_max + delta_q/2.)) continue;
 
-                    double q_x = particle_1_px - temp_particle_list[j].px;
-                    double q_y = particle_1_py - temp_particle_list[j].py;
+                    // calculate qout and qside in lcms
+                    // no boost in the transverse plane only rotation
+                    double q_x = particle_1_px - particle_2_px;
+                    double q_y = particle_1_py - particle_2_py;
 
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
                     if(local_q_out < (q_min - delta_q/2.) 
@@ -433,12 +456,10 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                     int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))/delta_q);
                     int qlong_idx = (int)((local_q_long - (q_min - delta_q/2.))/delta_q);
 
-                    double q_E = particle_1_E - temp_particle_list[j].E;
-
-                    double t_diff = particle_1_t - temp_particle_list[j].t;
-                    double x_diff = particle_1_x - temp_particle_list[j].x;
-                    double y_diff = particle_1_y - temp_particle_list[j].y;
-                    double z_diff = particle_1_z - temp_particle_list[j].z;
+                    double t_diff = particle_1_t - particle_2_t;
+                    double x_diff = particle_1_x - particle_2_x;
+                    double y_diff = particle_1_y - particle_2_y;
+                    double z_diff = particle_1_z - particle_2_z;
 
                     double cos_qx = cos(hbarC_inv*
                         (q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff));
@@ -550,29 +571,45 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
         double particle_1_E = temp_particle_list_1[i].E;
         for(int j = 0; j < number_of_particles_2; j++)
         {
-            double K_z_over_K_E = ((particle_1_pz + temp_particle_list_2[j].pz)
-                            /(particle_1_E + temp_particle_list_2[j].E));
+            double particle_2_pz = temp_particle_list_2[j].pz;
+            double particle_2_px = temp_particle_list_2[j].px;
+            double particle_2_py = temp_particle_list_2[j].py;
+            double particle_2_E = temp_particle_list_2[j].E;
+
+            double K_z_over_K_E = ((particle_1_pz + particle_2_pz)
+                                   /(particle_1_E + particle_2_E));
             if(K_z_over_K_E > rapidity_cut_min 
                && K_z_over_K_E < rapidity_cut_max)
             {
-                double K_x = 0.5*(particle_1_px + temp_particle_list_2[j].px);
-                double K_y = 0.5*(particle_1_py + temp_particle_list_2[j].py);
+                double K_x = 0.5*(particle_1_px + particle_2_px);
+                double K_y = 0.5*(particle_1_py + particle_2_py);
+                double K_z = 0.5*(particle_1_pz + particle_2_pz);
+                double K_E = 0.5*(particle_1_E + particle_2_E);
                 double K_perp_sq = K_x*K_x + K_y*K_y;
                 if(K_perp_sq > KT_min_sq && K_perp_sq < KT_max_sq)
                 {
                     double K_perp = sqrt(K_perp_sq);
                     int Kperp_idx = (int)((K_perp - KT_min)/dKT);
+
                     
                     double cos_K_phi = K_x/K_perp;
                     double sin_K_phi = K_y/K_perp;
                     
-                    double q_z = particle_1_pz - temp_particle_list_2[j].pz;
-                    double local_q_long = q_z;
+                    double q_z = particle_1_pz - particle_2_pz;
+                    double q_E = particle_1_E - particle_2_E;
+
+                    // calcualte qlong in the lcms
+                    double Mt = sqrt(K_E*K_E - K_z*K_z);
+                    double boost_gamma = K_E/Mt;
+                    double boost_beta = K_z_over_K_E;
+                    // boost qz to lcms
+                    double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
+
                     if(local_q_long < (q_min - delta_q/2.) 
                        || local_q_long >= (q_max + delta_q/2.)) continue;
                     
-                    double q_x = particle_1_px - temp_particle_list_2[j].px;
-                    double q_y = particle_1_py - temp_particle_list_2[j].py;
+                    double q_x = particle_1_px - particle_2_px;
+                    double q_y = particle_1_py - particle_2_py;
 
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
                     if(local_q_out < (q_min - delta_q/2.) 
