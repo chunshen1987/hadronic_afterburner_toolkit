@@ -654,65 +654,6 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(int event_id1,
     temp_particle_list_2.clear();
 }
 
-void HBT_correlation::bin_into_correlation_function(int type, int num_pair, particle_pair* pairlist)
-{
-    if(type == 0)  // pairs from the same event
-        number_pairs_num += num_pair;
-    else   // pairs from mixed events
-        number_pairs_denorm += num_pair;
-
-    for(int ipair = 0; ipair < num_pair; ipair++)
-    {
-        double rap = pairlist[ipair].K_rap;
-        if(rap > Krap_min && rap < Krap_max)
-        {
-            double KT_local = pairlist[ipair].K_perp;
-            if(KT_local > KT_min && KT_local < KT_max)
-            {
-                int Kperp_idx = (int)((KT_local - KT_min)/dKT);
-                double q_out_local = pairlist[ipair].q_out;
-                if(q_out_local < (q_min - delta_q/2.) || q_out_local >= (q_max + delta_q/2.)) continue;
-                double q_side_local = pairlist[ipair].q_side;
-                if(q_side_local < (q_min - delta_q/2.) || q_side_local >= (q_max + delta_q/2.)) continue;
-                double q_long_local = pairlist[ipair].q_long;
-                if(q_long_local < (q_min - delta_q/2.) || q_long_local >= (q_max + delta_q/2.)) continue;
-
-                int qout_idx = (int)((pairlist[ipair].q_out - (q_min - delta_q/2.))/delta_q);
-                int qside_idx = (int)((pairlist[ipair].q_side - (q_min - delta_q/2.))/delta_q);
-                int qlong_idx = (int)((pairlist[ipair].q_long - (q_min - delta_q/2.))/delta_q);
-
-                if(azimuthal_flag == 0)
-                {
-                    if(type == 0)  // pairs from same event
-                    {
-                        correl_3d_num_count[Kperp_idx][qout_idx][qside_idx][qlong_idx]++;
-                        q_out_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_out;
-                        q_side_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_side;
-                        q_long_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_long;
-                        correl_3d_num[Kperp_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx;
-                    }
-                    else   // pairs from mixed events
-                        correl_3d_denorm[Kperp_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
-                }
-                else
-                {
-                    int Kphi_idx = (int)((pairlist[ipair].K_phi)/dKphi);
-                    if(type == 0)  // pairs from same event
-                    {
-                        correl_3d_Kphi_diff_num_count[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx]++;
-                        q_out_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_out;
-                        q_side_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_side;
-                        q_long_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].q_long;
-                        correl_3d_Kphi_diff_num[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += pairlist[ipair].cos_qx;
-                    }
-                    else     // pairs from mixed events
-                        correl_3d_Kphi_diff_denorm[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
-                }
-            }
-        }
-    }
-}
-
 void HBT_correlation::output_correlation_function()
 {
     for(int iK = 0; iK < n_KT - 1; iK++)
