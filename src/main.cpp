@@ -37,9 +37,6 @@ int main(int argc, char *argv[])
         << "  Ver 1.0   ----- Chun Shen, 10/2014   " << endl;
    cout << endl << "**********************************************************" 
         << endl;
-   display_logo(2); // Hail to the king~
-   cout << endl << "**********************************************************" 
-        << endl << endl;
    
    // Read-in parameters
    ParameterReader *paraRdr = new ParameterReader;
