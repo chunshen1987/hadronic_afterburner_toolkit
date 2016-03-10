@@ -59,14 +59,18 @@ class particleSamples
         int get_event_buffer_size() {return(event_buffer_size);};
 
         int get_number_of_events() {return(particle_list->size());};
-        int get_number_of_mixed_events() {return(particle_list_mixed_event->size());};
+        int get_number_of_mixed_events()
+        {return(particle_list_mixed_event->size());};
 
-        int get_number_of_particles(int event_id) {return((*particle_list)[event_id]->size());};
-        int get_number_of_particles_mixed_event(int event_id) {return((*particle_list_mixed_event)[event_id]->size());};
+        int get_number_of_particles(int event_id)
+        {return((*particle_list)[event_id]->size());};
+        int get_number_of_particles_mixed_event(int event_id)
+        {return((*particle_list_mixed_event)[event_id]->size());};
 
-        particle_info get_particle(int event_id, int part_id) {return((*(*particle_list)[event_id])[part_id]);};
-        particle_info get_particle_from_mixed_event(int event_id, int part_id) {return((*(*particle_list_mixed_event)[event_id])[part_id]);};
-
+        particle_info get_particle(int event_id, int part_id) 
+        {return((*(*particle_list)[event_id])[part_id]);};
+        particle_info get_particle_from_mixed_event(int event_id, int part_id) 
+        {return((*(*particle_list_mixed_event)[event_id])[part_id]);};
 
 };
 
