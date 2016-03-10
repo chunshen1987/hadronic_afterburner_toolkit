@@ -413,27 +413,10 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                 {
                     double K_perp = sqrt(K_perp_sq);
                     int Kperp_idx = (int)((K_perp - KT_min)/dKT);
-                    double local_K_phi;
-                    int Kphi_idx;
-
-                    double cos_K_phi = K_x/K_perp;
-                    double sin_K_phi = K_y/K_perp;
-
-                    double q_z = particle_1_pz - particle_2_pz;
-                    double q_E = particle_1_E - particle_2_E;
-
-                    // calcualte qlong in the lcms
-                    double Mt = sqrt(K_E*K_E - K_z*K_z);
-                    double boost_gamma = K_E/Mt;
-                    double boost_beta = K_z_over_K_E;
-                    // boost qz to lcms
-                    double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
-
-                    if(local_q_long < (q_min - delta_q/2.) 
-                       || local_q_long >= (q_max + delta_q/2.)) continue;
 
                     // calculate qout and qside in lcms
-                    // no boost in the transverse plane only rotation
+                    double cos_K_phi = K_x/K_perp;
+                    double sin_K_phi = K_y/K_perp;
                     double q_x = particle_1_px - particle_2_px;
                     double q_y = particle_1_py - particle_2_py;
 
@@ -444,7 +427,21 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list)
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
                     if(local_q_side < (q_min - delta_q/2.) 
                        || local_q_side >= (q_max + delta_q/2.)) continue;
-                    
+
+                    // calcualte qlong in the lcms
+                    double q_z = particle_1_pz - particle_2_pz;
+                    double q_E = particle_1_E - particle_2_E;
+                    double Mt = sqrt(K_E*K_E - K_z*K_z);
+                    double boost_gamma = K_E/Mt;
+                    double boost_beta = K_z_over_K_E;
+                    // boost qz to lcms
+                    double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
+
+                    if(local_q_long < (q_min - delta_q/2.) 
+                       || local_q_long >= (q_max + delta_q/2.)) continue;
+
+                    double local_K_phi;
+                    int Kphi_idx;
                     if(azimuthal_flag == 0)
                     {
                         if(number_of_pairs_numerator_KTdiff[Kperp_idx] 
