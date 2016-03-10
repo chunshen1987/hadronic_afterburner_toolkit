@@ -24,13 +24,13 @@ ifeq "$(MAIN)" ""
 MAIN		=	HBT_afterburner.e
 endif
 
-SRC		=	main.cpp arsenal.cpp gauss_quadrature.cpp \
-                  ParameterReader.cpp particleSamples.cpp HBT_correlation.cpp \
-                  single_particleSpectra.cpp
+SRC		=	main.cpp arsenal.cpp \
+            ParameterReader.cpp particleSamples.cpp HBT_correlation.cpp \
+            single_particleSpectra.cpp
 
 INC		= 	parameters.h arsenal.h ParameterReader.h \
-                  Stopwatch.h gauss_quadrature.h particleSamples.h \
-                  HBT_correlation.h single_particleSpectra.h
+            Stopwatch.h particleSamples.h \
+            HBT_correlation.h single_particleSpectra.h
 
 # -------------------------------------------------
 
@@ -77,8 +77,7 @@ install:	$(TARGET)
 
 # --------------- Dependencies -------------------
 ./main.cpp: arsenal.h parameters.h Stopwatch.h ParameterReader.h particleSamples.h HBT_correlation.h single_particleSpectra.h
-./arsenal.cpp: arsenal.h gauss_quadrature.h
-./gauss_quadrature.cpp: gauss_quadrature.h
+./arsenal.cpp: arsenal.h
 ./ParameterReader.cpp: ParameterReader.h arsenal.h
 ./particleSamples.cpp: ParameterReader.h particleSamples.h 
 ./HBT_correlation.cpp: HBT_correlation.h ParameterReader.h particleSamples.h

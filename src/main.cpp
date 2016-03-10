@@ -35,9 +35,11 @@ int main(int argc, char *argv[])
         << "               iHBT_afterbuner         " << endl
         << endl
         << "  Ver 1.0   ----- Chun Shen, 10/2014   " << endl;
-   cout << endl << "**********************************************************" << endl;
+   cout << endl << "**********************************************************" 
+        << endl;
    display_logo(2); // Hail to the king~
-   cout << endl << "**********************************************************" << endl << endl;
+   cout << endl << "**********************************************************" 
+        << endl << endl;
    
    // Read-in parameters
    ParameterReader *paraRdr = new ParameterReader;
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
    }
 
    sw_total.toc();
-   cout << "Program totally finished in " << sw_total.takeTime() << " sec." << endl;
+   cout << "Program totally finished in " << sw_total.takeTime() << " sec." 
+        << endl;
    return 0;
 }

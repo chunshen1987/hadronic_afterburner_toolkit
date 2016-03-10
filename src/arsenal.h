@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 
-#include "gauss_quadrature.h"
+//#include "gauss_quadrature.h"
 
 using namespace std;
 
