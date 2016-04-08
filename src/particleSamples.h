@@ -50,6 +50,8 @@ class particleSamples
         int read_in_particle_samples_OSCAR_mixed_event();
         int read_in_particle_samples_UrQMD();
         int read_in_particle_samples_UrQMD_mixed_event();
+        int read_in_particle_samples_UrQMD_3p3();
+        int read_in_particle_samples_UrQMD_3p3_mixed_event();
         int read_in_particle_samples_Sangwook();
         int read_in_particle_samples_mixed_event_Sangwook();
 
