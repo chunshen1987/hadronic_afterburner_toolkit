@@ -1,4 +1,4 @@
-read_in_mode = 4              # mode for reading in particle information 
+read_in_mode = 1              # mode for reading in particle information 
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from hdf5 file (future)
@@ -20,10 +20,10 @@ event_buffer_size = 2000      # the number of events read in at once
 # Parameters for single particle spectra and vn
 order_max = 6                 # the maximum harmonic order of anisotropic flow
 
-npT = 51                      # number of pT points for pT-differential 
+npT = 41                      # number of pT points for pT-differential 
                               # spectra and vn
 pT_min = 0.05                 # the minimum value of transverse momentum (GeV)
-pT_max = 5.05                 # the maximum value of transverse momentum (GeV)
+pT_max = 4.05                 # the maximum value of transverse momentum (GeV)
 rap_min = -0.5                # minimum value of rapidity integration 
                               # range for mid-rapidity observables 
 rap_max = 0.5                 # maximum value of rapidity integration

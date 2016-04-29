@@ -1,7 +1,6 @@
 add_executable (HBT_afterburner.e
   main.cpp
   arsenal.cpp
-  gauss_quadrature.cpp
   ParameterReader.cpp
   particleSamples.cpp
   HBT_correlation.cpp

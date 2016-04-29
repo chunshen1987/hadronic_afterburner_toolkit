@@ -41,13 +41,11 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
 
     ostringstream filename;
     ostringstream filename_mixed_event;
-    if(read_in_mode == 0)
-    {
+    if(read_in_mode == 0) {
         filename << path << "/OSCAR.DAT";
         filename_mixed_event << path << "/OSCAR_mixed_event.DAT";
-    }
-    else if(read_in_mode == 1 || read_in_mode == 3 || read_in_mode == 4)
-    {
+    } else if (read_in_mode == 1 || read_in_mode == 3 || read_in_mode == 4
+               || read_in_mode == 5) {
         filename << path << "/particle_list.dat";
         filename_mixed_event << path << "/particle_list_mixed_event.dat";
     }
@@ -72,17 +70,20 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
 
     // skip the header file for OSCAR
     string temp;
-    if(read_in_mode == 0)
-    {
+    if (read_in_mode == 0) {
         getline(inputfile, temp);
         getline(inputfile, temp);
         getline(inputfile, temp);
-        if(run_mode == 1)
-        {
+        if (run_mode == 1) {
             getline(inputfile_mixed_event, temp);
             getline(inputfile_mixed_event, temp);
             getline(inputfile_mixed_event, temp);
         }
+    }
+    
+    // skip the header in JAM
+    if (read_in_mode == 5) {
+        getline(inputfile, temp);
     }
 
     initialize_charged_hadron_urqmd_id_list();
@@ -99,6 +100,16 @@ particleSamples::~particleSamples()
     for(int i = 0; i < particle_list_mixed_event->size(); i++)
         delete (*particle_list_mixed_event)[i];
     delete particle_list_mixed_event;
+}
+
+void particleSamples::initialize_charged_hadron_pdg_list()
+{
+    charged_hadron_pdg_list[0] = 211;       // pion
+    charged_hadron_pdg_list[1] = 321;       // kaon
+    charged_hadron_pdg_list[2] = 2212;      // proton
+    charged_hadron_pdg_list[3] = 3222;      // Sigma^+
+    charged_hadron_pdg_list[4] = 3112;      // Sigma^-
+    charged_hadron_pdg_list[5] = 3312;      // Xi^-
 }
 
 void particleSamples::initialize_charged_hadron_urqmd_id_list()
@@ -210,6 +221,8 @@ int particleSamples::read_in_particle_samples()
         read_in_particle_samples_Sangwook();
     else if(read_in_mode == 4)
         read_in_particle_samples_UrQMD_3p3();
+    else if(read_in_mode == 5)
+        read_in_particle_samples_JAM();
 
     return(0);
 }
@@ -224,67 +237,64 @@ int particleSamples::read_in_particle_samples_mixed_event()
         read_in_particle_samples_mixed_event_Sangwook();
     else if(read_in_mode == 4)
         read_in_particle_samples_UrQMD_3p3_mixed_event();
+    else if(read_in_mode == 5)
+        read_in_particle_samples_JAM_mixed_event();
 
     return(0);
 }
 
-int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge, 
-                                          int parent_proc_type)
-{
+int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge,
+                                          int parent_proc_type) {
     int pick_flag = 0;
-    if(particle_urqmd_id == 9999)  // charged hadrons
-    {
+    if (particle_urqmd_id == 9999) {  // charged hadrons
         int in_flag = 0;
-        for(int i = 0; i < 5; i++)
-        {
-            if(abs(pid) == charged_hadron_urqmd_id_list[i])
-            {
+        for (int i = 0; i < 5; i++) {
+            if (abs(pid) == charged_hadron_urqmd_id_list[i]) {
                 in_flag = 1;
                 break;
             }
         }
-        if(in_flag == 1 && charge != 0)
+        if (in_flag == 1 && charge != 0)
             pick_flag = 1;
-    }
-    else
-    {
-        if(flag_isospin == 0)
-        {
-            if(pid == particle_urqmd_id)
-            {
-                if(reject_decay_flag == 1 && parent_proc_type == 20)
-                {
+    } else {
+        if (flag_isospin == 0) {
+            if (pid == particle_urqmd_id) {
+                if (reject_decay_flag == 1 && parent_proc_type == 20) {
                     pick_flag = 0;
+                } else {
+                    pick_flag = 1;
                 }
-                else
-                {
+            }
+        } else {
+            if (pid == particle_urqmd_id && iso3 == particle_urqmd_isospin) {
+                if (reject_decay_flag == 1 && parent_proc_type == 20) {
+                    pick_flag = 0;
+                } else {
                     pick_flag = 1;
                 }
             }
         }
-        else
-        {
-            if(pid == particle_urqmd_id && iso3 == particle_urqmd_isospin)
-            {
-                if(reject_decay_flag == 1 && parent_proc_type == 20)
-                {
-                    pick_flag = 0;
-                }
-                else
-                {
-                    pick_flag = 1;
-                }
-            }
-        }
-
     }
     return(pick_flag);
 }
 
-int particleSamples::read_in_particle_samples_OSCAR()
-{
+int particleSamples::decide_to_pick_JAM(int pid) {
+    int pick_flag = 0;
+    if (particle_urqmd_id == 9999) {  // charged hadrons
+        int in_flag = 0;
+        for (int i = 0; i < 6; i++) {
+            if (abs(pid) == charged_hadron_pdg_list[i]) {
+                in_flag = 1;
+                break;
+            }
+        }
+    }
+    return(pick_flag);
+}
+
+int particleSamples::read_in_particle_samples_OSCAR() {
     // clean out the previous record
-    for(int i = 0; i < particle_list->size(); i++)
+    for (int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
     
@@ -292,38 +302,31 @@ int particleSamples::read_in_particle_samples_OSCAR()
     int event_id, n_particle, dummy;
     int ievent;
     int temp_monval;
-    for(ievent = 0; ievent < event_buffer_size; ievent++)
-    {
+    for (ievent = 0; ievent < event_buffer_size; ievent++) {
         getline(inputfile, temp_string);
         stringstream temp1(temp_string);
         temp1 >> event_id >> n_particle;
-        if(!inputfile.eof())
-        {
+        if (!inputfile.eof()) {
             particle_list->push_back(new vector<particle_info> );
             int idx = ievent;
 
             int pick_flag = 0;
-            for(int ipart = 0; ipart < n_particle; ipart++)
-            {
+            for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if(flag_isospin == 0)
-                {
-                    if(abs(temp_monval) == particle_monval)
+                if (flag_isospin == 0) {
+                    if (abs(temp_monval) == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                } else {
+                    if (temp_monval == particle_monval)
                         pick_flag = 1;
                     else
                         pick_flag = 0;
                 }
-                else
-                {
-                    if(temp_monval == particle_monval)
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                }
-                if(pick_flag == 1)
-                {
+                if (pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
                      temp2 >> temp_particle_info->px 
                            >> temp_particle_info->py
@@ -337,17 +340,78 @@ int particleSamples::read_in_particle_samples_OSCAR()
                      (*particle_list)[idx]->push_back(*temp_particle_info);
                 }
             }
-        }
-        else
+        } else {
             break;
+        }
     }
     return(0);
 }
 
-int particleSamples::read_in_particle_samples_OSCAR_mixed_event()
-{
+int particleSamples::read_in_particle_samples_JAM() {
     // clean out the previous record
-    for(int i = 0; i < particle_list_mixed_event->size(); i++)
+    for (int i = 0; i < particle_list->size(); i++)
+        (*particle_list)[i]->clear();
+    particle_list->clear();
+    
+    string temp_string;
+    int event_id, n_particle, dummy;
+    char cdummy;
+    int ievent;
+    int temp_monval;
+    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+        getline(inputfile, temp_string);
+        stringstream temp1(temp_string);
+        temp1 >> cdummy >> event_id >> n_particle;
+        if (!inputfile.eof()) {
+            particle_list->push_back(new vector<particle_info> );
+            int idx = ievent;
+
+            int pick_flag = 0;
+            for (int ipart = 0; ipart < n_particle; ipart++) {
+                getline(inputfile, temp_string);
+                stringstream temp2(temp_string);
+                temp2 >> temp_monval;
+                if (flag_isospin == 0) {
+                    if (abs(temp_monval) == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                } else {
+                    if (temp_monval == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                if (particle_monval == 9999)
+                    pick_flag = decide_to_pick_JAM(temp_monval);
+                if (pick_flag == 1) {  // pick up
+                     particle_info *temp_particle_info = new particle_info;
+                     temp2 >> temp_particle_info->mass
+                           >> temp_particle_info->px
+                           >> temp_particle_info->py
+                           >> temp_particle_info->pz
+                           >> temp_particle_info->x 
+                           >> temp_particle_info->y
+                           >> temp_particle_info->z 
+                           >> temp_particle_info->t;
+                     temp_particle_info->E = sqrt(
+                         temp_particle_info->mass*temp_particle_info->mass
+                         + temp_particle_info->px*temp_particle_info->px
+                         + temp_particle_info->py*temp_particle_info->py
+                         + temp_particle_info->pz*temp_particle_info->pz);
+                     (*particle_list)[idx]->push_back(*temp_particle_info);
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    return(0);
+}
+
+int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
+    // clean out the previous record
+    for (int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
@@ -355,38 +419,31 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event()
     int event_id, n_particle, dummy;
     int ievent;
     int temp_monval;
-    for(ievent = 0; ievent < event_buffer_size; ievent++)
-    {
+    for (ievent = 0; ievent < event_buffer_size; ievent++) {
         getline(inputfile_mixed_event, temp_string);
         stringstream temp1(temp_string);
         temp1 >> event_id >> n_particle;
-        if(!inputfile_mixed_event.eof())
-        {
+        if (!inputfile_mixed_event.eof()) {
             particle_list_mixed_event->push_back(new vector<particle_info> );
             int idx = ievent;
 
             int pick_flag = 0;
-            for(int ipart = 0; ipart < n_particle; ipart++)
-            {
+            for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile_mixed_event, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if(flag_isospin == 0)
-                {
-                    if(abs(temp_monval) == particle_monval)
+                if (flag_isospin == 0) {
+                    if (abs(temp_monval) == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                } else {
+                    if (temp_monval == particle_monval)
                         pick_flag = 1;
                     else
                         pick_flag = 0;
                 }
-                else
-                {
-                    if(temp_monval == particle_monval)
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                }
-                if(pick_flag == 1)
-                {
+                if (pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
                      temp2 >> temp_particle_info->px 
                            >> temp_particle_info->py
@@ -401,9 +458,72 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event()
                                                         *temp_particle_info);
                 }
             }
-        }
-        else
+        } else {
             break;
+        }
+    }
+    return(0);
+}
+
+int particleSamples::read_in_particle_samples_JAM_mixed_event() {
+    // clean out the previous record
+    for (int i = 0; i < particle_list_mixed_event->size(); i++)
+        (*particle_list_mixed_event)[i]->clear();
+    particle_list_mixed_event->clear();
+    
+    string temp_string;
+    int event_id, n_particle, dummy;
+    char cdummy;
+    int ievent;
+    int temp_monval;
+    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+        getline(inputfile_mixed_event, temp_string);
+        stringstream temp1(temp_string);
+        temp1 >> cdummy >> event_id >> n_particle;
+        if (!inputfile_mixed_event.eof()) {
+            particle_list_mixed_event->push_back(new vector<particle_info> );
+            int idx = ievent;
+
+            int pick_flag = 0;
+            for (int ipart = 0; ipart < n_particle; ipart++) {
+                getline(inputfile_mixed_event, temp_string);
+                stringstream temp2(temp_string);
+                temp2 >> temp_monval;
+                if (flag_isospin == 0) {
+                    if (abs(temp_monval) == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                } else {
+                    if (temp_monval == particle_monval)
+                        pick_flag = 1;
+                    else
+                        pick_flag = 0;
+                }
+                if (particle_monval == 9999)
+                    pick_flag = decide_to_pick_JAM(temp_monval);
+                if (pick_flag == 1) {
+                     particle_info *temp_particle_info = new particle_info;
+                     temp2 >> temp_particle_info->mass
+                           >> temp_particle_info->px
+                           >> temp_particle_info->py
+                           >> temp_particle_info->pz
+                           >> temp_particle_info->x
+                           >> temp_particle_info->y
+                           >> temp_particle_info->z
+                           >> temp_particle_info->t;
+                     temp_particle_info->E = sqrt(
+                         temp_particle_info->mass*temp_particle_info->mass
+                         + temp_particle_info->px*temp_particle_info->px
+                         + temp_particle_info->py*temp_particle_info->py
+                         + temp_particle_info->pz*temp_particle_info->pz);
+                     (*particle_list_mixed_event)[idx]->push_back(
+                                                        *temp_particle_info);
+                }
+            }
+        } else {
+            break;
+        }
     }
     return(0);
 }

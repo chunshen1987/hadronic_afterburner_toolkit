@@ -30,6 +30,7 @@ class particleSamples
         double tau_reject;
         int particle_urqmd_id, particle_urqmd_isospin;
 
+        int charged_hadron_pdg_list[6];
         int charged_hadron_urqmd_id_list[5];
 
         vector< vector<particle_info>* >* particle_list;
@@ -40,14 +41,18 @@ class particleSamples
         ~particleSamples();
 
         void initialize_charged_hadron_urqmd_id_list();
+        void initialize_charged_hadron_pdg_list();
         void get_UrQMD_id(int monval);
-        int decide_to_pick_UrQMD(int pid, int iso3, int charge, 
+        int decide_to_pick_UrQMD(int pid, int iso3, int charge,
                                  int parent_proc_type);
+        int decide_to_pick_JAM(int pid);
 
         int read_in_particle_samples();
         int read_in_particle_samples_mixed_event();
         int read_in_particle_samples_OSCAR();
         int read_in_particle_samples_OSCAR_mixed_event();
+        int read_in_particle_samples_JAM();
+        int read_in_particle_samples_JAM_mixed_event();
         int read_in_particle_samples_UrQMD();
         int read_in_particle_samples_UrQMD_mixed_event();
         int read_in_particle_samples_UrQMD_3p3();
