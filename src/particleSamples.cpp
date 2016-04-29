@@ -86,6 +86,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
         getline(inputfile, temp);
     }
 
+    initialize_charged_hadron_pdg_list();
     initialize_charged_hadron_urqmd_id_list();
 }
 
@@ -280,13 +281,11 @@ int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge,
 
 int particleSamples::decide_to_pick_JAM(int pid) {
     int pick_flag = 0;
-    if (particle_urqmd_id == 9999) {  // charged hadrons
-        int in_flag = 0;
-        for (int i = 0; i < 6; i++) {
-            if (abs(pid) == charged_hadron_pdg_list[i]) {
-                in_flag = 1;
-                break;
-            }
+    for (int i = 0; i < 6; i++) {
+        if (abs(pid) == charged_hadron_pdg_list[i]) {
+            // includes anti-particles
+            pick_flag = 1;
+            break;
         }
     }
     return(pick_flag);
