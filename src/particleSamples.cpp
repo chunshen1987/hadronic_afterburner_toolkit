@@ -19,13 +19,10 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
     run_mode = paraRdr->getVal("run_mode");
-    if(run_mode == 1)
-    {
+    if (run_mode == 1) {
         reject_decay_flag = paraRdr->getVal("reject_decay_flag");
         tau_reject = paraRdr->getVal("tau_reject");
-    }
-    else
-    {
+    } else {
         reject_decay_flag = 0;
         tau_reject = 10000.;
     }
@@ -84,6 +81,9 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in)
     // skip the header in JAM
     if (read_in_mode == 5) {
         getline(inputfile, temp);
+        if (run_mode == 1) {
+            getline(inputfile_mixed_event, temp);
+        }
     }
 
     initialize_charged_hadron_pdg_list();
