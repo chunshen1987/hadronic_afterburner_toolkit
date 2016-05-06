@@ -30,48 +30,48 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-   // program title
-   cout << endl
-        << "               iHBT_afterbuner         " << endl
-        << endl
-        << "  Ver 1.0   ----- Chun Shen, 10/2014   " << endl;
-   cout << endl << "**********************************************************" 
-        << endl;
+    // program title
+    cout << endl
+         << "               iHBT_afterbuner         " << endl
+         << endl
+         << "  Ver 1.0   ----- Chun Shen, 10/2014   " << endl;
+    cout << endl << "**********************************************************" 
+         << endl;
    
-   // Read-in parameters
-   ParameterReader *paraRdr = new ParameterReader;
-   paraRdr->readFromFile("parameters.dat");
-   paraRdr->readFromArguments(argc, argv);
-   paraRdr->echo();
+    // Read-in parameters
+    ParameterReader *paraRdr = new ParameterReader;
+    paraRdr->readFromFile("parameters.dat");
+    paraRdr->readFromArguments(argc, argv);
+    paraRdr->echo();
   
-   int run_mode = paraRdr->getVal("run_mode");
-
-   string path="results";
-
-   Stopwatch sw;
-   Stopwatch sw_total;
-   sw_total.tic();
-   sw.tic();
-
-   particleSamples particle_list(paraRdr, path);
-   if(run_mode == 0)
-   {
-       singleParticleSpectra testSP(paraRdr, path, &particle_list);
-       testSP.calculate_Qn_vector_shell();
-   }
-   else if (run_mode == 1)
-   {
-       HBT_correlation test(paraRdr, path, &particle_list);
-       test.calculate_HBT_correlation_function();
-   }
-   else
-   {
-       cout << "Error: unrecognized run_mode: " << run_mode << endl;
-       exit(1);
-   }
-
-   sw_total.toc();
-   cout << "Program totally finished in " << sw_total.takeTime() << " sec." 
-        << endl;
-   return 0;
+    int run_mode = paraRdr->getVal("run_mode");
+    
+    string path="results";
+    
+    Stopwatch sw;
+    Stopwatch sw_total;
+    sw_total.tic();
+    sw.tic();
+    
+    particleSamples particle_list(paraRdr, path);
+    if(run_mode == 0)
+    {
+        singleParticleSpectra testSP(paraRdr, path, &particle_list);
+        testSP.calculate_Qn_vector_shell();
+    }
+    else if (run_mode == 1)
+    {
+        HBT_correlation test(paraRdr, path, &particle_list);
+        test.calculate_HBT_correlation_function();
+    }
+    else
+    {
+        cout << "Error: unrecognized run_mode: " << run_mode << endl;
+        exit(1);
+    }
+    
+    sw_total.toc();
+    cout << "Program totally finished in " << sw_total.takeTime() << " sec." 
+         << endl;
+    return 0;
 }

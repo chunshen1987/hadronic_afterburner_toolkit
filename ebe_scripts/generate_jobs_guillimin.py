@@ -40,6 +40,41 @@ done
     script.close()
 
 
+def generate_script_JAM(folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    walltime = '10:00:00'
+
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    script.write(
+"""#!/usr/bin/env bash
+#PBS -N JAM_%s
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -e test.err
+#PBS -o test.log
+#PBS -A cqn-654-ad
+#PBS -q sw
+#PBS -d %s
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scratch/irulan/chun/JAM/JAM_lib/lib
+mkdir JAM_results
+for iev in `ls OSCAR_events`
+do
+    eventid=`echo $iev | cut -f 2 -d "_" | cut -f 1 -d "."`
+    cd JAM
+    mv ../OSCAR_events/$iev ./OSCAR.DAT
+    rm -fr phase.dat
+    ./jamgo
+    mv phase.dat ../JAM_results/particle_list_$eventid.dat
+    mv OSCAR.DAT ../OSCAR_events/OSCAR_$eventid.dat
+    cd ..
+done
+
+""" % (working_folder.split('/')[-1], walltime, working_folder))
+    script.close()
+
+
 def generate_script_iSS(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
     walltime = '10:00:00'
@@ -120,6 +155,43 @@ done
 """ % (working_folder.split('/')[-1], walltime, working_folder))
     script.close()
 
+
+def generate_script_HBT_with_JAM(folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    walltime = '30:00:00'
+
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    script.write(
+"""#!/usr/bin/env bash
+#PBS -N HBT_%s
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -e test.err
+#PBS -o test.log
+#PBS -A cqn-654-ad
+#PBS -q sw
+#PBS -d %s
+
+mkdir HBT_results
+for iev in `ls JAM_events | grep "particle_list"`
+do
+    eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    cd HBTcorrelation_MCafterburner
+    rm -fr results
+    mkdir results
+    mv ../JAM_events/$iev results/particle_list.dat
+    mv ../JAM_events/mixed_event_$eventid.dat results/particle_list_mixed_event.dat
+    ./HBT_afterburner.e run_mode=1 read_in_mode=5 > output.log
+    mv results/particle_list.dat ../JAM_events/$iev
+    mv results/particle_list_mixed_event.dat ../JAM_events/mixed_event_$eventid.dat
+    mv results ../HBT_results/event_$eventid
+    cd ..
+done
+
+""" % (working_folder.split('/')[-1], walltime, working_folder))
+    script.close()
+
 def generate_script_spectra_and_vn(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
     walltime = '0:30:00'
@@ -131,9 +203,9 @@ def generate_script_spectra_and_vn(folder_name):
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=%s
 #PBS -S /bin/bash
-#PBS -A cqn-654-ad
 #PBS -e test.err
 #PBS -o test.log
+#PBS -A cqn-654-ad
 #PBS -q sw
 #PBS -d %s
 
@@ -158,6 +230,52 @@ do
     ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
     mv results/particle_list.dat ../UrQMD_events/$iev
+    mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    cd ..
+done
+
+""" % (working_folder.split('/')[-1], walltime, working_folder))
+    script.close()
+
+
+def generate_script_spectra_and_vn_with_JAM(folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    walltime = '10:00:00'
+
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    script.write(
+"""#!/usr/bin/env bash
+#PBS -N HBT_spvn_%s
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -e test.err
+#PBS -o test.log
+#PBS -A cqn-654-ad
+#PBS -q sw
+#PBS -d %s
+
+mkdir spvn_results
+for iev in `ls JAM_events | grep "particle_list"`
+do
+    cd HBTcorrelation_MCafterburner
+    rm -fr results
+    mkdir results
+    mv ../JAM_events/$iev results/particle_list.dat
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
+    mv results/particle_list.dat ../JAM_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..
 done
@@ -222,6 +340,28 @@ def copy_UrQMD_events(number_of_cores, input_folder, working_folder):
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
 
 
+def copy_JAM_events(number_of_cores, input_folder, working_folder):
+    events_list = glob('%s/particle_list_*.dat' % input_folder)
+    for iev in range(len(events_list)):
+        folder_id = iev % number_of_cores
+        event_id = events_list[iev].split('/')[-1].split('_')[-1].split('.')[0]
+        folder_path = path.join(
+            working_folder, 'event_%d' % folder_id, 
+            'JAM_events', events_list[iev].split('/')[-1])
+        bashCommand = "ln -s %s %s" % (
+            path.abspath(events_list[iev]), folder_path)
+        subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
+        mixed_event_id = random.randint(0, len(events_list)-1)
+        while(mixed_event_id == iev):
+            mixed_event_id = random.randint(0, len(events_list)-1)
+        folder_path = path.join(
+            working_folder, 'event_%d' % folder_id, 
+            'JAM_events', 'mixed_event_%s.dat' % event_id)
+        bashCommand = "ln -s %s %s" % (
+            path.abspath(events_list[mixed_event_id]), folder_path)
+        subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
+
+
 def generate_event_folder_UrQMD(working_folder, event_id, mode):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
@@ -242,6 +382,32 @@ def generate_event_folder_UrQMD(working_folder, event_id, mode):
     shutil.copytree('codes/HBTcorrelation_MCafterburner', 
                     path.join(path.abspath(event_folder), 
                     'HBTcorrelation_MCafterburner'))
+
+
+def generate_event_folder_JAM(working_folder, event_id, mode):
+    event_folder = path.join(working_folder, 'event_%d' % event_id)
+    mkdir(event_folder)
+
+    if mode == 5:
+        # run JAM with OSCAR files
+        mkdir(path.join(event_folder, 'OSCAR_events'))
+        generate_script_JAM(event_folder)
+        shutil.copytree('codes/JAM', 
+                        path.join(path.abspath(event_folder), 'JAM'))
+    elif mode == 6:
+        # collect particle spectra and vn with JAM outputs
+        mkdir(path.join(event_folder, 'JAM_events'))
+        generate_script_spectra_and_vn_with_JAM(event_folder)
+        shutil.copytree('codes/HBTcorrelation_MCafterburner', 
+                        path.join(path.abspath(event_folder), 
+                        'HBTcorrelation_MCafterburner'))
+    elif mode == 7:
+        # calculate HBT correlation with JAM outputs
+        mkdir(path.join(event_folder, 'JAM_events'))
+        generate_script_HBT_with_JAM(event_folder)
+        shutil.copytree('codes/HBTcorrelation_MCafterburner', 
+                        path.join(path.abspath(event_folder), 
+                        'HBTcorrelation_MCafterburner'))
 
 
 def generate_event_folder(working_folder, event_id):
@@ -301,7 +467,8 @@ if __name__ == "__main__":
         ncore = int(sys.argv[3])
         mode = int(sys.argv[4])
     except IndexError:
-        print "./generate_jobs_guillimin.py input_folder working_folder num_of_cores mode"
+        print("%s input_folder working_folder num_of_cores mode"
+              % str(sys.argv[0]))
         exit(0)
 
     if mode == 0:   # running iSS+osc2u+UrQMD 
@@ -312,22 +479,29 @@ if __name__ == "__main__":
         for icore in range(ncore):
             generate_event_folder(folder_name, icore)
         copy_OSCAR_events(ncore, from_folder, folder_name)
-    elif mode == 2: # running HBT afterburner with OSCAR
+    elif mode == 2:   # running HBT afterburner with OSCAR
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore, mode)
-
-        # calculate HBT correlation from OSCAR files
         copy_OSCAR_events(ncore, from_folder, folder_name)
-    elif mode == 3: # running HBT afterburner with UrQMD
+    elif mode == 3:   # running HBT afterburner with UrQMD
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore, mode)
-
-        # calculate HBT correlation from UrQMD files
         copy_UrQMD_events(ncore, from_folder, folder_name)
-    elif mode == 4: # collect spectra and flow observables with UrQMD
+    elif mode == 4:   # collect spectra and flow observables with UrQMD
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore, mode)
-
-        # calculate HBT correlation from UrQMD files
         copy_UrQMD_events(ncore, from_folder, folder_name)
+    elif mode == 5:   # running JAM + OSCAR files
+        for icore in range(ncore):
+            generate_event_folder_JAM(folder_name, icore, mode)
+        copy_OSCAR_events(ncore, from_folder, folder_name)
+    elif mode == 6:   # collect spectra and vn  with JAM events
+        for icore in range(ncore):
+            generate_event_folder_JAM(folder_name, icore, mode)
+        copy_JAM_events(ncore, from_folder, folder_name)
+    elif mode == 7:   # calculate HBT correlation with JAM events
+        for icore in range(ncore):
+            generate_event_folder_JAM(folder_name, icore, mode)
+        copy_JAM_events(ncore, from_folder, folder_name)
+
 
