@@ -219,7 +219,7 @@ for ipart, particle_id in enumerate(particle_list):
 
     # calculate mean pT
     pT_interp = linspace(0.05, 2.95, 30)
-    dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra)))
+    dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra+1e-30)))
     dN_interp_err = interp(pT_interp, pT_spectra, dN_spectra_err)
     mean_pT = sum(pT_interp**2.*dN_interp)/sum(pT_interp*dN_interp)
     mean_pT_upper = (sum(pT_interp**2.*(dN_interp+dN_interp_err))
@@ -231,29 +231,29 @@ for ipart, particle_id in enumerate(particle_list):
 
     # calcualte vn{2}
     vn_phenix_array = array(vn_phenix_array)
-    vn_phenix_2 = sqrt(mean(abs(vn_phenix_array)**2., 0))
+    vn_phenix_2 = sqrt(mean(abs(vn_phenix_array)**2., 0)) + 1e-30
     vn_phenix_2_err = std(abs(vn_phenix_array)**2., 0)/sqrt(nev)/2./vn_phenix_2
 
     vn_star_array = array(vn_star_array)
-    vn_star_2 = sqrt(mean(abs(vn_star_array)**2., 0))
+    vn_star_2 = sqrt(mean(abs(vn_star_array)**2., 0)) + 1e-30
     vn_star_2_err = std(abs(vn_star_array)**2., 0)/sqrt(nev)/2./vn_star_2
 
     vn_alice_array = array(vn_alice_array)
-    vn_alice_2 = sqrt(mean(abs(vn_alice_array)**2., 0))
+    vn_alice_2 = sqrt(mean(abs(vn_alice_array)**2., 0)) + 1e-30
     vn_alice_2_err = std(abs(vn_alice_array)**2., 0)/sqrt(nev)/2./vn_alice_2
     
     vn_cms_array = array(vn_cms_array)
-    vn_cms_2 = sqrt(mean(abs(vn_cms_array)**2., 0))
+    vn_cms_2 = sqrt(mean(abs(vn_cms_array)**2., 0)) + 1e-30
     vn_cms_2_err = std(abs(vn_cms_array)**2., 0)/sqrt(nev)/2./vn_cms_2
     
     vn_atlas_array = array(vn_atlas_array)
-    vn_atlas_2 = sqrt(mean(abs(vn_atlas_array)**2., 0))
+    vn_atlas_2 = sqrt(mean(abs(vn_atlas_array)**2., 0)) + 1e-30
     vn_atlas_2_err = std(abs(vn_atlas_array)**2., 0)/sqrt(nev)/2./vn_atlas_2
 
     # calcualte vn{SP}(pT)
     vn_diff_phenix_real = array(vn_diff_phenix_real)
     vn_diff_phenix_imag = array(vn_diff_phenix_imag)
-    vn_diff_phenix_denorm = array(vn_diff_phenix_denorm)
+    vn_diff_phenix_denorm = array(vn_diff_phenix_denorm) + 1e-30
     vn_denorm = vn_phenix_2.reshape(len(vn_phenix_2), 1)
     vn_denorm_err = vn_phenix_2_err.reshape(len(vn_phenix_2_err), 1)
     vn_diff_SP_phenix = (
@@ -265,7 +265,7 @@ for ipart, particle_id in enumerate(particle_list):
         
     vn_diff_star_real = array(vn_diff_star_real)
     vn_diff_star_imag = array(vn_diff_star_imag)
-    vn_diff_star_denorm = array(vn_diff_star_denorm)
+    vn_diff_star_denorm = array(vn_diff_star_denorm) + 1e-3
     vn_denorm = vn_star_2.reshape(len(vn_star_2), 1)
     vn_denorm_err = vn_star_2_err.reshape(len(vn_star_2_err), 1)
     vn_diff_SP_star = (
@@ -277,7 +277,7 @@ for ipart, particle_id in enumerate(particle_list):
     
     vn_diff_alice_real = array(vn_diff_alice_real)
     vn_diff_alice_imag = array(vn_diff_alice_imag)
-    vn_diff_alice_denorm = array(vn_diff_alice_denorm)
+    vn_diff_alice_denorm = array(vn_diff_alice_denorm) + 1e-30
     vn_denorm = vn_alice_2.reshape(len(vn_alice_2), 1)
     vn_denorm_err = vn_alice_2_err.reshape(len(vn_alice_2_err), 1)
     vn_diff_SP_alice = (
@@ -289,7 +289,7 @@ for ipart, particle_id in enumerate(particle_list):
     
     vn_diff_cms_real = array(vn_diff_cms_real)
     vn_diff_cms_imag = array(vn_diff_cms_imag)
-    vn_diff_cms_denorm = array(vn_diff_cms_denorm)
+    vn_diff_cms_denorm = array(vn_diff_cms_denorm) + 1e-30
     vn_denorm = vn_cms_2.reshape(len(vn_cms_2), 1)
     vn_denorm_err = vn_cms_2_err.reshape(len(vn_cms_2_err), 1)
     vn_diff_SP_cms = (
@@ -301,7 +301,7 @@ for ipart, particle_id in enumerate(particle_list):
     
     vn_diff_atlas_real = array(vn_diff_atlas_real)
     vn_diff_atlas_imag = array(vn_diff_atlas_imag)
-    vn_diff_atlas_denorm = array(vn_diff_atlas_denorm)
+    vn_diff_atlas_denorm = array(vn_diff_atlas_denorm) + 1e-30
     vn_denorm = vn_atlas_2.reshape(len(vn_atlas_2), 1)
     vn_denorm_err = vn_atlas_2_err.reshape(len(vn_atlas_2_err), 1)
     vn_diff_SP_atlas = (
@@ -343,6 +343,8 @@ for ipart, particle_id in enumerate(particle_list):
     dNdeta_err = std(dN_array, 0)/sqrt(nev)
     vn_eta = sqrt(mean(abs(vn_array)**2., 0))
     vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
+    vn_eta_real = mean(real(vn_array), 0)
+    vn_eta_real_err = std(real(vn_array), 0)/sqrt(nev)
     
     # finally, output all the results
     output_filename = "%s_integrated_observables.dat" % particle_name_list[ipart]
@@ -444,8 +446,10 @@ for ipart, particle_id in enumerate(particle_list):
         f.write("%.10e  %.10e  %.10e  "
                 % (eta_point[ieta], dNdeta[ieta], dNdeta_err[ieta]))
         for iorder in range(1, n_order):
-            f.write("%.10e  %.10e  " % (vn_eta[iorder-1, ieta], 
-                                        vn_eta_err[iorder-1, ieta]))
+            f.write("%.10e  %.10e  %.10e  %.10e  "
+                    % (vn_eta[iorder-1, ieta], vn_eta_err[iorder-1, ieta],
+                       vn_eta_real[iorder-1, ieta],
+                       vn_eta_real_err[iorder-1, ieta]))
         f.write("\n")
     f.close()
     shutil.move(output_filename, avg_folder)

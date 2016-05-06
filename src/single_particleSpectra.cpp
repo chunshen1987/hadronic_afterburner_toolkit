@@ -494,7 +494,7 @@ void singleParticleSpectra::output_rapidity_distribution()
             output << scientific << setw(18) << setprecision(8) 
                    << vn_evavg_real << "   " << vn_real_err << "   " 
                    << vn_evavg_imag << "   " << vn_imag_err << "   "
-                   << vn_rms << "   " << vn_rms_err;
+                   << vn_rms << "   " << vn_rms_err << "   ";
         }
         output << endl;
     }
