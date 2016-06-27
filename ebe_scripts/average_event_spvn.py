@@ -100,6 +100,36 @@ def calcualte_diff_vn_SP(pT_ref_low, pT_ref_high, data):
     temp_vn_denorm_array.append(denorm)
     return(temp_vn_real_array, temp_vn_imag_array, temp_vn_denorm_array)
 
+def calculate_vn_distribution(vn_array):
+    nbin = 20
+    vn_dim = len(vn_array[0, :])
+    output = []
+    for vn_order in range(vn_dim):
+        vn_mag_array = abs(vn_array[:, vn_order])
+        vn_min = min(vn_mag_array)
+        vn_max = max(vn_mag_array) + 1e-10
+        bin_boundaries = linspace(vn_min, vn_max, nbin+1)
+        bin_width = bin_boundaries[1] - bin_boundaries[0]
+        bin_center = zeros([nbin])
+        bin_value = zeros([nbin])
+        for vn_elem in vn_mag_array:
+            vn_idx = int((vn_elem - vn_min)/bin_width)
+            bin_value[vn_idx] += 1.
+            bin_center[vn_idx] += vn_elem
+        bin_center = bin_center/(bin_value + 1e-15)
+        bin_value = bin_value/len(vn_array)
+        bin_value_err = sqrt(bin_value/len(vn_array))
+        bin_value = bin_value/bin_width
+        bin_value_err = bin_value_err/bin_width
+        for i in range(nbin):
+            if abs(bin_center[i]) < 1e-15:
+                bin_center[i] = (bin_boundaries[i] + bin_boundaries[i+1])/2.
+        output.append(bin_center)
+        output.append(bin_value)
+        output.append(bin_value_err)
+    output = array(output)
+    return(output.transpose())
+
 
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
@@ -249,6 +279,14 @@ for ipart, particle_id in enumerate(particle_list):
     vn_atlas_array = array(vn_atlas_array)
     vn_atlas_2 = sqrt(mean(abs(vn_atlas_array)**2., 0)) + 1e-30
     vn_atlas_2_err = std(abs(vn_atlas_array)**2., 0)/sqrt(nev)/2./vn_atlas_2
+    
+    # calculate vn distribution for charged hadrons
+    if particle_id == '9999':
+        vn_phenix_dis = calculate_vn_distribution(vn_phenix_array)
+        vn_star_dis = calculate_vn_distribution(vn_star_array)
+        vn_alice_dis = calculate_vn_distribution(vn_alice_array)
+        vn_cms_dis = calculate_vn_distribution(vn_cms_array)
+        vn_atlas_dis = calculate_vn_distribution(vn_atlas_array)
 
     # calcualte vn{SP}(pT)
     vn_diff_phenix_real = array(vn_diff_phenix_real)
@@ -453,6 +491,78 @@ for ipart, particle_id in enumerate(particle_list):
         f.write("\n")
     f.close()
     shutil.move(output_filename, avg_folder)
+    
+    if(particle_id == '9999'):
+        output_filename = ("%s_vn_distribution_PHENIX.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
+        for ipT in range(len(vn_phenix_dis[:, 0])):
+            for iorder in range(1, n_order):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (vn_phenix_dis[ipT, 3*(iorder-1)], 
+                           vn_phenix_dis[ipT, 3*(iorder-1)+1],
+                           vn_phenix_dis[ipT, 3*(iorder-1)+2]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        output_filename = ("%s_vn_distribution_STAR.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
+        for ipT in range(len(vn_star_dis[:, 0])):
+            for iorder in range(1, n_order):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (vn_star_dis[ipT, 3*(iorder-1)], 
+                           vn_star_dis[ipT, 3*(iorder-1)+1],
+                           vn_star_dis[ipT, 3*(iorder-1)+2]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        output_filename = ("%s_vn_distribution_ALICE.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
+        for ipT in range(len(vn_alice_dis[:, 0])):
+            for iorder in range(1, n_order):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (vn_alice_dis[ipT, 3*(iorder-1)], 
+                           vn_alice_dis[ipT, 3*(iorder-1)+1],
+                           vn_alice_dis[ipT, 3*(iorder-1)+2]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        output_filename = ("%s_vn_distribution_CMS.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
+        for ipT in range(len(vn_cms_dis[:, 0])):
+            for iorder in range(1, n_order):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (vn_cms_dis[ipT, 3*(iorder-1)], 
+                           vn_cms_dis[ipT, 3*(iorder-1)+1],
+                           vn_cms_dis[ipT, 3*(iorder-1)+2]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        output_filename = ("%s_vn_distribution_ATLAS.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
+        for ipT in range(len(vn_atlas_dis[:, 0])):
+            for iorder in range(1, n_order):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (vn_atlas_dis[ipT, 3*(iorder-1)], 
+                           vn_atlas_dis[ipT, 3*(iorder-1)+1],
+                           vn_atlas_dis[ipT, 3*(iorder-1)+2]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
 
 print "Analysis is done."
 
