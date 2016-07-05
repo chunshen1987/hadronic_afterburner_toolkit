@@ -77,7 +77,7 @@ done
 
 def generate_script_iSS(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '10:00:00'
+    walltime = '35:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
@@ -111,7 +111,9 @@ do
     cd ../urqmd
     ./runqmd.sh >> ../output.log
     mv particle_list.dat ../UrQMD_results/particle_list_$event_id.dat
-    mv ../iSS/OSCAR.DAT ../UrQMD_results/OSCAR_$event_id.dat
+    #mv ../iSS/OSCAR.DAT ../UrQMD_results/OSCAR_$event_id.dat
+    rm -fr ../iSS/OSCAR.DAT
+    rm -fr OSCAR.input
     cd ..
 done
 
@@ -194,7 +196,7 @@ done
 
 def generate_script_spectra_and_vn(folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '0:30:00'
+    walltime = '1:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     script.write(
@@ -216,19 +218,43 @@ do
     rm -fr results
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
+
+    # pi+, pi-
     ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
+    # K+, K-
     ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
+    # protons and anti-protons
     ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
     ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
+    # Lambda and anti-Lambda
+    ./HBT_afterburner.e run_mode=0 particle_monval=3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=3122 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-3122 distinguish_isospin=1 rap_type=1 >> output.log
+    # Xi- and anti-Xi+
+    ./HBT_afterburner.e run_mode=0 particle_monval=3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=3312 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-3312 distinguish_isospin=1 rap_type=1 >> output.log
+    # Omega and anti Omega
+    ./HBT_afterburner.e run_mode=0 particle_monval=3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=3334 distinguish_isospin=1 rap_type=1 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=-3334 distinguish_isospin=1 rap_type=1 >> output.log
+    # phi(1020)
+    ./HBT_afterburner.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=0 >> output.log
+    ./HBT_afterburner.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=1 >> output.log
+    # charged hadrons
     ./HBT_afterburner.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
+
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..
