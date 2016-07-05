@@ -289,13 +289,14 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id) {
 }
 
 void singleParticleSpectra::output_Qn_vectors() {
+    double drapidity = rap_max - rap_min;
     // pT-integrated flow
     ostringstream filename;
     filename << path << "/particle_" << particle_monval << "_vndata.dat";
     ofstream output(filename.str().c_str());
 
-    double dN_ev_avg = Qn_vector_real[0]/total_number_of_events;
-    double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events);
+    double dN_ev_avg = Qn_vector_real[0]/total_number_of_events/drapidity;
+    double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
         // reconstruction branching ratio
@@ -348,8 +349,8 @@ void singleParticleSpectra::output_Qn_vectors() {
         }
         output_diff << scientific << setw(18) << setprecision(8) 
                     << mean_pT << "   " << mean_pT_err << "   " 
-                    << dNpT_ev_avg/mean_pT/dpT/(2*M_PI) << "   " 
-                    << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI);
+                    << dNpT_ev_avg/mean_pT/dpT/(2*M_PI)/drapidity << "   " 
+                    << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI)/drapidity;
         for (int iorder = 1; iorder < order_max; iorder++) {
             if (dNpT_ev_avg > 0.) {
                 double vn_evavg_real = (Qn_diff_vector_real[iorder][ipT]
