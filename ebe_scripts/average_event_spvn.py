@@ -40,11 +40,15 @@ except IndexError:
     print("Usage: average_event_spvn.py working_folder results_folder")
     exit(1)
 
-particle_list = ['211', '-211', '321', '-321', '2212', '-2212', '9999']
+particle_list = ['211', '-211', '321', '-321', '2212', '-2212', 
+                 '3122', '-3122', '3312', '-3312', '3334', '-3334',
+                 '333', '9999']
 particle_name_list = ['pion_p', 'pion_m', 'kaon_p', 'kaon_m', 'proton', 
-                      'anti_proton', 'charged_hadron']
+                      'anti_proton', 'Lambda', 'anti_Lambda', 'Xi_m',
+                      'anti_Xi_p', 'Omega', 'anti_Omega', 'phi',
+                      'charged_hadron']
 
-n_order = 6
+n_order = 7
 
 def calcualte_inte_vn(pT_low, pT_high, data):
     npT = 50
@@ -153,7 +157,7 @@ def calcualte_event_plane_correlations(vn_array):
     corr_224 = corr_224_num/sqrt(v2_2*v2_2*v4_2)
     corr_224_err = sqrt(
         (corr_224_num_err/corr_224_denorm)**2.
-        + (corr_224_denorm_err*corr_224_num)**2.)
+         + (corr_224_denorm_err*corr_224_num)**2.)
 
     # cos(6(Psi_2 - Psi_3))
     v3_array = vn_array[:, 2]
