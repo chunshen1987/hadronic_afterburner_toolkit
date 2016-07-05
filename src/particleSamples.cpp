@@ -181,7 +181,7 @@ void particleSamples::get_UrQMD_id(int monval) {
     } else if (monval == -2212) {
         // anti-proton
         particle_urqmd_id = -1;
-        particle_urqmd_isospin = 1;
+        particle_urqmd_isospin = -1;
     } else if (monval == 3222) {
         // Sigma^+
         particle_urqmd_id = 40;
@@ -189,7 +189,7 @@ void particleSamples::get_UrQMD_id(int monval) {
     } else if (monval == -3222) {
         // anti-Sigma^+
         particle_urqmd_id = -40;
-        particle_urqmd_isospin = 2;
+        particle_urqmd_isospin = -2;
     } else if (monval == 3212) {
         // Sigma^0
         particle_urqmd_id = 40;
@@ -205,7 +205,7 @@ void particleSamples::get_UrQMD_id(int monval) {
     } else if (monval == -3112) {
         // anti-Sigma^-
         particle_urqmd_id = -40;
-        particle_urqmd_isospin = -2;
+        particle_urqmd_isospin = 2;
     } else if (monval == 3312) {
         // Xi^-
         particle_urqmd_id = 49;
@@ -213,7 +213,7 @@ void particleSamples::get_UrQMD_id(int monval) {
     } else if (monval == -3312) {
         // anti-Xi^-
         particle_urqmd_id = -49;
-        particle_urqmd_isospin = -1;
+        particle_urqmd_isospin = 1;
     } else if (monval == 3122) {
         // Lambda
         particle_urqmd_id = 27;
