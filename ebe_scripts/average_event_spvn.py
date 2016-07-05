@@ -100,6 +100,7 @@ def calcualte_diff_vn_SP(pT_ref_low, pT_ref_high, data):
     temp_vn_denorm_array.append(denorm)
     return(temp_vn_real_array, temp_vn_imag_array, temp_vn_denorm_array)
 
+
 def calculate_vn_distribution(vn_array):
     nbin = 20
     vn_dim = len(vn_array[0, :])
@@ -130,6 +131,116 @@ def calculate_vn_distribution(vn_array):
     output = array(output)
     return(output.transpose())
 
+
+def calcualte_event_plane_correlations(vn_array):
+    """
+        this function compute the scalar-product event plane correlations
+        vn_array is a matrix [event_idx, vn_order]
+    """
+    nev = len(vn_array[:, 0])
+    # cos(4(Psi_2 - Psi_4))
+    v2_array = vn_array[:, 1]
+    v4_array = vn_array[:, 3]
+    v2_2 = mean(abs(v2_array)**2.)
+    v4_2 = mean(abs(v4_array)**2.)
+    v2_2_err = std(abs(v2_array)**2.)/sqrt(nev)
+    v4_2_err = std(abs(v4_array)**2.)/sqrt(nev)
+    corr_224_num = mean(real(v2_array**2.*conj(v4_array)))
+    corr_224_num_err = std(real(v2_array**2.*conj(v4_array)))/sqrt(nev)
+    corr_224_denorm = sqrt(v2_2**2.*v4_2)
+    corr_224_denorm_err = sqrt((v2_2_err/(v2_2**2.*sqrt(v4_2)))**2.
+                               + (v4_2_err/(2.*v2_2*v4_2**1.5))**2.)
+    corr_224 = corr_224_num/sqrt(v2_2*v2_2*v4_2)
+    corr_224_err = sqrt(
+        (corr_224_num_err/corr_224_denorm)**2.
+        + (corr_224_denorm_err*corr_224_num)**2.)
+
+    # cos(6(Psi_2 - Psi_3))
+    v3_array = vn_array[:, 2]
+    v3_2 = mean(abs(v3_array)**2.)
+    v3_2_err = std(abs(v3_array)**2.)/sqrt(nev)
+    corr_22233_num = mean(real(v2_array**3.*conj(v3_array)**2.))
+    corr_22233_num_err = std(real(v2_array**3.*conj(v3_array)**2.))/sqrt(nev)
+    corr_22233_denorm = sqrt(v2_2**3.*v3_2**2.)
+    corr_22233_denorm_err = sqrt((3.*v2_2_err/(2.*v2_2**2.5*v3_2))**2.
+                                 + (v3_2_err/(v2_2**1.5*v3_2**2.))**2.)
+    corr_22233 = corr_22233_num/corr_22233_denorm
+    corr_22233_err = sqrt(
+        (corr_22233_num_err/corr_22233_denorm)**2.
+        + (corr_22233_denorm_err*corr_22233_num)**2.)
+
+    # cos(6(Psi_2 - Psi_6))
+    v6_array = vn_array[:, 5]
+    v6_2 = mean(abs(v6_array)**2.)
+    v6_2_err = std(abs(v6_array)**2.)/sqrt(nev)
+    corr_2226_num = mean(real(v2_array**3.*conj(v6_array)))
+    corr_2226_num_err = std(real(v2_array**3.*conj(v6_array)))/sqrt(nev)
+    corr_2226_denorm = sqrt(v2_2**3.*v6_2)
+    corr_2226_denorm_err = sqrt(
+        (3.*v2_2_err/(2.*v2_2**2.5*sqrt(v6_2)))**2.
+        + (v6_2_err/(2.*v2_2**1.5*v6_2**1.5))**2.)
+    corr_2226 = corr_2226_num/corr_2226_denorm
+    corr_2226_err = sqrt(
+        (corr_2226_num_err/corr_2226_denorm)**2.
+        + (corr_2226_num*corr_2226_denorm_err)**2.)
+
+    # cos(6(Psi_3 - Psi_6))
+    corr_336_num = mean(real(v3_array**2.*conj(v6_array)))
+    corr_336_num_err = std(real(v3_array**2.*conj(v6_array)))/sqrt(nev)
+    corr_336_denorm = sqrt(v3_2**2.*v6_2)
+    corr_336_denorm_err = sqrt(
+            (v3_2_err/(v3_2**2.*sqrt(v6_2)))**2.
+            + (v6_2_err/(2.*v3_2*v6_2**1.5))**2.)
+    corr_336 = corr_336_num/corr_336_denorm
+    corr_336_err = sqrt(
+            (corr_336_num_err/corr_336_denorm)**2.
+            + (corr_336_num*corr_336_denorm_err)**2.)
+
+    # cos(2Psi_2 + 3Psi_3 - 5Psi_5)
+    v5_array = vn_array[:, 4]
+    v5_2 = mean(abs(v5_array)**2.)
+    v5_2_err = std(abs(v5_array)**2.)/sqrt(nev)
+    corr_235_num = mean(real(v2_array*v3_array*conj(v5_array)))
+    corr_235_num_err = std(real(v2_array*v3_array*conj(v5_array)))/sqrt(nev)
+    corr_235_denorm = sqrt(v2_2*v3_2*v5_2)
+    corr_235_denorm_err = sqrt((v2_2_err/(2.*v2_2*sqrt(v3_2*v5_2)))**2.
+                               + (v3_2_err/(2.*v3_2*sqrt(v2_2*v5_2)))**2.
+                               + (v5_2_err/(2.*v5_2*sqrt(v2_2*v3_2)))**2.)
+    corr_235 = corr_235_num/corr_235_denorm
+    corr_235_err = sqrt(
+            (corr_235_num_err/corr_235_denorm)**2.
+            + (corr_235_num*corr_235_denorm_err)**2.)
+
+    # cos(2Psi_2 + 4Psi_4 - 6Psi_6)
+    corr_246_num = mean(real(v2_array*v4_array*conj(v6_array)))
+    corr_246_num_err = std(real(v2_array*v4_array*conj(v6_array)))/sqrt(nev)
+    corr_246_denorm = sqrt(v2_2*v4_2*v6_2)
+    corr_246_denorm_err = sqrt((v2_2_err/(2.*v2_2*sqrt(v4_2*v6_2)))**2.
+                               + (v4_2_err/(2.*v4_2*sqrt(v2_2*v6_2)))**2.
+                               + (v6_2_err/(2.*v6_2*sqrt(v2_2*v4_2)))**2.)
+    corr_246 = corr_246_num/corr_246_denorm
+    corr_246_err = sqrt(
+        (corr_246_num_err/corr_246_denorm)**2.
+        + (corr_246_num*corr_246_denorm_err)**2.)
+
+    # cos(2Psi_2 - 6Psi_3 + 4Psi_4)
+    corr_234_num = mean(real(v2_array*conj(v3_array)**2.*v4_array))
+    corr_234_num_err = std(real(v2_array*conj(v3_array)**2.*v4_array))/sqrt(nev)
+    corr_234_denorm = sqrt(v2_2*v3_2**2.*v4_2)
+    corr_234_denorm_err = sqrt(
+            (v2_2_err/(2.*v2_2**1.5*v3_2*sqrt(v4_2)))**2.
+            + (v3_2_err/(sqrt(v2_2*v4_2)*v3_2**2.))**2.
+            + (v4_2_err/(2.*sqrt(v2_2)*v3_2*v4_2**1.5))**2.)
+    corr_234 = corr_234_num/corr_234_denorm
+    corr_234_err = sqrt(
+        (corr_234_num_err/corr_234_denorm)**2.
+        + (corr_234_num*corr_234_denorm_err)**2.)
+
+    results = [corr_224, corr_22233, corr_2226, corr_336,
+               corr_235, corr_246, corr_234]
+    results_err = [corr_224_err, corr_22233_err, corr_2226_err, corr_336_err,
+                   corr_235_err, corr_246_err, corr_234_err]
+    return(results, results_err)
 
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
@@ -287,6 +398,8 @@ for ipart, particle_id in enumerate(particle_list):
         vn_alice_dis = calculate_vn_distribution(vn_alice_array)
         vn_cms_dis = calculate_vn_distribution(vn_cms_array)
         vn_atlas_dis = calculate_vn_distribution(vn_atlas_array)
+        vn_corr_atlas, vn_corr_atlas_err = (
+                calcualte_event_plane_correlations(vn_atlas_array))
 
     # calcualte vn{SP}(pT)
     vn_diff_phenix_real = array(vn_diff_phenix_real)
@@ -562,7 +675,20 @@ for ipart, particle_id in enumerate(particle_list):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-
+        
+        output_filename = ("%s_event_plane_correlation_ATLAS.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#correlator  value  value_err\n")
+        f.write("4(24)  %.5e  %.5e\n" % (vn_corr_atlas[0], vn_corr_atlas_err[0]))
+        f.write("6(23)  %.5e  %.5e\n" % (vn_corr_atlas[1], vn_corr_atlas_err[1]))
+        f.write("6(26)  %.5e  %.5e\n" % (vn_corr_atlas[2], vn_corr_atlas_err[2]))
+        f.write("6(36)  %.5e  %.5e\n" % (vn_corr_atlas[3], vn_corr_atlas_err[3]))
+        f.write("(235)  %.5e  %.5e\n" % (vn_corr_atlas[4], vn_corr_atlas_err[4]))
+        f.write("(246)  %.5e  %.5e\n" % (vn_corr_atlas[5], vn_corr_atlas_err[5]))
+        f.write("(234)  %.5e  %.5e\n" % (vn_corr_atlas[6], vn_corr_atlas_err[6]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
 
 print "Analysis is done."
 
