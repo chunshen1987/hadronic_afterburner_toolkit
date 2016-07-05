@@ -18,24 +18,23 @@
 #include<math.h>
 #include<sys/time.h>
 
-#include "Stopwatch.h"
-#include "parameters.h"
-#include "arsenal.h"
-#include "ParameterReader.h"
-#include "particleSamples.h"
-#include "HBT_correlation.h"
-#include "single_particleSpectra.h"
+#include "./Stopwatch.h"
+#include "./parameters.h"
+#include "./arsenal.h"
+#include "./ParameterReader.h"
+#include "./particleSamples.h"
+#include "./HBT_correlation.h"
+#include "./single_particleSpectra.h"
 
 using namespace std;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     // program title
     cout << endl
          << "               iHBT_afterbuner         " << endl
          << endl
          << "  Ver 1.0   ----- Chun Shen, 10/2014   " << endl;
-    cout << endl << "**********************************************************" 
+    cout << endl << "*********************************************************"
          << endl;
    
     // Read-in parameters
@@ -54,18 +53,13 @@ int main(int argc, char *argv[])
     sw.tic();
     
     particleSamples particle_list(paraRdr, path);
-    if(run_mode == 0)
-    {
+    if (run_mode == 0) {
         singleParticleSpectra testSP(paraRdr, path, &particle_list);
         testSP.calculate_Qn_vector_shell();
-    }
-    else if (run_mode == 1)
-    {
+    } else if (run_mode == 1) {
         HBT_correlation test(paraRdr, path, &particle_list);
         test.calculate_HBT_correlation_function();
-    }
-    else
-    {
+    } else {
         cout << "Error: unrecognized run_mode: " << run_mode << endl;
         exit(1);
     }

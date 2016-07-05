@@ -10,7 +10,7 @@ run_mode = 0                  # running mode for the program
                               # 0: collect single particle spectra and vn
                               # 1: compute HBT correlation function
 
-particle_monval = 3122        # particle Monte-Carlo number
+particle_monval = 333         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
