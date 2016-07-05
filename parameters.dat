@@ -6,11 +6,11 @@ read_in_mode = 1              # mode for reading in particle information
                               #    (without header lines)
                               # 4: reads outputs from UrQMD 3.3p2 outputs
 
-run_mode = 1                  # running mode for the program
+run_mode = 0                  # running mode for the program
                               # 0: collect single particle spectra and vn
                               # 1: compute HBT correlation function
 
-particle_monval = 211         # particle Monte-Carlo number
+particle_monval = 3122        # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
@@ -21,7 +21,7 @@ event_buffer_size = 2000      # the number of events read in at once
 
 
 # Parameters for single particle spectra and vn
-order_max = 6                 # the maximum harmonic order of anisotropic flow
+order_max = 7                 # the maximum harmonic order of anisotropic flow
 
 npT = 41                      # number of pT points for pT-differential 
                               # spectra and vn

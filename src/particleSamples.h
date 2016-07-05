@@ -35,8 +35,8 @@ class particleSamples
         int charged_hadron_urqmd_id_list[5];
 
         vector< vector<particle_info>* >* particle_list;
-        vector< vector<particle_info>* >* resonance_list;
         vector< vector<particle_info>* >* particle_list_mixed_event;
+        vector< vector<particle_info>* >* resonance_list;
 
     public:
         particleSamples(ParameterReader* paraRdr_in, string path_in);
