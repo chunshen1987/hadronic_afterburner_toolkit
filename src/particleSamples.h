@@ -25,6 +25,7 @@ class particleSamples
         int read_in_mode;
         int run_mode;
         int particle_monval;
+        int resonance_feed_down_flag;  // include Sigma0 feed down of Lambda
         int flag_isospin;
         int reject_decay_flag;
         double tau_reject;
@@ -34,6 +35,7 @@ class particleSamples
         int charged_hadron_urqmd_id_list[5];
 
         vector< vector<particle_info>* >* particle_list;
+        vector< vector<particle_info>* >* resonance_list;
         vector< vector<particle_info>* >* particle_list_mixed_event;
 
     public:
@@ -45,7 +47,13 @@ class particleSamples
         void get_UrQMD_id(int monval);
         int decide_to_pick_UrQMD(int pid, int iso3, int charge,
                                  int parent_proc_type);
+        int decide_to_pick_UrQMD_resonance(int pid, int iso3, int charge);
         int decide_to_pick_JAM(int pid);
+
+        void perform_resonance_feed_down();
+        void perform_two_body_decay(particle_info *mother,
+                                    particle_info* daughter1,
+                                    particle_info* daughter2);
 
         int read_in_particle_samples();
         int read_in_particle_samples_mixed_event();
