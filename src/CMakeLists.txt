@@ -1,4 +1,4 @@
-add_executable (HBT_afterburner.e
+add_executable (hadronic_afterburner_tools.e
   main.cpp
   arsenal.cpp
   ParameterReader.cpp
@@ -6,6 +6,6 @@ add_executable (HBT_afterburner.e
   HBT_correlation.cpp
   single_particleSpectra.cpp
   )
-target_link_libraries (HBT_afterburner.e ${LIBS})
+target_link_libraries (hadronic_afterburner_tools.e ${LIBS})
 
-install(TARGETS HBT_afterburner.e DESTINATION ${CMAKE_HOME_DIRECTORY})
+install(TARGETS hadronic_afterburner_tools.e DESTINATION ${CMAKE_HOME_DIRECTORY})

@@ -21,7 +21,7 @@ SYSTEMFILES     =       $(SRCGNU)
 # --------------- Files involved ------------------
 
 ifeq "$(MAIN)" ""
-MAIN		=	HBT_afterburner.e
+MAIN		=	hadronic_afterburner_tools.e
 endif
 
 SRC		=	main.cpp arsenal.cpp \

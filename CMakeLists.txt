@@ -1,8 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
-project (HBTcorrelation_MCafterburner)
+project (hadronic_afterburner_toolkit)
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_HOME_DIRECTORY}")
 
-set (CMAKE_CXX_FLAGS "-g")
+set (CMAKE_CXX_FLAGS "-O3 -Wall")
 
 add_subdirectory (src)

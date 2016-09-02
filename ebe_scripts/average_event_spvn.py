@@ -40,10 +40,10 @@ except IndexError:
     print("Usage: average_event_spvn.py working_folder results_folder")
     exit(1)
 
-particle_list = ['211', '-211', '321', '-321', '2212', '-2212', 
+particle_list = ['211', '-211', '321', '-321', '2212', '-2212',
                  '3122', '-3122', '3312', '-3312', '3334', '-3334',
                  '333', '9999']
-particle_name_list = ['pion_p', 'pion_m', 'kaon_p', 'kaon_m', 'proton', 
+particle_name_list = ['pion_p', 'pion_m', 'kaon_p', 'kaon_m', 'proton',
                       'anti_proton', 'Lambda', 'anti_Lambda', 'Xi_m',
                       'anti_Xi_p', 'Omega', 'anti_Omega', 'phi',
                       'charged_hadron']
