@@ -1,7 +1,17 @@
-HBTcorrelation_MCafterburner
+hadronic_afterburner_toolkit
 ===========================
 
-### This program computes the particle pair HBT correlation from Monte-Carlo samples of emitted particles
+## This program deals with hadronic afterburner output files and perform various analysis on hadronic observables 
+
+### Charged and Identified particle spectra and flow coefficients
+
+Single particle spectra for charged hadrons and identified particles are 
+collected.
+The anisotropic flow coefficients from two particle correlation are also 
+analyzed. As well as event-plane correlation, vn_distribution, rn ratio
+for flow factorizatin breaking.
+
+### Particle pair HBT correlation from Monte-Carlo samples of emitted particles
 
 The HBT correlation between identified particle pair is originated from the quantum statistic of the final wave function. The Monte-Carlo samples of the emitted particles do not have this correlation built in. So we need to add it by hand. 
 
@@ -16,5 +26,4 @@ In the program, we introduce oversampling parameter to increase statistics by fi
 Pairs from mixed event are form by first rotating the mixture event by a random angle which eliminate the unwanted correlations.
 
 The output correlation function is in 3-d q space (q_out, q_side, q_long).
-
 
