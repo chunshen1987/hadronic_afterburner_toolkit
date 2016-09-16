@@ -614,6 +614,8 @@ for ipart, particle_id in enumerate(particle_list):
         # calculate rn ratios
         rn_cms = calculate_rn_ratios(vn_cms_arrays_for_rn)
         # calculate flow event-plane correlation
+        vn_corr_alice, vn_corr_alice_err = (
+                calcualte_event_plane_correlations(vn_alice_array))
         vn_corr_atlas, vn_corr_atlas_err = (
                 calcualte_event_plane_correlations(vn_atlas_array))
 
@@ -931,6 +933,26 @@ for ipart, particle_id in enumerate(particle_list):
                     f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
         
         # output flow event-plane correlation
+        output_filename = ("%s_event_plane_correlation_ALICE.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#correlator  value  value_err\n")
+        f.write("4(24)  %.5e  %.5e\n"
+                % (vn_corr_alice[0], vn_corr_alice_err[0]))
+        f.write("6(23)  %.5e  %.5e\n"
+                % (vn_corr_alice[1], vn_corr_alice_err[1]))
+        f.write("6(26)  %.5e  %.5e\n"
+                % (vn_corr_alice[2], vn_corr_alice_err[2]))
+        f.write("6(36)  %.5e  %.5e\n"
+                % (vn_corr_alice[3], vn_corr_alice_err[3]))
+        f.write("(235)  %.5e  %.5e\n"
+                % (vn_corr_alice[4], vn_corr_alice_err[4]))
+        f.write("(246)  %.5e  %.5e\n"
+                % (vn_corr_alice[5], vn_corr_alice_err[5]))
+        f.write("(234)  %.5e  %.5e\n"
+                % (vn_corr_alice[6], vn_corr_alice_err[6]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
         output_filename = ("%s_event_plane_correlation_ATLAS.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
