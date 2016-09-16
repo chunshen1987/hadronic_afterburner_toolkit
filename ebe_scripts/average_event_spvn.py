@@ -71,57 +71,76 @@ def calcualte_inte_vn(pT_low, pT_high, data):
             /sum(dN_interp*pT_inte_array))
         vn_inte = vn_real_inte + 1j*vn_imag_inte
         temp_vn_array.append(vn_inte)
-    #print temp_vn_array[:][0]
     return(temp_vn_array)
 
 
 def calculate_chi_4(vn_array):
     v2_array = vn_array[:, 1]
+    nev = len(v2_array)
     v4_array = vn_array[:, 3]
     chi_4_num = v4_array*(v2_array.conjugate())**2
     chi_4_den = (abs(v2_array))**4
     chi_4_num_ave = mean(chi_4_num)
     chi_4_den_ave = mean(chi_4_den)
+    chi_4_num_err = std(chi_4_num)/sqrt(nev)
+    chi_4_den_err = std(chi_4_den)/sqrt(nev)
     chi_4 = chi_4_num_ave/chi_4_den_ave
-    ##print(abs(chi_4)), chi_4.real
-    return(chi_4.real)
+    chi_4_err = sqrt(
+        (chi_4_num_err/chi_4_den_ave)**2.
+        + (chi_4_num_ave*chi_4_den_err/(chi_4_den_ave)**2.)**2.)
+    return(chi_4.real, chi_4_err.real)
 
 
 def calculate_chi_5(vn_array):
     v2_array = vn_array[:, 1]
+    nev = len(v2_array)
     v3_array = vn_array[:, 2]
     v5_array = vn_array[:, 4]
     chi_5_num = v5_array*(v2_array.conjugate()*v3_array.conjugate())
     chi_5_den = (abs(v2_array))**2*(abs(v3_array))**2
     chi_5_num_ave = mean(chi_5_num)
     chi_5_den_ave = mean(chi_5_den)
+    chi_5_num_err = std(chi_5_num)/sqrt(nev)
+    chi_5_den_err = std(chi_5_den)/sqrt(nev)
     chi_5 = chi_5_num_ave/chi_5_den_ave
-    ##print(abs(chi_5)), chi_5.real
-    return(chi_5.real)
+    chi_5_err = sqrt(
+        (chi_5_num_err/chi_5_den_ave)**2.
+        + (chi_5_num_ave*chi_5_den_err/(chi_5_den_ave)**2.)**2.)
+    return(chi_5.real, chi_5_err.real)
 
 
 def calculate_chi_62(vn_array):
     v6_array = vn_array[:, 5]
     v2_array = vn_array[:, 1]
+    nev = len(v2_array)
     chi_62_num = v6_array*((v2_array.conjugate())**3)
     chi_62_den = (abs(v2_array))**6
     chi_62_num_ave = mean(chi_62_num)
     chi_62_den_ave = mean(chi_62_den)
+    chi_62_num_err = std(chi_62_num)/sqrt(nev)
+    chi_62_den_err = std(chi_62_den)/sqrt(nev)
     chi_62 = chi_62_num_ave/chi_62_den_ave
-    ##print(abs(chi_62)), chi_62.real
-    return(chi_62.real)
+    chi_62_err = sqrt(
+        (chi_62_num_err/chi_62_den_ave)**2.
+        + (chi_62_num_ave*chi_62_den_err/(chi_62_den_ave)**2.)**2.)
+    return(chi_62.real, chi_62_err.real)
 
 
 def calculate_chi_63(vn_array):
     v6_array = vn_array[:, 5]
     v3_array = vn_array[:, 2]
+    nev = len(v2_array)
     chi_63_num = v6_array*((v3_array.conjugate())**2)
     chi_63_den = (abs(v3_array))**4                  
     chi_63_num_ave = mean(chi_63_num)
     chi_63_den_ave = mean(chi_63_den)
+    chi_63_num_err = std(chi_63_num)/sqrt(nev)
+    chi_63_den_err = std(chi_63_den)/sqrt(nev)
     chi_63 = chi_63_num_ave/chi_63_den_ave
-    ##print(abs(chi_63)), chi_63.real
-    return(chi_63.real)
+    chi_63_err = sqrt(
+        (chi_63_num_err/chi_63_den_ave)**2.
+        + (chi_63_num_ave*chi_63_den_err/(chi_63_den_ave)**2.)**2.)
+    return(chi_63.real, chi_63_err.real)
 
 
 def calcualte_vn_2(vn_data_array):
@@ -527,15 +546,15 @@ for ipart, particle_id in enumerate(particle_list):
     vn_cms_array2 = array(vn_cms_array)
     if (particle_id == '9999'):
         # print "alice non-linear response coefficents"
-        chi_4_alice = calculate_chi_4(vn_alice_array2)
-        chi_5_alice =calculate_chi_5(vn_alice_array2)
-        chi_62_alice = calculate_chi_62(vn_alice_array2)
-        chi_63_alice = calculate_chi_63(vn_alice_array2)
+        chi_4_alice, chi_4_err_alice = calculate_chi_4(vn_alice_array2)
+        chi_5_alice, chi_5_err_alice = calculate_chi_5(vn_alice_array2)
+        chi_62_alice, chi_62_err_alice = calculate_chi_62(vn_alice_array2)
+        chi_63_alice, chi_63_err_alice = calculate_chi_63(vn_alice_array2)
         # print "cms non-linear response coefficents"
-        chi_4_cms = calculate_chi_4(vn_cms_array2)
-        chi_5_cms = calculate_chi_5(vn_cms_array2)
-        chi_62_cms = calculate_chi_62(vn_cms_array2)
-        chi_63_cms = calculate_chi_63(vn_cms_array2)
+        chi_4_cms, chi_4_cms = calculate_chi_4(vn_cms_array2)
+        chi_5_cms, chi_5_cms = calculate_chi_5(vn_cms_array2)
+        chi_62_cms, chi_62_cms = calculate_chi_62(vn_cms_array2)
+        chi_63_cms, chi_63_cms = calculate_chi_63(vn_cms_array2)
 
     # calculate vn distribution for charged hadrons
     if particle_id == '9999':
@@ -612,18 +631,24 @@ for ipart, particle_id in enumerate(particle_list):
     
     if (particle_id =='9999'):
         # output non-linear response coefficients chi_n for cms pt cut
-        output_filename = ("non_linear_response_coefficients_cms.dat")
+        output_filename = ("non_linear_response_coefficients_CMS.dat")
         f = open(output_filename, 'w')
-        f.write("%.10e %.10e %.10e %.10e \n"
-                % (chi_4_cms, chi_5_cms, chi_62_cms, chi_63_cms))
+        f.write("type  value  stat. err\n")
+        f.write("4  %.10e  %.10e\n" % (chi_4_cms, chi_4_err_cms))
+        f.write("5  %.10e  %.10e\n" % (chi_5_cms, chi_5_err_cms))
+        f.write("62  %.10e  %.10e\n" % (chi_62_cms, chi_62_err_cms))
+        f.write("63  %.10e  %.10e\n" % (chi_63_cms, chi_63_err_cms))
         f.close()
         shutil.move(output_filename, avg_folder)
 
         # output non-linear response coefficients chi_n for alice pt cut
-        output_filename = ("%s_non_linear_response_coefficients_alice.dat")
+        output_filename = ("%s_non_linear_response_coefficients_ALICE.dat")
         f = open(output_filename, 'w')
-        f.write("%.10e %.10e %.10e %.10e \n"
-                % (chi_4_alice, chi_5_alice, chi_62_alice, chi_63_alice))
+        f.write("type  value  stat. err\n")
+        f.write("4  %.10e  %.10e\n" % (chi_4_alice, chi_4_err_alice))
+        f.write("5  %.10e  %.10e\n" % (chi_5_alice, chi_5_err_alice))
+        f.write("62  %.10e  %.10e\n" % (chi_62_alice, chi_62_err_alice))
+        f.write("63  %.10e  %.10e\n" % (chi_63_alice, chi_63_err_alice))
         f.close()
         shutil.move(output_filename, avg_folder)
 
