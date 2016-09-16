@@ -183,8 +183,29 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data):
     return(temp_vn_real_array, temp_vn_imag_array, temp_vn_denorm_array)
 
 
+def get_vn_diff_2PC_from_single_event(data):
+    dN_event = data[:, 2]
+    temp_vn_real_array = []
+    temp_vn_imag_array = []
+    temp_vn_denorm_array = []
+    for iorder in range(1, n_order):
+        vn_real_event = data[:, 4*iorder]
+        vn_imag_event = data[:, 4*iorder+2]
+        vn_pt = vn_real_event + 1j*vn_imag_event
+        numerator_real = real(dN_event*vn_pt)
+        numerator_imag = imag(dN_event*vn_pt)
+        denorm = dN_event
+        temp_vn_real_array.append(numerator_real)
+        temp_vn_imag_array.append(numerator_imag)
+    temp_vn_denorm_array.append(denorm)
+    return(temp_vn_real_array, temp_vn_imag_array, temp_vn_denorm_array)
+
+
 def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag, vn_diff_denorm,
                          vn_2, vn_2_err):
+    """
+        this funciton calculates the scalar-product vn
+    """
     vn_diff_real = array(vn_diff_real)
     vn_diff_imag = array(vn_diff_imag)
     vn_diff_denorm = array(vn_diff_denorm) + 1e-30
@@ -198,6 +219,24 @@ def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag, vn_diff_denorm,
           /vn_denorm)**2.
         + (vn_diff_SP*vn_denorm_err/vn_denorm)**2.)
     return(vn_diff_SP, vn_diff_SP_err)
+
+
+def calculate_vn_diff_2PC(vn_diff_real, vn_diff_imag, vn_diff_denorm):
+    """
+        this funciton calculates the rms vn(pT)
+    """
+    vn_diff_real = array(vn_diff_real)
+    vn_diff_imag = array(vn_diff_imag)
+    vn_diff_denorm = array(vn_diff_denorm)
+    nev = len(vn_diff_denorm[:, 0])
+    num = sqrt(mean(vn_diff_real**2. + vn_diff_imag**2., 0))
+    denorm = sqrt(mean(vn_diff_denorm**2., 0))
+    num_err = std(vn_diff_real**2. + vn_diff_imag**2., 0)/sqrt(nev)/(2.*num)
+    denorm_err = std(vn_diff_denorm**2., 0)/sqrt(nev)/(2.*denorm)
+    vn_diff_2PC = num/denorm
+    vn_diff_2PC_err = sqrt((num_err/denorm)**2.
+                           + (num*denorm_err/denorm/denorm)**2.)
+    return(vn_diff_2PC, vn_diff_2PC_err)
 
 
 def calculate_vn_distribution(vn_array):
@@ -434,6 +473,7 @@ for ipart, particle_id in enumerate(particle_list):
     vn_diff_phenix_denorm = []
     vn_diff_star_real = []; vn_diff_star_imag = []; vn_diff_star_denorm = []
     vn_diff_alice_real = []; vn_diff_alice_imag = []; vn_diff_alice_denorm = []
+    vn_diff_2PC_real = []; vn_diff_2PC_imag = []; vn_diff_2PC_denorm = []
     vn_diff_cms_real = []; vn_diff_cms_imag = []; vn_diff_cms_denorm = []
     vn_diff_atlas_real = []; vn_diff_atlas_imag = []; vn_diff_atlas_denorm = []
     for ifolder in range(nev):
@@ -507,6 +547,14 @@ for ipart, particle_id in enumerate(particle_list):
         vn_diff_atlas_real.append(temp_vn_diff_real);
         vn_diff_atlas_imag.append(temp_vn_diff_imag);
         vn_diff_atlas_denorm.append(temp_dn_diff);
+        
+        # pT-differential vn using 2PC method
+        # vn[2](pT)
+        temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
+                                get_vn_diff_2PC_from_single_event(temp_data))
+        vn_diff_2PC_real.append(temp_vn_diff_real)
+        vn_diff_2PC_imag.append(temp_vn_diff_imag)
+        vn_diff_2PC_denorm.append(temp_dn_diff)
 
     # now we perform event average
     dN_array = array(dN_array)
@@ -589,6 +637,10 @@ for ipart, particle_id in enumerate(particle_list):
     vn_diff_SP_atlas, vn_diff_SP_atlas_err = calculate_vn_diff_SP(
             vn_diff_atlas_real, vn_diff_atlas_imag, vn_diff_atlas_denorm,
             vn_atlas_2, vn_atlas_2_err)
+    
+    # calcualte vn[2](pT)
+    vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
+            vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
     
     # then particle rapidity distribution
     if particle_id == '9999':
@@ -712,6 +764,21 @@ for ipart, particle_id in enumerate(particle_list):
         for iorder in range(1, n_order):
             f.write("%.10e  %.10e  " % (vn_diff_SP_alice[iorder-1, ipT], 
                                         vn_diff_SP_alice_err[iorder-1, ipT]))
+        f.write("\n")
+    f.close()
+    shutil.move(output_filename, avg_folder)
+    
+    output_filename = ("%s_differential_observables_2PC.dat" 
+                       % particle_name_list[ipart])
+    f = open(output_filename, 'w')
+    f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+            "vn[2]  vn[2]_err\n")
+    for ipT in range(len(pT_spectra)):
+        f.write("%.10e  %.10e  %.10e  "
+                % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+        for iorder in range(1, n_order):
+            f.write("%.10e  %.10e  " % (vn_diff_2PC[iorder-1, ipT], 
+                                        vn_diff_2PC_err[iorder-1, ipT]))
         f.write("\n")
     f.close()
     shutil.move(output_filename, avg_folder)
