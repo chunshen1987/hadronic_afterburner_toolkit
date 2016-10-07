@@ -58,7 +58,7 @@ particle_name_list = ['pion_p', 'pion_m', 'kaon_p', 'kaon_m', 'proton',
 nonlinear_reponse_correlator_name_list = [
                 'v4_L', 'v4(Psi2)', 'rho_422', 'chi_422',
                 'v5_L', 'v5(Psi23)', 'rho_523', 'chi_523',
-                'v6(Psi2)', 'v6(Psi3)',
+                'v6_L', 'v6(Psi2)', 'v6(Psi3)',
                 'rho_6222', 'rho_633', 'chi_6222', 'chi_633']
 
 n_order = 7
@@ -300,6 +300,35 @@ def calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array):
     return(v5_L, v5_L_err)
 
 
+def calculate_v6_L(chi_6222, chi_6222_err, chi_633, chi_633_err, vn_array):
+    """
+        v6_L = sqrt(v6(Psi6)^2 - chi_6222^2 v2^6
+                    - chi_633^2 v3^4 - 2 Re(chi_6222*chi_633*v2^3 v3^{2*}))
+    """
+    v6_array = vn_array[:, 5]
+    v2_array = vn_array[:, 1]
+    v3_array = vn_array[:, 2]
+    nev = len(v6_array)
+    v6_Psi6_sq = mean(abs(v6_array)**2.)
+    v6_Psi6_sq_err = std(abs(v6_array)**2.)/sqrt(nev)
+    v2_6 = mean(abs(v2_array)**6.)
+    v2_6_err = std(abs(v2_array)**6.)/sqrt(nev)
+    v3_4 = mean(abs(v3_array)**4.)
+    v3_4_err = std(abs(v3_array)**4.)/sqrt(nev)
+    v23 = real(mean(v2_array**3.*conj(v3_array)**2.))
+    v23_err = real(std(v2_array**3.*conj(v3_array)**2.))/sqrt(nev)
+    v6_L = (v6_Psi6_sq - chi_6222**2.*v2_6 - chi_633**2.*v3_4
+            - 2.*chi_6222*chi_633*v23)
+    v6_L_err = sqrt(
+            v6_Psi6_sq_err**2.
+            + (2.*chi_6222*chi_6222_err*v2_6)**2. + (chi_6222**2.*v2_6_err)**2.
+            + (2.*chi_633*chi_633_err*v3_4)**2. + (chi_633**2.*v3_4_err)**2.
+            + (2.*chi_6222_err*chi_633*v23)**2.
+            + (2.*chi_6222*chi_633_err*v23)**2.
+            + (2.*chi_6222*chi_633*v23_err)**2.)
+    return(v6_L, v6_L_err)
+
+
 def calculate_nonlinear_reponse(vn_array):
     """
         this function computes all the nonlinear response coefficients
@@ -322,12 +351,14 @@ def calculate_nonlinear_reponse(vn_array):
     chi_633, chi_633_err = calculate_chi_633(vn_array)
     v6_Psi3, v6_Psi3_err = calculate_v6_Psi3(chi_633, chi_633_err, vn_array)
     rho_633, rho_633_err = calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array)
+    v6_L, v6_L_err = calculate_v6_L(chi_6222, chi_6222_err,
+                                    chi_633, chi_633_err, vn_array)
 
     results = [v4_L, v4_L_err, v4_Psi2, v4_Psi2_err, rho_422, rho_422_err,
                chi_422, chi_422_err,
                v5_L, v5_L_err, v5_Psi23, v5_Psi23_err, rho_523, rho_523_err,
                chi_523, chi_523_err,
-               v6_Psi2, v6_Psi2_err, v6_Psi3, v6_Psi3_err,
+               v6_L, v6_L_err, v6_Psi2, v6_Psi2_err, v6_Psi3, v6_Psi3_err,
                rho_6222, rho_6222_err, rho_633, rho_633_err,
                chi_6222, chi_6222_err, chi_633, chi_633_err]
     return(results)
