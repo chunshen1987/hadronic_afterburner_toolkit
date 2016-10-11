@@ -295,11 +295,13 @@ void singleParticleSpectra::output_Qn_vectors() {
     filename << path << "/particle_" << particle_monval << "_vndata.dat";
     ofstream output(filename.str().c_str());
 
+    double total_N = Qn_vector_real[0];
     double dN_ev_avg = Qn_vector_real[0]/total_number_of_events/drapidity;
     double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
         // reconstruction branching ratio
+        total_N = total_N/reconst_branching_ratio;
         dN_ev_avg = dN_ev_avg/reconst_branching_ratio;
         dN_ev_avg_err = dN_ev_avg_err/reconst_branching_ratio;
     }
@@ -320,6 +322,10 @@ void singleParticleSpectra::output_Qn_vectors() {
                << vn_evavg_real << "   " << vn_real_err << "   " 
                << vn_evavg_imag << "   " << vn_imag_err << endl;
     }
+    // output total number of particles in the last row
+    // this quantities is useful when one wants to reconst the Qn vectors
+    output << scientific << setw(18) << setprecision(8) << 99 << "   "
+           << total_N << "   " << 0.0 << "   " << 0.0 << "   " << 0.0 << endl;
     output.close();
     
     // pT-differential flow
@@ -329,11 +335,13 @@ void singleParticleSpectra::output_Qn_vectors() {
     ofstream output_diff(filename_diff.str().c_str());
 
     for (int ipT = 0; ipT < npT - 1; ipT++) {
+        double total_NpT = Qn_diff_vector_real[0][ipT];
         double dNpT_ev_avg = Qn_diff_vector_real[0][ipT]/total_number_of_events;
         double dNpT_ev_avg_err = sqrt(dNpT_ev_avg/total_number_of_events);
         if (particle_monval == 333) {
             // for phi(1020) need to rescale the yield by
             // reconstruction branching ratio
+            total_NpT = total_NpT/reconst_branching_ratio;
             dNpT_ev_avg = dNpT_ev_avg/reconst_branching_ratio;
             dNpT_ev_avg_err = dNpT_ev_avg_err/reconst_branching_ratio;
         }
@@ -370,13 +378,17 @@ void singleParticleSpectra::output_Qn_vectors() {
                 output_diff << scientific << setw(18) << setprecision(8) 
                             << vn_evavg_real << "   " 
                             << vn_evavg_real_err << "   " 
-                            << vn_evavg_imag << "   " << vn_evavg_imag_err;
+                            << vn_evavg_imag << "   "
+                            << vn_evavg_imag_err << "   ";
             } else {
                 output_diff << scientific << setw(18) << setprecision(8) 
                             << 0.0e0 << "   " << 0.0e0 << "   " 
-                            << 0.0e0 << "   " << 0.0e0;
+                            << 0.0e0 << "   " << 0.0e0 << "   ";
             }
         }
+        // output total number of particles in the last column
+        // this quantities is useful when one wants to reconst the Qn vectors
+        output_diff << scientific << setw(18) << setprecision(8) << total_NpT;
         output_diff << endl;
     }
     output_diff.close();
@@ -437,10 +449,12 @@ void singleParticleSpectra::output_rapidity_distribution() {
            << endl;
     for (int i = 0; i < N_rap; i++) {
         rapidity_array[i] = rapidity_array[i]/(dNdy_array[i] + 1.);
+        double total_Nrap = dNdy_array[i];
         dNdy_array[i] = dNdy_array[i]/total_number_of_events;
         double dNdy_err = sqrt(dNdy_array[i]/total_number_of_events);
 
         if (particle_monval == 333) {
+            total_Nrap = total_Nrap/reconst_branching_ratio;
             dNdy_array[i] = dNdy_array[i]/reconst_branching_ratio;
             dNdy_err = dNdy_err/reconst_branching_ratio;
         }
@@ -476,6 +490,9 @@ void singleParticleSpectra::output_rapidity_distribution() {
                    << vn_evavg_imag << "   " << vn_imag_err << "   "
                    << vn_rms << "   " << vn_rms_err << "   ";
         }
+        // output total number of particles in the last column
+        // this quantities is useful when one wants to reconst the Qn vectors
+        output << scientific << setw(18) << setprecision(8) << total_Nrap;
         output << endl;
     }
     output.close();

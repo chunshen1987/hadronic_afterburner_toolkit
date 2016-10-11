@@ -459,7 +459,7 @@ int particleSamples::read_in_particle_samples_JAM() {
     }
     
     string temp_string;
-    int event_id, n_particle, dummy;
+    int event_id, n_particle;
     char cdummy;
     int ievent;
     int temp_monval;
@@ -634,7 +634,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
     }
     
     string temp_string;
-    int event_id, n_particle, dummy;
+    int event_id, n_particle;
     char cdummy;
     int ievent;
     int temp_monval;
@@ -1503,7 +1503,6 @@ void particleSamples::perform_particle_reconstruction() {
                 double px_1 = (*(*reconst_list_1)[iev])[i].px;
                 double py_1 = (*(*reconst_list_1)[iev])[i].py;
                 double pz_1 = (*(*reconst_list_1)[iev])[i].pz;
-                double m_1 = (*(*reconst_list_1)[iev])[i].mass;
                 double t_1 = (*(*reconst_list_1)[iev])[i].t;
                 double x_1 = (*(*reconst_list_1)[iev])[i].x;
                 double y_1 = (*(*reconst_list_1)[iev])[i].y;
@@ -1513,7 +1512,6 @@ void particleSamples::perform_particle_reconstruction() {
                     double px_2 = (*(*reconst_list_2)[iev])[j].px;
                     double py_2 = (*(*reconst_list_2)[iev])[j].py;
                     double pz_2 = (*(*reconst_list_2)[iev])[j].pz;
-                    double m_2 = (*(*reconst_list_2)[iev])[j].mass;
                     double t_2 = (*(*reconst_list_2)[iev])[j].t;
                     double x_2 = (*(*reconst_list_2)[iev])[j].x;
                     double y_2 = (*(*reconst_list_2)[iev])[j].y;
@@ -1526,7 +1524,7 @@ void particleSamples::perform_particle_reconstruction() {
                     double pz = pz_1 + pz_2;
                     double invariant_mass = sqrt(E*E - px*px - py*py - pz*pz);
                     if (fabs(invariant_mass - particle_mass)
-                            < particle_width) {
+                        < particle_width) {
                         // phi(1020) resonance found
                         double spatial_distance = sqrt(
                             (t_1 - t_2)*(t_1 - t_2)
