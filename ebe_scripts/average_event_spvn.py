@@ -405,7 +405,7 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data):
 
 
 def get_vn_diff_2PC_from_single_event(data):
-    dN_event = data[:, 2]
+    dN_event = data[:, -1]
     temp_vn_real_array = []
     temp_vn_imag_array = []
     temp_vn_denorm_array = []
@@ -444,19 +444,19 @@ def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag, vn_diff_denorm,
 
 def calculate_vn_diff_2PC(vn_diff_real, vn_diff_imag, vn_diff_denorm):
     """
-        this funciton calculates the rms vn(pT)
+        this funciton calculates the rms vn[2](pT)
     """
     vn_diff_real = array(vn_diff_real)
     vn_diff_imag = array(vn_diff_imag)
     vn_diff_denorm = array(vn_diff_denorm)
     nev = len(vn_diff_denorm[:, 0])
-    num = sqrt(mean(vn_diff_real**2. + vn_diff_imag**2., 0))
-    denorm = sqrt(mean(vn_diff_denorm**2., 0))
-    num_err = std(vn_diff_real**2. + vn_diff_imag**2., 0)/sqrt(nev)/(2.*num)
-    denorm_err = std(vn_diff_denorm**2., 0)/sqrt(nev)/(2.*denorm)
-    vn_diff_2PC = num/denorm
-    vn_diff_2PC_err = sqrt((num_err/denorm)**2.
-                           + (num*denorm_err/denorm/denorm)**2.)
+    vn_diff_2PC = sqrt(
+        mean((vn_diff_real**2. + vn_diff_imag**2. - vn_diff_denorm)
+             /(vn_diff_denorm**2. - vn_diff_denorm + 1e-15), 0))
+    vn_diff_2PC_err = (
+        std((vn_diff_real**2. + vn_diff_imag**2. - vn_diff_denorm)
+            /(vn_diff_denorm**2. - vn_diff_denorm + 1e-15), 0)
+        /sqrt(nev)/(2.*vn_diff_2PC + 1e-15))
     return(vn_diff_2PC, vn_diff_2PC_err)
 
 
