@@ -25,6 +25,7 @@
 #include "./particleSamples.h"
 #include "./HBT_correlation.h"
 #include "./single_particleSpectra.h"
+#include "./particle_yield_distribution.h"
 
 using namespace std;
 
@@ -54,11 +55,17 @@ int main(int argc, char *argv[]) {
     
     particleSamples particle_list(paraRdr, path);
     if (run_mode == 0) {
+        // collect single particle spectra and vn
         singleParticleSpectra testSP(paraRdr, path, &particle_list);
         testSP.calculate_Qn_vector_shell();
     } else if (run_mode == 1) {
+        // compute HBT correlation function and HBT radii
         HBT_correlation test(paraRdr, path, &particle_list);
         test.calculate_HBT_correlation_function();
+    } else if (run_mode == 2) {
+        // collect event-by-event particle yield distribution
+        particle_yield_distribution test_dis(paraRdr, path, &particle_list);
+        test_dis.collect_particle_yield_distribution();
     } else {
         cout << "Error: unrecognized run_mode: " << run_mode << endl;
         exit(1);
