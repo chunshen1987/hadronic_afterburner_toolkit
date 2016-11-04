@@ -142,12 +142,12 @@ mkdir HBT_results
 for iev in `ls UrQMD_events | grep "particle_list"`
 do
     eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
-    cd HBTcorrelation_MCafterburner
+    cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
     mv ../UrQMD_events/mixed_event_$eventid.dat results/particle_list_mixed_event.dat
-    ./HBT_afterburner.e > output.log
+    ./hadronic_afterburner_tools.e read_in_mode=1 run_mode=1 > output.log
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results/particle_list_mixed_event.dat ../UrQMD_events/mixed_event_$eventid.dat
     mv results ../HBT_results/event_$eventid
@@ -179,12 +179,12 @@ mkdir HBT_results
 for iev in `ls JAM_events | grep "particle_list"`
 do
     eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
-    cd HBTcorrelation_MCafterburner
+    cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
     mv ../JAM_events/$iev results/particle_list.dat
     mv ../JAM_events/mixed_event_$eventid.dat results/particle_list_mixed_event.dat
-    ./HBT_afterburner.e run_mode=1 read_in_mode=5 > output.log
+    ./hadronic_afterburner_tools.e run_mode=1 read_in_mode=5 > output.log
     mv results/particle_list.dat ../JAM_events/$iev
     mv results/particle_list_mixed_event.dat ../JAM_events/mixed_event_$eventid.dat
     mv results ../HBT_results/event_$eventid
@@ -214,46 +214,46 @@ def generate_script_spectra_and_vn(folder_name):
 mkdir spvn_results
 for iev in `ls UrQMD_events | grep "particle_list"`
 do
-    cd HBTcorrelation_MCafterburner
+    cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
 
     # pi+, pi-
-    ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
     # K+, K-
-    ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
     # protons and anti-protons
-    ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
     # Lambda and anti-Lambda
-    ./HBT_afterburner.e run_mode=0 particle_monval=3122 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=3122 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-3122 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-3122 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=3122 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-3122 distinguish_isospin=1 rap_type=1 >> output.log
     # Xi- and anti-Xi+
-    ./HBT_afterburner.e run_mode=0 particle_monval=3312 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=3312 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-3312 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-3312 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=3312 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-3312 distinguish_isospin=1 rap_type=1 >> output.log
     # Omega and anti Omega
-    ./HBT_afterburner.e run_mode=0 particle_monval=3334 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=3334 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-3334 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=-3334 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=3334 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-3334 distinguish_isospin=1 rap_type=1 >> output.log
     # phi(1020)
-    ./HBT_afterburner.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=1 >> output.log
     # charged hadrons
-    ./HBT_afterburner.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
 
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
@@ -284,23 +284,23 @@ def generate_script_spectra_and_vn_with_JAM(folder_name):
 mkdir spvn_results
 for iev in `ls JAM_events | grep "particle_list"`
 do
-    cd HBTcorrelation_MCafterburner
+    cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
     mv ../JAM_events/$iev results/particle_list.dat
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
-    ./HBT_afterburner.e run_mode=0 read_in_mode=5 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode=5 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
     mv results/particle_list.dat ../JAM_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..
@@ -330,11 +330,11 @@ def generate_script_HBT_with_OSCAR(folder_name):
 mkdir HBT_results
 for iev in `ls OSCAR_events`
 do
-    cd HBTcorrelation_MCafterburner
+    cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
     mv ../OSCAR_events/$iev results/OSCAR.DAT
-    ./HBT_afterburner.e mode=0 > output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=1 > output.log
     mv results/OSCAR.DAT ../OSCAR_events/$iev
     mv results ../HBT_results/event_`echo $iev | cut -f 2 -d _ | cut -f 1 -d .`
     cd ..
@@ -405,9 +405,9 @@ def generate_event_folder_UrQMD(working_folder, event_id, mode):
         mkdir(path.join(event_folder, 'UrQMD_events'))
         generate_script_spectra_and_vn(event_folder)
 
-    shutil.copytree('codes/HBTcorrelation_MCafterburner', 
+    shutil.copytree('codes/hadronic_afterburner_toolkit', 
                     path.join(path.abspath(event_folder), 
-                    'HBTcorrelation_MCafterburner'))
+                    'hadronic_afterburner_toolkit'))
 
 
 def generate_event_folder_JAM(working_folder, event_id, mode):
@@ -424,16 +424,16 @@ def generate_event_folder_JAM(working_folder, event_id, mode):
         # collect particle spectra and vn with JAM outputs
         mkdir(path.join(event_folder, 'JAM_events'))
         generate_script_spectra_and_vn_with_JAM(event_folder)
-        shutil.copytree('codes/HBTcorrelation_MCafterburner', 
+        shutil.copytree('codes/hadronic_afterburner_toolkit', 
                         path.join(path.abspath(event_folder), 
-                        'HBTcorrelation_MCafterburner'))
+                        'hadronic_afterburner_toolkit'))
     elif mode == 7:
         # calculate HBT correlation with JAM outputs
         mkdir(path.join(event_folder, 'JAM_events'))
         generate_script_HBT_with_JAM(event_folder)
-        shutil.copytree('codes/HBTcorrelation_MCafterburner', 
+        shutil.copytree('codes/hadronic_afterburner_toolkit', 
                         path.join(path.abspath(event_folder), 
-                        'HBTcorrelation_MCafterburner'))
+                        'hadronic_afterburner_toolkit'))
 
 
 def generate_event_folder(working_folder, event_id):
@@ -497,31 +497,31 @@ if __name__ == "__main__":
               % str(sys.argv[0]))
         exit(0)
 
-    if mode == 0:   # running iSS+osc2u+UrQMD 
+    if mode == 0:   # run iSS + osc2u + UrQMD from hydro hypersurface
         for icore in range(ncore):
             generate_event_folder_iSS(folder_name, icore)
         copy_hydro_events(ncore, from_folder, folder_name)
-    elif mode == 1:   # running UrQMD 
+    elif mode == 1:   # run UrQMD with OSCAR events
         for icore in range(ncore):
             generate_event_folder(folder_name, icore)
         copy_OSCAR_events(ncore, from_folder, folder_name)
-    elif mode == 2:   # running HBT afterburner with OSCAR
+    elif mode == 2:   # calculate HBT correlation with OSCAR events
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore, mode)
         copy_OSCAR_events(ncore, from_folder, folder_name)
-    elif mode == 3:   # running HBT afterburner with UrQMD
+    elif mode == 3:   # calculate HBT correlation with UrQMD events
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore, mode)
         copy_UrQMD_events(ncore, from_folder, folder_name)
-    elif mode == 4:   # collect spectra and flow observables with UrQMD
+    elif mode == 4:   # collect spectra and flow observables from UrQMD events
         for icore in range(ncore):
             generate_event_folder_UrQMD(folder_name, icore, mode)
         copy_UrQMD_events(ncore, from_folder, folder_name)
-    elif mode == 5:   # running JAM + OSCAR files
+    elif mode == 5:   # run JAM with OSCAR events
         for icore in range(ncore):
             generate_event_folder_JAM(folder_name, icore, mode)
         copy_OSCAR_events(ncore, from_folder, folder_name)
-    elif mode == 6:   # collect spectra and vn  with JAM events
+    elif mode == 6:   # collect spectra and vn with JAM events
         for icore in range(ncore):
             generate_event_folder_JAM(folder_name, icore, mode)
         copy_JAM_events(ncore, from_folder, folder_name)

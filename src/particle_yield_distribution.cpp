@@ -93,22 +93,29 @@ void particle_yield_distribution::collect_particle_yield(int event_id) {
             }
         }
     }
-    number_of_events[count-1]++;
+    if (count > 0) {
+      number_of_events[count-1]++;
+    }
 }
 
 void particle_yield_distribution::output_particle_yield_distribution() {
     // this function outputs the particle yield distribution
 
     ostringstream filename;
-    filename << path << "/particle_" << particle_monval
-             << "_yield_distribution.dat";
+    if (rap_type == 0)
+      filename << path << "/particle_" << particle_monval
+               << "_yield_distribution_eta.dat";
+    else
+      filename << path << "/particle_" << particle_monval
+               << "_yield_distribution_y.dat";
     ofstream output(filename.str().c_str());
 
     // output header
     output << "# N  P(N)" << endl;
 
     for (int i = 0; i < n_max; i++) {
-        double p_N = (number_of_events[i]/total_number_of_events
+        double p_N = (static_cast<double>(number_of_events[i])
+                      /static_cast<double>(total_number_of_events)
                       /reconst_branching_ratio);
         output << scientific << setw(18) << setprecision(8)
                << i << "   " << p_N << endl;
