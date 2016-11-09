@@ -267,8 +267,7 @@ int particleSamples::read_in_particle_samples() {
     return(0);
 }
 
-int particleSamples::read_in_particle_samples_mixed_event()
-{
+int particleSamples::read_in_particle_samples_mixed_event() {
     if (read_in_mode == 0) {
         read_in_particle_samples_OSCAR_mixed_event();
         resonance_feed_down_flag = 0;
