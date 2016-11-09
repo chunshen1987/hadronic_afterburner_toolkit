@@ -20,6 +20,7 @@ distinguish_isospin = 1       # flag whether to distinguish the isospin of
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
                                      # turn on only for Lambda (monval=3122)
                                      # for Sigma^0 -> Lambda + gamma
+net_particle_flag = 0         # flag to collect net particle yield distribution
 
 event_buffer_size = 2000      # the number of events read in at once
 
