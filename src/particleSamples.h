@@ -34,6 +34,7 @@ class particleSamples {
 
     int charged_hadron_pdg_list[6];
     int charged_hadron_urqmd_id_list[5];
+    int baryon_urqmd_id_list[5];
 
     vector< vector<particle_info>* >* particle_list;
     vector< vector<particle_info>* >* anti_particle_list;
@@ -48,6 +49,7 @@ class particleSamples {
 
     void initialize_charged_hadron_urqmd_id_list();
     void initialize_charged_hadron_pdg_list();
+    void initialize_baryon_urqmd_id_list();
     void get_UrQMD_id(int monval);
     int decide_to_pick_UrQMD(int pid, int iso3, int charge,
                              int parent_proc_type);
@@ -56,7 +58,8 @@ class particleSamples {
                 int pid, int iso3, int charge, int parent_proc_type,
                 int *flag1, int *flag2);
     int decide_to_pick_JAM(int pid);
-    int decide_to_pick_UrQMD_anti_particles(int pid, int iso3);
+    int decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
+                                            int charge);
 
     void perform_resonance_feed_down();
     void perform_two_body_decay(particle_info *mother,
