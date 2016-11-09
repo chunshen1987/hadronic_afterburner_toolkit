@@ -13,6 +13,7 @@ class particle_yield_distribution {
     particleSamples *particle_list;
 
     int particle_monval;
+    int net_particle_flag;
 
     double reconst_branching_ratio;
 
