@@ -93,9 +93,7 @@ void particle_yield_distribution::collect_particle_yield(int event_id) {
             }
         }
     }
-    if (count > 0) {
-      number_of_events[count-1]++;
-    }
+    number_of_events[count]++;
 }
 
 void particle_yield_distribution::output_particle_yield_distribution() {
