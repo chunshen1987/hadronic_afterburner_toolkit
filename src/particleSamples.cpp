@@ -26,6 +26,15 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         reject_decay_flag = 0;
         tau_reject = 10000.;
     }
+
+    if (run_mode == 2) {
+        net_particle_flag = paraRdr->getVal("net_particle_flag");
+        if (net_particle_flag == 1) {
+            anti_particle_list = new vector< vector<particle_info>* >;
+        }
+    } else {
+        net_particle_flag = 0;
+    }
     
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
@@ -119,6 +128,14 @@ particleSamples::~particleSamples() {
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     delete particle_list_mixed_event;
+
+    if (net_particle_flag == 1) {
+        for (int i = 0; i < anti_particle_list->size(); i++) {
+            (*anti_particle_list)[i]->clear();
+        }
+        anti_particle_list->clear();
+        delete anti_particle_list;
+    }
 
     if (resonance_feed_down_flag == 1) {
         for (int i = 0; i < resonance_list->size(); i++)
@@ -322,6 +339,14 @@ int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge,
     return(pick_flag);
 }
 
+int particleSamples::decide_to_pick_UrQMD_anti_particles(int pid, int iso3) {
+    int pick_flag = 0;
+    if (pid == -particle_urqmd_id && iso3 == -particle_urqmd_isospin) {
+        pick_flag = 1;
+    }
+    return(pick_flag);
+}
+
 int particleSamples::decide_to_pick_UrQMD_resonance(int pid, int iso3,
                                                     int charge) {
     int pick_flag = 0;
@@ -386,6 +411,12 @@ int particleSamples::read_in_particle_samples_OSCAR() {
     for (int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
+    if (net_particle_flag == 1) {
+        for (int i = 0; i < anti_particle_list->size(); i++) {
+            (*anti_particle_list)[i]->clear();
+        }
+    }
+    anti_particle_list->clear();
     
     string temp_string;
     int event_id, n_particle, dummy;
@@ -397,23 +428,34 @@ int particleSamples::read_in_particle_samples_OSCAR() {
         temp1 >> event_id >> n_particle;
         if (!inputfile.eof()) {
             particle_list->push_back(new vector<particle_info> );
+            if (net_particle_flag == 1) {
+                anti_particle_list->push_back(new vector<particle_info> );
+            }
             int idx = ievent;
 
             int pick_flag = 0;
+            int anti_particle_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
                 if (flag_isospin == 0) {
-                    if (abs(temp_monval) == particle_monval)
+                    if (abs(temp_monval) == particle_monval) {
                         pick_flag = 1;
-                    else
+                    } else {
                         pick_flag = 0;
+                    }
                 } else {
-                    if (temp_monval == particle_monval)
+                    if (temp_monval == particle_monval) {
                         pick_flag = 1;
-                    else
+                    } else {
                         pick_flag = 0;
+                    }
+                    if (temp_monval == -particle_monval) {
+                        anti_particle_pick_flag = 1;
+                    } else {
+                        anti_particle_pick_flag = 0;
+                    }
                 }
                 if (pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
@@ -427,6 +469,19 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                            >> temp_particle_info->z 
                            >> temp_particle_info->t;
                      (*particle_list)[idx]->push_back(*temp_particle_info);
+                }
+                if (anti_particle_pick_flag == 1) {
+                     particle_info *temp_particle_info = new particle_info;
+                     temp2 >> temp_particle_info->px 
+                           >> temp_particle_info->py
+                           >> temp_particle_info->pz 
+                           >> temp_particle_info->E
+                           >> temp_particle_info->mass 
+                           >> temp_particle_info->x 
+                           >> temp_particle_info->y
+                           >> temp_particle_info->z 
+                           >> temp_particle_info->t;
+                     (*anti_particle_list)[idx]->push_back(*temp_particle_info);
                 }
             }
         } else {
@@ -721,6 +776,13 @@ int particleSamples::read_in_particle_samples_UrQMD() {
         resonance_list->clear();
     }
 
+    if (net_particle_flag == 1) {
+        for (int i = 0; i < anti_particle_list->size(); i++) {
+            (*anti_particle_list)[i]->clear();
+        }
+        anti_particle_list->clear();
+    }
+
     if (reconst_flag == 1) {
         for (int i = 0; i < reconst_list_1->size(); i++)
             (*reconst_list_1)[i]->clear();
@@ -749,6 +811,9 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                 reconst_list_1->push_back(new vector<particle_info>);
                 reconst_list_2->push_back(new vector<particle_info>);
             }
+            if (net_particle_flag == 1) {
+                anti_particle_list->push_back(new vector<particle_info>);
+            }
 
             // first skip the header
             for (int i = 0; i < 16; i++)
@@ -764,6 +829,9 @@ int particleSamples::read_in_particle_samples_UrQMD() {
             if (resonance_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
+            if (net_particle_flag == 1) {
+                (*anti_particle_list)[idx]->clear();
+            }
             if (reconst_flag == 1) {
                 (*reconst_list_1)[idx]->clear();
                 (*reconst_list_2)[idx]->clear();
@@ -773,6 +841,7 @@ int particleSamples::read_in_particle_samples_UrQMD() {
             int resonance_pick_flag = 0;
             int reconst_1_pick_flag = 0;
             int reconst_2_pick_flag = 0;
+            int anti_particle_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile, temp_string);
                 stringstream temp2(temp_string);
@@ -789,6 +858,12 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
 
+                if (net_particle_flag == 1) {
+                    anti_particle_pick_flag =
+                        decide_to_pick_UrQMD_anti_particles(urqmd_pid,
+                                                            urqmd_iso3);
+                }
+
                 if (reconst_flag == 1) {
                     decide_to_pick_UrQMD_reconst(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type,
@@ -796,6 +871,7 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                 }
 
                 int trigger = (pick_flag + resonance_pick_flag
+                               + net_particle_flag
                                + reconst_1_pick_flag + reconst_2_pick_flag);
                 if (trigger > 0) {
                     particle_info *temp_particle_info = new particle_info;
@@ -831,6 +907,8 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_2_pick_flag == 1) {
                         (*reconst_list_2)[idx]->push_back(*temp_particle_info);
+                    } else if (net_particle_flag == 1) {
+                        (*anti_particle_list)[idx]->push_back(*temp_particle_info);
                     }
                 }
             }
