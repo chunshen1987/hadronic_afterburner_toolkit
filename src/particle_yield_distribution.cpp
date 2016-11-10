@@ -135,13 +135,14 @@ void particle_yield_distribution::output_particle_yield_distribution() {
     // this function outputs the particle yield distribution
 
     ostringstream filename;
-    if (rap_type == 0)
-      filename << path << "/particle_" << particle_monval
-               << "_yield_distribution_eta.dat";
-    else
-      filename << path << "/particle_" << particle_monval
-               << "_yield_distribution_y.dat";
-    if (net_particle_flag == 1) {
+    if (net_particle_flag == 0) {
+        if (rap_type == 0)
+          filename << path << "/particle_" << particle_monval
+                   << "_yield_distribution_eta.dat";
+        else
+          filename << path << "/particle_" << particle_monval
+                   << "_yield_distribution_y.dat";
+    } else {
         if (rap_type == 0)
           filename << path << "/particle_0" << particle_monval
                    << "_yield_distribution_eta.dat";
