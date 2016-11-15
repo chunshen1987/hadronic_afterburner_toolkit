@@ -26,6 +26,7 @@
 #include "./HBT_correlation.h"
 #include "./single_particleSpectra.h"
 #include "./particle_yield_distribution.h"
+#include "./particle_decay.h"
 
 using namespace std;
 
@@ -53,6 +54,14 @@ int main(int argc, char *argv[]) {
     sw_total.tic();
     sw.tic();
     
+    if (run_mode == 10) {
+        // perform particle decays
+        particle_decay decay_tool;
+        int N = decay_tool.read_resonances_list();
+        decay_tool.check_resonance_table();
+        exit(1);
+    }
+
     particleSamples particle_list(paraRdr, path);
     if (run_mode == 0) {
         // collect single particle spectra and vn

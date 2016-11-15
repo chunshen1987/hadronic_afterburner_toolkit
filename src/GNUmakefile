@@ -26,12 +26,13 @@ endif
 
 SRC		=	main.cpp arsenal.cpp \
             ParameterReader.cpp particleSamples.cpp HBT_correlation.cpp \
-            single_particleSpectra.cpp particle_yield_distribution.cpp
+            single_particleSpectra.cpp particle_yield_distribution.cpp \
+			particle_decay.cpp
 
 INC		= 	parameters.h arsenal.h ParameterReader.h \
             Stopwatch.h particleSamples.h \
             HBT_correlation.h single_particleSpectra.h \
-			particle_yield_distribution.h
+			particle_yield_distribution.h particle_decay.h
 
 # -------------------------------------------------
 
@@ -77,11 +78,12 @@ install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)
 
 # --------------- Dependencies -------------------
-./main.cpp: arsenal.h parameters.h Stopwatch.h ParameterReader.h particleSamples.h HBT_correlation.h single_particleSpectra.h particle_yield_distribution.h
+./main.cpp: arsenal.h parameters.h Stopwatch.h ParameterReader.h particleSamples.h HBT_correlation.h single_particleSpectra.h particle_yield_distribution.h particle_decay.h
 ./arsenal.cpp: arsenal.h
 ./ParameterReader.cpp: ParameterReader.h arsenal.h
 ./particleSamples.cpp: ParameterReader.h particleSamples.h 
 ./HBT_correlation.cpp: HBT_correlation.h ParameterReader.h particleSamples.h
 ./single_particleSpectra.cpp: single_particleSpectra.h ParameterReader.h particleSamples.h
 ./particle_yield_distribution.cpp: particle_yield_distribution.h ParameterReader.h particleSamples.h
+./particle_decay.cpp: particle_decay.h particleSamples.h
 
