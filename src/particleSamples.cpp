@@ -51,6 +51,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         if (resonance_feed_down_flag == 1) {
             // include Sigma0 feed down to Lambda
             resonance_list = new vector< vector<particle_info>* >;
+            decayer_ptr = new particle_decay;
         }
     } else {
         resonance_feed_down_flag = 0;
@@ -142,6 +143,7 @@ particleSamples::~particleSamples() {
             (*resonance_list)[i]->clear();
         resonance_list->clear();
         delete resonance_list;
+        delete decayer_ptr;
     }
 
     if (reconst_flag == 1) {
@@ -290,6 +292,16 @@ void particleSamples::get_UrQMD_id(int monval) {
     }
 }
 
+int particleSamples::get_pdg_id(int urqmd_id, int urqmd_isospin) {
+    int monval = 0;
+    if (urqmd_id == 40 && urqmd_isospin == 0) {
+        monval = 3212;
+    } else if (urqmd_id == -40 && urqmd_isospin == 0) {
+        monval = -3212;
+    }
+    return(monval);
+}
+
 int particleSamples::read_in_particle_samples() {
     if (read_in_mode == 0) {
         read_in_particle_samples_OSCAR();
@@ -330,7 +342,7 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         read_in_particle_samples_JAM_mixed_event();
     }
     if (resonance_feed_down_flag == 1) {
-            perform_resonance_feed_down();
+        perform_resonance_feed_down();
     }
 
     return(0);
@@ -566,6 +578,7 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                 }
                 if (pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
+                     temp_particle_info->monval = temp_monval;
                      temp2 >> temp_particle_info->px 
                            >> temp_particle_info->py
                            >> temp_particle_info->pz 
@@ -579,6 +592,7 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                 }
                 if (anti_particle_pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
+                     temp_particle_info->monval = temp_monval;
                      temp2 >> temp_particle_info->px 
                            >> temp_particle_info->py
                            >> temp_particle_info->pz 
@@ -711,6 +725,7 @@ int particleSamples::read_in_particle_samples_JAM() {
                     if (pick_flag == 1) {
                         (*particle_list)[idx]->push_back(*temp_particle_info);
                     } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = temp_monval;
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_1_pick_flag == 1) {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
@@ -762,6 +777,7 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
                 }
                 if (pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
+                     temp_particle_info->monval = temp_monval;
                      temp2 >> temp_particle_info->px 
                            >> temp_particle_info->py
                            >> temp_particle_info->pz 
@@ -860,6 +876,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
                         (*particle_list_mixed_event)[idx]->push_back(
                                                         *temp_particle_info);
                      } else if (resonance_pick_flag == 1) {
+                         temp_particle_info->monval = temp_monval;
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                      }
                 }
@@ -1009,6 +1026,8 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                             delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_1_pick_flag == 1) {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
@@ -1143,6 +1162,8 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
                             delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_1_pick_flag == 1) {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
@@ -1251,6 +1272,8 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
                             delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
                 }
@@ -1354,6 +1377,8 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
                             delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
                 }
@@ -1478,6 +1503,8 @@ int particleSamples::read_in_particle_samples_Sangwook() {
                             delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_1_pick_flag == 1) {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
@@ -1581,6 +1608,8 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
                             delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
                 }
@@ -1601,76 +1630,14 @@ void particleSamples::perform_resonance_feed_down() {
                 particle_info *daughter2 = new particle_info;
                 daughter1->mass = 1.116;  // mass of Lambda
                 daughter2->mass = 0.0;    // mass of photon
-                perform_two_body_decay(&(*(*resonance_list)[iev])[i],
-                                       daughter1, daughter2);
+                decayer_ptr->perform_two_body_decay(
+                        &(*(*resonance_list)[iev])[i],
+                        daughter1, daughter2);
                 (*particle_list)[iev]->push_back(*daughter1);
                 delete daughter2;  // discard the photon
             }
         }
     }
-}
-
-void particleSamples::perform_two_body_decay(particle_info *mother,
-                                             particle_info* daughter1,
-                                             particle_info* daughter2) {
-    // this function perform two body decay
-    double M = mother->mass;
-    double m1 = daughter1->mass;
-    double m2 = daughter2->mass;
-    if (M < (m1 + m2)) {
-        cout << "Error:particleSamples::perform_two_body_decay:"
-             << "can not found decays!" << endl;
-        cout << "M = " << M << ", m1 = " << m1 << ", m2 = " << m2 << endl;
-        exit(1);
-    }
-    double temp = M*M - m1*m1 - m2*m2;
-    double p_lrf = sqrt(temp*temp - 4*m1*m1*m2*m2)/(2*M);
-
-    // randomly pick emission angle
-    double phi = drand48()*2*M_PI;
-    double cos_theta = 2.*(drand48() - 0.5);
-    double sin_theta = sqrt(1. - cos_theta*cos_theta);
-
-    // compute daughter particles' energy and momentum in the rest frame
-    double E1_lrf = sqrt(p_lrf*p_lrf + m1*m1);
-    double p1_lrf_x = p_lrf*sin_theta*cos(phi);
-    double p1_lrf_y = p_lrf*sin_theta*sin(phi);
-    double p1_lrf_z = p_lrf*cos_theta;
-    double E2_lrf = sqrt(p_lrf*p_lrf + m2*m2);
-    double p2_lrf_x = -p1_lrf_x;
-    double p2_lrf_y = -p1_lrf_y;
-    double p2_lrf_z = -p1_lrf_z;
-    
-    // compute mother velocity
-    double vx = mother->px/mother->E;
-    double vy = mother->py/mother->E;
-    double vz = mother->pz/mother->E;
-
-    // perform the boost
-    double v2 = vx*vx + vy*vy + vz*vz;
-    double gamma = 1./sqrt(1. - v2);
-    double gamma_m_1 = gamma - 1.;
-    double vp1 = vx*p1_lrf_x + vy*p1_lrf_y + vz*p1_lrf_z;
-    double vp2 = vx*p2_lrf_x + vy*p2_lrf_y + vz*p2_lrf_z;
-    daughter1->E = gamma*(E1_lrf - vp1);
-    daughter1->px = p1_lrf_x + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vx;
-    daughter1->py = p1_lrf_y + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vy;
-    daughter1->pz = p1_lrf_z + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vz;
-    daughter2->E = gamma*(E2_lrf - vp2);
-    daughter2->px = p2_lrf_x + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vx;
-    daughter2->py = p2_lrf_y + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vy;
-    daughter2->pz = p2_lrf_z + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vz;
-
-    daughter1->t = mother->t;
-    daughter1->x = mother->x;
-    daughter1->y = mother->y;
-    daughter1->z = mother->z;
-    daughter2->t = mother->t;
-    daughter2->x = mother->x;
-    daughter2->y = mother->y;
-    daughter2->z = mother->z;
-
-    return;
 }
 
 void particleSamples::perform_particle_reconstruction() {

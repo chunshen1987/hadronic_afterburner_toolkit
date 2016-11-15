@@ -6,13 +6,10 @@
 #include <vector>
 
 #include "./ParameterReader.h"
-using namespace std;
+#include "./particle_info.h"
+#include "./particle_decay.h"
 
-struct particle_info {
-    double mass;
-    double px, py, pz, E;
-    double x, y, z, t;
-};
+using namespace std;
 
 class particleSamples {
  private:
@@ -43,6 +40,7 @@ class particleSamples {
     vector< vector<particle_info>* >* reconst_list_1;
     vector< vector<particle_info>* >* reconst_list_2;
 
+    particle_decay *decayer_ptr;
  public:
     particleSamples(ParameterReader* paraRdr_in, string path_in);
     ~particleSamples();
@@ -61,11 +59,11 @@ class particleSamples {
     int decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
                                             int charge);
 
+    int get_pdg_id(int urqmd_id, int urqmd_isospin);
+
     void perform_resonance_feed_down();
-    void perform_two_body_decay(particle_info *mother,
-                                particle_info* daughter1,
-                                particle_info* daughter2);
     void perform_particle_reconstruction(); 
+
     int read_in_particle_samples();
     int read_in_particle_samples_mixed_event();
     int read_in_particle_samples_OSCAR();

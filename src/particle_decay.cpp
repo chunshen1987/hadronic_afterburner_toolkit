@@ -1,6 +1,7 @@
 // Copyright Chun Shen @ 2016
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <cmath>
 #include "./particle_decay.h"
@@ -174,12 +175,23 @@ void particle_decay::check_resonance_table() {
     }
 }
 
-void particle_decay::perform_two_body_decay(particle_information *mother,
-                                            particle_information *daughter1,
-                                            particle_information *daughter2) {
+double particle_decay::get_particle_width(particle_info *part) {
+    double width = 0.0;
+    for (int i = 0; i < resonance_table.size(); i++) {
+        if (part->monval == resonance_table[i]->monval) {
+            width = resonance_table[i]->width;
+            break;
+        }
+    }
+    return(width);
+}
+
+void particle_decay::perform_two_body_decay(particle_info *mother,
+                                            particle_info *daughter1,
+                                            particle_info *daughter2) {
     // this function perform two body decay
     double M_pole = mother->mass;
-    double M_width = mother->width;
+    double M_width = get_particle_width(mother);
     double m1 = daughter1->mass;
     double m2 = daughter2->mass;
     double M_min = m1 + m2;
@@ -189,7 +201,7 @@ void particle_decay::perform_two_body_decay(particle_information *mother,
         cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2 << endl;
         exit(1);
     }
-    double M_sampled = BreitWigner(M_pole, M_width, M_min);
+    double M_sampled = breit_wigner(M_pole, M_width, M_min);
     double temp = M_sampled*M_sampled - m1*m1 - m2*m2;
     double p_lrf = sqrt(temp*temp - 4*m1*m1*m2*m2)/(2*M_sampled);
 
@@ -247,12 +259,13 @@ void particle_decay::perform_two_body_decay(particle_information *mother,
     return;
 }
 
-void particle_decay::perform_three_body_decay(
-        particle_information *mother, particle_information *daughter1,
-        particle_information *daughter2, particle_information *daughter3) {
+void particle_decay::perform_three_body_decay(particle_info *mother,
+                                              particle_info *daughter1,
+                                              particle_info *daughter2,
+                                              particle_info *daughter3) {
     // this function perform 3 body decays
     double M_pole = mother->mass;
-    double M_width = mother->width;
+    double M_width = get_particle_width(mother);
     double m1 = daughter1->mass;
     double m2 = daughter2->mass;
     double m3 = daughter3->mass;
@@ -264,7 +277,7 @@ void particle_decay::perform_three_body_decay(
              << ", m3 = " << m3 << endl;
         exit(1);
     }
-    double M_sampled = BreitWigner(M_pole, M_width, M_min);
+    double M_sampled = breit_wigner(M_pole, M_width, M_min);
     // generate lrf E1, E2, and theta12 using accept and reject method
     double E1_lrf, E2_lrf, E3_lrf, p1_lrf, p2_lrf, cos12_lrf;
     do {
@@ -296,11 +309,10 @@ void particle_decay::perform_three_body_decay(
     double tp2_lrf_x = p2_lrf*sqrt(1. - cos12_lrf*cos12_lrf);
     double tp2_lrf_z = p2_lrf*cos12_lrf;
     double tp3_lrf_x = - tp2_lrf_x;
-    double tp3_lrf_z = - (p1_lrf + tp2_lrf_z);
-
-    double phi = 2*M_PI*drand48();
-    double ksi = 2*M_PI*drand48();
-    double cos_theta = 2*drand48() - 1.0;
+    double tp3_lrf_z = - (p1_lrf + tp2_lrf_z); 
+    double phi = 2.*M_PI*drand48();
+    double ksi = 2.*M_PI*drand48();
+    double cos_theta = 2.*drand48() - 1.0;
 
     double sin_phi = sin(phi);
     double cos_phi = cos(phi);
@@ -315,7 +327,7 @@ void particle_decay::perform_three_body_decay(
                   + p1_lrf_y*p1_lrf_y + p1_lrf_z*p1_lrf_z);
     double p2_lrf_x = (tp2_lrf_x*(cos_phi*cos_theta*cos_ksi - sin_phi*sin_ksi)
                        - tp2_lrf_z*sin_theta*cos_ksi);
-    double p2_lrf_y = (tp2_lrf_x*(- cos_phi*cos_theta*sin_ksi - sin_phi*cos_ksi)
+    double p2_lrf_y = (tp2_lrf_x*(-cos_phi*cos_theta*sin_ksi - sin_phi*cos_ksi)
                        + tp2_lrf_z*sin_theta*sin_ksi);
     double p2_lrf_z = tp2_lrf_x*(cos_phi*sin_theta) + tp2_lrf_z*cos_theta;
     E2_lrf = sqrt(m2*m2 + p2_lrf_x*p2_lrf_x
@@ -368,7 +380,7 @@ void particle_decay::perform_three_body_decay(
     return;
 }
 
-double particle_decay::BreitWigner(double mass, double width, double M_min) {
+double particle_decay::breit_wigner(double mass, double width, double M_min) {
     // this function sample BreitWigner distribution for the mass
     // particle mass sampled is >= M_min
     // From Wiki: https://en.wikipedia.org/wiki/Cauchy_distribution

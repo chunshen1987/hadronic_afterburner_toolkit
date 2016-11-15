@@ -32,7 +32,8 @@ SRC		=	main.cpp arsenal.cpp \
 INC		= 	parameters.h arsenal.h ParameterReader.h \
             Stopwatch.h particleSamples.h \
             HBT_correlation.h single_particleSpectra.h \
-			particle_yield_distribution.h particle_decay.h
+			particle_yield_distribution.h particle_decay.h \
+			particle_info.h
 
 # -------------------------------------------------
 
