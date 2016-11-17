@@ -252,6 +252,16 @@ do
     # phi(1020)
     ./hadronic_afterburner_tools.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=0 >> output.log
     ./hadronic_afterburner_tools.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=1 >> output.log
+    # all positive charged hadrons
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9998 distinguish_isospin=0 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9998 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9998 distinguish_isospin=0 rap_type=0 rap_min=-2.5 rap_max=-0.5 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9998 distinguish_isospin=0 rap_type=0 rap_min=0.5 rap_max=2.5 >> output.log
+    # all negative charged hadrons
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-9998 distinguish_isospin=0 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-9998 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-9998 distinguish_isospin=0 rap_type=0 rap_min=-2.5 rap_max=-0.5 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=-9998 distinguish_isospin=0 rap_type=0 rap_min=0.5 rap_max=2.5 >> output.log
     # charged hadrons
     ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
     ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 >> output.log
