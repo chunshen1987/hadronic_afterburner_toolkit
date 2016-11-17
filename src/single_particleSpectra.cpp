@@ -292,7 +292,13 @@ void singleParticleSpectra::output_Qn_vectors() {
     double drapidity = rap_max - rap_min;
     // pT-integrated flow
     ostringstream filename;
-    filename << path << "/particle_" << particle_monval << "_vndata.dat";
+    if (rap_type == 0) {
+        filename << path << "/particle_" << particle_monval << "_vndata"
+                 << "_eta_" << rap_min << "_" << rap_max << ".dat";
+    } else {
+        filename << path << "/particle_" << particle_monval << "_vndata"
+                 << "_y_" << rap_min << "_" << rap_max << ".dat";
+    }
     ofstream output(filename.str().c_str());
 
     double total_N = Qn_vector_real[0];
@@ -330,8 +336,15 @@ void singleParticleSpectra::output_Qn_vectors() {
     
     // pT-differential flow
     ostringstream filename_diff;
-    filename_diff << path 
-                  << "/particle_" << particle_monval << "_vndata_diff.dat";
+    if (rap_type == 0) {
+        filename_diff << path 
+                      << "/particle_" << particle_monval << "_vndata_diff"
+                      << "_eta_" << rap_min << "_" << rap_max << ".dat";
+    } else {
+        filename_diff << path 
+                      << "/particle_" << particle_monval << "_vndata_diff"
+                      << "_y_" << rap_min << "_" << rap_max << ".dat";
+    }
     ofstream output_diff(filename_diff.str().c_str());
 
     for (int ipT = 0; ipT < npT - 1; ipT++) {
@@ -439,10 +452,15 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id) {
 
 void singleParticleSpectra::output_rapidity_distribution() {
     ostringstream filename;
-    if (rap_type == 0)
-        filename << path << "/particle_" << particle_monval << "_dNdeta.dat";
-    else
-        filename << path << "/particle_" << particle_monval << "_dNdy.dat";
+    if (rap_type == 0) {
+        filename << path << "/particle_" << particle_monval << "_dNdeta"
+                 << "_pT_" << vn_rapidity_dis_pT_min << "_"
+                 << vn_rapidity_dis_pT_max << ".dat";
+    } else {
+        filename << path << "/particle_" << particle_monval << "_dNdy"
+                 << "_pT_" << vn_rapidity_dis_pT_min << "_"
+                 << vn_rapidity_dis_pT_max << ".dat";
+    }
     ofstream output(filename.str().c_str());
     output << "#y  dN/dy  dN/dy_err  vn_real  vn_real_err  " 
            << "vn_imag  vn_imag_err  vn_rms   vn_rms_err"
