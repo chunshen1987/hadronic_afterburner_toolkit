@@ -27,3 +27,7 @@ Pairs from mixed event are form by first rotating the mixture event by a random 
 
 The output correlation function is in 3-d q space (q_out, q_side, q_long).
 
+### Event-by-event particle yield distribution
+
+Particle yield distrbution from a given pT and rapidity cut can be collected from UrQMD outputs
+
