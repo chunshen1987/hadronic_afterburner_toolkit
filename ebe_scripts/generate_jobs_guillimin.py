@@ -111,9 +111,9 @@ do
     cd ../urqmd
     ./runqmd.sh >> ../output.log
     mv particle_list.dat ../UrQMD_results/particle_list_$event_id.dat
-    #mv ../iSS/OSCAR.DAT ../UrQMD_results/OSCAR_$event_id.dat
-    rm -fr ../iSS/OSCAR.DAT
-    rm -fr OSCAR.input
+    mv ../iSS/OSCAR.DAT ../UrQMD_results/OSCAR_$event_id.dat
+    #rm -fr ../iSS/OSCAR.DAT
+    #rm -fr OSCAR.input
     cd ..
 done
 
@@ -254,9 +254,178 @@ do
     ./hadronic_afterburner_tools.e run_mode=0 particle_monval=333 distinguish_isospin=1 rap_type=1 >> output.log
     # charged hadrons
     ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 rap_min=-2.5 rap_max=-0.5 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 particle_monval=9999 distinguish_isospin=0 rap_type=0 rap_min=0.5 rap_max=2.5 >> output.log
 
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    cd ..
+done
+
+""" % (working_folder.split('/')[-1], walltime, working_folder))
+    script.close()
+
+
+def generate_script_particle_yield_distribution(folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    walltime = '1:00:00'
+
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    script.write(
+"""#!/usr/bin/env bash
+#PBS -N HBT_spvn_%s
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -e test.err
+#PBS -o test.log
+#PBS -A cqn-654-ad
+#PBS -q sw
+#PBS -d %s
+
+mkdir spvn_results
+for iev in `ls UrQMD_events | grep "particle_list"`
+do
+    cd hadronic_afterburner_toolkit
+    rm -fr results
+    mkdir results
+    mv ../UrQMD_events/$iev results/particle_list.dat
+
+    # pi+, pi-, and net charged pi
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # K+, K-, ant net charged K
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=321 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-321 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # protons, anti-protons, and net protons
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # Lambda, anti-Lambda, and net Lambda
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-3122 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # Xi- and anti-Xi+
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3312 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-3312 distinguish_isospin=1 rap_type=1 >> output.log
+    # Omega and anti Omega
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=3334 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-3334 distinguish_isospin=1 rap_type=1 >> output.log
+    # phi(1020)
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=333 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=333 distinguish_isospin=1 rap_type=1 >> output.log
+    # all baryon
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=9997 distinguish_isospin=0 rap_type=0 >> output.log
+    # all anti-baryon
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-9997 distinguish_isospin=0 rap_type=0 >> output.log
+    # net baryon
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=9997 distinguish_isospin=0 rap_type=0 net_particle_flag=1 >> output.log
+    # all positive charged hadrons
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=9998 distinguish_isospin=0 rap_type=0 >> output.log
+    # all negative charged hadrons
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=-9998 distinguish_isospin=0 rap_type=0 >> output.log
+    # net charged hadrons
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=9998 distinguish_isospin=0 rap_type=0 net_particle_flag=1 >> output.log
+    # charged hadrons
+    ./hadronic_afterburner_tools.e run_mode=2 particle_monval=9999 distinguish_isospin=0 rap_type=0 >> output.log
+
+    mv results/particle_list.dat ../UrQMD_events/$iev
+    mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    cd ..
+done
+
+""" % (working_folder.split('/')[-1], walltime, working_folder))
+    script.close()
+
+
+def generate_script_particle_yield_distribution_with_OSCAR(folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    walltime = '1:00:00'
+
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    script.write(
+"""#!/usr/bin/env bash
+#PBS -N HBT_spvn_%s
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -e test.err
+#PBS -o test.log
+#PBS -A cqn-654-ad
+#PBS -q sw
+#PBS -d %s
+
+mkdir spvn_results
+for iev in `ls OSCAR_events`
+do
+    cd hadronic_afterburner_toolkit
+    rm -fr results
+    mkdir results
+    mv ../OSCAR_events/$iev results/OSCAR.DAT
+
+    # themal pi+, pi-, net charged pi
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-211 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-211 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=211 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # thermal K+, K-, and net charged K
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-321 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-321 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=321 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=321 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # thermal protons, anti-protons, and net protons
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-2212 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-2212 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=2212 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # thermal Lambda, anti-Lambda, andn net Lambda
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-3122 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-3122 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=0 net_particle_flag=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3122 distinguish_isospin=1 rap_type=1 net_particle_flag=1 >> output.log
+    # thermal Xi- and anti-Xi+
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3312 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-3312 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-3312 distinguish_isospin=1 rap_type=1 >> output.log
+    # thermal Omega and anti Omega
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=3334 distinguish_isospin=1 rap_type=1 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-3334 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=-3334 distinguish_isospin=1 rap_type=1 >> output.log
+    # thermal phi(1020)
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=333 distinguish_isospin=1 rap_type=0 >> output.log
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=2 particle_monval=333 distinguish_isospin=1 rap_type=1 >> output.log
+
+    mv results/OSCAR.DAT ../OSCAR_events/$iev
+    mv results ../spvn_results/event_`echo $iev | cut -f 2 -d _ | cut -f 1 -d .`
     cd ..
 done
 
@@ -404,6 +573,15 @@ def generate_event_folder_UrQMD(working_folder, event_id, mode):
         # calculate HBT correlation with UrQMD outputs
         mkdir(path.join(event_folder, 'UrQMD_events'))
         generate_script_spectra_and_vn(event_folder)
+    elif mode == 8:
+        # collect event-by-event particle distribution
+        mkdir(path.join(event_folder, 'UrQMD_events'))
+        generate_script_particle_yield_distribution(event_folder)
+    elif mode == 9:
+        # calculate event-by-event particle distribution with OSCAR outputs
+        mkdir(path.join(event_folder, 'OSCAR_events'))
+        generate_script_particle_yield_distribution_with_OSCAR(event_folder)
+
 
     shutil.copytree('codes/hadronic_afterburner_toolkit', 
                     path.join(path.abspath(event_folder), 
@@ -529,5 +707,13 @@ if __name__ == "__main__":
         for icore in range(ncore):
             generate_event_folder_JAM(folder_name, icore, mode)
         copy_JAM_events(ncore, from_folder, folder_name)
+    elif mode == 8:  # collect particle yield distribution with UrQMD events
+        for icore in range(ncore):
+            generate_event_folder_UrQMD(folder_name, icore, mode)
+        copy_UrQMD_events(ncore, from_folder, folder_name)
+    elif mode == 9:  # collect particle yield distribution with OSCAR events
+        for icore in range(ncore):
+            generate_event_folder_UrQMD(folder_name, icore, mode)
+        copy_OSCAR_events(ncore, from_folder, folder_name)
 
 
