@@ -1,9 +1,12 @@
 // Copyright Chun Shen @ 2016
 
+#include <sys/time.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <ctime>
+#include <cstdlib>
 #include "./particle_decay.h"
 
 using namespace std;
@@ -20,6 +23,10 @@ particle_decay::~particle_decay() {
         delete resonance_table[i];
     }
     resonance_table.clear();
+    timeval a;
+    gettimeofday(&a, 0);
+    int random_seed = a.tv_usec;
+    srand48(random_seed);
 }
 
 int particle_decay::read_resonances_list() {
