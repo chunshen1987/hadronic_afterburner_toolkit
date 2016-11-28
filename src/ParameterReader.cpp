@@ -65,15 +65,17 @@ void ParameterReader::phraseEquationWithoutComments(string equation)
 
 
 //----------------------------------------------------------------------
-long ParameterReader::find(string name)
+long ParameterReader::find(string name) {
 /*
   Check if the parameter with "name" already exists in the internal 
   "names" list. If yes, it returns its
 */
-{
-  for (long ii=0; ii<names->size(); ii++)
-    if ((*names)[ii].compare(toLower(trim(name)))==0) return ii;
-  return -1;
+    for (unsigned int ii = 0; ii < names->size(); ii++) {
+        if ((*names)[ii].compare(toLower(trim(name))) == 0) {
+            return ii;
+        }
+    }
+    return -1;
 }
 
 
@@ -176,14 +178,12 @@ double ParameterReader::getVal(string name)
 
 
 //----------------------------------------------------------------------
-void ParameterReader::echo()
-/*
-  Print out all stored parameters to screen.
-*/
-{
-  if (names->size()==0) 
-      return;
-  for (long ii=0; ii<names->size(); ii++)
-      cout << (*names)[ii] << "=" << (*values)[ii] << "  ";
-  cout << endl;
+void ParameterReader::echo() {
+    // Print out all stored parameters to screen.
+    if (names->size() == 0) 
+        return;
+    for (unsigned int ii = 0; ii < names->size(); ii++) {
+        cout << (*names)[ii] << "=" << (*values)[ii] << "  ";
+    }
+    cout << endl;
 }

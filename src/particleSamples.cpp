@@ -1,13 +1,14 @@
 // Copyright Chun Shen @ 2016
-#include<iostream>
-#include<sstream>
-#include<string>
-#include<fstream>
-#include<cmath>
-#include<iomanip>
-#include<stdlib.h>
-#include<vector>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <cmath>
+#include <iomanip>
+#include <cstdlib>
+#include <vector>
 
+#include "zlib.h"
 #include "./particleSamples.h"
 
 using namespace std;
@@ -39,7 +40,8 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
     flag_isospin = paraRdr->getVal("distinguish_isospin");
-    if(read_in_mode == 1 || read_in_mode == 3 || read_in_mode == 4)
+    if(read_in_mode == 1 || read_in_mode == 2
+            || read_in_mode == 3 || read_in_mode == 4)
         get_UrQMD_id(particle_monval);
 
     particle_list = new vector< vector<particle_info>* >;
@@ -70,24 +72,42 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     if (read_in_mode == 0) {
         filename << path << "/OSCAR.DAT";
         filename_mixed_event << path << "/OSCAR_mixed_event.DAT";
-    } else if (read_in_mode == 1 || read_in_mode == 3 || read_in_mode == 4
-               || read_in_mode == 5) {
+    } else if (read_in_mode == 1 || read_in_mode == 2 || read_in_mode == 3
+               || read_in_mode == 4 || read_in_mode == 5) {
         filename << path << "/particle_list.dat";
         filename_mixed_event << path << "/particle_list_mixed_event.dat";
     }
 
-    inputfile.open(filename.str().c_str());
-    if (!inputfile.is_open()) {
-        cout << "particleSamples:: Error: input file: " << filename.str() 
-             << " can not open!" << endl;
-        exit(1);
-    }
-    if (run_mode == 1) {
-        inputfile_mixed_event.open(filename_mixed_event.str().c_str());
-        if (!inputfile_mixed_event.is_open()) {
-            cout << "particleSamples:: Error: input file: " 
-                 << filename_mixed_event.str() << " can not open!" << endl;
+    if (read_in_mode != 2) {
+        inputfile.open(filename.str().c_str());
+        if (!inputfile.is_open()) {
+            cout << "particleSamples:: Error: input file: " << filename.str() 
+                 << " can not open!" << endl;
             exit(1);
+        }
+        if (run_mode == 1) {
+            inputfile_mixed_event.open(filename_mixed_event.str().c_str());
+            if (!inputfile_mixed_event.is_open()) {
+                cout << "particleSamples:: Error: input file: " 
+                     << filename_mixed_event.str() << " can not open!" << endl;
+                exit(1);
+            }
+        }
+    } else {
+        inputfile_gz = gzopen(filename.str().c_str(), "rb");
+        if (!inputfile_gz) {
+            cout << "particleSamples:: Error: input file: " << filename.str() 
+                 << " can not open!" << endl;
+            exit(1);
+        }
+        if (run_mode == 1) {
+            inputfile_mixed_event_gz =
+                            gzopen(filename_mixed_event.str().c_str(), "rb");
+            if (!inputfile_mixed_event_gz) {
+                cout << "particleSamples:: Error: input file: " 
+                     << filename_mixed_event.str() << " can not open!" << endl;
+                exit(1);
+            }
         }
     }
 
@@ -117,21 +137,30 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
 }
 
 particleSamples::~particleSamples() {
-    inputfile.close();
-    if (run_mode == 1)
-        inputfile_mixed_event.close();
+    if (read_in_mode != 2) {
+        inputfile.close();
+    } else {
+        gzclose(inputfile_gz);
+    }
+    if (run_mode == 1) {
+        if (read_in_mode != 2) {
+            inputfile_mixed_event.close();
+        } else {
+            gzclose(inputfile_mixed_event_gz);
+        }
+    }
     
-    for (int i = 0; i < particle_list->size(); i++)
+    for (unsigned int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
     delete particle_list;
-    for (int i = 0; i < particle_list_mixed_event->size(); i++)
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     delete particle_list_mixed_event;
 
     if (net_particle_flag == 1) {
-        for (int i = 0; i < anti_particle_list->size(); i++) {
+        for (unsigned int i = 0; i < anti_particle_list->size(); i++) {
             (*anti_particle_list)[i]->clear();
         }
         anti_particle_list->clear();
@@ -139,7 +168,7 @@ particleSamples::~particleSamples() {
     }
 
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
         delete resonance_list;
@@ -147,11 +176,11 @@ particleSamples::~particleSamples() {
     }
 
     if (reconst_flag == 1) {
-        for (int i = 0; i < reconst_list_1->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
             (*reconst_list_1)[i]->clear();
         reconst_list_1->clear();
         delete reconst_list_1;
-        for (int i = 0; i < reconst_list_2->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
             (*reconst_list_2)[i]->clear();
         reconst_list_2->clear();
         delete reconst_list_2;
@@ -309,6 +338,8 @@ int particleSamples::read_in_particle_samples() {
         reconst_flag = 0;
     } else if (read_in_mode == 1) {
         read_in_particle_samples_UrQMD();
+    } else if (read_in_mode == 2) {
+        read_in_particle_samples_UrQMD_zipped();
     } else if (read_in_mode == 3) {
         read_in_particle_samples_Sangwook();
     } else if (read_in_mode == 4) {
@@ -334,6 +365,8 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         resonance_feed_down_flag = 0;
     } else if (read_in_mode == 1) {
         read_in_particle_samples_UrQMD_mixed_event();
+    } else if (read_in_mode == 2) {
+        read_in_particle_samples_UrQMD_mixed_event_zipped();
     } else if (read_in_mode == 3) {
         read_in_particle_samples_mixed_event_Sangwook();
     } else if (read_in_mode == 4) {
@@ -527,11 +560,11 @@ int particleSamples::decide_to_pick_JAM(int pid) {
 
 int particleSamples::read_in_particle_samples_OSCAR() {
     // clean out the previous record
-    for (int i = 0; i < particle_list->size(); i++)
+    for (unsigned int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
     if (net_particle_flag == 1) {
-        for (int i = 0; i < anti_particle_list->size(); i++) {
+        for (unsigned int i = 0; i < anti_particle_list->size(); i++) {
             (*anti_particle_list)[i]->clear();
         }
     }
@@ -614,21 +647,21 @@ int particleSamples::read_in_particle_samples_OSCAR() {
 
 int particleSamples::read_in_particle_samples_JAM() {
     // clean out the previous record
-    for (int i = 0; i < particle_list->size(); i++)
+    for (unsigned int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
     
     if (reconst_flag == 1) {
-        for (int i = 0; i < reconst_list_1->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
             (*reconst_list_1)[i]->clear();
         reconst_list_1->clear();
-        for (int i = 0; i < reconst_list_2->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
             (*reconst_list_2)[i]->clear();
         reconst_list_2->clear();
     }
@@ -743,7 +776,7 @@ int particleSamples::read_in_particle_samples_JAM() {
 
 int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
     // clean out the previous record
-    for (int i = 0; i < particle_list_mixed_event->size(); i++)
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
@@ -800,12 +833,12 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
 
 int particleSamples::read_in_particle_samples_JAM_mixed_event() {
     // clean out the previous record
-    for (int i = 0; i < particle_list_mixed_event->size(); i++)
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
@@ -890,28 +923,28 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
 
 int particleSamples::read_in_particle_samples_UrQMD() {
     // clean out the previous record
-    for (int i = 0; i < particle_list->size(); i++)
+    for (unsigned int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
 
     if (net_particle_flag == 1) {
-        for (int i = 0; i < anti_particle_list->size(); i++) {
+        for (unsigned int i = 0; i < anti_particle_list->size(); i++) {
             (*anti_particle_list)[i]->clear();
         }
         anti_particle_list->clear();
     }
 
     if (reconst_flag == 1) {
-        for (int i = 0; i < reconst_list_1->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
             (*reconst_list_1)[i]->clear();
         reconst_list_1->clear();
-        for (int i = 0; i < reconst_list_2->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
             (*reconst_list_2)[i]->clear();
         reconst_list_2->clear();
     }
@@ -1033,8 +1066,160 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_2_pick_flag == 1) {
                         (*reconst_list_2)[idx]->push_back(*temp_particle_info);
-                    } else if (net_particle_flag == 1) {
-                        (*anti_particle_list)[idx]->push_back(*temp_particle_info);
+                    } else if (anti_particle_pick_flag == 1) {
+                        (*anti_particle_list)[idx]->push_back(
+                                                        *temp_particle_info);
+                    }
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    return(0);
+}
+
+int particleSamples::read_in_particle_samples_UrQMD_zipped() {
+    // clean out the previous record
+    for (unsigned int i = 0; i < particle_list->size(); i++)
+        (*particle_list)[i]->clear();
+    particle_list->clear();
+    
+    if (resonance_feed_down_flag == 1) {
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
+            (*resonance_list)[i]->clear();
+        resonance_list->clear();
+    }
+
+    if (net_particle_flag == 1) {
+        for (unsigned int i = 0; i < anti_particle_list->size(); i++) {
+            (*anti_particle_list)[i]->clear();
+        }
+        anti_particle_list->clear();
+    }
+
+    if (reconst_flag == 1) {
+        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
+            (*reconst_list_1)[i]->clear();
+        reconst_list_1->clear();
+        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
+            (*reconst_list_2)[i]->clear();
+        reconst_list_2->clear();
+    }
+
+    string temp_string;
+    int n_particle;
+    double dummy;
+    int parent_proc_type;
+    int ievent;
+    int urqmd_pid, urqmd_iso3, urqmd_charge;
+    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+        temp_string = gz_readline(inputfile_gz);
+        if (!gzeof(inputfile_gz)) {
+            // create one event
+            particle_list->push_back(new vector<particle_info> );
+            if (resonance_feed_down_flag == 1) {
+                resonance_list->push_back(new vector<particle_info>);
+            }
+            if (reconst_flag == 1) {
+                reconst_list_1->push_back(new vector<particle_info>);
+                reconst_list_2->push_back(new vector<particle_info>);
+            }
+            if (net_particle_flag == 1) {
+                anti_particle_list->push_back(new vector<particle_info>);
+            }
+
+            // get number of particles within the event
+            stringstream temp1(temp_string);
+            temp1 >> n_particle;
+            temp_string = gz_readline(inputfile_gz);  // then get one useless line
+
+            int idx = ievent;
+            (*particle_list)[idx]->clear(); // clean out the previous record
+            if (resonance_feed_down_flag == 1) {
+                (*resonance_list)[idx]->clear();
+            }
+            if (net_particle_flag == 1) {
+                (*anti_particle_list)[idx]->clear();
+            }
+            if (reconst_flag == 1) {
+                (*reconst_list_1)[idx]->clear();
+                (*reconst_list_2)[idx]->clear();
+            }
+
+            int pick_flag = 0;
+            int resonance_pick_flag = 0;
+            int reconst_1_pick_flag = 0;
+            int reconst_2_pick_flag = 0;
+            int anti_particle_pick_flag = 0;
+            for (int ipart = 0; ipart < n_particle; ipart++) {
+                temp_string = gz_readline(inputfile_gz);
+                stringstream temp2(temp_string);
+                temp2 >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
+                      >> dummy >> dummy >> parent_proc_type;
+
+                pick_flag = decide_to_pick_UrQMD(
+                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
+
+                if (resonance_feed_down_flag == 1) {
+                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
+                                        urqmd_pid, urqmd_iso3, urqmd_charge);
+                }
+
+                if (net_particle_flag == 1) {
+                    anti_particle_pick_flag =
+                        decide_to_pick_UrQMD_anti_particles(
+                                        urqmd_pid, urqmd_iso3, urqmd_charge);
+                }
+
+                if (reconst_flag == 1) {
+                    decide_to_pick_UrQMD_reconst(
+                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type,
+                        &reconst_1_pick_flag, &reconst_2_pick_flag);
+                }
+
+                int trigger = (pick_flag + resonance_pick_flag
+                               + net_particle_flag
+                               + reconst_1_pick_flag + reconst_2_pick_flag);
+                if (trigger > 0) {
+                    particle_info *temp_particle_info = new particle_info;
+                    temp2 >> temp_particle_info->mass
+                          >> temp_particle_info->t
+                          >> temp_particle_info->x 
+                          >> temp_particle_info->y
+                          >> temp_particle_info->z 
+                          >> temp_particle_info->E
+                          >> temp_particle_info->px 
+                          >> temp_particle_info->py
+                          >> temp_particle_info->pz;
+                    if (pick_flag == 1) {
+                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
+                            double tau = sqrt(
+                                temp_particle_info->t*temp_particle_info->t
+                                - temp_particle_info->z*temp_particle_info->z);
+                            if (tau > tau_reject) {
+                                pick_flag = 0;
+                            } else {
+                                pick_flag = 1;
+                            }
+                        }
+                        if (pick_flag == 1) {
+                            (*particle_list)[idx]->push_back(
+                                                        *temp_particle_info);
+                        } else {
+                            delete temp_particle_info;
+                        }
+                    } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
+                        (*resonance_list)[idx]->push_back(*temp_particle_info);
+                    } else if (reconst_1_pick_flag == 1) {
+                        (*reconst_list_1)[idx]->push_back(*temp_particle_info);
+                    } else if (reconst_2_pick_flag == 1) {
+                        (*reconst_list_2)[idx]->push_back(*temp_particle_info);
+                    } else if (anti_particle_pick_flag == 1) {
+                        (*anti_particle_list)[idx]->push_back(
+                                                        *temp_particle_info);
                     }
                 }
             }
@@ -1047,21 +1232,21 @@ int particleSamples::read_in_particle_samples_UrQMD() {
 
 int particleSamples::read_in_particle_samples_UrQMD_3p3() {
     // clean out the previous record
-    for (int i = 0; i < particle_list->size(); i++)
+    for (unsigned int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
     
     if (reconst_flag == 1) {
-        for (int i = 0; i < reconst_list_1->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
             (*reconst_list_1)[i]->clear();
         reconst_list_1->clear();
-        for (int i = 0; i < reconst_list_2->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
             (*reconst_list_2)[i]->clear();
         reconst_list_2->clear();
     }
@@ -1181,12 +1366,12 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
 
 int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
     // clean out the previous record
-    for (int i = 0; i < particle_list_mixed_event->size(); i++)
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
@@ -1285,14 +1470,111 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
     return(0);
 }
 
-int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
+int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
     // clean out the previous record
-    for(int i = 0; i < particle_list_mixed_event->size(); i++)
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
+            (*resonance_list)[i]->clear();
+        resonance_list->clear();
+    }
+
+    string temp_string;
+    int n_particle;
+    double dummy;
+    int parent_proc_type;
+    int urqmd_pid, urqmd_iso3, urqmd_charge;
+    for (int ievent = 0; ievent < event_buffer_size; ievent++) {
+        temp_string = gz_readline(inputfile_mixed_event_gz);
+        if (!gzeof(inputfile_mixed_event_gz)) {
+            particle_list_mixed_event->push_back(new vector<particle_info> );
+            if (resonance_feed_down_flag == 1) {
+                resonance_list->push_back(new vector<particle_info>);
+            }
+
+            // get number of particles within the event
+            stringstream temp1(temp_string);
+            temp1 >> n_particle;
+            // then get one useless line
+            temp_string = gz_readline(inputfile_mixed_event_gz);  
+
+            // clean out the previous record
+            int idx = ievent;
+            (*particle_list_mixed_event)[idx]->clear(); 
+            if (resonance_feed_down_flag == 1) {
+                (*resonance_list)[idx]->clear();
+            }
+
+            int pick_flag = 0;
+            int resonance_pick_flag = 0;
+            for (int ipart = 0; ipart < n_particle; ipart++) {
+                temp_string = gz_readline(inputfile_mixed_event_gz);
+                stringstream temp2(temp_string);
+                temp2 >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
+                      >> dummy >> dummy >> parent_proc_type;
+
+                pick_flag = decide_to_pick_UrQMD(
+                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
+
+                if (resonance_feed_down_flag == 1) {
+                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
+                                        urqmd_pid, urqmd_iso3, urqmd_charge);
+                }
+                
+                int trigger = pick_flag + resonance_pick_flag;
+                if (trigger > 0) {
+                    particle_info *temp_particle_info = new particle_info;
+                    temp2 >> temp_particle_info->mass
+                          >> temp_particle_info->t
+                          >> temp_particle_info->x
+                          >> temp_particle_info->y
+                          >> temp_particle_info->z
+                          >> temp_particle_info->E
+                          >> temp_particle_info->px
+                          >> temp_particle_info->py
+                          >> temp_particle_info->pz;
+                    if (pick_flag == 1) {
+                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
+                            double tau = sqrt(
+                                temp_particle_info->t*temp_particle_info->t
+                                - temp_particle_info->z*temp_particle_info->z);
+                            if (tau > tau_reject) {
+                                pick_flag = 0;
+                            } else {
+                                pick_flag = 1;
+                            }
+                        }
+                        if (pick_flag == 1) {
+                            (*particle_list_mixed_event)[idx]->push_back(
+                                                           *temp_particle_info);
+                        } else {
+                            delete temp_particle_info;
+                        }
+                    } else if (resonance_pick_flag == 1) {
+                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                                urqmd_iso3);
+                        (*resonance_list)[idx]->push_back(*temp_particle_info);
+                    }
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    return(0);
+}
+
+int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
+    // clean out the previous record
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
+        (*particle_list_mixed_event)[i]->clear();
+    particle_list_mixed_event->clear();
+    
+    if (resonance_feed_down_flag == 1) {
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
@@ -1392,21 +1674,21 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
 
 int particleSamples::read_in_particle_samples_Sangwook() {
     // clean out the previous record
-    for (int i = 0; i < particle_list->size(); i++)
+    for (unsigned int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
     
     if (reconst_flag == 1) {
-        for (int i = 0; i < reconst_list_1->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
             (*reconst_list_1)[i]->clear();
         reconst_list_1->clear();
-        for (int i = 0; i < reconst_list_2->size(); i++)
+        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
             (*reconst_list_2)[i]->clear();
         reconst_list_2->clear();
     }
@@ -1522,12 +1804,12 @@ int particleSamples::read_in_particle_samples_Sangwook() {
 
 int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
     // clean out the previous record
-    for(int i = 0; i < particle_list_mixed_event->size(); i++)
+    for(unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
     if (resonance_feed_down_flag == 1) {
-        for (int i = 0; i < resonance_list->size(); i++)
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
@@ -1624,8 +1906,8 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
 void particleSamples::perform_resonance_feed_down() {
     if (particle_monval == 3122) {
         // consider Sigma^0 feed down to Lambda
-        for (int iev = 0; iev < resonance_list->size(); iev++) {
-            for (int i = 0; i < (*resonance_list)[iev]->size(); i++) {
+        for (unsigned int iev = 0; iev < resonance_list->size(); iev++) {
+            for (unsigned int i = 0; i < (*resonance_list)[iev]->size(); i++) {
                 particle_info *daughter1 = new particle_info;
                 particle_info *daughter2 = new particle_info;
                 daughter1->mass = 1.116;  // mass of Lambda
@@ -1647,9 +1929,9 @@ void particleSamples::perform_particle_reconstruction() {
         double particle_width = 0.00443;
 
         // now we loop over events
-        for (int iev = 0; iev < reconst_list_1->size(); iev++) {
+        for (unsigned int iev = 0; iev < reconst_list_1->size(); iev++) {
             // we first perfrom the (K^+, K^-) pair
-            for (int i = 0; i < (*reconst_list_1)[iev]->size(); i++) {
+            for (unsigned int i = 0; i < (*reconst_list_1)[iev]->size(); i++) {
                 double E_1 = (*(*reconst_list_1)[iev])[i].E;
                 double px_1 = (*(*reconst_list_1)[iev])[i].px;
                 double py_1 = (*(*reconst_list_1)[iev])[i].py;
@@ -1658,7 +1940,8 @@ void particleSamples::perform_particle_reconstruction() {
                 double x_1 = (*(*reconst_list_1)[iev])[i].x;
                 double y_1 = (*(*reconst_list_1)[iev])[i].y;
                 double z_1 = (*(*reconst_list_1)[iev])[i].z;
-                for (int j = 0; j < (*reconst_list_2)[iev]->size(); j++) {
+                for (unsigned int j = 0; j < (*reconst_list_2)[iev]->size();
+                        j++) {
                     double E_2 = (*(*reconst_list_2)[iev])[j].E;
                     double px_2 = (*(*reconst_list_2)[iev])[j].px;
                     double py_2 = (*(*reconst_list_2)[iev])[j].py;
@@ -1702,4 +1985,15 @@ void particleSamples::perform_particle_reconstruction() {
         }
     }
     return;
+}
+
+string particleSamples::gz_readline(gzFile gzfp) {
+    stringstream line;
+    char buffer[1];
+    int len = gzread(gzfp, buffer, 1);
+    while (len == 1 && buffer[0] != '\n') {
+        line << buffer;
+        len = gzread(gzfp, buffer, 1);
+    }
+    return(line.str());
 }

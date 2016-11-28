@@ -11,7 +11,7 @@
 ##  
 
 CC := icpc
-CFLAGS= -O3 -Wall
+CFLAGS= -O3 -Wall -lz
 
 RM		=	rm -f
 O               =       .o

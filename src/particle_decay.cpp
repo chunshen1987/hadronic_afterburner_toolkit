@@ -16,7 +16,7 @@ particle_decay::particle_decay() {
 }
 
 particle_decay::~particle_decay() {
-    for (int i = 0; i < resonance_table.size(); i++) {
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
         for (int j = 0; j < resonance_table[i]->decays; j++) {
             delete resonance_table[i]->decay_channels[j];
         }
@@ -158,7 +158,7 @@ int particle_decay::read_resonances_list() {
 }
 
 void particle_decay::check_resonance_table() {
-    for (int i = 0; i < resonance_table.size(); i++) {
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
         cout << "name: " << resonance_table[i]->name << endl;
         cout << "monval: " << resonance_table[i]->monval << endl;
         cout << "mass: " << resonance_table[i]->mass << endl;
@@ -184,7 +184,7 @@ void particle_decay::check_resonance_table() {
 
 double particle_decay::get_particle_width(particle_info *part) {
     double width = 0.0;
-    for (int i = 0; i < resonance_table.size(); i++) {
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
         if (part->monval == resonance_table[i]->monval) {
             width = resonance_table[i]->width;
             break;

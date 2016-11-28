@@ -5,6 +5,8 @@
 #include <fstream>
 #include <vector>
 
+#include "zlib.h"
+
 #include "./ParameterReader.h"
 #include "./particle_info.h"
 #include "./particle_decay.h"
@@ -17,6 +19,8 @@ class particleSamples {
     string path;                 // path for results folder
     ifstream inputfile;
     ifstream inputfile_mixed_event;
+    gzFile inputfile_gz;
+    gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
     int read_in_mode;
     int run_mode;
@@ -72,35 +76,58 @@ class particleSamples {
     int read_in_particle_samples_JAM_mixed_event();
     int read_in_particle_samples_UrQMD();
     int read_in_particle_samples_UrQMD_mixed_event();
+    int read_in_particle_samples_UrQMD_zipped();
+    int read_in_particle_samples_UrQMD_mixed_event_zipped();
     int read_in_particle_samples_UrQMD_3p3();
     int read_in_particle_samples_UrQMD_3p3_mixed_event();
     int read_in_particle_samples_Sangwook();
     int read_in_particle_samples_mixed_event_Sangwook();
 
-    bool end_of_file() {return(inputfile.eof());}
-    bool end_of_file_mixed_event() {return(inputfile_mixed_event.eof());}
+    string gz_readline(gzFile gzfp);
+    bool end_of_file() {
+        if (read_in_mode == 2) {
+            return(gzeof(inputfile_gz));
+        } else {
+            return(inputfile.eof());
+        }
+    }
+    bool end_of_file_mixed_event() {
+        if (read_in_mode == 2) {
+            return(gzeof(inputfile_mixed_event_gz));
+        } else {
+            return(inputfile_mixed_event.eof());
+        }
+    }
 
     int get_event_buffer_size() {return(event_buffer_size);}
 
     int get_number_of_events() {return(particle_list->size());}
-    int get_number_of_events_anti_particle()
-    {return(anti_particle_list->size());}
-    int get_number_of_mixed_events()
-    {return(particle_list_mixed_event->size());}
+    int get_number_of_events_anti_particle() {
+        return(anti_particle_list->size());
+    }
+    int get_number_of_mixed_events() {
+        return(particle_list_mixed_event->size());
+    }
 
-    int get_number_of_particles(int event_id)
-    {return((*particle_list)[event_id]->size());}
-    int get_number_of_particles_mixed_event(int event_id)
-    {return((*particle_list_mixed_event)[event_id]->size());}
-    int get_number_of_anti_particles(int event_id)
-    {return((*anti_particle_list)[event_id]->size());}
+    int get_number_of_particles(int event_id) {
+        return((*particle_list)[event_id]->size());
+    }
+    int get_number_of_particles_mixed_event(int event_id) {
+        return((*particle_list_mixed_event)[event_id]->size());
+    }
+    int get_number_of_anti_particles(int event_id) {
+        return((*anti_particle_list)[event_id]->size());
+    }
 
-    particle_info get_particle(int event_id, int part_id) 
-    {return((*(*particle_list)[event_id])[part_id]);}
-    particle_info get_anti_particle(int event_id, int part_id) 
-    {return((*(*anti_particle_list)[event_id])[part_id]);}
-    particle_info get_particle_from_mixed_event(int event_id, int part_id) 
-    {return((*(*particle_list_mixed_event)[event_id])[part_id]);}
+    particle_info get_particle(int event_id, int part_id) {
+        return((*(*particle_list)[event_id])[part_id]);
+    }
+    particle_info get_anti_particle(int event_id, int part_id) {
+        return((*(*anti_particle_list)[event_id])[part_id]);
+    }
+    particle_info get_particle_from_mixed_event(int event_id, int part_id) {
+        return((*(*particle_list_mixed_event)[event_id])[part_id]);
+    }
 };
 
 #endif  // SRC_particleSamples_h_
