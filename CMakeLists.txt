@@ -3,6 +3,11 @@ project (hadronic_afterburner_toolkit)
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_HOME_DIRECTORY}")
 
+find_package ( ZLIB REQUIRED )
+if ( ZIB_FOUND )
+    include_directories( ${ZLIB_INCLUDE_DIRS} )
+endif ( ZIB_FOUND)
+
 set (CMAKE_CXX_FLAGS "-O3 -Wall")
 
 add_subdirectory (src)

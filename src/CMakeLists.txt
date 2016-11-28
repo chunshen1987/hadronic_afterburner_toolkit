@@ -8,6 +8,6 @@ add_executable (hadronic_afterburner_tools.e
   particle_yield_distribution.cpp
   particle_decay.cpp
   )
-target_link_libraries (hadronic_afterburner_tools.e ${LIBS})
+target_link_libraries (hadronic_afterburner_tools.e ${LIBS} ${ZLIB_LIBRARIES})
 
 install(TARGETS hadronic_afterburner_tools.e DESTINATION ${CMAKE_HOME_DIRECTORY})
