@@ -1,7 +1,9 @@
 hadronic_afterburner_toolkit
 ===========================
 
-## This program deals with hadronic afterburner output files and perform various analysis on hadronic observables 
+## This program deals with hadronic afterburner output files and perform various analysis on hadronic observables
+
+### Zlib is required to read in zipped UrQMD files
 
 ### Charged and Identified particle spectra and flow coefficients
 
