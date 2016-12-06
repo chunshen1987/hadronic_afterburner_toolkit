@@ -47,7 +47,7 @@ class particle_decay {
                                   particle_info *daughter1,
                                   particle_info *daughter2,
                                   particle_info *daughter3);
-    double breit_wigner(double mass, double width, double M_min);
+    double sample_breit_wigner(double mass, double width, double M_min);
 };
 
 #endif  // SRC_particle_decay_h_

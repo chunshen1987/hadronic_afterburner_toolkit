@@ -9,8 +9,7 @@
 using namespace std;
 
 HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, 
-                                 particleSamples *particle_list_in)
-{
+                                 particleSamples *particle_list_in) {
     paraRdr = paraRdr_in;
     path = path_in;
     particle_list = particle_list_in;
@@ -23,8 +22,7 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
     q_out = new double [qnpts];
     q_side = new double [qnpts];
     q_long = new double [qnpts];
-    for(int i = 0; i < qnpts; i++)
-    {
+    for (int i = 0; i < qnpts; i++) {
         q_out[i] = q_min + i*delta_q;
         q_side[i] = q_min + i*delta_q;
         q_long[i] = q_min + i*delta_q;

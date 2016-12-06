@@ -208,7 +208,7 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
         cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2 << endl;
         exit(1);
     }
-    double M_sampled = breit_wigner(M_pole, M_width, M_min);
+    double M_sampled = sample_breit_wigner(M_pole, M_width, M_min);
     double temp = M_sampled*M_sampled - m1*m1 - m2*m2;
     double p_lrf = sqrt(temp*temp - 4*m1*m1*m2*m2)/(2*M_sampled);
 
@@ -284,7 +284,7 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
              << ", m3 = " << m3 << endl;
         exit(1);
     }
-    double M_sampled = breit_wigner(M_pole, M_width, M_min);
+    double M_sampled = sample_breit_wigner(M_pole, M_width, M_min);
     // generate lrf E1, E2, and theta12 using accept and reject method
     double E1_lrf, E2_lrf, E3_lrf, p1_lrf, p2_lrf, cos12_lrf;
     do {
@@ -387,8 +387,9 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     return;
 }
 
-double particle_decay::breit_wigner(double mass, double width, double M_min) {
-    // this function sample BreitWigner distribution for the mass
+double particle_decay::sample_breit_wigner(double mass, double width,
+                                           double M_min) {
+    // this function sample the Breit Wigner distribution for the mass
     // particle mass sampled is >= M_min
     // From Wiki: https://en.wikipedia.org/wiki/Cauchy_distribution
     // The CDF of BreitWigner (or Cauchy) distribution is
