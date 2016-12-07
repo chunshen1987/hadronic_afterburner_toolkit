@@ -505,23 +505,36 @@ done
 
 def copy_UrQMD_events(number_of_cores, input_folder, working_folder):
     events_list = glob('%s/particle_list_*.dat' % input_folder)
+    if events_list == []:
+        events_list = glob('%s/particle_list_*.gz' % input_folder)
+        if events_list == []:
+            print("Error: can not find UrQMD events, events_list is empty! ",
+                  events_list)
+        else:
+            print("Linking zipped binary UrQMD events, ",
+                  "make sure read_in_mode is set to 2~")
+
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
-        event_id = events_list[iev].split('/')[-1].split('_')[-1].split('.')[0]
-        folder_path = path.join(
-            working_folder, 'event_%d' % folder_id, 
-            'UrQMD_events', events_list[iev].split('/')[-1])
+        filename = events_list[iev].split('/')[-1].split('.')[0]
+        event_id = filename.split('_')[-1]
+        folder_path = path.join(working_folder, 'event_%d' % folder_id, 
+                                'UrQMD_events', '%s.dat' % filename)
         bashCommand = "ln -s %s %s" % (
             path.abspath(events_list[iev]), folder_path)
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
-        mixed_event_id = random.randint(0, len(events_list)-1)
-        while(mixed_event_id == iev):
-            mixed_event_id = random.randint(0, len(events_list)-1)
+        mixed_id = random.randint(0, len(events_list)-1)
+        filename_mixed = events_list[mixed_id].split('/')[-1].split('.')[0]
+        mixed_event_id = filename_mixed.split('_')[-1]
+        while (mixed_event_id == iev):
+            mixed_id = random.randint(0, len(events_list)-1)
+            filename_mixed = events_list[mixed_id].split('/')[-1].split('.')[0]
+            mixed_event_id = filename_mixed.split('_')[-1]
         folder_path = path.join(
             working_folder, 'event_%d' % folder_id, 
             'UrQMD_events', 'mixed_event_%s.dat' % event_id)
         bashCommand = "ln -s %s %s" % (
-            path.abspath(events_list[mixed_event_id]), folder_path)
+            path.abspath(events_list[mixed_id]), folder_path)
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
 
 
@@ -529,21 +542,24 @@ def copy_JAM_events(number_of_cores, input_folder, working_folder):
     events_list = glob('%s/particle_list_*.dat' % input_folder)
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
-        event_id = events_list[iev].split('/')[-1].split('_')[-1].split('.')[0]
-        folder_path = path.join(
-            working_folder, 'event_%d' % folder_id, 
-            'JAM_events', events_list[iev].split('/')[-1])
+        filename = events_list[iev].split('/')[-1].split('.')[0]
+        event_id = filename.split('_')[-1]
+        folder_path = path.join(working_folder, 'event_%d' % folder_id, 
+                                'JAM_events', '%s.dat' % filename)
         bashCommand = "ln -s %s %s" % (
             path.abspath(events_list[iev]), folder_path)
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
-        mixed_event_id = random.randint(0, len(events_list)-1)
-        while(mixed_event_id == iev):
-            mixed_event_id = random.randint(0, len(events_list)-1)
-        folder_path = path.join(
-            working_folder, 'event_%d' % folder_id, 
-            'JAM_events', 'mixed_event_%s.dat' % event_id)
-        bashCommand = "ln -s %s %s" % (
-            path.abspath(events_list[mixed_event_id]), folder_path)
+        mixed_id = random.randint(0, len(events_list)-1)
+        filename_mixed = events_list[mixed_id].split('/')[-1].split('.')[0]
+        mixed_event_id = filename_mixed.split('_')[-1]
+        while (mixed_event_id == iev):
+            mixed_id = random.randint(0, len(events_list)-1)
+            filename_mixed = events_list[mixed_id].split('/')[-1].split('.')[0]
+            mixed_event_id = filename_mixed.split('_')[-1]
+        folder_path = path.join(working_folder, 'event_%d' % folder_id, 
+                                'JAM_events', 'mixed_event_%s.dat' % event_id)
+        bashCommand = "ln -s %s %s" % (path.abspath(events_list[mixed_id]),
+                                       folder_path)
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
 
 
