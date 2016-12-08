@@ -1132,6 +1132,8 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
             // get number of particles within the event
             stringstream temp1(temp_string);
             temp1 >> n_particle;
+            cout << "first line: " << temp_string << endl;
+            cout << "check n_particle = " << n_particle << endl;
             temp_string = gz_readline(inputfile_gz);  // then get one useless line
 
             int idx = ievent;

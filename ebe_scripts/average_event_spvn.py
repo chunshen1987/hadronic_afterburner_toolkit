@@ -666,7 +666,10 @@ for ipart, particle_id in enumerate(particle_list):
     print("processing %s ..." % particle_name_list[ipart])
     
     # first particle yield dN/dy
-    file_name = 'particle_%s_vndata.dat' % particle_id
+    if particle_id = '9999':
+        file_name = 'particle_%s_vndata_eta_-0.5_0.5.dat' % particle_id
+    else:
+        file_name = 'particle_%s_vndata_y_-0.5_0.5.dat' % particle_id
 
     dN_dy = []
     for ifolder in range(nev):
@@ -680,7 +683,10 @@ for ipart, particle_id in enumerate(particle_list):
     dN_dy_avg_err = std(dN_dy)/sqrt(nev)
 
     # then <pT>, vn, dN/(2pi dy pT dpT), vn{SP}(pT)
-    file_name = 'particle_%s_vndata_diff.dat' % particle_id
+    if particle_id == '9999':
+        file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
+    else:
+        file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
    
     pT_array = []
     dN_array = []
@@ -865,9 +871,9 @@ for ipart, particle_id in enumerate(particle_list):
     
     # then particle rapidity distribution
     if particle_id == '9999':
-        file_name = 'particle_%s_dNdeta.dat' % particle_id
+        file_name = 'particle_%s_dNdeta_pT_0.15_2.dat' % particle_id
     else:
-        file_name = 'particle_%s_dNdy.dat' % particle_id
+        file_name = 'particle_%s_dNdy_pT_0.15_2.dat' % particle_id
 
     eta_array = []
     dN_array = []
