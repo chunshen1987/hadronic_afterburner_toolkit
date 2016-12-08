@@ -1,4 +1,4 @@
-read_in_mode = 1              # mode for reading in particle information 
+read_in_mode = 2              # mode for reading in particle information 
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from zipped UrQMD outputs
@@ -6,7 +6,7 @@ read_in_mode = 1              # mode for reading in particle information
                               #    (without header lines)
                               # 4: reads outputs from UrQMD 3.3p2 outputs
 
-run_mode = 10                 # running mode for the program
+run_mode = 1                  # running mode for the program
                               # 0: collect single particle spectra and vn
                               # 1: compute HBT correlation function
                               # 2: collect event-by-event particle yield
@@ -15,7 +15,7 @@ run_mode = 10                 # running mode for the program
                               #    and rap_max)
                               # 10: do particle decay
 
-particle_monval = 333         # particle Monte-Carlo number
+particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
