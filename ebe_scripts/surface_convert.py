@@ -22,7 +22,7 @@ n_cells = len(decdat_file[:, 0])
 print("number of fluid cells: %d" % n_cells)
 
 
-of = open("surface_MUSIC.dat", "w")
+of = open(path.join(working_folder, "surface_MUSIC.dat"), "w")
 for i in range(n_cells):
     tau_f = decdat_file[i, 0]
     x_f = surface_file[i, 2]
