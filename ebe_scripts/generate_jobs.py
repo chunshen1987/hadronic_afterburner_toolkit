@@ -53,7 +53,8 @@ def generate_script(cluster_name, folder_name):
     event_id = working_folder.split('/')[-1]
     walltime = '10:00:00'
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir UrQMD_results
@@ -77,7 +78,8 @@ def generate_script_JAM(cluster_name, folder_name):
     walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scratch/irulan/chun/JAM/JAM_lib/lib
@@ -103,7 +105,8 @@ def generate_script_iSS(cluster_name, folder_name):
     walltime = '35:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir UrQMD_results
@@ -140,7 +143,8 @@ def generate_script_iS(cluster_name, folder_name):
     walltime = '3:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir spvn_results
@@ -168,7 +172,8 @@ def generate_script_HBT(cluster_name, folder_name):
     walltime = '20:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir HBT_results
@@ -196,7 +201,8 @@ def generate_script_HBT_with_JAM(cluster_name, folder_name):
     walltime = '30:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir HBT_results
@@ -223,7 +229,8 @@ def generate_script_spectra_and_vn(cluster_name, folder_name):
     walltime = '1:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir spvn_results
@@ -297,7 +304,8 @@ def generate_script_particle_yield_distribution(cluster_name, folder_name):
     walltime = '1:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir spvn_results
@@ -380,7 +388,8 @@ def generate_script_particle_yield_distribution_with_OSCAR(cluster_name,
     walltime = '1:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir spvn_results
@@ -447,7 +456,8 @@ def generate_script_spectra_and_vn_with_JAM(cluster_name, folder_name):
     walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir spvn_results
@@ -484,7 +494,8 @@ def generate_script_HBT_with_OSCAR(cluster_name, folder_name):
     walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    write_script_header(cluster_name, event_id, walltime, working_folder)
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
     script.write(
 """
 mkdir HBT_results
