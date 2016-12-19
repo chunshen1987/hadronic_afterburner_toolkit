@@ -7,21 +7,55 @@ from glob import glob
 import subprocess
 import random
 
-def generate_script(folder_name):
-    working_folder = path.join(path.abspath('./'), folder_name)
-    walltime = '10:00:00'
-
-    script = open(path.join(working_folder, "submit_job.pbs"), "w")
-    script.write(
+def write_script_header(cluster, script, event_id, walltime, working_folder):
+    if cluster == "nersc":
+        script.write(
 """#!/bin/bash -l
-
 #SBATCH -p shared
 #SBATCH -n 1
 #SBATCH -J UrQMD_%s
 #SBATCH -t %s
 #SBATCH -L SCRATCH
 #SBATCH -C haswell
+""" % (event_id, walltime))
+    elif cluster == "guillimin":
+        script.write(
+"""#!/usr/bin/env bash
+#PBS -N UrQMD_%s
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -e test.err
+#PBS -o test.log
+#PBS -A cqn-654-ad
+#PBS -q sw
+#PBS -d %s
+""" % (event_id, walltime, working_folder))
+    elif cluster == "McGill":
+        script.write(
+"""#!/usr/bin/env bash
+#PBS -N UrQMD_%s
+#PBS -l nodes=1:ppn=1:irulan
+#PBS -l walltime=%s
+#PBS -S /bin/bash
+#PBS -e test.err
+#PBS -o test.log
+#PBS -d %s
+""" % (event_id, walltime, working_folder))
+    else:
+        print("Error: unrecoginzed cluster name :", cluster)
+        print("Available options: nersc, guillimin, McGill")
+        exit(1)
 
+
+def generate_script(cluster_name, folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
+    walltime = '10:00:00'
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
+    script.write(
+"""
 mkdir UrQMD_results
 for iev in `ls OSCAR_events`
 do
@@ -33,27 +67,19 @@ do
     mv particle_list.dat ../UrQMD_results/particle_list_`echo $iev | cut -f 2 -d _`
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_JAM(folder_name):
+def generate_script_JAM(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
-
+"""
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scratch/irulan/chun/JAM/JAM_lib/lib
 mkdir JAM_results
 for iev in `ls OSCAR_events`
@@ -67,26 +93,19 @@ do
     mv OSCAR.DAT ../OSCAR_events/OSCAR_$eventid.dat
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_iSS(folder_name):
+def generate_script_iSS(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '35:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
-
+"""
 mkdir UrQMD_results
 for iev in `ls hydro_events --color=none | grep "surface"`
 do
@@ -111,25 +130,19 @@ do
     rm -fr OSCAR.input
     cd ..
 done
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_iS(folder_name):
+def generate_script_iS(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '3:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J iS_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
-
+"""
 mkdir spvn_results
 for iev in `ls hydro_events --color=none | grep "surface"`
 do
@@ -146,24 +159,18 @@ do
     mv results/ ../spvn_results/event_$event_id
     cd ..
 done
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
-def generate_script_HBT(folder_name):
+def generate_script_HBT(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '20:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
+"""
 mkdir HBT_results
 for iev in `ls UrQMD_events | grep "particle_list"`
 do
@@ -179,26 +186,19 @@ do
     mv results ../HBT_results/event_$eventid
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_HBT_with_JAM(folder_name):
+def generate_script_HBT_with_JAM(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '30:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
+"""
 mkdir HBT_results
 for iev in `ls JAM_events | grep "particle_list"`
 do
@@ -214,25 +214,18 @@ do
     mv results ../HBT_results/event_$eventid
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
-def generate_script_spectra_and_vn(folder_name):
+def generate_script_spectra_and_vn(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '1:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
+"""
 mkdir spvn_results
 for iev in `ls UrQMD_events | grep "particle_list"`
 do
@@ -294,26 +287,19 @@ do
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_particle_yield_distribution(folder_name):
+def generate_script_particle_yield_distribution(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '1:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
+"""
 mkdir spvn_results
 for iev in `ls UrQMD_events | grep "particle_list"`
 do
@@ -383,25 +369,20 @@ do
     cd ..
 done
 
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_particle_yield_distribution_with_OSCAR(folder_name):
+def generate_script_particle_yield_distribution_with_OSCAR(cluster_name,
+                                                           folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '1:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
+"""
 mkdir spvn_results
 for iev in `ls OSCAR_events`
 do
@@ -456,26 +437,19 @@ do
     mv results ../spvn_results/event_`echo $iev | cut -f 2 -d _ | cut -f 1 -d .`
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_spectra_and_vn_with_JAM(folder_name):
+def generate_script_spectra_and_vn_with_JAM(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
+"""
 mkdir spvn_results
 for iev in `ls JAM_events | grep "particle_list"`
 do
@@ -500,26 +474,19 @@ do
     mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
-def generate_script_HBT_with_OSCAR(folder_name):
+def generate_script_HBT_with_OSCAR(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
     walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, event_id, walltime, working_folder)
     script.write(
-"""#!/bin/bash -l
-
-#SBATCH -p shared
-#SBATCH -n 1
-#SBATCH -J UrQMD_%s
-#SBATCH -t %s
-#SBATCH -L SCRATCH
-#SBATCH -C haswell
-
+"""
 mkdir HBT_results
 for iev in `ls OSCAR_events`
 do
@@ -532,8 +499,7 @@ do
     mv results ../HBT_results/event_`echo $iev | cut -f 2 -d _ | cut -f 1 -d .`
     cd ..
 done
-
-""" % (working_folder.split('/')[-1], walltime))
+""")
     script.close()
 
 
@@ -597,68 +563,68 @@ def copy_JAM_events(number_of_cores, input_folder, working_folder):
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
 
 
-def generate_event_folder_UrQMD(working_folder, event_id, mode):
+def generate_event_folder_UrQMD(cluster_name, working_folder, event_id, mode):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
 
     if mode == 2:
         # calculate HBT correlation with OSCAR outputs
         mkdir(path.join(event_folder, 'OSCAR_events'))
-        generate_script_HBT_with_OSCAR(event_folder)
+        generate_script_HBT_with_OSCAR(cluster_name, event_folder)
     elif mode == 3:
         # calculate HBT correlation with UrQMD outputs
         mkdir(path.join(event_folder, 'UrQMD_events'))
-        generate_script_HBT(event_folder)
+        generate_script_HBT(cluster_name, event_folder)
     elif mode == 4:
         # calculate HBT correlation with UrQMD outputs
         mkdir(path.join(event_folder, 'UrQMD_events'))
-        generate_script_spectra_and_vn(event_folder)
+        generate_script_spectra_and_vn(cluster_name, event_folder)
     elif mode == 8:
         # collect event-by-event particle distribution
         mkdir(path.join(event_folder, 'UrQMD_events'))
-        generate_script_particle_yield_distribution(event_folder)
+        generate_script_particle_yield_distribution(cluster_name, event_folder)
     elif mode == 9:
         # calculate event-by-event particle distribution with OSCAR outputs
         mkdir(path.join(event_folder, 'OSCAR_events'))
-        generate_script_particle_yield_distribution_with_OSCAR(event_folder)
-
+        generate_script_particle_yield_distribution_with_OSCAR(cluster_name,
+                                                               event_folder)
 
     shutil.copytree('codes/hadronic_afterburner_toolkit', 
                     path.join(path.abspath(event_folder), 
                     'hadronic_afterburner_toolkit'))
 
 
-def generate_event_folder_JAM(working_folder, event_id, mode):
+def generate_event_folder_JAM(cluster_name, working_folder, event_id, mode):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
 
     if mode == 5:
         # run JAM with OSCAR files
         mkdir(path.join(event_folder, 'OSCAR_events'))
-        generate_script_JAM(event_folder)
+        generate_script_JAM(cluster_name, event_folder)
         shutil.copytree('codes/JAM', 
                         path.join(path.abspath(event_folder), 'JAM'))
     elif mode == 6:
         # collect particle spectra and vn with JAM outputs
         mkdir(path.join(event_folder, 'JAM_events'))
-        generate_script_spectra_and_vn_with_JAM(event_folder)
+        generate_script_spectra_and_vn_with_JAM(cluster_name, event_folder)
         shutil.copytree('codes/hadronic_afterburner_toolkit', 
                         path.join(path.abspath(event_folder), 
                         'hadronic_afterburner_toolkit'))
     elif mode == 7:
         # calculate HBT correlation with JAM outputs
         mkdir(path.join(event_folder, 'JAM_events'))
-        generate_script_HBT_with_JAM(event_folder)
+        generate_script_HBT_with_JAM(cluster_name, event_folder)
         shutil.copytree('codes/hadronic_afterburner_toolkit', 
                         path.join(path.abspath(event_folder), 
                         'hadronic_afterburner_toolkit'))
 
 
-def generate_event_folder(working_folder, event_id):
+def generate_event_folder(cluster_name, working_folder, event_id):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
     mkdir(path.join(event_folder, 'OSCAR_events'))
-    generate_script(event_folder)
+    generate_script(cluster_name, event_folder)
     shutil.copytree('codes/osc2u', 
                     path.join(path.abspath(event_folder), 'osc2u'))
     shutil.copytree('codes/urqmd', 
@@ -676,11 +642,11 @@ def copy_OSCAR_events(number_of_cores, input_folder, working_folder):
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
 
 
-def generate_event_folder_iSS(working_folder, event_id):
+def generate_event_folder_iSS(cluster_name, working_folder, event_id):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
     mkdir(path.join(event_folder, 'hydro_events'))
-    generate_script_iSS(event_folder)
+    generate_script_iSS(cluster_name, event_folder)
     shutil.copytree('codes/iSS', 
                     path.join(path.abspath(event_folder), 'iSS'))
     shutil.copytree('codes/osc2u', 
@@ -688,11 +654,11 @@ def generate_event_folder_iSS(working_folder, event_id):
     shutil.copytree('codes/urqmd', 
                     path.join(path.abspath(event_folder), 'urqmd'))
 
-def generate_event_folder_iS(working_folder, event_id):
+def generate_event_folder_iS(cluster_name, working_folder, event_id):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
     mkdir(path.join(event_folder, 'hydro_events'))
-    generate_script_iS(event_folder)
+    generate_script_iS(cluster_name, event_folder)
     shutil.copytree('codes/iS',
                     path.join(path.abspath(event_folder), 'iS'))
 
@@ -711,61 +677,78 @@ def copy_hydro_events(number_of_cores, input_folder, working_folder):
                               'music_input_event_%s' % event_id), 
                     working_path)
 
+def print_mode_cheat_sheet():
+    print("Here is a cheat sheet for mode option:")
+    print("mode -1: run iS + resonance decay")
+    print("mode 0: run iSS + osc2u + UrQMD from hydro hypersurface")
+    print("mode 1: run UrQMD with OSCAR events")
+    print("mode 2: calculate HBT correlation with OSCAR events")
+    print("mode 3: calculate HBT correlation with UrQMD events")
+    print("mode 4: collect spectra and flow observables from UrQMD events")
+    print("mode 5: run JAM with OSCAR events")
+    print("mode 6: collect spectra and vn with JAM events")
+    print("mode 7: calculate HBT correlation with JAM events")
+    print("mode 8: collect particle yield distribution with UrQMD events")
+    print("mode 9: collect particle yield distribution with OSCAR events")
 
 if __name__ == "__main__":
     try:
         from_folder = str(sys.argv[1])
         folder_name = str(sys.argv[2])
-        ncore = int(sys.argv[3])
-        mode = int(sys.argv[4])
+        cluster_name = str(sys.argv[3])
+        ncore = int(sys.argv[4])
+        mode = int(sys.argv[5])
     except IndexError:
-        print("%s input_folder working_folder num_of_cores mode"
+        print("Usage:")
+        print("  %s input_folder working_folder cluster_name num_of_cores mode"
               % str(sys.argv[0]))
+        print("")
+        print_mode_cheat_sheet()
         exit(0)
 
     if mode == 0:   # run iSS + osc2u + UrQMD from hydro hypersurface
         for icore in range(ncore):
-            generate_event_folder_iSS(folder_name, icore)
+            generate_event_folder_iSS(cluster_name, folder_name, icore)
         copy_hydro_events(ncore, from_folder, folder_name)
     elif mode == -1:   # run iS + resonance decay
         for icore in range(ncore):
-            generate_event_folder_iS(folder_name, icore)
+            generate_event_folder_iS(cluster_name, folder_name, icore)
         copy_hydro_events(ncore, from_folder, folder_name)
     elif mode == 1:   # run UrQMD with OSCAR events
         for icore in range(ncore):
-            generate_event_folder(folder_name, icore)
+            generate_event_folder(cluster_name, folder_name, icore)
         copy_OSCAR_events(ncore, from_folder, folder_name)
     elif mode == 2:   # calculate HBT correlation with OSCAR events
         for icore in range(ncore):
-            generate_event_folder_UrQMD(folder_name, icore, mode)
+            generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_OSCAR_events(ncore, from_folder, folder_name)
     elif mode == 3:   # calculate HBT correlation with UrQMD events
         for icore in range(ncore):
-            generate_event_folder_UrQMD(folder_name, icore, mode)
+            generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_UrQMD_events(ncore, from_folder, folder_name)
     elif mode == 4:   # collect spectra and flow observables from UrQMD events
         for icore in range(ncore):
-            generate_event_folder_UrQMD(folder_name, icore, mode)
+            generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_UrQMD_events(ncore, from_folder, folder_name)
     elif mode == 5:   # run JAM with OSCAR events
         for icore in range(ncore):
-            generate_event_folder_JAM(folder_name, icore, mode)
+            generate_event_folder_JAM(cluster_name, folder_name, icore, mode)
         copy_OSCAR_events(ncore, from_folder, folder_name)
     elif mode == 6:   # collect spectra and vn with JAM events
         for icore in range(ncore):
-            generate_event_folder_JAM(folder_name, icore, mode)
+            generate_event_folder_JAM(cluster_name, folder_name, icore, mode)
         copy_JAM_events(ncore, from_folder, folder_name)
     elif mode == 7:   # calculate HBT correlation with JAM events
         for icore in range(ncore):
-            generate_event_folder_JAM(folder_name, icore, mode)
+            generate_event_folder_JAM(cluster_name, folder_name, icore, mode)
         copy_JAM_events(ncore, from_folder, folder_name)
     elif mode == 8:  # collect particle yield distribution with UrQMD events
         for icore in range(ncore):
-            generate_event_folder_UrQMD(folder_name, icore, mode)
+            generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_UrQMD_events(ncore, from_folder, folder_name)
     elif mode == 9:  # collect particle yield distribution with OSCAR events
         for icore in range(ncore):
-            generate_event_folder_UrQMD(folder_name, icore, mode)
+            generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_OSCAR_events(ncore, from_folder, folder_name)
 
 
