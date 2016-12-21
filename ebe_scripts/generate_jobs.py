@@ -132,6 +132,8 @@ do
     rm -fr ../iSS/OSCAR.DAT
     rm -fr OSCAR.input
     cd ..
+    ./hadronic_afterburner_toolkit/convert_to_binary.e UrQMD_results/particle_list_$event_id.dat
+    rm -fr UrQMD_results/particle_list_$event_id.dat
 done
 """)
     script.close()
@@ -664,6 +666,9 @@ def generate_event_folder_iSS(cluster_name, working_folder, event_id):
                     path.join(path.abspath(event_folder), 'osc2u'))
     shutil.copytree('codes/urqmd', 
                     path.join(path.abspath(event_folder), 'urqmd'))
+    shutil.copytree('codes/hadronic_afterburner_toolkit', 
+                    path.join(path.abspath(event_folder), 
+                    'hadronic_afterburner_toolkit'))
 
 def generate_event_folder_iS(cluster_name, working_folder, event_id):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
