@@ -64,12 +64,20 @@ nonlinear_reponse_correlator_name_list = [
 n_order = 7
 
 def calcualte_inte_vn(pT_low, pT_high, data):
+    """
+        this function calculates the pT-integrated vn in a 
+        given pT range (pT_low, pT_high) for every event in the data
+    """
     npT = 50
     pT_inte_array = linspace(pT_low, pT_high, npT)
+    dpT = pT_inte_array[1] - pT_inte_array[0]
     dN_event = data[:, 2]
     pT_event = data[:, 0]
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
-    temp_vn_array = []
+    N_event = data[:, -1]
+    N_interp = exp(interp(pT_inte_array, pT_event, log(N_event+1e-30)))
+    N = sum(N_interp)*dpT/0.1
+    temp_vn_array = [N,]
     for iorder in range(1, n_order):
         vn_real_event = data[:, 4*iorder]
         vn_imag_event = data[:, 4*iorder+2]
@@ -365,35 +373,49 @@ def calculate_nonlinear_reponse(vn_array):
 
 
 def calcualte_vn_2(vn_data_array):
+    """
+        this function computes vn{2} and its stat. err.
+        self correlation is substracted
+    """
     vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
-    vn_2 = sqrt(mean(abs(vn_data_array)**2., 0)) + 1e-30
-    vn_2_err = std(abs(vn_data_array)**2., 0)/sqrt(nev)/2./vn_2
+    dN = vn_data_array[:, 0]
+    dN = dN.reshape(len(dN), 1)
+    Qn_array = dN*vn_data_array[:, 1:]
+    corr = 1./(dN*(dN - 1.))*(Qn_array*conj(Qn_array) - dN)
+    vn_2 = sqrt(real(mean(corr, 0))) + 1e-30
+    vn_2_err = std(real(corr), 0)/sqrt(nev)/2./vn_2
     return(vn_2, vn_2_err)
 
 
-def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data):
+def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     npT = 50
     pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
     dN_event = data[:, 2]
-    pT_event = data[:, 0]
-    dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
-    dN_ref = sum(dN_interp*pT_inte_array)
+    dN_ref_event = data_ref[:, 2]
+    pT_ref_event = data_ref[:, 0]
+    dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
+                               log(dN_ref_event + 1e-30)))
+    dN_ref = sum(dN_ref_interp*pT_inte_array)
     temp_vn_real_array = []
     temp_vn_imag_array = []
     temp_vn_denorm_array = []
     for iorder in range(1, n_order):
         vn_real_event = data[:, 4*iorder]
         vn_imag_event = data[:, 4*iorder+2]
-        vn_real_interp = interp(pT_inte_array, pT_event, vn_real_event)
-        vn_imag_interp = interp(pT_inte_array, pT_event, vn_imag_event)
-        vn_real_inte = (
-            sum(vn_real_interp*dN_interp*pT_inte_array)
-            /sum(dN_interp*pT_inte_array))
-        vn_imag_inte = (
-            sum(vn_imag_interp*dN_interp*pT_inte_array)
-            /sum(dN_interp*pT_inte_array))
-        vn_ref = vn_real_inte + 1j*vn_imag_inte
+        vn_ref_real_event = data_ref[:, 4*iorder]
+        vn_ref_imag_event = data_ref[:, 4*iorder+2]
+        vn_ref_real_interp = interp(pT_inte_array, pT_ref_event,
+                                    vn_ref_real_event)
+        vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
+                                    vn_ref_imag_event)
+        vn_ref_real_inte = (
+            sum(vn_ref_real_interp*dN_ref_interp*pT_inte_array)
+            /sum(dN_ref_interp*pT_inte_array))
+        vn_ref_imag_inte = (
+            sum(vn_ref_imag_interp*dN_ref_interp*pT_inte_array)
+            /sum(dN_ref_interp*pT_inte_array))
+        vn_ref = vn_ref_real_inte + 1j*vn_ref_imag_inte
         vn_pt = vn_real_event + 1j*vn_imag_event
         numerator_real = real(dN_event*vn_pt*dN_ref*conj(vn_ref))
         numerator_imag = imag(dN_event*vn_pt*dN_ref*conj(vn_ref))
@@ -468,13 +490,15 @@ def calculate_vn_distribution(vn_array):
     for vn_order in range(vn_dim):
         vn_mag_array = abs(vn_array[:, vn_order])
         vn_min = min(vn_mag_array)
-        vn_max = max(vn_mag_array) + 1e-10
+        vn_max = max(vn_mag_array)*1.0001
         bin_boundaries = linspace(vn_min, vn_max, nbin+1)
         bin_width = bin_boundaries[1] - bin_boundaries[0]
         bin_center = zeros([nbin])
         bin_value = zeros([nbin])
         for vn_elem in vn_mag_array:
-            vn_idx = int((vn_elem - vn_min)/bin_width)
+            vn_idx = int(floor((vn_elem - vn_min)/bin_width))
+            if (vn_idx == 20):
+                print(vn_elem, vn_min, bin_width)
             bin_value[vn_idx] += 1.
             bin_center[vn_idx] += vn_elem
         bin_center = bin_center/(bin_value + 1e-15)
@@ -666,7 +690,7 @@ for ipart, particle_id in enumerate(particle_list):
     print("processing %s ..." % particle_name_list[ipart])
     
     # first particle yield dN/dy
-    if particle_id = '9999':
+    if particle_id == '9999':
         file_name = 'particle_%s_vndata_eta_-0.5_0.5.dat' % particle_id
     else:
         file_name = 'particle_%s_vndata_y_-0.5_0.5.dat' % particle_id
@@ -687,6 +711,7 @@ for ipart, particle_id in enumerate(particle_list):
         file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
     else:
         file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
+    file_name_ref = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
    
     pT_array = []
     dN_array = []
@@ -706,6 +731,7 @@ for ipart, particle_id in enumerate(particle_list):
     for ifolder in range(nev):
         results_folder = path.abspath(file_folder_list[ifolder])
         temp_data = loadtxt(path.join(results_folder, file_name))
+        temp_data_ref = loadtxt(path.join(results_folder, file_name_ref))
         
         dN_event = temp_data[:, 2]  # dN/(2pi dy pT dpT)
         pT_event = temp_data[:, 0]
@@ -742,35 +768,40 @@ for ipart, particle_id in enumerate(particle_list):
         # pT-differential vn using scalar-product method
         # vn{SP}(pT) with PHENIX pT cut
         temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
-                        calculate_diff_vn_single_event(0.15, 2.0, temp_data))
+                        calculate_diff_vn_single_event(0.15, 2.0, temp_data,
+                                                       temp_data_ref))
         vn_diff_phenix_real.append(temp_vn_diff_real);
         vn_diff_phenix_imag.append(temp_vn_diff_imag);
         vn_diff_phenix_denorm.append(temp_dn_diff);
 
         # vn{SP}(pT) with STAR pT cut
         temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
-                        calculate_diff_vn_single_event(0.15, 2.0, temp_data))
+                        calculate_diff_vn_single_event(0.15, 2.0, temp_data,
+                                                       temp_data_ref))
         vn_diff_star_real.append(temp_vn_diff_real);
         vn_diff_star_imag.append(temp_vn_diff_imag);
         vn_diff_star_denorm.append(temp_dn_diff);
         
         # vn{SP}(pT) with ALICE pT cut
         temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
-                        calculate_diff_vn_single_event(0.2, 3.0, temp_data))
+                        calculate_diff_vn_single_event(0.2, 3.0, temp_data,
+                                                       temp_data_ref))
         vn_diff_alice_real.append(temp_vn_diff_real);
         vn_diff_alice_imag.append(temp_vn_diff_imag);
         vn_diff_alice_denorm.append(temp_dn_diff);
         
         # vn{SP}(pT) with CMS pT cut
         temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
-                        calculate_diff_vn_single_event(0.3, 3.0, temp_data))
+                        calculate_diff_vn_single_event(0.3, 3.0, temp_data,
+                                                       temp_data_ref))
         vn_diff_cms_real.append(temp_vn_diff_real);
         vn_diff_cms_imag.append(temp_vn_diff_imag);
         vn_diff_cms_denorm.append(temp_dn_diff);
         
         # vn{SP}(pT) with ATLAS pT cut
         temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
-                        calculate_diff_vn_single_event(0.5, 3.0, temp_data))
+                        calculate_diff_vn_single_event(0.5, 3.0, temp_data,
+                                                       temp_data_ref))
         vn_diff_atlas_real.append(temp_vn_diff_real);
         vn_diff_atlas_imag.append(temp_vn_diff_imag);
         vn_diff_atlas_denorm.append(temp_dn_diff);
@@ -1213,5 +1244,5 @@ for ipart, particle_id in enumerate(particle_list):
         f.close()
         shutil.move(output_filename, avg_folder)
 
-print "Analysis is done."
+print("Analysis is done.")
 
