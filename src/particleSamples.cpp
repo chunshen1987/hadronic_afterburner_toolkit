@@ -40,9 +40,10 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
     flag_isospin = paraRdr->getVal("distinguish_isospin");
-    if(read_in_mode == 1 || read_in_mode == 2
-            || read_in_mode == 3 || read_in_mode == 4)
+    if (read_in_mode == 1 || read_in_mode == 2
+            || read_in_mode == 3 || read_in_mode == 4) {
         get_UrQMD_id(particle_monval);
+    }
 
     particle_list = new vector< vector<particle_info>* >;
     particle_list_mixed_event = new vector< vector<particle_info>* >;
@@ -58,6 +59,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     } else {
         resonance_feed_down_flag = 0;
     }
+
     if (particle_monval == 333) {
         // for phi(1020) meson, we need reconstruct them from (K^+ K^-) pairs
         reconst_flag = 1;
@@ -65,6 +67,15 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         reconst_list_2 = new vector< vector<particle_info>* >;
     } else {
         reconst_flag = 0;
+    }
+
+    flag_charge_dependence = 0;
+    if (particle_monval == 9999) {
+        flag_charge_dependence = paraRdr->getVal("flag_charge_dependence");
+        if (flag_charge_dependence == 1) {
+            positive_charge_hadron_list = new vector< vector<particle_info>* >;
+            negative_charge_hadron_list = new vector< vector<particle_info>* >;
+        }
     }
 
     ostringstream filename;
@@ -184,6 +195,17 @@ particleSamples::~particleSamples() {
             (*reconst_list_2)[i]->clear();
         reconst_list_2->clear();
         delete reconst_list_2;
+    }
+
+    if (flag_charge_dependence == 1) {
+        for (unsigned int i = 0; i < positive_charge_hadron_list->size(); i++)
+            (*positive_charge_hadron_list)[i]->clear();
+        positive_charge_hadron_list->clear();
+        delete positive_charge_hadron_list;
+        for (unsigned int i = 0; i < negative_charge_hadron_list->size(); i++)
+            (*negative_charge_hadron_list)[i]->clear();
+        negative_charge_hadron_list->clear();
+        delete negative_charge_hadron_list;
     }
 }
 
@@ -1107,6 +1129,15 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
         reconst_list_2->clear();
     }
 
+    if (flag_charge_dependence == 1) {
+        for (unsigned int i = 0; i < positive_charge_hadron_list->size(); i++)
+            (*positive_charge_hadron_list)[i]->clear();
+        positive_charge_hadron_list->clear();
+        for (unsigned int i = 0; i < negative_charge_hadron_list->size(); i++)
+            (*negative_charge_hadron_list)[i]->clear();
+        negative_charge_hadron_list->clear();
+    }
+
     string temp_string;
     int n_particle;
     double dummy;
@@ -1128,12 +1159,18 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
             if (net_particle_flag == 1) {
                 anti_particle_list->push_back(new vector<particle_info>);
             }
+            if (flag_charge_dependence == 1) {
+                positive_charge_hadron_list->push_back(
+                                                new vector<particle_info>);
+                negative_charge_hadron_list->push_back(
+                                                new vector<particle_info>);
+            }
 
             // get number of particles within the event
             stringstream temp1(temp_string);
             temp1 >> n_particle;
-            cout << "first line: " << temp_string << endl;
-            cout << "check n_particle = " << n_particle << endl;
+            // cout << "first line: " << temp_string << endl;
+            // cout << "check n_particle = " << n_particle << endl;
             temp_string = gz_readline(inputfile_gz);  // then get one useless line
 
             int idx = ievent;
@@ -1147,6 +1184,10 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
             if (reconst_flag == 1) {
                 (*reconst_list_1)[idx]->clear();
                 (*reconst_list_2)[idx]->clear();
+            }
+            if (flag_charge_dependence == 1) {
+                (*positive_charge_hadron_list)[idx]->clear();
+                (*negative_charge_hadron_list)[idx]->clear();
             }
 
             int pick_flag = 0;
@@ -1208,6 +1249,15 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                         if (pick_flag == 1) {
                             (*particle_list)[idx]->push_back(
                                                         *temp_particle_info);
+                            if (flag_charge_dependence == 1) {
+                                if (urqmd_charge > 0) {
+                                    (*positive_charge_hadron_list)[idx]->push_back(
+                                                        *temp_particle_info);
+                                } else {
+                                    (*negative_charge_hadron_list)[idx]->push_back(
+                                                        *temp_particle_info);
+                                }
+                            }
                         } else {
                             delete temp_particle_info;
                         }

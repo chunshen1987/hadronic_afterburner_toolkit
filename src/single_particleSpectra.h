@@ -44,6 +44,8 @@ class singleParticleSpectra {
     double **QnSP_diff_vector, **QnSP_diff_vector_err;
     int num_corr;
     double *C_nmk, *C_nmk_err;
+    int flag_charge_dependence;
+    double *C_nmk_ss, *C_nmk_ss_err, *C_nmk_os, *C_nmk_os_err;
 
     int check_spatial_flag;
     int N_tau;
@@ -73,6 +75,16 @@ class singleParticleSpectra {
             double *event_Qn_imag, double *event_Qn_imag_err,
             double **event_Qn_diff_real, double **event_Qn_diff_real_err,
             double **event_Qn_diff_imag, double **event_Qn_diff_imag_err);
+    void calculate_Qn_vector_positive_charge(int event_id,
+        double *event_Qn_real, double *event_Qn_real_err,
+        double *event_Qn_imag, double *event_Qn_imag_err,
+        double **event_Qn_diff_real, double **event_Qn_diff_real_err,
+        double **event_Qn_diff_imag, double **event_Qn_diff_imag_err);
+    void calculate_Qn_vector_negative_charge(int event_id,
+        double *event_Qn_real, double *event_Qn_real_err,
+        double *event_Qn_imag, double *event_Qn_imag_err,
+        double **event_Qn_diff_real, double **event_Qn_diff_real_err,
+        double **event_Qn_diff_imag, double **event_Qn_diff_imag_err);
 
     //! This function outputs the event averaged particle pT-spectra
     //! and flow coefficients
@@ -99,7 +111,8 @@ class singleParticleSpectra {
     void calculate_three_particle_correlation(
             double *event_Q1_real, double *event_Q1_imag,
             double *event_Q2_real, double *event_Q2_imag,
-            double *event_Q3_real, double *event_Q3_imag, int flag);
+            double *event_Q3_real, double *event_Q3_imag, int flag,
+            double *corr, double *corr_err);
 
     //! This function outputs the event averaged three-particle correlation
     void output_three_particle_correlation();

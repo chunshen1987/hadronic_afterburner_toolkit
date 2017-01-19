@@ -16,34 +16,73 @@ using namespace std;
 class particleSamples {
  private:
     ParameterReader *paraRdr;
-    string path;                 // path for results folder
+    //! path for results folder
+    string path;
     ifstream inputfile;
     ifstream inputfile_mixed_event;
     gzFile inputfile_gz;
     gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
+
     int read_in_mode;
     int run_mode;
+
+    //! the monte-carlo number of the particle of interest
     int particle_monval;
-    int resonance_feed_down_flag;  // include Sigma0 feed down of Lambda
-    int reconst_flag;  // reconst phi meson from (K^+, K^-) pairs
-    int net_particle_flag;  // flag to collect net particle distribution
+
+    //! include Sigma0 feed down of Lambda
+    int resonance_feed_down_flag;
+
+    //! reconst phi meson from (K^+, K^-) pairs
+    int reconst_flag;
+
+    //! flag to collect net particle distribution (for run_mode == 2)
+    int net_particle_flag;
+
+    //! flag to distinguish particle's isospin
     int flag_isospin;
+
+    //! flag to collect positive and negative charged hadron seperately
+    int flag_charge_dependence;
+
+    //! flag to reject from decay particles in the sample
     int reject_decay_flag;
     double tau_reject;
+
     int particle_urqmd_id, particle_urqmd_isospin;
 
     int charged_hadron_pdg_list[6];
     int charged_hadron_urqmd_id_list[5];
     int baryon_urqmd_id_list[5];
 
+    //! particle list to store the select particle sample
     vector< vector<particle_info>* >* particle_list;
+
+    //! particle list to store anti-particles
+    //! (used when net_particle_flag == 1)
     vector< vector<particle_info>* >* anti_particle_list;
+
+    //! particle list to store the selected particle sample from a mix event
+    //! (used when run_mode == 1 for HBT calculation)
     vector< vector<particle_info>* >* particle_list_mixed_event;
+
+    //! particle list to store the resonance particles (Sigma0)
+    //! (used when resonance_feed_down_flag == 1)
     vector< vector<particle_info>* >* resonance_list;
+
+    //! particle list to store the (K^+ and K^-) pairs
+    //! (used when reconst_flag == 1)
     vector< vector<particle_info>* >* reconst_list_1;
     vector< vector<particle_info>* >* reconst_list_2;
+    
+    //! particle list to store the positive hadrons
+    //! (used when flag_charge_dependence == 1)
+    vector< vector<particle_info>* >* positive_charge_hadron_list;
+    //! particle list to store the negative hadrons
+    //! (used when flag_charge_dependence == 1)
+    vector< vector<particle_info>* >* negative_charge_hadron_list;
 
+    //! particle decay
     particle_decay *decayer_ptr;
  public:
     particleSamples(ParameterReader* paraRdr_in, string path_in);
@@ -118,6 +157,12 @@ class particleSamples {
     int get_number_of_anti_particles(int event_id) {
         return((*anti_particle_list)[event_id]->size());
     }
+    int get_number_of_positive_particles(int event_id) {
+        return((*positive_charge_hadron_list)[event_id]->size());
+    }
+    int get_number_of_negative_particles(int event_id) {
+        return((*negative_charge_hadron_list)[event_id]->size());
+    }
 
     particle_info get_particle(int event_id, int part_id) {
         return((*(*particle_list)[event_id])[part_id]);
@@ -127,6 +172,12 @@ class particleSamples {
     }
     particle_info get_particle_from_mixed_event(int event_id, int part_id) {
         return((*(*particle_list_mixed_event)[event_id])[part_id]);
+    }
+    particle_info get_positive_particle(int event_id, int part_id) {
+        return((*(*positive_charge_hadron_list)[event_id])[part_id]);
+    }
+    particle_info get_negative_particle(int event_id, int part_id) {
+        return((*(*negative_charge_hadron_list)[event_id])[part_id]);
     }
 };
 

@@ -188,6 +188,19 @@ singleParticleSpectra::singleParticleSpectra(
             C_nmk[i] = 0.0;
             C_nmk_err[i] = 0.0;
         }
+        flag_charge_dependence = paraRdr->getVal("flag_charge_dependence");
+        if (flag_charge_dependence == 1) {
+            C_nmk_ss = new double[num_corr];
+            C_nmk_ss_err = new double[num_corr];
+            C_nmk_os = new double[num_corr];
+            C_nmk_os_err = new double[num_corr];
+            for (int i = 0; i < num_corr; i++) {
+                C_nmk_ss[i] = 0.0;
+                C_nmk_ss_err[i] = 0.0;
+                C_nmk_os[i] = 0.0;
+                C_nmk_os_err[i] = 0.0;
+            }
+        }
     }
 }
 
@@ -254,6 +267,12 @@ singleParticleSpectra::~singleParticleSpectra() {
 
         delete[] C_nmk;
         delete[] C_nmk_err;
+        if (flag_charge_dependence == 1) {
+            delete[] C_nmk_ss;
+            delete[] C_nmk_ss_err;
+            delete[] C_nmk_os;
+            delete[] C_nmk_os_err;
+        }
     }
 }
 
@@ -288,6 +307,42 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             event_Qn_diff_real_err[i][j] = 0.0;
             event_Qn_diff_imag[i][j] = 0.0;
             event_Qn_diff_imag_err[i][j] = 0.0;
+        }
+    }
+    double *event_Qn_p_real, *event_Qn_p_real_err;
+    double *event_Qn_p_imag, *event_Qn_p_imag_err;
+    double *event_Qn_m_real, *event_Qn_m_real_err;
+    double *event_Qn_m_imag, *event_Qn_m_imag_err;
+    double **event_Qn_p_diff_real, **event_Qn_p_diff_real_err;
+    double **event_Qn_p_diff_imag, **event_Qn_p_diff_imag_err;
+    double **event_Qn_m_diff_real, **event_Qn_m_diff_real_err;
+    double **event_Qn_m_diff_imag, **event_Qn_m_diff_imag_err;
+    if (flag_charge_dependence == 1) {
+        event_Qn_p_real = new double[order_max];
+        event_Qn_p_real_err = new double[order_max];
+        event_Qn_p_imag = new double[order_max];
+        event_Qn_p_imag_err = new double[order_max];
+        event_Qn_m_real = new double[order_max];
+        event_Qn_m_real_err = new double[order_max];
+        event_Qn_m_imag = new double[order_max];
+        event_Qn_m_imag_err = new double[order_max];
+        event_Qn_p_diff_real = new double* [order_max];
+        event_Qn_p_diff_real_err = new double* [order_max];
+        event_Qn_p_diff_imag = new double* [order_max];
+        event_Qn_p_diff_imag_err = new double* [order_max];
+        event_Qn_m_diff_real = new double* [order_max];
+        event_Qn_m_diff_real_err = new double* [order_max];
+        event_Qn_m_diff_imag = new double* [order_max];
+        event_Qn_m_diff_imag_err = new double* [order_max];
+        for (int i = 0; i < order_max; i++) {
+            event_Qn_p_diff_real[i] = new double[npT];
+            event_Qn_p_diff_real_err[i] = new double[npT];
+            event_Qn_p_diff_imag[i] = new double[npT];
+            event_Qn_p_diff_imag_err[i] = new double[npT];
+            event_Qn_m_diff_real[i] = new double[npT];
+            event_Qn_m_diff_real_err[i] = new double[npT];
+            event_Qn_m_diff_imag[i] = new double[npT];
+            event_Qn_m_diff_imag_err[i] = new double[npT];
         }
     }
     for (int i = 0; i < N_rap; i++) {
@@ -339,7 +394,39 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                 calculate_three_particle_correlation(
                         event_Qn_real, event_Qn_imag,
                         event_Qn_real, event_Qn_imag,
-                        event_Qn_real, event_Qn_imag, 0);
+                        event_Qn_real, event_Qn_imag, 0, C_nmk, C_nmk_err);
+                if (flag_charge_dependence == 1) {
+                    calculate_Qn_vector_positive_charge(iev,
+                        event_Qn_p_real, event_Qn_p_real_err,
+                        event_Qn_p_imag, event_Qn_p_imag_err,
+                        event_Qn_p_diff_real, event_Qn_p_diff_real_err,
+                        event_Qn_p_diff_imag, event_Qn_p_diff_imag_err);
+                    calculate_Qn_vector_negative_charge(iev,
+                        event_Qn_m_real, event_Qn_m_real_err,
+                        event_Qn_m_imag, event_Qn_m_imag_err,
+                        event_Qn_m_diff_real, event_Qn_m_diff_real_err,
+                        event_Qn_m_diff_imag, event_Qn_m_diff_imag_err);
+                    calculate_three_particle_correlation(
+                            event_Qn_p_real, event_Qn_p_imag,
+                            event_Qn_p_real, event_Qn_p_imag,
+                            event_Qn_real, event_Qn_imag, 0,
+                            C_nmk_ss, C_nmk_ss_err);
+                    calculate_three_particle_correlation(
+                            event_Qn_m_real, event_Qn_m_imag,
+                            event_Qn_m_real, event_Qn_m_imag,
+                            event_Qn_real, event_Qn_imag, 0,
+                            C_nmk_ss, C_nmk_ss_err);
+                    calculate_three_particle_correlation(
+                            event_Qn_p_real, event_Qn_p_imag,
+                            event_Qn_m_real, event_Qn_m_imag,
+                            event_Qn_real, event_Qn_imag, 1,
+                            C_nmk_os, C_nmk_os_err);
+                    calculate_three_particle_correlation(
+                            event_Qn_m_real, event_Qn_m_imag,
+                            event_Qn_p_real, event_Qn_p_imag,
+                            event_Qn_real, event_Qn_imag, 1,
+                            C_nmk_os, C_nmk_os_err);
+                }
             }
 
             if (rapidity_distribution_flag == 1) {
@@ -442,6 +529,140 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
         if (rap_local > rap_min && rap_local < rap_max) {
             double px_local = particle_list->get_particle(event_id, i).px;
             double py_local = particle_list->get_particle(event_id, i).py;
+            double p_perp = sqrt(px_local*px_local + py_local*py_local);
+            if (p_perp > pT_min && p_perp < pT_max) {
+                double p_phi = atan2(py_local, px_local);
+                int p_idx = (int)((p_perp - pT_min)/dpT);
+                pT_mean_array[p_idx] += p_perp;
+                pT_mean_array_err[p_idx] += p_perp*p_perp;
+                for (int iorder = 0; iorder < order_max; iorder++) {
+                    double cos_nphi = cos(iorder*p_phi);
+                    double sin_nphi = sin(iorder*p_phi);
+                    event_Qn_real[iorder] += cos_nphi;
+                    event_Qn_imag[iorder] += sin_nphi;
+                    event_Qn_real_err[iorder] += cos_nphi*cos_nphi;
+                    event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
+                    event_Qn_diff_real[iorder][p_idx] += cos_nphi;
+                    event_Qn_diff_imag[iorder][p_idx] += sin_nphi;
+                    event_Qn_diff_real_err[iorder][p_idx] += cos_nphi*cos_nphi;
+                    event_Qn_diff_imag_err[iorder][p_idx] += sin_nphi*sin_nphi;
+                }
+            }
+        }
+    }
+}
+
+
+//! this function computes the pT-integrated and pT-differential Qn vector
+//! of postive charged hadrons within a given rapidity region in one event
+void singleParticleSpectra::calculate_Qn_vector_positive_charge(int event_id,
+        double *event_Qn_real, double *event_Qn_real_err,
+        double *event_Qn_imag, double *event_Qn_imag_err,
+        double **event_Qn_diff_real, double **event_Qn_diff_real_err,
+        double **event_Qn_diff_imag, double **event_Qn_diff_imag_err) {
+    
+    // first clean the results arrays
+    for (int i = 0; i < order_max; i++) {
+        event_Qn_real[i] = 0.0;
+        event_Qn_real_err[i] = 0.0;
+        event_Qn_imag[i] = 0.0;
+        event_Qn_imag_err[i] = 0.0;
+        for (int j = 0; j < npT; j++) {
+            event_Qn_diff_real[i][j] = 0.0;
+            event_Qn_diff_real_err[i][j] = 0.0;
+            event_Qn_diff_imag[i][j] = 0.0;
+            event_Qn_diff_imag_err[i][j] = 0.0;
+        }
+    }
+
+    int number_of_particles = (
+                    particle_list->get_number_of_positive_particles(event_id));
+    for (int i = 0; i < number_of_particles; i++) {
+        double pz_local = particle_list->get_positive_particle(event_id, i).pz;
+        double E_local = particle_list->get_positive_particle(event_id, i).E;
+
+        double rap_local;
+        if (rap_type == 0) {
+            double mass = (
+                    particle_list->get_positive_particle(event_id, i).mass);
+            double pmag = sqrt(E_local*E_local - mass*mass);
+            rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
+        } else {
+            rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
+        }
+
+        if (rap_local > rap_min && rap_local < rap_max) {
+            double px_local = (
+                    particle_list->get_positive_particle(event_id, i).px);
+            double py_local = (
+                    particle_list->get_positive_particle(event_id, i).py);
+            double p_perp = sqrt(px_local*px_local + py_local*py_local);
+            if (p_perp > pT_min && p_perp < pT_max) {
+                double p_phi = atan2(py_local, px_local);
+                int p_idx = (int)((p_perp - pT_min)/dpT);
+                pT_mean_array[p_idx] += p_perp;
+                pT_mean_array_err[p_idx] += p_perp*p_perp;
+                for (int iorder = 0; iorder < order_max; iorder++) {
+                    double cos_nphi = cos(iorder*p_phi);
+                    double sin_nphi = sin(iorder*p_phi);
+                    event_Qn_real[iorder] += cos_nphi;
+                    event_Qn_imag[iorder] += sin_nphi;
+                    event_Qn_real_err[iorder] += cos_nphi*cos_nphi;
+                    event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
+                    event_Qn_diff_real[iorder][p_idx] += cos_nphi;
+                    event_Qn_diff_imag[iorder][p_idx] += sin_nphi;
+                    event_Qn_diff_real_err[iorder][p_idx] += cos_nphi*cos_nphi;
+                    event_Qn_diff_imag_err[iorder][p_idx] += sin_nphi*sin_nphi;
+                }
+            }
+        }
+    }
+}
+
+
+//! this function computes the pT-integrated and pT-differential Qn vector
+//! of negative charged hadrons within a given rapidity region in one event
+void singleParticleSpectra::calculate_Qn_vector_negative_charge(int event_id,
+        double *event_Qn_real, double *event_Qn_real_err,
+        double *event_Qn_imag, double *event_Qn_imag_err,
+        double **event_Qn_diff_real, double **event_Qn_diff_real_err,
+        double **event_Qn_diff_imag, double **event_Qn_diff_imag_err) {
+    
+    // first clean the results arrays
+    for (int i = 0; i < order_max; i++) {
+        event_Qn_real[i] = 0.0;
+        event_Qn_real_err[i] = 0.0;
+        event_Qn_imag[i] = 0.0;
+        event_Qn_imag_err[i] = 0.0;
+        for (int j = 0; j < npT; j++) {
+            event_Qn_diff_real[i][j] = 0.0;
+            event_Qn_diff_real_err[i][j] = 0.0;
+            event_Qn_diff_imag[i][j] = 0.0;
+            event_Qn_diff_imag_err[i][j] = 0.0;
+        }
+    }
+
+    int number_of_particles = (
+                    particle_list->get_number_of_negative_particles(event_id));
+    for (int i = 0; i < number_of_particles; i++) {
+        double pz_local = particle_list->get_negative_particle(event_id, i).pz;
+        double E_local = particle_list->get_negative_particle(event_id, i).E;
+
+        double rap_local;
+        if (rap_type == 0) {
+            double mass = (
+                    particle_list->get_negative_particle(event_id, i).mass);
+            double pmag = sqrt(E_local*E_local - mass*mass);
+            rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
+        } else {
+            rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
+        }
+
+        if (rap_local > rap_min && rap_local < rap_max) {
+            double px_local = (
+                    particle_list->get_negative_particle(event_id, i).px);
+            double py_local = (
+                    particle_list->get_negative_particle(event_id, i).py);
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
             if (p_perp > pT_min && p_perp < pT_max) {
                 double p_phi = atan2(py_local, px_local);
@@ -623,6 +844,8 @@ void singleParticleSpectra::output_two_particle_correlation() {
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
+    output << "# n  vn{2}  vn{2}_err  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>"
+           << endl;
 
     double num_pair = Qn2_vector[0]/total_number_of_events;
     double num_pair_stdsq = (
@@ -632,19 +855,26 @@ void singleParticleSpectra::output_two_particle_correlation() {
         num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
     }
     output << scientific << setw(18) << setprecision(8)
-           << 0 << "  " << num_pair << "  " << num_pair_err << endl;
+           << 0 << "  " << num_pair << "  " << num_pair_err << "  "
+           << num_pair << "  " << Qn2_vector_err[0]/total_number_of_events
+           << endl;
     for (int i = 1; i < order_max; i++) {
-        double Qn2_avg = Qn2_vector[i]/total_number_of_events;
-        double vn2_avg = sqrt(Qn2_avg/num_pair);
-        double Qn2_stdsq = (
-                Qn2_vector_err[i]/total_number_of_events - Qn2_avg*Qn2_avg);
+        double vn2_avg = 0.0;
         double vn2_err = 0.0;
-        if (Qn2_stdsq > 0) {
-            double Qn2_err = sqrt(Qn2_stdsq/total_number_of_events);
-            vn2_err = Qn2_err/num_pair;
+        double Qn2_avg = Qn2_vector[i]/total_number_of_events;
+        if (Qn2_avg > 0.) {
+            vn2_avg = sqrt(Qn2_avg/num_pair);
+            double Qn2_stdsq = (
+                Qn2_vector_err[i]/total_number_of_events - Qn2_avg*Qn2_avg);
+            if (Qn2_stdsq > 0) {
+                double Qn2_err = sqrt(Qn2_stdsq/total_number_of_events);
+                vn2_err = Qn2_err/num_pair;
+            }
         }
         output << scientific << setw(18) << setprecision(8)
-               << i << vn2_avg << "  " << vn2_err << endl;
+               << i << "  " << vn2_avg << "  " << vn2_err << "  "
+               << Qn2_avg << "  " << Qn2_vector_err[i]/total_number_of_events
+               << endl;
     }
 }
 
@@ -657,7 +887,8 @@ void singleParticleSpectra::output_two_particle_correlation() {
 void singleParticleSpectra::calculate_three_particle_correlation(
         double *event_Q1_real, double *event_Q1_imag,
         double *event_Q2_real, double *event_Q2_imag,
-        double *event_Q3_real, double *event_Q3_imag, int flag) {
+        double *event_Q3_real, double *event_Q3_imag, int flag,
+        double *corr, double *corr_err) {
     // C_nmk[0] = C_000 = N(N-1)(N-2) is the number of pairs
     // C_nmk[1] = C_112, C_nmk[2] = C_123, C_nmk[3] = C_224, C_nmk[4] = C_235
     int n[5] = {0, 1, 1, 2, 2};
@@ -687,8 +918,8 @@ void singleParticleSpectra::calculate_three_particle_correlation(
         } else if (flag == 2) {
             corr_local = Qn_Qm_Qkstar;
         }
-        C_nmk[i] += corr_local;
-        C_nmk_err[i] += corr_local*corr_local;
+        corr[i] += corr_local;
+        corr_err[i] += corr_local*corr_local;
     }
 }
 
@@ -703,6 +934,7 @@ void singleParticleSpectra::output_three_particle_correlation() {
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
+    output << "# n  C_nmk  C_nmk_err" << endl;
 
     double num_pair = C_nmk[0]/total_number_of_events;
     double num_pair_stdsq = (
@@ -713,17 +945,98 @@ void singleParticleSpectra::output_three_particle_correlation() {
     }
     output << scientific << setw(18) << setprecision(8)
            << 0 << "  " << num_pair << "  " << num_pair_err << endl;
-    for (int i = 1; i < order_max; i++) {
+    for (int i = 1; i < num_corr; i++) {
         double Cnmk_avg = C_nmk[i]/total_number_of_events;
         double Cnmk_stdsq = (
                 C_nmk_err[i]/total_number_of_events - Cnmk_avg*Cnmk_avg);
+        Cnmk_avg = Cnmk_avg/num_pair;
         double Cnmk_err = 0.0;
         if (Cnmk_stdsq > 0) {
-            double Cnmk_err = sqrt(Cnmk_stdsq/total_number_of_events);
+            Cnmk_err = sqrt(Cnmk_stdsq/total_number_of_events);
             Cnmk_err = Cnmk_err/num_pair;
         }
         output << scientific << setw(18) << setprecision(8)
-               << i << Cnmk_avg << "  " << Cnmk_err << endl;
+               << i << "  " << Cnmk_avg << "  " << Cnmk_err << endl;
+    }
+    if (flag_charge_dependence == 1) {
+        ostringstream filename_ss;
+        if (rap_type == 0) {
+            filename_ss << path << "/particle_" << particle_monval
+                        << "_Cmnk_ss_eta_" << rap_min << "_"
+                        << rap_max << ".dat";
+        } else {
+            filename_ss << path << "/particle_" << particle_monval
+                        << "_Cmnk_ss_y_" << rap_min << "_"
+                        << rap_max << ".dat";
+        }
+        ofstream output_ss(filename_ss.str().c_str());
+        output_ss << "# n  C_nmk_ss  C_nmk_ss_err" << endl;
+
+        double num_pair_ss = C_nmk_ss[0]/total_number_of_events;
+        double num_pair_ss_stdsq = (
+                C_nmk_ss_err[0]/total_number_of_events
+                - num_pair_ss*num_pair_ss);
+        double num_pair_ss_err = 0.0;
+        if (num_pair_ss_stdsq > 0) {
+            num_pair_ss_err = sqrt(num_pair_ss_stdsq/total_number_of_events);
+        }
+        output_ss << scientific << setw(18) << setprecision(8)
+                  << 0 << "  " << num_pair_ss << "  " << num_pair_ss_err
+                  << endl;
+        for (int i = 1; i < num_corr; i++) {
+            double Cnmk_ss_avg = C_nmk_ss[i]/total_number_of_events;
+            double Cnmk_ss_stdsq = (
+                    C_nmk_ss_err[i]/total_number_of_events
+                    - Cnmk_ss_avg*Cnmk_ss_avg);
+            Cnmk_ss_avg = Cnmk_ss_avg/num_pair_ss;
+            double Cnmk_ss_err = 0.0;
+            if (Cnmk_ss_stdsq > 0) {
+                Cnmk_ss_err = sqrt(Cnmk_ss_stdsq/total_number_of_events);
+                Cnmk_ss_err = Cnmk_ss_err/num_pair;
+            }
+            output_ss << scientific << setw(18) << setprecision(8)
+                      << i << "  " << Cnmk_ss_avg << "  " << Cnmk_ss_err
+                      << endl;
+        }
+        ostringstream filename_os;
+        if (rap_type == 0) {
+            filename_os << path << "/particle_" << particle_monval
+                        << "_Cmnk_os_eta_" << rap_min << "_"
+                        << rap_max << ".dat";
+        } else {
+            filename_os << path << "/particle_" << particle_monval
+                        << "_Cmnk_os_y_" << rap_min << "_"
+                        << rap_max << ".dat";
+        }
+        ofstream output_os(filename_os.str().c_str());
+        output_os << "# n  C_nmk_os  C_nmk_os_err" << endl;
+
+        double num_pair_os = C_nmk_os[0]/total_number_of_events;
+        double num_pair_os_stdsq = (
+                C_nmk_os_err[0]/total_number_of_events
+                - num_pair_os*num_pair_os);
+        double num_pair_os_err = 0.0;
+        if (num_pair_os_stdsq > 0) {
+            num_pair_os_err = sqrt(num_pair_os_stdsq/total_number_of_events);
+        }
+        output_os << scientific << setw(18) << setprecision(8)
+                  << 0 << "  " << num_pair_os << "  " << num_pair_os_err
+                  << endl;
+        for (int i = 1; i < num_corr; i++) {
+            double Cnmk_os_avg = C_nmk_os[i]/total_number_of_events;
+            double Cnmk_os_stdsq = (
+                    C_nmk_os_err[i]/total_number_of_events
+                    - Cnmk_os_avg*Cnmk_os_avg);
+            Cnmk_os_avg = Cnmk_os_avg/num_pair_os;
+            double Cnmk_os_err = 0.0;
+            if (Cnmk_os_stdsq > 0) {
+                Cnmk_os_err = sqrt(Cnmk_os_stdsq/total_number_of_events);
+                Cnmk_os_err = Cnmk_os_err/num_pair;
+            }
+            output_os << scientific << setw(18) << setprecision(8)
+                      << i << "  " << Cnmk_os_avg << "  " << Cnmk_os_err
+                      << endl;
+        }
     }
 }
 
