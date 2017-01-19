@@ -488,6 +488,34 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     delete[] event_Qn_rap_real_err;
     delete[] event_Qn_rap_imag;
     delete[] event_Qn_rap_imag_err;
+    if (flag_charge_dependence == 1) {
+        delete[] event_Qn_p_real;
+        delete[] event_Qn_p_real_err;
+        delete[] event_Qn_p_imag;
+        delete[] event_Qn_p_imag_err;
+        delete[] event_Qn_m_real;
+        delete[] event_Qn_m_real_err;
+        delete[] event_Qn_m_imag;
+        delete[] event_Qn_m_imag_err;
+        for (int i = 0; i < order_max; i++) {
+            delete[] event_Qn_p_diff_real[i];
+            delete[] event_Qn_p_diff_real_err[i];
+            delete[] event_Qn_p_diff_imag[i];
+            delete[] event_Qn_p_diff_imag_err[i];
+            delete[] event_Qn_m_diff_real[i];
+            delete[] event_Qn_m_diff_real_err[i];
+            delete[] event_Qn_m_diff_imag[i];
+            delete[] event_Qn_m_diff_imag_err[i];
+        }
+        delete[] event_Qn_p_diff_real;
+        delete[] event_Qn_p_diff_real_err;
+        delete[] event_Qn_p_diff_imag;
+        delete[] event_Qn_p_diff_imag_err;
+        delete[] event_Qn_m_diff_real;
+        delete[] event_Qn_m_diff_real_err;
+        delete[] event_Qn_m_diff_imag;
+        delete[] event_Qn_m_diff_imag_err;
+    }
 }
 
 //! this function computes the pT-integrated and pT-differential Qn vector
