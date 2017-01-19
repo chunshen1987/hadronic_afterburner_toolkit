@@ -39,6 +39,12 @@ class singleParticleSpectra {
     double *Qn_vector_real_err, *Qn_vector_imag_err;
     double **Qn_diff_vector_real_err, **Qn_diff_vector_imag_err;
 
+    int flag_correlation;
+    double *Qn2_vector, *Qn2_vector_err;
+    double **QnSP_diff_vector, **QnSP_diff_vector_err;
+    int num_corr;
+    double *C_nmk, *C_nmk_err;
+
     int check_spatial_flag;
     int N_tau;
     double tau_min, tau_max, dtau, intrinsic_dtau;
@@ -57,11 +63,53 @@ class singleParticleSpectra {
                           particleSamples *particle_list_in);
     ~singleParticleSpectra();
 
+    //! This is a driver function to compute the Qn flow vector
     void calculate_Qn_vector_shell();
-    void calculate_Qn_vector(int event_id);
+
+    //! this function computes the pT-integrated and pT-differential Qn vector
+    //! within a given rapidity region in one event
+    void calculate_Qn_vector(int event_id,
+            double *event_Qn_real, double *event_Qn_real_err,
+            double *event_Qn_imag, double *event_Qn_imag_err,
+            double **event_Qn_diff_real, double **event_Qn_diff_real_err,
+            double **event_Qn_diff_imag, double **event_Qn_diff_imag_err);
+
+    //! This function outputs the event averaged particle pT-spectra
+    //! and flow coefficients
     void output_Qn_vectors();
 
-    void calculate_rapidity_distribution(int event_id);
+    //! This function computes the 2-particle correlation for Qn vectors
+    //! within one event
+    //!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
+    //!     Real(Qn(pT)*conj(Qn)) for n = 0, 1, ... , order_max
+    //! self correlation is subtracted assuming full overlap
+    void calculate_two_particle_correlation(
+            double *event_Qn_real, double *event_Qn_imag,
+            double **event_Qn_diff_real, double **event_Qn_diff_imag);
+
+    //! This function outputs the event averaged two-particle flow correlation
+    void output_two_particle_correlation();
+
+    //! This function computes the 3-particle correlation for Qn vectors
+    //! within one event
+    //!     C_nmk = Real(Q_n*Q_m*conj(Q_k)) for (112), (123), (224), (235)
+    //! self correlation is subtracted assuming Qk's sample >= Qn's and Qm's
+    //! flag = 0: Qn = Qm <= Qk, flag = 1: Qn != Qm, Qn \in Qk, Qm \in Qk
+    //! flag = 2: no overlap
+    void calculate_three_particle_correlation(
+            double *event_Q1_real, double *event_Q1_imag,
+            double *event_Q2_real, double *event_Q2_imag,
+            double *event_Q3_real, double *event_Q3_imag, int flag);
+
+    //! This function outputs the event averaged three-particle correlation
+    void output_three_particle_correlation();
+
+    //! this function computes the pT-integrated Qn vector as a function of
+    //! rapidity in one event
+    void calculate_rapidity_distribution(int event_id,
+                    double **event_Qn_real, double **event_Qn_real_err,
+                    double **event_Qn_imag, double **event_Qn_imag_err);
+
     void output_rapidity_distribution();
     
     void check_dNdSV(int event_id);
