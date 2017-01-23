@@ -934,9 +934,9 @@ void singleParticleSpectra::calculate_three_particle_correlation(
         // full overlap between Q1 and Q3 = Q2[m]*conj(Q1[m])
         double Qm_Qmstar = (event_Q2_real[m[i]]*event_Q1_real[m[i]]
                             + event_Q2_imag[m[i]]*event_Q1_imag[m[i]]);
-        // full overlap between Q1 and Q2 = Q1[k]*conj(Q1[k])
-        double Qk_Qkstar = (event_Q1_real[k]*event_Q1_real[k]
-                            + event_Q1_imag[k]*event_Q1_imag[k]);
+        // full overlap between Q1 and Q2 = Q1[k]*conj(Q3[k])
+        double Qk_Qkstar = (event_Q1_real[k]*event_Q3_real[k]
+                            + event_Q1_imag[k]*event_Q3_imag[k]);
         double corr_local = 0.;
         if (flag == 0) {
             corr_local = (Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar - Qk_Qkstar
