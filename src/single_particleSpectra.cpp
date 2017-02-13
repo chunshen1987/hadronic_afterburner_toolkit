@@ -404,6 +404,11 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                         event_Qn_real, event_Qn_imag,
                         event_Qn_real, event_Qn_imag,
                         event_Qn_real, event_Qn_imag, 0, C_nmk, C_nmk_err);
+                calculate_four_particle_correlation_SC(
+                        event_Qn_real, event_Qn_imag,
+                        event_Qn_real, event_Qn_imag,
+                        event_Qn_real, event_Qn_imag,
+                        event_Qn_real, event_Qn_imag, 0, SC_mn, SC_mn_err);
                 if (flag_charge_dependence == 1) {
                     calculate_Qn_vector_positive_charge(iev,
                         event_Qn_p_real, event_Qn_p_real_err,
@@ -470,6 +475,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     if (flag_correlation == 1) {
         output_two_particle_correlation();
         output_three_particle_correlation();
+        output_four_particle_SC_correlation();
     }
 
     // clean up
