@@ -60,6 +60,7 @@ nonlinear_reponse_correlator_name_list = [
                 'v5_L', 'v5(Psi23)', 'rho_523', 'chi_523',
                 'v6_L', 'v6(Psi2)', 'v6(Psi3)',
                 'rho_6222', 'rho_633', 'chi_6222', 'chi_633']
+symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 
 n_order = 7
 
@@ -683,6 +684,76 @@ def calculate_rn_ratios(vn_event_arrays):
     rn_arrays = array(rn_arrays)
     return(rn_arrays)
 
+def calculate_symmetric_cumulant(vn_data_array):
+    """
+        this funciton computes the symmetric cumulant
+            SC(m,n) = <v_m*conj(v_m)*v_n*conj(v_n)>
+                      - <v_m*conj(v_m)>*<v_n*conj(v_n)>
+    """
+    vn_data_array = array(vn_data_array)
+    nev = len(vn_data_array[:, 0])
+    dN = vn_data_array[:, 0]
+    Q1 = dN*vn_data_array[:, 1]
+    Q2 = dN*vn_data_array[:, 2]
+    Q3 = dN*vn_data_array[:, 3]
+    Q4 = dN*vn_data_array[:, 4]
+    Q5 = dN*vn_data_array[:, 5]
+    Q6 = dN*vn_data_array[:, 6]
+
+    # two-particle correlation
+    N2_weight = dN*(dN - 1.)
+    Q2_2 = abs(Q2)**2. - dN
+    Q3_2 = abs(Q3)**2. - dN
+    Q4_2 = abs(Q4)**2. - dN
+
+    # four-particle correlation
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
+        - 2.*real(Q3*conj(Q1)*conj(Q2)) + abs(Q5)**2. + abs(Q1)**2.
+        - (dN - 4.)*(abs(Q2)**2. + abs(Q3)**2.) + dN*(dN - 6.)
+    )
+    Q_42 = ((abs(Q2)**2.)*(abs(Q4)**2.) - 2.*real(Q6*conj(Q2)*conj(Q4))
+        - 2.*real(Q4*conj(Q2)*conj(Q2)) + abs(Q6)**2. + abs(Q2)**2.
+        - (dN - 4.)*(abs(Q2)**2. + abs(Q4)**2.) + dN*(dN - 6.)
+    )
+
+    # SC(3,2)
+    #SC_32 = real(mean(v2*conj(v2)*v3*conj(v3))
+    #             - mean(v2*conj(v2))*mean(v3*conj(v3)))
+    #SC_32_err = sqrt(real(std(v2*conj(v2)*v3*conj(v3)))**2.
+    #                 + (mean(v2*conj(v2))*std(v3*conj(v3)))**2.
+    #                 + (mean(v3*conj(v3))*std(v2*conj(v2)))**2.)/sqrt(nev)
+    SC_32 = (mean(Q_32)/mean(N4_weight)
+             - (mean(Q3_2)*mean(Q2_2))/(mean(N2_weight)**2.))
+    stat_err1 = (sqrt((std(Q_32)/mean(N4_weight))**2.
+                      + ((std(N4_weight)*mean(Q_32))/mean(N4_weight)**2.)**2.)
+                 /sqrt(nev))
+    stat_err2 = (sqrt((std(Q3_2)*mean(Q2_2)/(mean(N2_weight)**2.))**2.
+            + (std(Q2_2)*mean(Q3_2)/(mean(N2_weight)**2.))**2.
+            + (mean(Q2_2)*mean(Q3_2)*std(N2_weight)/mean(N2_weight)**3.)**2.
+            )/sqrt(nev))
+    SC_32_err = sqrt(stat_err1**2. + stat_err2**2.)
+
+    # SC(4,2)
+    #SC_42 = real(mean(v2*conj(v2)*v4*conj(v4))
+    #             - mean(v2*conj(v2))*mean(v4*conj(v4)))
+    #SC_32_err = sqrt(real(std(v2*conj(v2)*v4*conj(v4)))**2.
+    #                 + (mean(v2*conj(v2))*std(v4*conj(v4)))**2.
+    #                 + (mean(v4*conj(v4))*std(v2*conj(v2)))**2.)/sqrt(nev)
+    SC_42 = (mean(Q_42)/mean(N4_weight)
+             - (mean(Q4_2)*mean(Q2_2))/(mean(N4_weight)**2.))
+    stat_err1 = (sqrt((std(Q_42)/mean(N4_weight))**2.
+                      + ((std(N4_weight)*mean(Q_42))/mean(N4_weight)**2.)**2.)
+                 /sqrt(nev))
+    stat_err2 = (sqrt((std(Q4_2)*mean(Q2_2)/(mean(N2_weight)**2.))**2.
+            + (std(Q2_2)*mean(Q4_2)/(mean(N2_weight)**2.))**2.
+            + (mean(Q2_2)*mean(Q4_2)*std(N2_weight)/mean(N2_weight)**3.)**2.
+            )/sqrt(nev))
+    SC_42_err = sqrt(stat_err1**2. + stat_err2**2.)
+
+    results = [SC_32, SC_32_err, SC_42, SC_42_err]
+    return(results)
+
 
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
@@ -858,6 +929,9 @@ for ipart, particle_id in enumerate(particle_list):
         nonlinear_response_cms = calculate_nonlinear_reponse(vn_cms_array2)
         # calculate non-linear response coefficents with ATLAS pT cut
         nonlinear_response_atlas = calculate_nonlinear_reponse(vn_atlas_array2)
+        
+        # calculate symmetric cumulant coefficents with ALICE pT cut
+        sc_alice = calculate_symmetric_cumulant(vn_alice_array)
 
         # calculate vn distribution for charged hadrons
         vn_phenix_dis = calculate_vn_distribution(vn_phenix_array)
@@ -973,6 +1047,17 @@ for ipart, particle_id in enumerate(particle_list):
                     % (nonlinear_reponse_correlator_name_list[i],
                        nonlinear_response_atlas[2*i],
                        nonlinear_response_atlas[2*i+1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output symmetric cumulants for ALICE pt cut
+        output_filename = ("symmetric_cumulant_ALICE.dat")
+        f = open(output_filename, 'w')
+        f.write("# type  value  stat. err\n")
+        for i in range(len(symmetric_cumulant_name_list)):
+            f.write("%s  %.10e  %.10e\n"
+                    % (symmetric_cumulant_name_list[i],
+                       SC_alice[2*i], SC_alice[2*i+1]))
         f.close()
         shutil.move(output_filename, avg_folder)
 
