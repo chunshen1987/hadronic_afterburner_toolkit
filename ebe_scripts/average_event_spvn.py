@@ -931,7 +931,7 @@ for ipart, particle_id in enumerate(particle_list):
         nonlinear_response_atlas = calculate_nonlinear_reponse(vn_atlas_array2)
         
         # calculate symmetric cumulant coefficents with ALICE pT cut
-        sc_alice = calculate_symmetric_cumulant(vn_alice_array)
+        SC_alice = calculate_symmetric_cumulant(vn_alice_array)
 
         # calculate vn distribution for charged hadrons
         vn_phenix_dis = calculate_vn_distribution(vn_phenix_array)
