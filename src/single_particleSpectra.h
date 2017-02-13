@@ -46,6 +46,8 @@ class singleParticleSpectra {
     double *C_nmk, *C_nmk_err;
     int flag_charge_dependence;
     double *C_nmk_ss, *C_nmk_ss_err, *C_nmk_os, *C_nmk_os_err;
+    int SC_num_corr;
+    double *SC_mn, *SC_mn_err;
 
     int check_spatial_flag;
     int N_tau;
@@ -116,6 +118,22 @@ class singleParticleSpectra {
 
     //! This function outputs the event averaged three-particle correlation
     void output_three_particle_correlation();
+
+    //! This function computes the 4-particle correlation for
+    //! symmetric cumulants using Qn vectors within one event
+    //!     SC_mn = <Q1_m*conj(Q2_m)*Q3_n*conj(Q4_n)>
+    //              - <Q1_m*conj(Q2_m)><Q3_n*conj(Q4_n)>
+    //! for (32), (42), (52), (43), (53)
+    //! self correlation is subtracted assuming Qk's sample >= Qn's and Qm's
+    void calculate_four_particle_correlation_SC(
+            double *event_Q1_real, double *event_Q1_imag,
+            double *event_Q2_real, double *event_Q2_imag,
+            double *event_Q3_real, double *event_Q3_imag,
+            double *event_Q4_real, double *event_Q4_imag, int flag,
+            double *corr, double *corr_err);
+
+    //! This function outputs the event averaged four-particle correlation
+    void output_four_particle_SC_correlation();
 
     //! this function computes the pT-integrated Qn vector as a function of
     //! rapidity in one event

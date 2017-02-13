@@ -201,6 +201,13 @@ singleParticleSpectra::singleParticleSpectra(
                 C_nmk_os_err[i] = 0.0;
             }
         }
+        SC_num_corr = 6;
+        SC_mn = new double[SC_num_corr];
+        SC_mn_err = new double[SC_num_corr];
+        for (int i = 0; i < SC_num_corr; i++) {
+            SC_mn[i] = 0.0;
+            SC_mn_err[i] = 0.0;
+        }
     }
 }
 
@@ -273,6 +280,8 @@ singleParticleSpectra::~singleParticleSpectra() {
             delete[] C_nmk_os;
             delete[] C_nmk_os_err;
         }
+        delete[] SC_mn;
+        delete[] SC_mn_err;
     }
 }
 
@@ -923,6 +932,12 @@ void singleParticleSpectra::calculate_three_particle_correlation(
     int m[5] = {0, 1, 2, 2, 3};
     for (int i = 0; i < num_corr; i++) {
         int k = n[i] + m[i];
+        if (k > order_max) {
+            cout << "Error: the vn needed for three-particle correlation "
+                 << "is not computed, order_max = " << order_max
+                 << "n+m = " << k << ". Make sure order_max > n+m!" << endl;
+            exit(1);
+        }
         double Qn_Qm_Qkstar = (
             (event_Q1_real[n[i]]*event_Q2_real[m[i]]
              - event_Q1_imag[n[i]]*event_Q2_imag[m[i]])*event_Q3_real[k]
@@ -945,6 +960,103 @@ void singleParticleSpectra::calculate_three_particle_correlation(
             corr_local = (Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar);
         } else if (flag == 2) {
             corr_local = Qn_Qm_Qkstar;
+        }
+        corr[i] += corr_local;
+        corr_err[i] += corr_local*corr_local;
+    }
+}
+
+//! This function computes the 4-particle correlation for symmetric cumulants
+//! using Qn vectors within one event
+//!     SC_mn = <Q1_m*conj(Q2_m)*Q3_n*conj(Q4_n)>
+//              - <Q1_m*conj(Q2_m)><Q3_n*conj(Q4_n)>
+//! for (32), (42), (52), (43), (53)
+//! self correlation is subtracted assuming Qk's sample >= Qn's and Qm's
+void singleParticleSpectra::calculate_four_particle_correlation_SC(
+        double *event_Q1_real, double *event_Q1_imag,
+        double *event_Q2_real, double *event_Q2_imag,
+        double *event_Q3_real, double *event_Q3_imag,
+        double *event_Q4_real, double *event_Q4_imag, int flag,
+        double *corr, double *corr_err) {
+    // SC_mn[0] = SC_00 = N(N-1)(N-2)(N-3) is the number of pairs
+    // SC_mn[1] = SC_32, SC_mn[2] = SC_42
+    // SC_mn[3] = SC_52, SC_mn[4] = SC_43, SC_mn[5] = SC_53
+    int m[6] = {0, 3, 4, 5, 4, 5};
+    int n[6] = {0, 2, 2, 2, 3, 3};
+    for (int i = 0; i < SC_num_corr; i++) {
+        int k = m[i] + n[i];
+        if (k > order_max) {
+            cout << "Error: the vn needed for symmetric cumulants is not "
+                 << "computed, order_max = " << order_max
+                 << "m+n = " << k << ". Make sure order_max > m+n!" << endl;
+            exit(1);
+        }
+        int l = m[i] - n[i];
+        double Q1_conjQ2 = (event_Q1_real[m[i]]*event_Q2_real[m[i]]
+                            + event_Q1_imag[m[i]]*event_Q2_imag[m[i]]);
+        double Q3_conjQ4 = (event_Q3_real[n[i]]*event_Q4_real[n[i]]
+                            + event_Q3_imag[n[i]]*event_Q4_imag[n[i]]);
+        // full overlap of Q1 and Q3
+        double Q1Q3_overlap = (
+            event_Q1_real[k]*event_Q2_real[m[i]]*event_Q4_real[n[i]]
+            - event_Q1_real[k]*event_Q2_imag[m[i]]*event_Q4_imag[n[i]]
+            + event_Q1_imag[k]*event_Q2_real[m[i]]*event_Q4_imag[n[i]]
+            + event_Q1_imag[k]*event_Q2_imag[m[i]]*event_Q4_real[n[i]]
+        );
+        // full overlap of Q1 and Q4
+        double Q1Q4_overlap = (
+            event_Q1_real[l]*event_Q2_real[m[i]]*event_Q3_real[n[i]]
+            + event_Q1_real[l]*event_Q2_imag[m[i]]*event_Q3_imag[n[i]]
+            - event_Q1_imag[l]*event_Q2_real[m[i]]*event_Q3_imag[n[i]]
+            + event_Q1_imag[l]*event_Q2_imag[m[i]]*event_Q3_real[n[i]]
+        );
+        // full overlap of Q2 and Q4
+        double Q2Q4_overlap = (
+            event_Q2_real[k]*event_Q1_real[m[i]]*event_Q3_real[n[i]]
+            - event_Q2_real[k]*event_Q1_imag[m[i]]*event_Q3_imag[n[i]]
+            + event_Q2_imag[k]*event_Q1_real[m[i]]*event_Q3_imag[n[i]]
+            + event_Q2_imag[k]*event_Q1_imag[m[i]]*event_Q3_real[n[i]]
+        );
+        // full overlap of Q2 and Q3
+        double Q2Q3_overlap = (
+            event_Q2_real[l]*event_Q1_real[m[i]]*event_Q4_real[n[i]]
+            + event_Q2_real[l]*event_Q1_imag[m[i]]*event_Q4_imag[n[i]]
+            - event_Q2_imag[l]*event_Q1_real[m[i]]*event_Q4_imag[n[i]]
+            + event_Q2_imag[l]*event_Q1_imag[m[i]]*event_Q4_real[n[i]]
+        );
+        // full overlap of Q1 with Q3 and Q2 with Q4
+        double Q1Q3_Q2Q4_overlap = (event_Q1_real[k]*event_Q2_real[k]
+                                    + event_Q1_imag[k]*event_Q2_imag[k]);
+        // full overlap of Q1 with Q4 and Q2 with Q3
+        double Q1Q4_Q2Q3_overlap = (event_Q1_real[l]*event_Q2_real[l]
+                                    + event_Q1_imag[l]*event_Q2_imag[l]);
+        // full overlap of Q1 with Q2 and Q3
+        double Q1Q2Q3_overlap = (event_Q1_real[n[i]]*event_Q4_real[n[i]]
+                                 + event_Q1_imag[n[i]]*event_Q4_imag[n[i]]);
+        // full overlap of Q1 with Q2 and Q4
+        double Q1Q2Q4_overlap = (event_Q1_real[n[i]]*event_Q3_real[n[i]]
+                                 + event_Q1_imag[n[i]]*event_Q3_imag[n[i]]);
+        // full overlap of Q1 with Q3 and Q4
+        double Q1Q3Q4_overlap = (event_Q1_real[m[i]]*event_Q2_real[m[i]]
+                                 + event_Q1_imag[m[i]]*event_Q2_imag[m[i]]);
+        // full overlap of Q2 with Q3 and Q4
+        double Q2Q3Q4_overlap = (event_Q1_real[m[i]]*event_Q2_real[m[i]]
+                                 + event_Q1_imag[m[i]]*event_Q2_imag[m[i]]);
+        // full overlap of Q1 with Q2, Q3, and Q4
+        double Q1Q2Q3Q4_overlap = event_Q1_real[0];
+
+        double corr_local = 0.;
+        if (flag == 0) {
+            corr_local = (
+                Q1_conjQ2*Q3_conjQ4 - Q1Q3_overlap - Q1Q4_overlap
+                - Q2Q3_overlap - Q2Q4_overlap
+                + Q1Q3_Q2Q4_overlap + Q1Q4_Q2Q3_overlap
+                - (event_Q1_real[0] - 4.)/2.*Q1Q2Q3_overlap
+                - (event_Q1_real[0] - 4.)/2.*Q1Q2Q4_overlap
+                - (event_Q1_real[0] - 4.)/2.*Q1Q3Q4_overlap
+                - (event_Q1_real[0] - 4.)/2.*Q2Q3Q4_overlap
+                + Q1Q2Q3Q4_overlap*(Q1Q2Q3Q4_overlap - 6.)
+            );
         }
         corr[i] += corr_local;
         corr_err[i] += corr_local*corr_local;
@@ -1065,6 +1177,42 @@ void singleParticleSpectra::output_three_particle_correlation() {
                       << i << "  " << Cnmk_os_avg << "  " << Cnmk_os_err
                       << endl;
         }
+    }
+}
+
+//! This function outputs the event averaged four-particle correlation
+void singleParticleSpectra::output_four_particle_SC_correlation() {
+    ostringstream filename;
+    if (rap_type == 0) {
+        filename << path << "/particle_" << particle_monval << "_SCmn"
+                 << "_eta_" << rap_min << "_" << rap_max << ".dat";
+    } else {
+        filename << path << "/particle_" << particle_monval << "_SCmn"
+                 << "_y_" << rap_min << "_" << rap_max << ".dat";
+    }
+    ofstream output(filename.str().c_str());
+    output << "# n  SC_mn  SC_mn_err" << endl;
+    double num_pair = SC_mn[0]/total_number_of_events;
+    double num_pair_stdsq = (
+            SC_mn_err[0]/total_number_of_events - num_pair*num_pair);
+    double num_pair_err = 0.0;
+    if (num_pair_stdsq > 0) {
+        num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
+    }
+    output << scientific << setw(18) << setprecision(8)
+           << 0 << "  " << num_pair << "  " << num_pair_err << endl;
+    for (int i = 1; i < num_corr; i++) {
+        double SC_mn_avg = SC_mn[i]/total_number_of_events;
+        double SC_mn_stdsq = (
+                SC_mn_err[i]/total_number_of_events - SC_mn_avg*SC_mn_avg);
+        SC_mn_avg = SC_mn_avg/num_pair;
+        double SC_mn_avg_err = 0.0;
+        if (SC_mn_stdsq > 0) {
+            SC_mn_avg_err = sqrt(SC_mn_stdsq/total_number_of_events);
+            SC_mn_avg_err = SC_mn_avg_err/num_pair;
+        }
+        output << scientific << setw(18) << setprecision(8)
+               << i << "  " << SC_mn_avg << "  " << SC_mn_avg_err << endl;
     }
 }
 
