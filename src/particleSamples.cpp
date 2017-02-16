@@ -431,7 +431,7 @@ int particleSamples::read_in_particle_samples_mixed_event() {
 int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge,
                                           int parent_proc_type) {
     int pick_flag = 0;
-    if (particle_urqmd_id == -1) {  // all hadrons
+    if (resonance_feed_down_flag == 1) {  // all hadrons
         pick_flag = 1;
     } else if (particle_urqmd_id == 9999) {  // charged hadrons
         int in_flag = 0;
@@ -640,7 +640,7 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                 getline(inputfile, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if (particle_monval == -1) {
+                if (resonance_feed_down_flag == 1) {
                     pick_flag = 1;
                 } else if (flag_isospin == 0) {
                     if (abs(temp_monval) == particle_monval) {
@@ -2003,7 +2003,9 @@ void particleSamples::perform_resonance_feed_down() {
             for (unsigned int idaughter = 0; idaughter < daughter_list->size();
                     idaughter++) {
                 if (decayer_ptr->check_particle_stable(&(*daughter_list)[idaughter]) == 1) {
-                    (*particle_list)[ievent]->push_back((*daughter_list)[idaughter]);
+                    if ((*daughter_list)[idaughter].monval == particle_monval) {
+                        (*particle_list)[ievent]->push_back((*daughter_list)[idaughter]);
+                    }
                 } else {
                     temp_list.push_back((*daughter_list)[idaughter]);
                 }

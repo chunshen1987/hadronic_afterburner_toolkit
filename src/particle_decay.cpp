@@ -300,6 +300,10 @@ void particle_decay::perform_decays(
         daughter1->mass = mass1;
         daughter2->mass = mass2;
         daughter3->mass = mass3;
+        //cout << "check: mother: " << mother->monval << " decay into"
+        //     << " daughter1: " << daughter1->monval
+        //     << " and daughter2: " << daughter2->monval
+        //     << " and daughter3: " << daughter3->monval << endl;
         perform_three_body_decay(mother, daughter1, daughter2, daughter3);
         daughter_list->push_back(*daughter1);
         daughter_list->push_back(*daughter2);
