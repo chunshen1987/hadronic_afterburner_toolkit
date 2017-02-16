@@ -13,6 +13,11 @@ using namespace std;
 
 particle_decay::particle_decay() {
     resonance_table.clear();
+    timeval a;
+    gettimeofday(&a, 0);
+    int random_seed = a.tv_usec;
+    srand48(random_seed);
+    read_resonances_list();
 }
 
 particle_decay::~particle_decay() {
@@ -23,10 +28,6 @@ particle_decay::~particle_decay() {
         delete resonance_table[i];
     }
     resonance_table.clear();
-    timeval a;
-    gettimeofday(&a, 0);
-    int random_seed = a.tv_usec;
-    srand48(random_seed);
 }
 
 int particle_decay::read_resonances_list() {
@@ -192,6 +193,120 @@ double particle_decay::get_particle_width(particle_info *part) {
     }
     return(width);
 }
+
+int particle_decay::check_particle_stable(particle_info *part) {
+    int stable = 0;
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
+        if (part->monval == resonance_table[i]->monval) {
+            stable = resonance_table[i]->stable;
+            break;
+        }
+    }
+    return(stable);
+}
+
+void particle_decay::perform_decays(
+            particle_info *mother, vector<particle_info>* daughter_list) {
+    particle_decay_info* mother_decay_info = NULL;
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
+        if (mother->monval == resonance_table[i]->monval) {
+            mother_decay_info = resonance_table[i];
+            break;
+        }
+    }
+    if (mother_decay_info->stable == 1) {
+        // the particle is a stable particle
+        daughter_list->push_back(*mother);
+        return;
+    }
+    int N_decay_channel = mother_decay_info->decays;
+    double random_local = drand48();
+    double cumulated_branching_ratio = 0.0;
+    decay_channel_info* picked_channel = NULL;
+    for (int i_channel = 0; i_channel < N_decay_channel; i_channel++) {
+        cumulated_branching_ratio +=
+            mother_decay_info->decay_channels[i_channel]->branching_ratio;
+        if (cumulated_branching_ratio > random_local) {
+            picked_channel = mother_decay_info->decay_channels[i_channel];
+            break;
+        }
+    }
+    int N_decay_part = picked_channel->decay_Npart;
+    if (N_decay_part == 2) {
+        particle_info *daughter1 = new particle_info;
+        particle_info *daughter2 = new particle_info;
+        int decay_part1_monval = picked_channel->decay_part[0];
+        int decay_part2_monval = picked_channel->decay_part[1];
+        daughter1->monval = decay_part1_monval;
+        daughter2->monval = decay_part2_monval;
+        double mass1 = 0.0;
+        double mass2 = 0.0;
+        for (unsigned int ipart1 = 0; ipart1 < resonance_table.size();
+                ipart1++) {
+            if (decay_part1_monval == resonance_table[ipart1]->monval) {
+                mass1 = resonance_table[ipart1]->mass;
+                break;
+            }
+        }
+        for (unsigned int ipart2 = 0; ipart2 < resonance_table.size();
+                ipart2++) {
+            if (decay_part2_monval == resonance_table[ipart2]->monval) {
+                mass2 = resonance_table[ipart2]->mass;
+                break;
+            }
+        }
+        daughter1->mass = mass1;
+        daughter2->mass = mass2;
+        //cout << "check: mother: " << mother->monval << " decay into "
+        //     << "daughter1: " << daughter1->monval << " and daughter2: "
+        //     << daughter2->monval << endl;
+        perform_two_body_decay(mother, daughter1, daughter2);
+        daughter_list->push_back(*daughter1);
+        daughter_list->push_back(*daughter2);
+    } else if (N_decay_part == 3) {
+        particle_info *daughter1 = new particle_info;
+        particle_info *daughter2 = new particle_info;
+        particle_info *daughter3 = new particle_info;
+        int decay_part1_monval = picked_channel->decay_part[0];
+        int decay_part2_monval = picked_channel->decay_part[1];
+        int decay_part3_monval = picked_channel->decay_part[2];
+        daughter1->monval = decay_part1_monval;
+        daughter2->monval = decay_part2_monval;
+        daughter3->monval = decay_part3_monval;
+        double mass1 = 0.0;
+        double mass2 = 0.0;
+        double mass3 = 0.0;
+        for (unsigned int ipart1 = 0; ipart1 < resonance_table.size();
+                ipart1++) {
+            if (decay_part1_monval == resonance_table[ipart1]->monval) {
+                mass1 = resonance_table[ipart1]->mass;
+                break;
+            }
+        }
+        for (unsigned int ipart2 = 0; ipart2 < resonance_table.size();
+                ipart2++) {
+            if (decay_part2_monval == resonance_table[ipart2]->monval) {
+                mass2 = resonance_table[ipart2]->mass;
+                break;
+            }
+        }
+        for (unsigned int ipart3 = 0; ipart3 < resonance_table.size();
+                ipart3++) {
+            if (decay_part3_monval == resonance_table[ipart3]->monval) {
+                mass3 = resonance_table[ipart3]->mass;
+                break;
+            }
+        }
+        daughter1->mass = mass1;
+        daughter2->mass = mass2;
+        daughter3->mass = mass3;
+        perform_three_body_decay(mother, daughter1, daughter2, daughter3);
+        daughter_list->push_back(*daughter1);
+        daughter_list->push_back(*daughter2);
+        daughter_list->push_back(*daughter3);
+    }
+}
+
 
 void particle_decay::perform_two_body_decay(particle_info *mother,
                                             particle_info *daughter1,

@@ -44,20 +44,25 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
             || read_in_mode == 3 || read_in_mode == 4) {
         get_UrQMD_id(particle_monval);
     }
+    resonance_feed_down_flag = paraRdr->getVal("resonance_feed_down_flag");
+    if (resonance_feed_down_flag == 1) {
+        resonance_list = new vector< vector<particle_info>* >;
+        decayer_ptr = new particle_decay;
+    }
 
     particle_list = new vector< vector<particle_info>* >;
     particle_list_mixed_event = new vector< vector<particle_info>* >;
     if (abs(particle_monval) == 3122) {
         // for Lambda and anti-Lambda
-        resonance_feed_down_flag = paraRdr->getVal(
+        resonance_weak_feed_down_flag = paraRdr->getVal(
                                             "resonance_weak_feed_down_flag");
-        if (resonance_feed_down_flag == 1) {
+        if (resonance_weak_feed_down_flag == 1) {
             // include Sigma0 feed down to Lambda
             resonance_list = new vector< vector<particle_info>* >;
             decayer_ptr = new particle_decay;
         }
     } else {
-        resonance_feed_down_flag = 0;
+        resonance_weak_feed_down_flag = 0;
     }
 
     if (particle_monval == 333) {
@@ -176,6 +181,14 @@ particleSamples::~particleSamples() {
         }
         anti_particle_list->clear();
         delete anti_particle_list;
+    }
+
+    if (resonance_weak_feed_down_flag == 1) {
+        for (unsigned int i = 0; i < resonance_list->size(); i++)
+            (*resonance_list)[i]->clear();
+        resonance_list->clear();
+        delete resonance_list;
+        delete decayer_ptr;
     }
 
     if (resonance_feed_down_flag == 1) {
@@ -340,6 +353,10 @@ void particleSamples::get_UrQMD_id(int monval) {
         // all charged hadrons
         particle_urqmd_id = 9999;
         particle_urqmd_isospin = 0;
+    } else if (monval == -1) {
+        // all hadrons
+        particle_urqmd_id = -1;
+        particle_urqmd_isospin = 0;
     }
 }
 
@@ -356,7 +373,7 @@ int particleSamples::get_pdg_id(int urqmd_id, int urqmd_isospin) {
 int particleSamples::read_in_particle_samples() {
     if (read_in_mode == 0) {
         read_in_particle_samples_OSCAR();
-        resonance_feed_down_flag = 0;
+        resonance_weak_feed_down_flag = 0;
         reconst_flag = 0;
     } else if (read_in_mode == 1) {
         read_in_particle_samples_UrQMD();
@@ -368,6 +385,10 @@ int particleSamples::read_in_particle_samples() {
         read_in_particle_samples_UrQMD_3p3();
     } else if (read_in_mode == 5) {
         read_in_particle_samples_JAM();
+    }
+
+    if (resonance_weak_feed_down_flag == 1) {
+        perform_weak_resonance_feed_down();
     }
 
     if (resonance_feed_down_flag == 1) {
@@ -384,7 +405,7 @@ int particleSamples::read_in_particle_samples() {
 int particleSamples::read_in_particle_samples_mixed_event() {
     if (read_in_mode == 0) {
         read_in_particle_samples_OSCAR_mixed_event();
-        resonance_feed_down_flag = 0;
+        resonance_weak_feed_down_flag = 0;
     } else if (read_in_mode == 1) {
         read_in_particle_samples_UrQMD_mixed_event();
     } else if (read_in_mode == 2) {
@@ -396,6 +417,10 @@ int particleSamples::read_in_particle_samples_mixed_event() {
     } else if (read_in_mode == 5) {
         read_in_particle_samples_JAM_mixed_event();
     }
+    if (resonance_weak_feed_down_flag == 1) {
+        perform_weak_resonance_feed_down();
+    }
+    
     if (resonance_feed_down_flag == 1) {
         perform_resonance_feed_down();
     }
@@ -406,7 +431,9 @@ int particleSamples::read_in_particle_samples_mixed_event() {
 int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge,
                                           int parent_proc_type) {
     int pick_flag = 0;
-    if (particle_urqmd_id == 9999) {  // charged hadrons
+    if (particle_urqmd_id == -1) {  // all hadrons
+        pick_flag = 1;
+    } else if (particle_urqmd_id == 9999) {  // charged hadrons
         int in_flag = 0;
         for (int i = 0; i < 5; i++) {
             if (abs(pid) == charged_hadron_urqmd_id_list[i]) {
@@ -589,8 +616,8 @@ int particleSamples::read_in_particle_samples_OSCAR() {
         for (unsigned int i = 0; i < anti_particle_list->size(); i++) {
             (*anti_particle_list)[i]->clear();
         }
+        anti_particle_list->clear();
     }
-    anti_particle_list->clear();
     
     string temp_string;
     int event_id, n_particle, dummy;
@@ -613,7 +640,9 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                 getline(inputfile, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if (flag_isospin == 0) {
+                if (particle_monval == -1) {
+                    pick_flag = 1;
+                } else if (flag_isospin == 0) {
                     if (abs(temp_monval) == particle_monval) {
                         pick_flag = 1;
                     } else {
@@ -673,7 +702,7 @@ int particleSamples::read_in_particle_samples_JAM() {
         (*particle_list)[i]->clear();
     particle_list->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -700,7 +729,7 @@ int particleSamples::read_in_particle_samples_JAM() {
         if (!inputfile.eof()) {
             particle_list->push_back(new vector<particle_info> );
 
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
 
@@ -735,7 +764,7 @@ int particleSamples::read_in_particle_samples_JAM() {
                 if (particle_monval == 9999)
                     pick_flag = decide_to_pick_JAM(temp_monval);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     if (temp_monval == 3122 && particle_monval == 3212) {
                         // pick Sigma^0 for Lambda
                         resonance_pick_flag = 1;
@@ -859,7 +888,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -876,7 +905,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
         temp1 >> cdummy >> event_id >> n_particle;
         if (!inputfile_mixed_event.eof()) {
             particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
             int idx = ievent;
@@ -901,7 +930,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
                 if (particle_monval == 9999)
                     pick_flag = decide_to_pick_JAM(temp_monval);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     // pick up Sigma^0 for Lambda
                     if (temp_monval == 3122 && particle_monval == 3212) {
                         resonance_pick_flag = 1;
@@ -949,7 +978,7 @@ int particleSamples::read_in_particle_samples_UrQMD() {
         (*particle_list)[i]->clear();
     particle_list->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -983,7 +1012,7 @@ int particleSamples::read_in_particle_samples_UrQMD() {
         if (!inputfile.eof()) {
             // create one event
             particle_list->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
             if (reconst_flag == 1) {
@@ -1005,7 +1034,7 @@ int particleSamples::read_in_particle_samples_UrQMD() {
 
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
             if (net_particle_flag == 1) {
@@ -1032,7 +1061,7 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1107,7 +1136,7 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
         (*particle_list)[i]->clear();
     particle_list->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -1149,7 +1178,7 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
         if (!gzeof(inputfile_gz)) {
             // create one event
             particle_list->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
             if (reconst_flag == 1) {
@@ -1175,7 +1204,7 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
 
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
             if (net_particle_flag == 1) {
@@ -1204,7 +1233,7 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1288,7 +1317,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
         (*particle_list)[i]->clear();
     particle_list->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -1315,7 +1344,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
         if (!inputfile.eof()) {
             // create one event
             particle_list->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
             if (reconst_flag == 1) {
@@ -1334,7 +1363,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
 
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
             if (reconst_flag == 1) {
@@ -1357,7 +1386,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1422,7 +1451,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -1439,7 +1468,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
         getline(inputfile_mixed_event, temp_string);
         if (!inputfile_mixed_event.eof()) {
             particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
 
@@ -1456,7 +1485,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
             // clean out the previous record
             int idx = ievent;
             (*particle_list_mixed_event)[idx]->clear(); 
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
 
@@ -1474,7 +1503,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1528,7 +1557,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -1543,7 +1572,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
         temp_string = gz_readline(inputfile_mixed_event_gz);
         if (!gzeof(inputfile_mixed_event_gz)) {
             particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
 
@@ -1556,7 +1585,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
             // clean out the previous record
             int idx = ievent;
             (*particle_list_mixed_event)[idx]->clear(); 
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
 
@@ -1571,7 +1600,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1625,7 +1654,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -1642,7 +1671,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
         getline(inputfile_mixed_event, temp_string);
         if (!inputfile_mixed_event.eof()) {
             particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
 
@@ -1659,7 +1688,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
             // clean out the previous record
             int idx = ievent;
             (*particle_list_mixed_event)[idx]->clear(); 
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
 
@@ -1676,7 +1705,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1730,7 +1759,7 @@ int particleSamples::read_in_particle_samples_Sangwook() {
         (*particle_list)[i]->clear();
     particle_list->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -1757,7 +1786,7 @@ int particleSamples::read_in_particle_samples_Sangwook() {
         if (!inputfile.eof()) {
             // create one event
             particle_list->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
             if (reconst_flag == 1) {
@@ -1772,7 +1801,7 @@ int particleSamples::read_in_particle_samples_Sangwook() {
 
             int idx = ievent;
             (*particle_list)[idx]->clear(); // clean out the previous record
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
             if (reconst_flag == 1) {
@@ -1795,7 +1824,7 @@ int particleSamples::read_in_particle_samples_Sangwook() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1860,7 +1889,7 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
     
-    if (resonance_feed_down_flag == 1) {
+    if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
@@ -1877,7 +1906,7 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
         getline(inputfile_mixed_event, temp_string);
         if (!inputfile_mixed_event.eof()) {
             particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 resonance_list->push_back(new vector<particle_info>);
             }
 
@@ -1890,7 +1919,7 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
             // clean out the previous record
             int idx = ievent;
             (*particle_list_mixed_event)[idx]->clear(); 
-            if (resonance_feed_down_flag == 1) {
+            if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
 
@@ -1907,7 +1936,7 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
                 pick_flag = decide_to_pick_UrQMD(
                         urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
 
-                if (resonance_feed_down_flag == 1) {
+                if (resonance_weak_feed_down_flag == 1) {
                     resonance_pick_flag = decide_to_pick_UrQMD_resonance(
                                         urqmd_pid, urqmd_iso3, urqmd_charge);
                 }
@@ -1956,6 +1985,36 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
 }
 
 void particleSamples::perform_resonance_feed_down() {
+    cout << "perform resonance decays... " << endl;
+    // loop over events
+    for (unsigned int ievent = 0; ievent < particle_list->size(); ievent++) {
+        // create a temporary particle list
+        vector<particle_info> temp_list;
+        // copy all particles into the temp list
+        for (unsigned int ipart = 0; ipart < (*particle_list)[ievent]->size();
+                ipart++) {
+            temp_list.push_back((*(*particle_list)[ievent])[ipart]);
+        }
+        (*particle_list)[ievent]->clear();
+        // perform resonance decays
+        for (unsigned int ipart = 0; ipart < temp_list.size(); ipart++) {
+            vector<particle_info> *daughter_list = new vector<particle_info>;
+            decayer_ptr->perform_decays(&temp_list[ipart], daughter_list);
+            for (unsigned int idaughter = 0; idaughter < daughter_list->size();
+                    idaughter++) {
+                if (decayer_ptr->check_particle_stable(&(*daughter_list)[idaughter]) == 1) {
+                    (*particle_list)[ievent]->push_back((*daughter_list)[idaughter]);
+                } else {
+                    temp_list.push_back((*daughter_list)[idaughter]);
+                }
+            }
+            daughter_list->clear();
+            delete daughter_list;
+        }
+    }
+}
+
+void particleSamples::perform_weak_resonance_feed_down() {
     if (particle_monval == 3122) {
         // consider Sigma^0 feed down to Lambda
         for (unsigned int iev = 0; iev < resonance_list->size(); iev++) {

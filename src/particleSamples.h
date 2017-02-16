@@ -30,8 +30,11 @@ class particleSamples {
     //! the monte-carlo number of the particle of interest
     int particle_monval;
 
-    //! include Sigma0 feed down of Lambda
+    //! perform resonance feed down for all unstable particles
     int resonance_feed_down_flag;
+
+    //! include Sigma0 feed down of Lambda
+    int resonance_weak_feed_down_flag;
 
     //! reconst phi meson from (K^+, K^-) pairs
     int reconst_flag;
@@ -67,7 +70,7 @@ class particleSamples {
     vector< vector<particle_info>* >* particle_list_mixed_event;
 
     //! particle list to store the resonance particles (Sigma0)
-    //! (used when resonance_feed_down_flag == 1)
+    //! (used when resonance_weak_feed_down_flag == 1)
     vector< vector<particle_info>* >* resonance_list;
 
     //! particle list to store the (K^+ and K^-) pairs
@@ -105,6 +108,7 @@ class particleSamples {
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
 
     void perform_resonance_feed_down();
+    void perform_weak_resonance_feed_down();
     void perform_particle_reconstruction(); 
 
     int read_in_particle_samples();

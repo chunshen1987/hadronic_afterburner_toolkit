@@ -40,6 +40,9 @@ class particle_decay {
     int read_resonances_list();
     void check_resonance_table();
     double get_particle_width(particle_info *part);
+    int check_particle_stable(particle_info *part);
+    void perform_decays(particle_info *mother,
+                        std::vector<particle_info>* daughter_list);
     void perform_two_body_decay(particle_info *mother,
                                 particle_info *daughter1,
                                 particle_info *daughter2);
