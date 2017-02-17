@@ -1208,7 +1208,7 @@ void singleParticleSpectra::output_four_particle_SC_correlation() {
     }
     output << scientific << setw(18) << setprecision(8)
            << 0 << "  " << num_pair << "  " << num_pair_err << endl;
-    for (int i = 1; i < num_corr; i++) {
+    for (int i = 1; i < SC_num_corr; i++) {
         double SC_mn_avg = SC_mn[i]/total_number_of_events;
         double SC_mn_stdsq = (
                 SC_mn_err[i]/total_number_of_events - SC_mn_avg*SC_mn_avg);
