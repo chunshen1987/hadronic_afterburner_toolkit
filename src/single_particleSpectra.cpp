@@ -181,7 +181,7 @@ singleParticleSpectra::singleParticleSpectra(
             }
         }
 
-        num_corr = 5;
+        num_corr = 9;
         C_nmk = new double[num_corr];
         C_nmk_err = new double[num_corr];
         for (int i = 0; i < num_corr; i++) {
@@ -934,8 +934,9 @@ void singleParticleSpectra::calculate_three_particle_correlation(
         double *corr, double *corr_err) {
     // C_nmk[0] = C_000 = N(N-1)(N-2) is the number of pairs
     // C_nmk[1] = C_112, C_nmk[2] = C_123, C_nmk[3] = C_224, C_nmk[4] = C_235
-    int n[5] = {0, 1, 1, 2, 2};
-    int m[5] = {0, 1, 2, 2, 3};
+    // C_nmk[5] = C_134, C_nmk[6] = C_246, C_nmk[7] = C_336, C_nmk[8] = C_347
+    int n[9] = {0, 1, 1, 2, 2, 1, 2, 3, 3};
+    int m[9] = {0, 1, 2, 2, 3, 3, 4, 3, 4};
     for (int i = 0; i < num_corr; i++) {
         int k = n[i] + m[i];
         if (k > order_max) {
