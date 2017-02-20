@@ -1653,7 +1653,7 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
     for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
-    
+
     if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
@@ -1683,11 +1683,11 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
             stringstream temp1(temp_string);
             temp1 >> n_particle;
             // then get one useless line
-            getline(inputfile_mixed_event, temp_string);  
+            getline(inputfile_mixed_event, temp_string);
 
             // clean out the previous record
             int idx = ievent;
-            (*particle_list_mixed_event)[idx]->clear(); 
+            (*particle_list_mixed_event)[idx]->clear();
             if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
@@ -1758,13 +1758,13 @@ int particleSamples::read_in_particle_samples_Sangwook() {
     for (unsigned int i = 0; i < particle_list->size(); i++)
         (*particle_list)[i]->clear();
     particle_list->clear();
-    
+
     if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
         resonance_list->clear();
     }
-    
+
     if (reconst_flag == 1) {
         for (unsigned int i = 0; i < reconst_list_1->size(); i++)
             (*reconst_list_1)[i]->clear();
@@ -1800,7 +1800,7 @@ int particleSamples::read_in_particle_samples_Sangwook() {
             getline(inputfile, temp_string);  // then get one useless line
 
             int idx = ievent;
-            (*particle_list)[idx]->clear(); // clean out the previous record
+            (*particle_list)[idx]->clear();  // clean out the previous record
             if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
@@ -1840,13 +1840,13 @@ int particleSamples::read_in_particle_samples_Sangwook() {
                 if (trigger > 0) {
                     particle_info *temp_particle_info = new particle_info;
                     temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x 
+                          >> temp_particle_info->x
                           >> temp_particle_info->y
-                          >> temp_particle_info->z 
+                          >> temp_particle_info->z
                           >> temp_particle_info->E
-                          >> temp_particle_info->px 
+                          >> temp_particle_info->px
                           >> temp_particle_info->py
-                          >> temp_particle_info->pz ;
+                          >> temp_particle_info->pz;
                     temp_particle_info->mass = temp_mass;
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
@@ -1885,10 +1885,10 @@ int particleSamples::read_in_particle_samples_Sangwook() {
 
 int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
     // clean out the previous record
-    for(unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
         (*particle_list_mixed_event)[i]->clear();
     particle_list_mixed_event->clear();
-    
+
     if (resonance_weak_feed_down_flag == 1) {
         for (unsigned int i = 0; i < resonance_list->size(); i++)
             (*resonance_list)[i]->clear();
@@ -1918,7 +1918,7 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
 
             // clean out the previous record
             int idx = ievent;
-            (*particle_list_mixed_event)[idx]->clear(); 
+            (*particle_list_mixed_event)[idx]->clear();
             if (resonance_weak_feed_down_flag == 1) {
                 (*resonance_list)[idx]->clear();
             }
@@ -1945,13 +1945,13 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
                 if (trigger > 0) {
                     particle_info *temp_particle_info = new particle_info;
                     temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x 
+                          >> temp_particle_info->x
                           >> temp_particle_info->y
-                          >> temp_particle_info->z 
+                          >> temp_particle_info->z
                           >> temp_particle_info->E
-                          >> temp_particle_info->px 
+                          >> temp_particle_info->px
                           >> temp_particle_info->py
-                          >> temp_particle_info->pz ;
+                          >> temp_particle_info->pz;
                     temp_particle_info->mass = temp_mass;
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
@@ -2002,9 +2002,11 @@ void particleSamples::perform_resonance_feed_down() {
             decayer_ptr->perform_decays(&temp_list[ipart], daughter_list);
             for (unsigned int idaughter = 0; idaughter < daughter_list->size();
                     idaughter++) {
-                if (decayer_ptr->check_particle_stable(&(*daughter_list)[idaughter]) == 1) {
+                if (decayer_ptr->check_particle_stable(
+                                        &(*daughter_list)[idaughter]) == 1) {
                     if ((*daughter_list)[idaughter].monval == particle_monval) {
-                        (*particle_list)[ievent]->push_back((*daughter_list)[idaughter]);
+                        (*particle_list)[ievent]->push_back(
+                                                (*daughter_list)[idaughter]);
                     }
                 } else {
                     temp_list.push_back((*daughter_list)[idaughter]);
