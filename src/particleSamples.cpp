@@ -1990,14 +1990,14 @@ void particleSamples::perform_resonance_feed_down(
                     vector< vector<particle_info>* >* input_particle_list) {
     cout << "perform resonance decays... " << endl;
     // loop over events
-    int nev = input_particle_list->size();
+    unsigned int nev = input_particle_list->size();
     for (unsigned int ievent = 0; ievent < nev; ievent++) {
         // create a temporary particle list
         vector<particle_info> temp_list;
         // copy all particles into the temp list
-        for (unsigned int ipart = 0;
-             ipart < (*input_particle_list)[ievent]->size(); ipart++) {
-            temp_list.push_back((*(*particle_list)[ievent])[ipart]);
+        unsigned int Npart = (*input_particle_list)[ievent]->size();
+        for (unsigned int ipart = 0; ipart < Npart; ipart++) {
+            temp_list.push_back((*(*input_particle_list)[ievent])[ipart]);
         }
         (*input_particle_list)[ievent]->clear();
         // perform resonance decays
