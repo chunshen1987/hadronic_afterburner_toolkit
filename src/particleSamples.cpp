@@ -392,7 +392,7 @@ int particleSamples::read_in_particle_samples() {
     }
 
     if (resonance_feed_down_flag == 1) {
-        perform_resonance_feed_down();
+        perform_resonance_feed_down(particle_list);
     }
 
     if (reconst_flag == 1) {
@@ -422,7 +422,7 @@ int particleSamples::read_in_particle_samples_mixed_event() {
     }
     
     if (resonance_feed_down_flag == 1) {
-        perform_resonance_feed_down();
+        perform_resonance_feed_down(particle_list_mixed_event);
     }
 
     return(0);
@@ -848,7 +848,9 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
                 getline(inputfile_mixed_event, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if (flag_isospin == 0) {
+                if (resonance_feed_down_flag == 1) {
+                    pick_flag = 1;
+                } else if (flag_isospin == 0) {
                     if (abs(temp_monval) == particle_monval)
                         pick_flag = 1;
                     else
@@ -1984,18 +1986,20 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
     return(0);
 }
 
-void particleSamples::perform_resonance_feed_down() {
+void particleSamples::perform_resonance_feed_down(
+                    vector< vector<particle_info>* >* input_particle_list) {
     cout << "perform resonance decays... " << endl;
     // loop over events
-    for (unsigned int ievent = 0; ievent < particle_list->size(); ievent++) {
+    int nev = input_particle_list->size();
+    for (unsigned int ievent = 0; ievent < nev; ievent++) {
         // create a temporary particle list
         vector<particle_info> temp_list;
         // copy all particles into the temp list
-        for (unsigned int ipart = 0; ipart < (*particle_list)[ievent]->size();
-                ipart++) {
+        for (unsigned int ipart = 0;
+             ipart < (*input_particle_list)[ievent]->size(); ipart++) {
             temp_list.push_back((*(*particle_list)[ievent])[ipart]);
         }
-        (*particle_list)[ievent]->clear();
+        (*input_particle_list)[ievent]->clear();
         // perform resonance decays
         for (unsigned int ipart = 0; ipart < temp_list.size(); ipart++) {
             vector<particle_info> *daughter_list = new vector<particle_info>;
@@ -2004,8 +2008,9 @@ void particleSamples::perform_resonance_feed_down() {
                     idaughter++) {
                 if (decayer_ptr->check_particle_stable(
                                         &(*daughter_list)[idaughter]) == 1) {
-                    if ((*daughter_list)[idaughter].monval == particle_monval) {
-                        (*particle_list)[ievent]->push_back(
+                    if ((*daughter_list)[idaughter].monval
+                            == particle_monval) {
+                        (*input_particle_list)[ievent]->push_back(
                                                 (*daughter_list)[idaughter]);
                     }
                 } else {

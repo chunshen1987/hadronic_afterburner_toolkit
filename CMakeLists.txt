@@ -8,6 +8,6 @@ if ( ZIB_FOUND )
     include_directories( ${ZLIB_INCLUDE_DIRS} )
 endif ( ZIB_FOUND)
 
-set (CMAKE_CXX_FLAGS "-O3 -Wall")
+set (CMAKE_CXX_FLAGS "-g -Wall")
 
 add_subdirectory (src)

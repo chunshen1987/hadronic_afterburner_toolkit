@@ -107,7 +107,8 @@ class particleSamples {
 
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
 
-    void perform_resonance_feed_down();
+    void perform_resonance_feed_down(
+                vector< vector<particle_info>* >* input_particle_list);
     void perform_weak_resonance_feed_down();
     void perform_particle_reconstruction(); 
 
