@@ -654,8 +654,10 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                     } else {
                         pick_flag = 0;
                     }
-                    if (temp_monval == -particle_monval) {
-                        anti_particle_pick_flag = 1;
+                    if (net_particle_flag == 1) {
+                        if (temp_monval == -particle_monval) {
+                            anti_particle_pick_flag = 1;
+                        }
                     } else {
                         anti_particle_pick_flag = 0;
                     }
