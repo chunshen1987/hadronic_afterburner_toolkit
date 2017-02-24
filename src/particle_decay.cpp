@@ -187,7 +187,7 @@ double particle_decay::get_particle_width(particle_info *part) {
     double width = 0.0;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
         if (part->monval == resonance_table[i]->monval) {
-            width = resonance_table[i]->width;
+            width = resonance_table[i]->width/0.19733;   // convert to 1/fm
             break;
         }
     }
