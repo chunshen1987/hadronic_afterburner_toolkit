@@ -184,10 +184,11 @@ void particle_decay::check_resonance_table() {
 }
 
 double particle_decay::get_particle_width(particle_info *part) {
+    // return particle width in GeV
     double width = 0.0;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
         if (part->monval == resonance_table[i]->monval) {
-            width = resonance_table[i]->width/0.19733;   // convert to 1/fm
+            width = resonance_table[i]->width;
             break;
         }
     }
@@ -370,7 +371,7 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     if (M_width > 1e-10) {
         // compute life-time = gamma*1/\Gamma
         double tau0 = mother->E/(M_sampled)*1./(M_width);
-        life_time = -tau0*log(drand48());
+        life_time = -tau0*log(drand48())*0.19733;  // convert to fm
     }
 
     daughter1->t = mother->t + life_time;
@@ -423,7 +424,7 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     double life_time = 1e10;
     if (M_width > 1e-10) {
         double tau = mother->E/(M_sampled)*1./M_width;
-        life_time = -tau*log(drand48());
+        life_time = -tau*log(drand48())*0.19733;  // convert unit to fm
     }
     // compute the decay position
     double decay_time = mother->t + life_time;
