@@ -2022,6 +2022,7 @@ void particleSamples::perform_resonance_feed_down(
             daughter_list->clear();
             delete daughter_list;
         }
+        temp_list.clear();
     }
 }
 

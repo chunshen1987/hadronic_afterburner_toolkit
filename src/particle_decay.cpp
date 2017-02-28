@@ -358,14 +358,14 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     double gamma_m_1 = gamma - 1.;
     double vp1 = vx*p1_lrf_x + vy*p1_lrf_y + vz*p1_lrf_z;
     double vp2 = vx*p2_lrf_x + vy*p2_lrf_y + vz*p2_lrf_z;
-    daughter1->E = gamma*(E1_lrf - vp1);
-    daughter1->px = p1_lrf_x + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vx;
-    daughter1->py = p1_lrf_y + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vy;
-    daughter1->pz = p1_lrf_z + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vz;
-    daughter2->E = gamma*(E2_lrf - vp2);
-    daughter2->px = p2_lrf_x + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vx;
-    daughter2->py = p2_lrf_y + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vy;
-    daughter2->pz = p2_lrf_z + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vz;
+    daughter1->E = gamma*(E1_lrf + vp1);
+    daughter1->px = p1_lrf_x + (gamma_m_1*vp1/v2 + gamma*E1_lrf)*vx;
+    daughter1->py = p1_lrf_y + (gamma_m_1*vp1/v2 + gamma*E1_lrf)*vy;
+    daughter1->pz = p1_lrf_z + (gamma_m_1*vp1/v2 + gamma*E1_lrf)*vz;
+    daughter2->E = gamma*(E2_lrf + vp2);
+    daughter2->px = p2_lrf_x + (gamma_m_1*vp2/v2 + gamma*E2_lrf)*vx;
+    daughter2->py = p2_lrf_y + (gamma_m_1*vp2/v2 + gamma*E2_lrf)*vy;
+    daughter2->pz = p2_lrf_z + (gamma_m_1*vp2/v2 + gamma*E2_lrf)*vz;
 
     double life_time = 1e10;
     if (M_width > 1e-10) {
@@ -375,7 +375,7 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     }
 
     daughter1->t = mother->t + life_time;
-    daughter1->x = mother->x + mother->x/mother->E*life_time;
+    daughter1->x = mother->x + mother->px/mother->E*life_time;
     daughter1->y = mother->y + mother->py/mother->E*life_time;
     daughter1->z = mother->z + mother->pz/mother->E*life_time;
     daughter2->t = mother->t + life_time;
@@ -477,28 +477,28 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     double vp2 = vx*p2_lrf_x + vy*p2_lrf_y + vz*p2_lrf_z;
     double vp3 = vx*p3_lrf_x + vy*p3_lrf_y + vz*p3_lrf_z;
 
-    daughter1->E = gamma*(E1_lrf - vp1);
-    daughter1->px = p1_lrf_x + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vx;
-    daughter1->py = p1_lrf_y + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vy;
-    daughter1->pz = p1_lrf_z + (gamma_m_1*vp1/v2 - gamma*E1_lrf)*vz;
+    daughter1->E = gamma*(E1_lrf + vp1);
+    daughter1->px = p1_lrf_x + (gamma_m_1*vp1/v2 + gamma*E1_lrf)*vx;
+    daughter1->py = p1_lrf_y + (gamma_m_1*vp1/v2 + gamma*E1_lrf)*vy;
+    daughter1->pz = p1_lrf_z + (gamma_m_1*vp1/v2 + gamma*E1_lrf)*vz;
     daughter1->t = decay_time;
     daughter1->x = decay_x;
     daughter1->y = decay_y;
     daughter1->z = decay_z;
 
-    daughter2->E = gamma*(E2_lrf - vp2);
-    daughter2->px = p2_lrf_x + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vx;
-    daughter2->py = p2_lrf_y + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vy;
-    daughter2->pz = p2_lrf_z + (gamma_m_1*vp2/v2 - gamma*E2_lrf)*vz;
+    daughter2->E = gamma*(E2_lrf + vp2);
+    daughter2->px = p2_lrf_x + (gamma_m_1*vp2/v2 + gamma*E2_lrf)*vx;
+    daughter2->py = p2_lrf_y + (gamma_m_1*vp2/v2 + gamma*E2_lrf)*vy;
+    daughter2->pz = p2_lrf_z + (gamma_m_1*vp2/v2 + gamma*E2_lrf)*vz;
     daughter2->t = decay_time;
     daughter2->x = decay_x;
     daughter2->y = decay_y;
     daughter2->z = decay_z;
 
-    daughter3->E = gamma*(E3_lrf - vp3);
-    daughter3->px = p3_lrf_x + (gamma_m_1*vp3/v2 - gamma*E3_lrf)*vx;
-    daughter3->py = p3_lrf_y + (gamma_m_1*vp3/v2 - gamma*E3_lrf)*vy;
-    daughter3->pz = p3_lrf_z + (gamma_m_1*vp3/v2 - gamma*E3_lrf)*vz;
+    daughter3->E = gamma*(E3_lrf + vp3);
+    daughter3->px = p3_lrf_x + (gamma_m_1*vp3/v2 + gamma*E3_lrf)*vx;
+    daughter3->py = p3_lrf_y + (gamma_m_1*vp3/v2 + gamma*E3_lrf)*vy;
+    daughter3->pz = p3_lrf_z + (gamma_m_1*vp3/v2 + gamma*E3_lrf)*vz;
     daughter3->t = decay_time;
     daughter3->x = decay_x;
     daughter3->y = decay_y;
