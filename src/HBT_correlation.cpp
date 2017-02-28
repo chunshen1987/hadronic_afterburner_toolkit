@@ -382,14 +382,24 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                     double q_y = particle_1_py - particle_2_py;
 
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-                    if (local_q_out < (q_min - delta_q/2.) 
-                        || local_q_out >= (q_max + delta_q/2.))
+                    if (local_q_out < (q_min - delta_q/2. + 1e-8)
+                        || local_q_out >= (q_max + delta_q/2. - 1e-8)) {
                         continue;
+                    }
+                    
+                    int qout_idx = static_cast<int>(
+                            (local_q_out - (q_min - delta_q/2.))/delta_q);
+                    if (qout_idx >= qnpts) continue;
 
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-                    if (local_q_side < (q_min - delta_q/2.) 
-                        || local_q_side >= (q_max + delta_q/2.))
+                    if (local_q_side < (q_min - delta_q/2. + 1e-8)
+                        || local_q_side >= (q_max + delta_q/2. - 1e-8)) {
                         continue;
+                    }
+                    
+                    int qside_idx = static_cast<int>(
+                            (local_q_side - (q_min - delta_q/2.))/delta_q);
+                    if (qside_idx >= qnpts) continue;
 
                     // calcualte qlong in the lcms
                     double q_z = particle_1_pz - particle_2_pz;
@@ -400,40 +410,39 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                     // boost qz to lcms
                     double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
 
-                    if (local_q_long < (q_min - delta_q/2.) 
-                        || local_q_long >= (q_max + delta_q/2.))
+                    if (local_q_long < (q_min - delta_q/2. + 1e-8)
+                        || local_q_long >= (q_max + delta_q/2. - 1e-8)) {
                         continue;
+                    }
+                    int qlong_idx = static_cast<int>(
+                            (local_q_long - (q_min - delta_q/2.))/delta_q);
+                    if (qlong_idx >= qnpts) continue;
 
                     double local_K_phi;
                     int Kphi_idx;
                     if (azimuthal_flag == 0) {
-                        if (number_of_pairs_numerator_KTdiff[Kperp_idx] 
-                            > needed_number_of_pairs)
+                        if (number_of_pairs_numerator_KTdiff[Kperp_idx]
+                            > needed_number_of_pairs) {
                             continue;
+                        }
                         number_of_pairs_numerator_KTdiff[Kperp_idx]++;
                     } else {
                         local_K_phi = atan2(K_y, K_x);
                         Kphi_idx = (int)((local_K_phi)/dKphi);
-                        if (number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx] 
-                                > needed_number_of_pairs)
+                        if (number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]
+                                > needed_number_of_pairs) {
                             continue;
+                        }
                         number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]++;
                     }
                     
-                    int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))
-                                         /delta_q);
-                    int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))
-                                          /delta_q);
-                    int qlong_idx = (int)((local_q_long - (q_min - delta_q/2.))
-                                          /delta_q);
-
                     double t_diff = particle_1_t - particle_2_t;
                     double x_diff = particle_1_x - particle_2_x;
                     double y_diff = particle_1_y - particle_2_y;
                     double z_diff = particle_1_z - particle_2_z;
 
-                    double cos_qx = cos(hbarC_inv*
-                        (q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff));
+                    double cos_qx = cos(hbarC_inv
+                        *(q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff));
 
                     // bin results
                     if (azimuthal_flag == 0) {
@@ -577,12 +586,23 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                     double q_y = particle_1_py - particle_2_py;
 
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-                    if(local_q_out < (q_min - delta_q/2.) 
-                       || local_q_out >= (q_max + delta_q/2.)) continue;
+                    if (local_q_out < (q_min - delta_q/2. + 1e-8)
+                        || local_q_out >= (q_max + delta_q/2. - 1e-8)) {
+                        continue;
+                    }
+                    int qout_idx = static_cast<int>(
+                            (local_q_out - (q_min - delta_q/2.))/delta_q); 
+                    if (qout_idx >= qnpts) continue;
 
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-                    if(local_q_side < (q_min - delta_q/2.) 
-                       || local_q_side >= (q_max + delta_q/2.)) continue;
+                    if (local_q_side < (q_min - delta_q/2. + 1e-8)
+                        || local_q_side >= (q_max + delta_q/2. - 1e-8)) {
+                        continue;
+                    }
+                    
+                    int qside_idx = static_cast<int>(
+                            (local_q_side - (q_min - delta_q/2.))/delta_q);
+                    if (qside_idx >= qnpts) continue;
 
                     // calcualte qlong in the lcms
                     double q_z = particle_1_pz - particle_2_pz;
@@ -593,36 +613,38 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                     // boost qz to lcms
                     double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
 
-                    if(local_q_long < (q_min - delta_q/2.) 
-                       || local_q_long >= (q_max + delta_q/2.)) continue;
+                    if (local_q_long < (q_min - delta_q/2. + 1e-8)
+                        || local_q_long >= (q_max + delta_q/2. - 1e-8)) {
+                        continue;
+                    }
+                    int qlong_idx = static_cast<int>(
+                            (local_q_long - (q_min - delta_q/2.))/delta_q);
+                    if (qlong_idx >= qnpts) continue;
                     
                     double local_K_phi;
                     int Kphi_idx;
                     if (azimuthal_flag == 0) {
-                        if (number_of_pairs_denormenator_KTdiff[Kperp_idx] 
-                                        > needed_number_of_pairs)
+                        if (number_of_pairs_denormenator_KTdiff[Kperp_idx]
+                                        > needed_number_of_pairs) {
                             continue;
+                        }
                         number_of_pairs_denormenator_KTdiff[Kperp_idx]++;
                     } else {
                         local_K_phi = atan2(K_y, K_x);
                         Kphi_idx = (int)((local_K_phi)/dKphi);
-                        if(number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx] 
-                                        > needed_number_of_pairs)
+                        if (number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx]
+                                        > needed_number_of_pairs) {
                             continue;
+                        }
                         number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx]++;
                     }
                     
-                    int qout_idx = (int)((local_q_out - (q_min - delta_q/2.))
-                                         /delta_q); 
-                    int qside_idx = (int)((local_q_side - (q_min - delta_q/2.))
-                                          /delta_q);
-                    int qlong_idx = (int)((local_q_long - (q_min - delta_q/2.))
-                                          /delta_q);
                     // bin results
-                    if (azimuthal_flag == 0)
+                    if (azimuthal_flag == 0) {
                         correl_3d_denorm[Kperp_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
-                    else
+                    } else {
                         correl_3d_Kphi_diff_denorm[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += 1.0;
+                    }
                 }
             }
         }
