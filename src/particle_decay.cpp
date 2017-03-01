@@ -206,6 +206,39 @@ int particle_decay::check_particle_stable(particle_info *part) {
     return(stable);
 }
 
+int particle_decay::get_particle_charge(int monval) {
+    int charge = 0;
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
+        if (monval == resonance_table[i]->monval) {
+            charge = resonance_table[i]->charge;
+            break;
+        }
+    }
+    return(charge);
+}
+
+int particle_decay::get_particle_baryon_number(int monval) {
+    int baryon = 0;
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
+        if (monval == resonance_table[i]->monval) {
+            baryon = resonance_table[i]->baryon;
+            break;
+        }
+    }
+    return(baryon);
+}
+
+int particle_decay::get_particle_strange_number(int monval) {
+    int strange = 0;
+    for (unsigned int i = 0; i < resonance_table.size(); i++) {
+        if (monval == resonance_table[i]->monval) {
+            strange = resonance_table[i]->strange;
+            break;
+        }
+    }
+    return(strange);
+}
+
 void particle_decay::perform_decays(
             particle_info *mother, vector<particle_info>* daughter_list) {
     particle_decay_info* mother_decay_info = NULL;

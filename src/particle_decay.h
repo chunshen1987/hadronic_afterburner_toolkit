@@ -41,6 +41,9 @@ class particle_decay {
     void check_resonance_table();
     double get_particle_width(particle_info *part);
     int check_particle_stable(particle_info *part);
+    int get_particle_charge(int monval);
+    int get_particle_baryon_number(int monval);
+    int get_particle_strange_number(int monval);
     void perform_decays(particle_info *mother,
                         std::vector<particle_info>* daughter_list);
     void perform_two_body_decay(particle_info *mother,

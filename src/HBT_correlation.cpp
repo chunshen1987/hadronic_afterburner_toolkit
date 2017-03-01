@@ -383,7 +383,7 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
 
                     double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
                     if (local_q_out < (q_min - delta_q/2. + 1e-8)
-                        || local_q_out >= (q_max + delta_q/2. - 1e-8)) {
+                        || local_q_out > (q_max + delta_q/2. - 1e-8)) {
                         continue;
                     }
                     
@@ -393,7 +393,7 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
 
                     double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
                     if (local_q_side < (q_min - delta_q/2. + 1e-8)
-                        || local_q_side >= (q_max + delta_q/2. - 1e-8)) {
+                        || local_q_side > (q_max + delta_q/2. - 1e-8)) {
                         continue;
                     }
                     
@@ -411,7 +411,7 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                     double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
 
                     if (local_q_long < (q_min - delta_q/2. + 1e-8)
-                        || local_q_long >= (q_max + delta_q/2. - 1e-8)) {
+                        || local_q_long > (q_max + delta_q/2. - 1e-8)) {
                         continue;
                     }
                     int qlong_idx = static_cast<int>(

@@ -104,6 +104,7 @@ class particleSamples {
     int decide_to_pick_JAM(int pid);
     int decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
                                             int charge);
+    int decide_to_pick_OSCAR(int monval);
 
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
 

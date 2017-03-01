@@ -607,6 +607,51 @@ int particleSamples::decide_to_pick_JAM(int pid) {
     return(pick_flag);
 }
 
+int particleSamples::decide_to_pick_OSCAR(int monval) {
+    int pick_flag = 0;
+    if (particle_monval == 9999) {
+        int charge = decayer_ptr->get_particle_charge(monval);
+        if (charge != 0) {
+            pick_flag = 1;
+        }
+    } else if (particle_monval == 9998) {
+        int charge = decayer_ptr->get_particle_charge(monval);
+        if (charge > 0) {
+            pick_flag = 1;
+        }
+    } else if (particle_monval == -9998) {
+        int charge = decayer_ptr->get_particle_charge(monval);
+        if (charge < 0) {
+            pick_flag = 1;
+        }
+    } else if (particle_monval == 9997) {
+        int baryon = decayer_ptr->get_particle_baryon_number(monval);
+        if (baryon > 0) {
+            pick_flag = 1;
+        }
+    } else if (particle_monval == -9997) {
+        int baryon = decayer_ptr->get_particle_baryon_number(monval);
+        if (baryon < 0) {
+            pick_flag = 1;
+        }
+    } else if (particle_monval == 9996) {
+        int strange = decayer_ptr->get_particle_strange_number(monval);
+        if (strange > 0) {
+            pick_flag = 1;
+        }
+    } else if (particle_monval == -9996) {
+        int strange = decayer_ptr->get_particle_strange_number(monval);
+        if (strange < 0) {
+            pick_flag = 1;
+        }
+    } else {
+        if (monval == particle_monval) {
+            pick_flag = 1;
+        }
+    }
+    return(pick_flag);
+}
+
 int particleSamples::read_in_particle_samples_OSCAR() {
     // clean out the previous record
     for (unsigned int i = 0; i < particle_list->size(); i++)
@@ -2010,10 +2055,11 @@ void particleSamples::perform_resonance_feed_down(
                     idaughter++) {
                 if (decayer_ptr->check_particle_stable(
                                         &(*daughter_list)[idaughter]) == 1) {
-                    if ((*daughter_list)[idaughter].monval
-                            == particle_monval) {
+                    int flag = decide_to_pick_OSCAR(
+                                (*daughter_list)[idaughter].monval);
+                    if (flag == 1) {
                         (*input_particle_list)[ievent]->push_back(
-                                                (*daughter_list)[idaughter]);
+                                            (*daughter_list)[idaughter]);
                     }
                 } else {
                     temp_list.push_back((*daughter_list)[idaughter]);
