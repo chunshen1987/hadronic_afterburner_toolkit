@@ -187,7 +187,7 @@ do
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
     mv ../UrQMD_events/mixed_event_$eventid.dat results/particle_list_mixed_event.dat
-    ./hadronic_afterburner_tools.e read_in_mode=1 run_mode=1 > output.log
+    ./hadronic_afterburner_tools.e read_in_mode=1 run_mode=1 resonance_feed_down_flag=0 > output.log
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results/particle_list_mixed_event.dat ../UrQMD_events/mixed_event_$eventid.dat
     mv results ../HBT_results/event_$eventid
@@ -493,7 +493,7 @@ done
 def generate_script_HBT_with_OSCAR(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
     event_id = working_folder.split('/')[-1]
-    walltime = '10:00:00'
+    walltime = '35:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     write_script_header(cluster_name, script, event_id, walltime,
@@ -501,15 +501,18 @@ def generate_script_HBT_with_OSCAR(cluster_name, folder_name):
     script.write(
 """
 mkdir HBT_results
-for iev in `ls OSCAR_events`
+for iev in `ls OSCAR_events | grep "OSCAR"`
 do
+    eventid=`echo $iev | cut -f 2 -d _ | cut -f 1 -d .`
     cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
     mv ../OSCAR_events/$iev results/OSCAR.DAT
-    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=1 > output.log
+    mv ../OSCAR_events/mixed_event_$eventid.dat results/OSCAR_mixed_event.DAT
+    ./hadronic_afterburner_tools.e read_in_mode=0 run_mode=1 resonance_feed_down_flag=1 > output.log
     mv results/OSCAR.DAT ../OSCAR_events/$iev
-    mv results ../HBT_results/event_`echo $iev | cut -f 2 -d _ | cut -f 1 -d .`
+    mv results/OSCAR_mixed_event.DAT ../OSCAR_events/mixed_event_$eventid.dat
+    mv results ../HBT_results/event_$eventid
     cd ..
 done
 """)
@@ -647,12 +650,27 @@ def copy_OSCAR_events(number_of_cores, input_folder, working_folder):
     events_list = glob('%s/*.dat' % input_folder)
     for iev in range(len(events_list)):
         folder_id = iev % number_of_cores
+        filename = events_list[iev].split('/')[-1].split('.')[0] 
+        event_id = filename.split('_')[-1]
         folder_path = path.join(
             working_folder, 'event_%d' % folder_id, 
             'OSCAR_events', events_list[iev].split('/')[-1])
         bashCommand = "ln -s %s %s" % (
             path.abspath(events_list[iev]), folder_path)
         subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)
+        mixed_id = random.randint(0, len(events_list)-1)
+        filename_mixed = events_list[mixed_id].split('/')[-1].split('.')[0]    
+        mixed_event_id = filename_mixed.split('_')[-1]                         
+        while (mixed_event_id == iev):                                         
+            mixed_id = random.randint(0, len(events_list)-1)                   
+            filename_mixed = events_list[mixed_id].split('/')[-1].split('.')[0]
+            mixed_event_id = filename_mixed.split('_')[-1]                     
+        folder_path = path.join(                                               
+                    working_folder, 'event_%d' % folder_id,                            
+                    'OSCAR_events', 'mixed_event_%s.dat' % event_id)                   
+        bashCommand = "ln -s %s %s" % (                                        
+                    path.abspath(events_list[mixed_id]), folder_path)                  
+        subprocess.Popen(bashCommand, stdout = subprocess.PIPE, shell=True)    
 
 
 def generate_event_folder_iSS(cluster_name, working_folder, event_id):
