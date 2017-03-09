@@ -64,8 +64,8 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
         number_of_pairs_denormenator_KTKphidiff[i] = (
                                           new unsigned long long int [n_Kphi]);
         for (int j = 0; j < n_Kphi; j++) {
-            number_of_pairs_numerator_KTKphidiff[i] = 0;
-            number_of_pairs_denormenator_KTKphidiff[i] = 0;
+            number_of_pairs_numerator_KTKphidiff[i][j] = 0;
+            number_of_pairs_denormenator_KTKphidiff[i][j] = 0;
         }
     }
     

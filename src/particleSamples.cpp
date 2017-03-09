@@ -720,6 +720,7 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                            >> temp_particle_info->z 
                            >> temp_particle_info->t;
                      (*particle_list)[idx]->push_back(*temp_particle_info);
+                     delete temp_particle_info;
                 }
                 if (anti_particle_pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
@@ -734,6 +735,7 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                            >> temp_particle_info->z 
                            >> temp_particle_info->t;
                      (*anti_particle_list)[idx]->push_back(*temp_particle_info);
+                     delete temp_particle_info;
                 }
             }
         } else {
@@ -863,6 +865,7 @@ int particleSamples::read_in_particle_samples_JAM() {
                     } else if (reconst_2_pick_flag == 1) {
                         (*reconst_list_2)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -922,6 +925,7 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
                            >> temp_particle_info->t;
                      (*particle_list_mixed_event)[idx]->push_back(
                                                         *temp_particle_info);
+                     delete temp_particle_info;
                 }
             }
         } else {
@@ -1012,6 +1016,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
                          temp_particle_info->monval = temp_monval;
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                      }
+                     delete temp_particle_info;
                 }
             }
         } else {
@@ -1155,8 +1160,6 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                         if (pick_flag == 1) {
                             (*particle_list)[idx]->push_back(
                                                         *temp_particle_info);
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
                         temp_particle_info->monval = get_pdg_id(urqmd_pid,
@@ -1170,6 +1173,7 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                         (*anti_particle_list)[idx]->push_back(
                                                         *temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -1313,6 +1317,8 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                           >> temp_particle_info->px 
                           >> temp_particle_info->py
                           >> temp_particle_info->pz;
+                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                            urqmd_iso3);
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
                             double tau = sqrt(
@@ -1336,12 +1342,8 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                                                         *temp_particle_info);
                                 }
                             }
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
-                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_1_pick_flag == 1) {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
@@ -1351,6 +1353,7 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                         (*anti_particle_list)[idx]->push_back(
                                                         *temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -1459,6 +1462,8 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
                           >> temp_particle_info->py
                           >> temp_particle_info->pz;
                     temp_particle_info->mass = temp_mass;
+                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                            urqmd_iso3);
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
                             double tau = sqrt(
@@ -1473,18 +1478,15 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
                         if (pick_flag == 1) {
                             (*particle_list)[idx]->push_back(
                                                         *temp_particle_info);
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
-                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_1_pick_flag == 1) {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_2_pick_flag == 1) {
                         (*reconst_list_2)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -1569,6 +1571,8 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
                           >> temp_particle_info->py
                           >> temp_particle_info->pz ;
                     temp_particle_info->mass = temp_mass;
+                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                            urqmd_iso3);
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
                             double tau = sqrt(
@@ -1583,14 +1587,11 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
                         if (pick_flag == 1) {
                             (*particle_list_mixed_event)[idx]->push_back(
                                                            *temp_particle_info);
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
-                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -1666,6 +1667,8 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
                           >> temp_particle_info->px
                           >> temp_particle_info->py
                           >> temp_particle_info->pz;
+                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                            urqmd_iso3);
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
                             double tau = sqrt(
@@ -1680,14 +1683,11 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
                         if (pick_flag == 1) {
                             (*particle_list_mixed_event)[idx]->push_back(
                                                            *temp_particle_info);
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
-                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -1771,6 +1771,8 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
                           >> temp_particle_info->py
                           >> temp_particle_info->pz ;
                     temp_particle_info->mass = temp_mass;
+                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                            urqmd_iso3);
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
                             double tau = sqrt(
@@ -1785,14 +1787,11 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
                         if (pick_flag == 1) {
                             (*particle_list_mixed_event)[idx]->push_back(
                                                            *temp_particle_info);
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
-                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -1897,6 +1896,8 @@ int particleSamples::read_in_particle_samples_Sangwook() {
                           >> temp_particle_info->py
                           >> temp_particle_info->pz;
                     temp_particle_info->mass = temp_mass;
+                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                            urqmd_iso3);
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
                             double tau = sqrt(
@@ -1911,18 +1912,15 @@ int particleSamples::read_in_particle_samples_Sangwook() {
                         if (pick_flag == 1) {
                             (*particle_list)[idx]->push_back(
                                                         *temp_particle_info);
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
-                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_1_pick_flag == 1) {
                         (*reconst_list_1)[idx]->push_back(*temp_particle_info);
                     } else if (reconst_2_pick_flag == 1) {
                         (*reconst_list_2)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {
@@ -2002,6 +2000,8 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
                           >> temp_particle_info->py
                           >> temp_particle_info->pz;
                     temp_particle_info->mass = temp_mass;
+                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                            urqmd_iso3);
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
                             double tau = sqrt(
@@ -2016,14 +2016,11 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
                         if (pick_flag == 1) {
                             (*particle_list_mixed_event)[idx]->push_back(
                                                         *temp_particle_info);
-                        } else {
-                            delete temp_particle_info;
                         }
                     } else if (resonance_pick_flag == 1) {
-                        temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                                urqmd_iso3);
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
                 }
             }
         } else {

@@ -297,6 +297,8 @@ void particle_decay::perform_decays(
         perform_two_body_decay(mother, daughter1, daughter2);
         daughter_list->push_back(*daughter1);
         daughter_list->push_back(*daughter2);
+        delete daughter1;
+        delete daughter2;
     } else if (N_decay_part == 3) {
         particle_info *daughter1 = new particle_info;
         particle_info *daughter2 = new particle_info;
@@ -342,6 +344,9 @@ void particle_decay::perform_decays(
         daughter_list->push_back(*daughter1);
         daughter_list->push_back(*daughter2);
         daughter_list->push_back(*daughter3);
+        delete daughter1;
+        delete daughter2;
+        delete daughter3;
     }
 }
 
