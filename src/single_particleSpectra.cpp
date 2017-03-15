@@ -1518,8 +1518,10 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
     }
     ofstream output1(filename1.str().c_str());
     ofstream output2(filename2.str().c_str());
-    output1 << "# eta12  C_nmk  C_nmk_err" << endl;
-    output2 << "# eta13  C_nmk  C_nmk_err" << endl;
+    output1 << "# eta12  C_nmk  C_nmk_err "
+            << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
+    output2 << "# eta13  C_nmk  C_nmk_err " 
+            << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
 
     for (int j = 0; j < N_rap; j++) {
         double eta_local = rapidity_dis_min + j*drap;
