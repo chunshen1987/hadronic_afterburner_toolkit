@@ -44,8 +44,15 @@ class singleParticleSpectra {
     double **QnSP_diff_vector, **QnSP_diff_vector_err;
     int num_corr;
     double *C_nmk, *C_nmk_err;
+    double **C_nmk_eta12, **C_nmk_eta12_err;
+    double **C_nmk_eta13, **C_nmk_eta13_err;
     int flag_charge_dependence;
     double *C_nmk_ss, *C_nmk_ss_err, *C_nmk_os, *C_nmk_os_err;
+    double **C_nmk_eta12_ss, **C_nmk_eta12_ss_err;
+    double **C_nmk_eta12_os, **C_nmk_eta12_os_err;
+    double **C_nmk_eta13_ss, **C_nmk_eta13_ss_err;
+    double **C_nmk_eta13_os, **C_nmk_eta13_os_err;
+
     int SC_num_corr;
     double *SC_mn, *SC_mn_err;
 
@@ -116,8 +123,24 @@ class singleParticleSpectra {
             double *event_Q3_real, double *event_Q3_imag, int flag,
             double *corr, double *corr_err);
 
+    //! This function computes the 3-particle correlation as a function of 
+    //! relative rapidity between particle 1 and particle 2 within one event
+    //!     C_nmk(eta_12) = Real(Q_n(eta1)*Q_m(eta2)*conj(Q_k))
+    //! self correlation is subtracted assuming Qk's sample >= Qn's and Qm's
+    //! Qn != Qm, Qn \in Qk, Qm \in Qk
+    //! flag == 1 : eta_12, flag == 2: eta_13
+    //! flag_ch == 1: same charge, flag_ch == 2: opposite charge
+    void calculate_three_particle_correlation_deltaeta(
+        double **event_Q1_real, double **event_Q1_imag,
+        double **event_Q2_real, double **event_Q2_imag,
+        double **event_Q3_real, double **event_Q3_imag, int flag, int flag_ch,
+        double **corr, double **corr_err);
+
     //! This function outputs the event averaged three-particle correlation
     void output_three_particle_correlation();
+
+    //! This function outputs the rapidity dependent three-particle correlation
+    void output_three_particle_correlation_rap();
 
     //! This function computes the 4-particle correlation for
     //! symmetric cumulants using Qn vectors within one event
@@ -138,8 +161,8 @@ class singleParticleSpectra {
     //! this function computes the pT-integrated Qn vector as a function of
     //! rapidity in one event
     void calculate_rapidity_distribution(int event_id,
-                    double **event_Qn_real, double **event_Qn_real_err,
-                    double **event_Qn_imag, double **event_Qn_imag_err);
+               double **event_Qn_real, double **event_Qn_real_err,
+               double **event_Qn_imag, double **event_Qn_imag_err, int flag);
 
     void output_rapidity_distribution();
     

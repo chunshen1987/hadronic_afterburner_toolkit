@@ -184,9 +184,23 @@ singleParticleSpectra::singleParticleSpectra(
         num_corr = 9;
         C_nmk = new double[num_corr];
         C_nmk_err = new double[num_corr];
+        C_nmk_eta12 = new double* [num_corr];
+        C_nmk_eta12_err = new double* [num_corr];
+        C_nmk_eta13 = new double* [num_corr];
+        C_nmk_eta13_err = new double* [num_corr];
         for (int i = 0; i < num_corr; i++) {
             C_nmk[i] = 0.0;
             C_nmk_err[i] = 0.0;
+            C_nmk_eta12[i] = new double[N_eta_s];
+            C_nmk_eta12_err[i] = new double[N_eta_s];
+            C_nmk_eta13[i] = new double[N_eta_s];
+            C_nmk_eta13_err[i] = new double[N_eta_s];
+            for (int j = 0; j < N_eta_s; j++) {
+                C_nmk_eta12[i][j] = 0.0;
+                C_nmk_eta12_err[i][j] = 0.0;
+                C_nmk_eta13[i][j] = 0.0;
+                C_nmk_eta13_err[i][j] = 0.0;
+            }
         }
         flag_charge_dependence = paraRdr->getVal("flag_charge_dependence");
         if (flag_charge_dependence == 1) {
@@ -194,11 +208,37 @@ singleParticleSpectra::singleParticleSpectra(
             C_nmk_ss_err = new double[num_corr];
             C_nmk_os = new double[num_corr];
             C_nmk_os_err = new double[num_corr];
+            C_nmk_eta12_ss = new double* [num_corr];
+            C_nmk_eta12_ss_err = new double* [num_corr];
+            C_nmk_eta12_os = new double* [num_corr];
+            C_nmk_eta12_os_err = new double* [num_corr];
+            C_nmk_eta13_ss = new double* [num_corr];
+            C_nmk_eta13_ss_err = new double* [num_corr];
+            C_nmk_eta13_os = new double* [num_corr];
+            C_nmk_eta13_os_err = new double* [num_corr];
             for (int i = 0; i < num_corr; i++) {
                 C_nmk_ss[i] = 0.0;
                 C_nmk_ss_err[i] = 0.0;
                 C_nmk_os[i] = 0.0;
                 C_nmk_os_err[i] = 0.0;
+                C_nmk_eta12_ss[i] = new double[N_eta_s];
+                C_nmk_eta12_ss_err[i] = new double[N_eta_s];
+                C_nmk_eta12_os[i] = new double[N_eta_s];
+                C_nmk_eta12_os_err[i] = new double[N_eta_s];
+                C_nmk_eta13_ss[i] = new double[N_eta_s];
+                C_nmk_eta13_ss_err[i] = new double[N_eta_s];
+                C_nmk_eta13_os[i] = new double[N_eta_s];
+                C_nmk_eta13_os_err[i] = new double[N_eta_s];
+                for (int j = 0; j < N_eta_s; j++) {
+                    C_nmk_eta12_ss[i][j] = 0.0;
+                    C_nmk_eta12_ss_err[i][j] = 0.0;
+                    C_nmk_eta12_os[i][j] = 0.0;
+                    C_nmk_eta12_os_err[i][j] = 0.0;
+                    C_nmk_eta13_ss[i][j] = 0.0;
+                    C_nmk_eta13_ss_err[i][j] = 0.0;
+                    C_nmk_eta13_os[i][j] = 0.0;
+                    C_nmk_eta13_os_err[i][j] = 0.0;
+                }
             }
         }
         SC_num_corr = 6;
@@ -274,11 +314,39 @@ singleParticleSpectra::~singleParticleSpectra() {
 
         delete[] C_nmk;
         delete[] C_nmk_err;
+        for (int i = 0; i < num_corr; i++) {
+            delete[] C_nmk_eta12[i];
+            delete[] C_nmk_eta12_err[i];
+            delete[] C_nmk_eta13[i];
+            delete[] C_nmk_eta13_err[i];
+        }
+        delete[] C_nmk_eta12;
+        delete[] C_nmk_eta12_err;
+        delete[] C_nmk_eta13;
+        delete[] C_nmk_eta13_err;
         if (flag_charge_dependence == 1) {
             delete[] C_nmk_ss;
             delete[] C_nmk_ss_err;
             delete[] C_nmk_os;
             delete[] C_nmk_os_err;
+            for (int i = 0; i < num_corr; i++) {
+                delete[] C_nmk_eta12_ss[i];
+                delete[] C_nmk_eta12_ss_err[i];
+                delete[] C_nmk_eta13_ss[i];
+                delete[] C_nmk_eta13_ss_err[i];
+                delete[] C_nmk_eta12_os[i];
+                delete[] C_nmk_eta12_os_err[i];
+                delete[] C_nmk_eta13_os[i];
+                delete[] C_nmk_eta13_os_err[i];
+            }
+            delete[] C_nmk_eta12_ss;
+            delete[] C_nmk_eta12_ss_err;
+            delete[] C_nmk_eta13_ss;
+            delete[] C_nmk_eta13_ss_err;
+            delete[] C_nmk_eta12_os;
+            delete[] C_nmk_eta12_os_err;
+            delete[] C_nmk_eta13_os;
+            delete[] C_nmk_eta13_os_err;
         }
         delete[] SC_mn;
         delete[] SC_mn_err;
@@ -298,10 +366,6 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     double **event_Qn_diff_real_err = new double* [order_max];
     double **event_Qn_diff_imag = new double* [order_max];
     double **event_Qn_diff_imag_err = new double* [order_max];
-    double **event_Qn_rap_real = new double* [N_rap];
-    double **event_Qn_rap_real_err = new double* [N_rap];
-    double **event_Qn_rap_imag = new double* [N_rap];
-    double **event_Qn_rap_imag_err = new double* [N_rap];
     for (int i = 0; i < order_max; i++) {
         event_Qn_real[i] = 0.0;
         event_Qn_real_err[i] = 0.0;
@@ -354,6 +418,10 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             event_Qn_m_diff_imag_err[i] = new double[npT];
         }
     }
+    double **event_Qn_rap_real = new double* [N_rap];
+    double **event_Qn_rap_real_err = new double* [N_rap];
+    double **event_Qn_rap_imag = new double* [N_rap];
+    double **event_Qn_rap_imag_err = new double* [N_rap];
     for (int i = 0; i < N_rap; i++) {
         event_Qn_rap_real[i] = new double[order_max];
         event_Qn_rap_real_err[i] = new double[order_max];
@@ -364,6 +432,40 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             event_Qn_rap_real_err[i][j] = 0.0;
             event_Qn_rap_imag[i][j] = 0.0;
             event_Qn_rap_imag_err[i][j] = 0.0;
+        }
+    }
+    double **event_Qn_p_rap_real, **event_Qn_p_rap_real_err;
+    double **event_Qn_p_rap_imag, **event_Qn_p_rap_imag_err;
+    double **event_Qn_m_rap_real, **event_Qn_m_rap_real_err;
+    double **event_Qn_m_rap_imag, **event_Qn_m_rap_imag_err;
+    if (flag_charge_dependence == 1) {
+        event_Qn_p_rap_real = new double* [N_rap];
+        event_Qn_p_rap_real_err = new double* [N_rap];
+        event_Qn_p_rap_imag = new double* [N_rap];
+        event_Qn_p_rap_imag_err = new double* [N_rap];
+        event_Qn_m_rap_real = new double* [N_rap];
+        event_Qn_m_rap_real_err = new double* [N_rap];
+        event_Qn_m_rap_imag = new double* [N_rap];
+        event_Qn_m_rap_imag_err = new double* [N_rap];
+        for (int i = 0; i < N_rap; i++) {
+            event_Qn_p_rap_real[i] = new double[order_max];
+            event_Qn_p_rap_real_err[i] = new double[order_max];
+            event_Qn_p_rap_imag[i] = new double[order_max];
+            event_Qn_p_rap_imag_err[i] = new double[order_max];
+            event_Qn_m_rap_real[i] = new double[order_max];
+            event_Qn_m_rap_real_err[i] = new double[order_max];
+            event_Qn_m_rap_imag[i] = new double[order_max];
+            event_Qn_m_rap_imag_err[i] = new double[order_max];
+            for (int j = 0; j < order_max; j++) {
+                event_Qn_p_rap_real[i][j] = 0.0;
+                event_Qn_p_rap_real_err[i][j] = 0.0;
+                event_Qn_p_rap_imag[i][j] = 0.0;
+                event_Qn_p_rap_imag_err[i][j] = 0.0;
+                event_Qn_m_rap_real[i][j] = 0.0;
+                event_Qn_m_rap_real_err[i][j] = 0.0;
+                event_Qn_m_rap_imag[i][j] = 0.0;
+                event_Qn_m_rap_imag_err[i][j] = 0.0;
+            }
         }
     }
 
@@ -446,7 +548,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             if (rapidity_distribution_flag == 1) {
                 calculate_rapidity_distribution(iev,
                         event_Qn_rap_real, event_Qn_rap_real_err,
-                        event_Qn_rap_imag, event_Qn_rap_imag_err);
+                        event_Qn_rap_imag, event_Qn_rap_imag_err, 0);
                 for (int i = 0; i < N_rap; i++) {
                     for (int j = 0; j < order_max; j++) {
                         vn_real_rapidity_dis_array[i][j] += (
@@ -459,6 +561,64 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                                                 event_Qn_rap_imag_err[i][j]);
                     }
                 }
+                calculate_three_particle_correlation_deltaeta(
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag, 1, 1,
+                        C_nmk_eta12, C_nmk_eta12_err);
+                calculate_three_particle_correlation_deltaeta(
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag, 2, 1,
+                        C_nmk_eta13, C_nmk_eta13_err);
+                if (flag_charge_dependence == 1) {
+                    calculate_rapidity_distribution(iev,
+                            event_Qn_p_rap_real, event_Qn_p_rap_real_err,
+                            event_Qn_p_rap_imag, event_Qn_p_rap_imag_err, 1);
+                    calculate_rapidity_distribution(iev,
+                            event_Qn_m_rap_real, event_Qn_m_rap_real_err,
+                            event_Qn_m_rap_imag, event_Qn_m_rap_imag_err, 2);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 1, 2,
+                            C_nmk_eta12_os, C_nmk_eta12_os_err);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 1, 2,
+                            C_nmk_eta12_os, C_nmk_eta12_os_err);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 2, 2,
+                            C_nmk_eta13_os, C_nmk_eta13_os_err);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 2, 2,
+                            C_nmk_eta13_os, C_nmk_eta13_os_err);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 1, 1,
+                            C_nmk_eta12_ss, C_nmk_eta12_ss_err);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 1, 1,
+                            C_nmk_eta12_ss, C_nmk_eta12_ss_err);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 2, 1,
+                            C_nmk_eta13_ss, C_nmk_eta13_ss_err);
+                    calculate_three_particle_correlation_deltaeta(
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag, 2, 1,
+                            C_nmk_eta13_ss, C_nmk_eta13_ss_err);
+                }
             }
 
             if (check_spatial_flag == 1)
@@ -468,8 +628,12 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     }
     total_number_of_events = event_id;
     output_Qn_vectors();
-    if (rapidity_distribution_flag == 1)
+    if (rapidity_distribution_flag == 1) {
         output_rapidity_distribution();
+        if (flag_correlation == 1) {
+            output_three_particle_correlation_rap();
+        }
+    }
     if (check_spatial_flag == 1)
         output_dNdSV();
     if (flag_correlation == 1) {
@@ -977,6 +1141,153 @@ void singleParticleSpectra::calculate_three_particle_correlation(
     }
 }
 
+//! This function computes the 3-particle correlation as a function of relative
+//! rapidity between particle 1 and particle 2 within one event
+//!     C_nmk(eta_12) = Real(Q_n(eta1)*Q_m(eta2)*conj(Q_k))
+//! self correlation is subtracted assuming Qk's sample >= Qn's and Qm's
+//! Qn != Qm, Qn \in Qk, Qm \in Qk
+//! flag == 1 : eta_12, flag == 2: eta_13
+//! flag_ch == 1: same charge, flag_ch == 2: opposite charge
+void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
+        double **event_Q1_real, double **event_Q1_imag,
+        double **event_Q2_real, double **event_Q2_imag,
+        double **event_Q3_real, double **event_Q3_imag, int flag, int flag_ch,
+        double **corr, double **corr_err) {
+    // C_nmk[0] = C_000 = N(N-1)(N-2) is the number of pairs
+    // C_nmk[1] = C_112, C_nmk[2] = C_123, C_nmk[3] = C_224, C_nmk[4] = C_235
+    // C_nmk[5] = C_134, C_nmk[6] = C_246, C_nmk[7] = C_336, C_nmk[8] = C_347
+    int n[9] = {0, 1, 1, 2, 2, 1, 2, 3, 3};
+    int m[9] = {0, 1, 2, 2, 3, 3, 4, 3, 4};
+    for (int i = 0; i < num_corr; i++) {
+        int k = n[i] + m[i];
+        if (k > order_max) {
+            cout << "Error: the vn needed for three-particle correlation "
+                 << "is not computed, order_max = " << order_max
+                 << "n+m = " << k << ". Make sure order_max > n+m!" << endl;
+            exit(1);
+        }
+
+        double Q2_real = 0.0;
+        double Q2_imag = 0.0;
+        double Q2_yield = 0.0;
+        double Q3_real = 0.0;
+        double Q3_imag = 0.0;
+        double Q3_yield = 0.0;
+        if (flag == 1) {
+            for (int j = 0; j < N_rap; j++) {
+                Q3_real += event_Q3_real[j][k]*event_Q3_real[j][0];
+                Q3_imag += event_Q3_imag[j][k]*event_Q3_real[j][0];
+                Q3_yield += event_Q3_real[j][0];
+            }
+            if (k == 0) {
+                Q3_real = Q3_yield;
+                Q3_imag = 0.0;
+            } else {
+                Q3_real /= Q3_yield;
+                Q3_imag /= Q3_yield;
+            }
+        } else if (flag == 2) {
+            for (int j = 0; j < N_rap; j++) {
+                Q2_real += event_Q2_real[j][k]*event_Q2_real[j][0];
+                Q2_imag += event_Q2_imag[j][k]*event_Q2_real[j][0];
+                Q2_yield += event_Q2_real[j][0];
+            }
+            if (k == 0) {
+                Q2_real = Q2_yield;
+                Q2_imag = 0.0;
+            } else {
+                Q2_real /= Q2_yield;
+                Q2_imag /= Q2_yield;
+            }
+        }
+
+        for (int ii = 0; ii < N_rap; ii++) {
+            double rap_1 = rapidity_dis_min + ii*drap;
+            for (int jj = 0; jj < N_rap; jj++) {
+                double rap_2 = rapidity_dis_min + jj*drap;
+                double delta_eta = rap_1 - rap_2;
+                if (delta_eta > rapidity_dis_min
+                        && delta_eta < rapidity_dis_max) {
+                    int rap_idx = static_cast<int>(
+                                        (delta_eta - rapidity_dis_min)/drap);
+                    double Qn_Qm_Qkstar = 0.0;
+                    double Qn_Qnstar = 0.0;
+                    double Qm_Qmstar = 0.0;
+                    double Qk_Qkstar = 0.0;
+                    if (flag == 1) {
+                        Qn_Qm_Qkstar = (
+                            (event_Q1_real[ii][n[i]]*event_Q2_real[jj][m[i]]
+                             - event_Q1_imag[ii][n[i]]*event_Q2_imag[jj][m[i]])
+                            *Q3_real
+                            + (event_Q1_real[ii][n[i]]*event_Q2_imag[jj][m[i]]
+                               + event_Q1_imag[ii][n[i]]*event_Q2_real[jj][m[i]])
+                            *Q3_imag);
+                        // full overlap between Q2 and Q3 = Q1[n]*conj(Q2[n])
+                        Qn_Qnstar = (
+                            event_Q1_real[ii][n[i]]*event_Q2_real[jj][n[i]]
+                            + event_Q1_imag[ii][n[i]]*event_Q2_imag[jj][n[i]]);
+                        // full overlap between Q1 and Q3 = Q2[m]*conj(Q1[m])
+                        Qm_Qmstar = (
+                            event_Q2_real[ii][m[i]]*event_Q1_real[jj][m[i]]
+                            + event_Q2_imag[ii][m[i]]*event_Q1_imag[jj][m[i]]);
+                        // full overlap between Q1 and Q2 = Q1[k]*conj(Q3[k])
+                        if (ii == jj && flag_ch == 1) {
+                            Qk_Qkstar = (event_Q1_real[ii][k]*Q3_real
+                                         + event_Q1_imag[ii][k]*Q3_imag);
+                        }
+                        double corr_local;
+                        if (fabs(Qk_Qkstar) < 1e-15) {
+                            corr_local = Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar;
+                        } else {
+                            corr_local = (
+                                Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar
+                                - Qk_Qkstar + 2.*event_Q1_real[ii][0]);
+                        }
+                        corr[i][rap_idx] += corr_local;
+                        corr_err[i][rap_idx] += corr_local*corr_local;
+                    } else if (flag == 2) {
+                        Qn_Qm_Qkstar = (
+                            (event_Q1_real[ii][n[i]]*Q2_real
+                             - event_Q1_imag[ii][n[i]]*Q2_imag)
+                            *event_Q3_real[jj][k]
+                            + (event_Q1_real[ii][n[i]]*Q2_imag
+                               + event_Q1_imag[ii][n[i]]*Q2_real)
+                            *event_Q3_imag[jj][k]);
+                        // full overlap between Q2 and Q3 = Q1[n]*conj(Q2[n])
+                        Qn_Qnstar = (
+                            event_Q1_real[ii][n[i]]*event_Q2_real[jj][n[i]]
+                            + event_Q1_imag[ii][n[i]]*event_Q2_imag[jj][n[i]]);
+                        // full overlap between Q1 and Q3 = Q2[m]*conj(Q1[m])
+                        if (ii == jj) {
+                            Qm_Qmstar = (Q2_real*event_Q1_real[jj][m[i]]
+                                         + Q2_imag*event_Q1_imag[jj][m[i]]);
+                        }
+                        // full overlap between Q1 and Q2 = Q1[k]*conj(Q3[k])
+                        if (flag_ch == 1) {
+                            Qk_Qkstar = (
+                                event_Q1_real[ii][k]*event_Q3_real[jj][k]
+                                + event_Q1_imag[ii][k]*event_Q3_imag[jj][k]);
+                        }
+
+                        double corr_local;
+                        if (fabs(Qk_Qkstar) > 1e-15
+                                && fabs(Qm_Qmstar) > 1e-15) {
+                            corr_local = (
+                                Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar
+                                - Qk_Qkstar + 2.*event_Q1_real[ii][0]);
+                        } else {
+                            corr_local = (Qn_Qm_Qkstar - Qn_Qnstar
+                                          - Qm_Qmstar - Qk_Qkstar);
+                        }
+                        corr[i][rap_idx] += corr_local;
+                        corr_err[i][rap_idx] += corr_local*corr_local;
+                    }
+                }
+            }
+        }
+    }
+}
+
 //! This function computes the 4-particle correlation for symmetric cumulants
 //! using Qn vectors within one event
 //!     SC_mn = <Q1_m*conj(Q2_m)*Q3_n*conj(Q4_n)>
@@ -1191,6 +1502,231 @@ void singleParticleSpectra::output_three_particle_correlation() {
     }
 }
 
+//! This function outputs the rapidity dependent three-particle correlation
+void singleParticleSpectra::output_three_particle_correlation_rap() {
+    ostringstream filename1, filename2;
+    if (rap_type == 0) {
+        filename1 << path << "/particle_" << particle_monval << "_Cmnk_eta12"
+                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
+        filename2 << path << "/particle_" << particle_monval << "_Cmnk_eta13"
+                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
+    } else {
+        filename1 << path << "/particle_" << particle_monval << "_Cmnk_eta12"
+                  << "_y_" << rap_min << "_" << rap_max << ".dat";
+        filename2 << path << "/particle_" << particle_monval << "_Cmnk_eta13"
+                  << "_y_" << rap_min << "_" << rap_max << ".dat";
+    }
+    ofstream output1(filename1.str().c_str());
+    ofstream output2(filename2.str().c_str());
+    output1 << "# eta12  C_nmk  C_nmk_err" << endl;
+    output2 << "# eta13  C_nmk  C_nmk_err" << endl;
+
+    for (int j = 0; j < N_rap; j++) {
+        double eta_local = rapidity_dis_min + j*drap;
+        double num_pair = C_nmk_eta12[0][j]/total_number_of_events;
+        double num_pair_stdsq = (
+            C_nmk_eta12_err[0][j]/total_number_of_events - num_pair*num_pair);
+        double num_pair_err = 0.0;
+        if (num_pair_stdsq > 0) {
+            num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
+        }
+        output1 << scientific << setw(18) << setprecision(8)
+                << eta_local << "  " << num_pair << "  " << num_pair_err
+                << "  ";
+        double num_pair_2 = C_nmk_eta13[0][j]/total_number_of_events;
+        double num_pair_2_stdsq = (C_nmk_eta13_err[0][j]/total_number_of_events
+                                   - num_pair_2*num_pair_2);
+        double num_pair_2_err = 0.0;
+        if (num_pair_2_stdsq > 0) {
+            num_pair_2_err = sqrt(num_pair_2_stdsq/total_number_of_events);
+        }
+        output2 << scientific << setw(18) << setprecision(8)
+                << eta_local << "  " << num_pair_2 << "  " << num_pair_2_err
+                << "  ";
+        for (int i = 1; i < num_corr; i++) {
+            double Cnmk_avg = C_nmk_eta12[i][j]/total_number_of_events;
+            double Cnmk_stdsq = (C_nmk_eta12_err[i][j]/total_number_of_events
+                                 - Cnmk_avg*Cnmk_avg);
+            Cnmk_avg = Cnmk_avg/num_pair;
+            double Cnmk_err = 0.0;
+            if (Cnmk_stdsq > 0) {
+                Cnmk_err = sqrt(Cnmk_stdsq/total_number_of_events);
+                Cnmk_err = Cnmk_err/num_pair;
+            }
+            output1 << scientific << setw(18) << setprecision(8)
+                    << Cnmk_avg << "  " << Cnmk_err << "  ";
+            Cnmk_avg = C_nmk_eta13[i][j]/total_number_of_events;
+            Cnmk_stdsq = (C_nmk_eta13_err[i][j]/total_number_of_events
+                          - Cnmk_avg*Cnmk_avg);
+            Cnmk_avg = Cnmk_avg/num_pair_2;
+            Cnmk_err = 0.0;
+            if (Cnmk_stdsq > 0) {
+                Cnmk_err = sqrt(Cnmk_stdsq/total_number_of_events);
+                Cnmk_err = Cnmk_err/num_pair_2;
+            }
+            output2 << scientific << setw(18) << setprecision(8)
+                    << Cnmk_avg << "  " << Cnmk_err << "  ";
+        }
+        output1 << endl;
+        output2 << endl;
+    }
+    output1.close();
+    output2.close();
+    if (flag_charge_dependence == 1) {
+        ostringstream filename_ss1, filename_ss2;
+        ostringstream filename_os1, filename_os2;
+        if (rap_type == 0) {
+            filename_ss1 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta12_ss_eta_" << rap_min << "_"
+                         << rap_max << ".dat";
+            filename_os1 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta12_os_eta_" << rap_min << "_"
+                         << rap_max << ".dat";
+            filename_ss2 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta13_ss_eta_" << rap_min << "_"
+                         << rap_max << ".dat";
+            filename_os2 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta13_os_eta_" << rap_min << "_"
+                         << rap_max << ".dat";
+        } else {
+            filename_ss1 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta12_ss_y_" << rap_min << "_"
+                         << rap_max << ".dat";
+            filename_os1 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta12_os_y_" << rap_min << "_"
+                         << rap_max << ".dat";
+            filename_ss2 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta13_ss_y_" << rap_min << "_"
+                         << rap_max << ".dat";
+            filename_os2 << path << "/particle_" << particle_monval
+                         << "_Cmnk_eta13_os_y_" << rap_min << "_"
+                         << rap_max << ".dat";
+        }
+        ofstream output_ss1(filename_ss1.str().c_str());
+        output_ss1 << "# eta  C_nmk_ss  C_nmk_ss_err" << endl;
+        ofstream output_os1(filename_os1.str().c_str());
+        output_os1 << "# eta  C_nmk_os  C_nmk_os_err" << endl;
+        ofstream output_ss2(filename_ss2.str().c_str());
+        output_ss2 << "# eta  C_nmk_ss  C_nmk_ss_err" << endl;
+        ofstream output_os2(filename_os2.str().c_str());
+        output_os2 << "# eta  C_nmk_os  C_nmk_os_err" << endl;
+
+        for (int j = 0; j < N_rap; j++) {
+            double eta_local = rapidity_dis_min + j*drap;
+            double num_pair_ss = C_nmk_eta12_ss[0][j]/total_number_of_events;
+            double num_pair_ss_stdsq = (
+                    C_nmk_eta12_ss_err[0][j]/total_number_of_events
+                    - num_pair_ss*num_pair_ss);
+            double num_pair_ss_err = 0.0;
+            if (num_pair_ss_stdsq > 0) {
+                num_pair_ss_err = (
+                        sqrt(num_pair_ss_stdsq/total_number_of_events));
+            }
+            output_ss1 << scientific << setw(18) << setprecision(8)
+                       << eta_local << "  " << num_pair_ss << "  "
+                       << num_pair_ss_err << "  ";
+            double num_pair_os = C_nmk_eta12_os[0][j]/total_number_of_events;
+            double num_pair_os_stdsq = (
+                    C_nmk_eta12_os_err[0][j]/total_number_of_events
+                    - num_pair_os*num_pair_os);
+            double num_pair_os_err = 0.0;
+            if (num_pair_os_stdsq > 0) {
+                num_pair_os_err = (
+                        sqrt(num_pair_os_stdsq/total_number_of_events));
+            }
+            output_os1 << scientific << setw(18) << setprecision(8)
+                       << eta_local << "  " << num_pair_os << "  "
+                       << num_pair_os_err << "  ";
+            double num_pair_ss2 = C_nmk_eta13_ss[0][j]/total_number_of_events;
+            double num_pair_ss2_stdsq = (
+                    C_nmk_eta13_ss_err[0][j]/total_number_of_events
+                    - num_pair_ss2*num_pair_ss2);
+            double num_pair_ss2_err = 0.0;
+            if (num_pair_ss2_stdsq > 0) {
+                num_pair_ss2_err = (
+                        sqrt(num_pair_ss2_stdsq/total_number_of_events));
+            }
+            output_ss2 << scientific << setw(18) << setprecision(8)
+                       << eta_local << "  " << num_pair_ss2 << "  "
+                       << num_pair_ss2_err << "  ";
+            double num_pair_os2 = C_nmk_eta13_os[0][j]/total_number_of_events;
+            double num_pair_os2_stdsq = (
+                    C_nmk_eta13_os_err[0][j]/total_number_of_events
+                    - num_pair_os2*num_pair_os2);
+            double num_pair_os2_err = 0.0;
+            if (num_pair_os2_stdsq > 0) {
+                num_pair_os2_err = (
+                        sqrt(num_pair_os2_stdsq/total_number_of_events));
+            }
+            output_os2 << scientific << setw(18) << setprecision(8)
+                       << eta_local << "  " << num_pair_os2 << "  "
+                       << num_pair_os2_err << "  ";
+            for (int i = 1; i < num_corr; i++) {
+                double Cnmk_ss_avg = (
+                        C_nmk_eta12_ss[i][j]/total_number_of_events);
+                double Cnmk_ss_stdsq = (
+                        C_nmk_eta12_ss_err[i][j]/total_number_of_events
+                        - Cnmk_ss_avg*Cnmk_ss_avg);
+                Cnmk_ss_avg = Cnmk_ss_avg/num_pair_ss;
+                double Cnmk_ss_err = 0.0;
+                if (Cnmk_ss_stdsq > 0) {
+                    Cnmk_ss_err = sqrt(Cnmk_ss_stdsq/total_number_of_events);
+                    Cnmk_ss_err = Cnmk_ss_err/num_pair_ss;
+                }
+                output_ss1 << scientific << setw(18) << setprecision(8)
+                           << Cnmk_ss_avg << "  " << Cnmk_ss_err << "  ";
+                double Cnmk_os_avg = (
+                        C_nmk_eta12_os[i][j]/total_number_of_events);
+                double Cnmk_os_stdsq = (
+                        C_nmk_eta12_os_err[i][j]/total_number_of_events
+                        - Cnmk_os_avg*Cnmk_os_avg);
+                Cnmk_os_avg = Cnmk_os_avg/num_pair_os;
+                double Cnmk_os_err = 0.0;
+                if (Cnmk_os_stdsq > 0) {
+                    Cnmk_os_err = sqrt(Cnmk_os_stdsq/total_number_of_events);
+                    Cnmk_os_err = Cnmk_os_err/num_pair_os;
+                }
+                output_os1 << scientific << setw(18) << setprecision(8)
+                           << Cnmk_os_avg << "  " << Cnmk_os_err << "  ";
+                Cnmk_ss_avg = (
+                        C_nmk_eta13_ss[i][j]/total_number_of_events);
+                Cnmk_ss_stdsq = (
+                        C_nmk_eta13_ss_err[i][j]/total_number_of_events
+                        - Cnmk_ss_avg*Cnmk_ss_avg);
+                Cnmk_ss_avg = Cnmk_ss_avg/num_pair_ss2;
+                Cnmk_ss_err = 0.0;
+                if (Cnmk_ss_stdsq > 0) {
+                    Cnmk_ss_err = sqrt(Cnmk_ss_stdsq/total_number_of_events);
+                    Cnmk_ss_err = Cnmk_ss_err/num_pair_ss2;
+                }
+                output_ss2 << scientific << setw(18) << setprecision(8)
+                           << Cnmk_ss_avg << "  " << Cnmk_ss_err << "  ";
+                Cnmk_os_avg = (
+                        C_nmk_eta13_os[i][j]/total_number_of_events);
+                Cnmk_os_stdsq = (
+                        C_nmk_eta13_os_err[i][j]/total_number_of_events
+                        - Cnmk_os_avg*Cnmk_os_avg);
+                Cnmk_os_avg = Cnmk_os_avg/num_pair_os2;
+                Cnmk_os_err = 0.0;
+                if (Cnmk_os_stdsq > 0) {
+                    Cnmk_os_err = sqrt(Cnmk_os_stdsq/total_number_of_events);
+                    Cnmk_os_err = Cnmk_os_err/num_pair_os2;
+                }
+                output_os2 << scientific << setw(18) << setprecision(8)
+                           << Cnmk_os_avg << "  " << Cnmk_os_err << "  ";
+            }
+            output_ss1 << endl;
+            output_os1 << endl;
+            output_ss2 << endl;
+            output_os2 << endl;
+        }
+        output_ss1.close();
+        output_os1.close();
+        output_ss2.close();
+        output_os2.close();
+    }
+}
+
 //! This function outputs the event averaged four-particle correlation
 void singleParticleSpectra::output_four_particle_SC_correlation() {
     ostringstream filename;
@@ -1231,7 +1767,7 @@ void singleParticleSpectra::output_four_particle_SC_correlation() {
 //! rapidity in one event
 void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         double **event_Qn_real, double **event_Qn_real_err,
-        double **event_Qn_imag, double **event_Qn_imag_err) {
+        double **event_Qn_imag, double **event_Qn_imag_err, int flag) {
     // first clean the results arrays
     for (int i = 0; i < N_rap; i++) {
         for (int j = 0; j < order_max; j++) {
@@ -1242,14 +1778,44 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         }
     }
 
-    int number_of_particles = particle_list->get_number_of_particles(event_id);
+    int number_of_particles = 0;
+    if (flag == 0) {
+        number_of_particles = particle_list->get_number_of_particles(event_id);
+    } else if (flag == 1) {
+        number_of_particles = (
+                particle_list->get_number_of_positive_particles(event_id));
+    } else if (flag == 2) {
+        number_of_particles = (
+                particle_list->get_number_of_negative_particles(event_id));
+    } else {
+        cout << "[Error]:calculate_rapidity_distribution: "
+             << "unrecogonized flag = " << flag << endl;
+        exit(1);
+    }
     for (int i = 0; i < number_of_particles; i++) {
-        double pz_local = particle_list->get_particle(event_id, i).pz;
-        double E_local = particle_list->get_particle(event_id, i).E;
+        double pz_local = 0.0;
+        double E_local = 0.0;
+        if (flag == 0) {
+            pz_local = particle_list->get_particle(event_id, i).pz;
+            E_local = particle_list->get_particle(event_id, i).E;
+        } else if (flag == 1) {
+            pz_local = particle_list->get_positive_particle(event_id, i).pz;
+            E_local = particle_list->get_positive_particle(event_id, i).E;
+        } else if (flag == 2) {
+            pz_local = particle_list->get_negative_particle(event_id, i).pz;
+            E_local = particle_list->get_negative_particle(event_id, i).E;
+        }
 
-        double rap_local;
+        double rap_local = 0.0;
         if (rap_type == 0) {
-            double mass = particle_list->get_particle(event_id, i).mass;
+            double mass = 0.0;
+            if (flag == 0) {
+                mass = particle_list->get_particle(event_id, i).mass;
+            } else if (flag == 1) {
+                mass = particle_list->get_positive_particle(event_id, i).mass;
+            } else if (flag == 2) {
+                mass = particle_list->get_negative_particle(event_id, i).mass;
+            }
             double pmag = sqrt(E_local*E_local - mass*mass);
             rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
         } else {
@@ -1258,15 +1824,26 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         
         if (rap_local > rapidity_dis_min && rap_local < rapidity_dis_max) {
             int rap_idx = (int)((rap_local - rapidity_dis_min)/drap);
-            rapidity_array[rap_idx] += rap_local;
-            dNdy_array[rap_idx]++;
-            
+            if (flag == 0) {
+                rapidity_array[rap_idx] += rap_local;
+                dNdy_array[rap_idx]++;
+            }
             // calcualte vn
-            double px_local = particle_list->get_particle(event_id, i).px;
-            double py_local = particle_list->get_particle(event_id, i).py;
+            double px_local = 0.0;
+            double py_local = 0.0;
+            if (flag == 0) {
+                px_local = particle_list->get_particle(event_id, i).px;
+                py_local = particle_list->get_particle(event_id, i).py;
+            } else if (flag == 1) {
+                px_local = particle_list->get_positive_particle(event_id, i).px;
+                py_local = particle_list->get_positive_particle(event_id, i).py;
+            } else if (flag == 2) {
+                px_local = particle_list->get_negative_particle(event_id, i).px;
+                py_local = particle_list->get_negative_particle(event_id, i).py;
+            }
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
-            if(p_perp > vn_rapidity_dis_pT_min 
-               && p_perp < vn_rapidity_dis_pT_max) {
+            if (p_perp > vn_rapidity_dis_pT_min 
+                && p_perp < vn_rapidity_dis_pT_max) {
                 double p_phi = atan2(py_local, px_local);
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
