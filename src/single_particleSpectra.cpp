@@ -1176,6 +1176,7 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
     // C_nmk[5] = C_134, C_nmk[6] = C_246, C_nmk[7] = C_336, C_nmk[8] = C_347
     int n[9] = {0, 1, 1, 2, 2, 1, 2, 3, 3};
     int m[9] = {0, 1, 2, 2, 3, 3, 4, 3, 4};
+    double *temp_corr = new double[N_rap];
     for (int i = 0; i < num_corr; i++) {
         int k = n[i] + m[i];
         if (k > order_max) {
@@ -1219,15 +1220,17 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
             }
         }
 
+        for (int kk = 0; kk < N_rap; kk++) {
+            temp_corr[kk] = 0.0;
+        }
         for (int ii = 0; ii < N_rap; ii++) {
             double rap_1 = rapidity_dis_min + ii*drap;
             for (int jj = 0; jj < N_rap; jj++) {
                 double rap_2 = rapidity_dis_min + jj*drap;
                 double delta_eta = rap_1 - rap_2;
-                if (delta_eta > rapidity_dis_min
-                        && delta_eta < rapidity_dis_max) {
-                    int rap_idx = static_cast<int>(
+                int rap_idx = static_cast<int>(
                                         (delta_eta - rapidity_dis_min)/drap);
+                if (rap_idx >= 0 && rap_idx < N_rap) {
                     double Qn_Qm_Qkstar = 0.0;
                     double Qn_Qnstar = 0.0;
                     double Qm_Qmstar = 0.0;
@@ -1261,8 +1264,7 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
                                 Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar
                                 - Qk_Qkstar + 2.*event_Q1_real[ii][0]);
                         }
-                        corr_rap[i][rap_idx] += corr_local;
-                        corr_rap_err[i][rap_idx] += corr_local*corr_local;
+                        temp_corr[rap_idx] += corr_local;
                     } else if (flag == 2) {
                         Qn_Qm_Qkstar = (
                             (event_Q1_real[ii][n[i]]*Q2_real
@@ -1297,13 +1299,17 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
                             corr_local = (Qn_Qm_Qkstar - Qn_Qnstar
                                           - Qm_Qmstar - Qk_Qkstar);
                         }
-                        corr_rap[i][rap_idx] += corr_local;
-                        corr_rap_err[i][rap_idx] += corr_local*corr_local;
+                        temp_corr[rap_idx] += corr_local;
                     }
                 }
             }
         }
+        for (int kk = 0; kk < N_rap; kk++) {
+            corr_rap[i][kk] += temp_corr[kk];
+            corr_rap_err[i][kk] += temp_corr[kk]*temp_corr[kk];
+        }
     }
+    delete[] temp_corr;
 }
 
 //! This function computes the 4-particle correlation for symmetric cumulants
@@ -1523,23 +1529,25 @@ void singleParticleSpectra::output_three_particle_correlation() {
 //! This function outputs the rapidity dependent three-particle correlation
 void singleParticleSpectra::output_three_particle_correlation_rap() {
     ostringstream filename1, filename2;
-    if (rap_type == 0) {
-        filename1 << path << "/particle_" << particle_monval << "_Cmnk_eta12"
-                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
-        filename2 << path << "/particle_" << particle_monval << "_Cmnk_eta13"
-                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
-    } else {
-        filename1 << path << "/particle_" << particle_monval << "_Cmnk_eta12"
-                  << "_y_" << rap_min << "_" << rap_max << ".dat";
-        filename2 << path << "/particle_" << particle_monval << "_Cmnk_eta13"
-                  << "_y_" << rap_min << "_" << rap_max << ".dat";
-    }
+    filename1 << path << "/particle_" << particle_monval << "_Cmnk_eta12"
+              << "_pT_" << vn_rapidity_dis_pT_min << "_"
+              << vn_rapidity_dis_pT_max << ".dat";
+    filename2 << path << "/particle_" << particle_monval << "_Cmnk_eta13"
+              << "_pT_" << vn_rapidity_dis_pT_min << "_"
+              << vn_rapidity_dis_pT_max << ".dat";
     ofstream output1(filename1.str().c_str());
     ofstream output2(filename2.str().c_str());
-    output1 << "# eta12  C_nmk  C_nmk_err "
-            << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
-    output2 << "# eta13  C_nmk  C_nmk_err " 
-            << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
+    if (rap_type == 0) {
+        output1 << "# eta12  C_nmk  C_nmk_err "
+                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
+        output2 << "# eta13  C_nmk  C_nmk_err " 
+                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
+    } else {
+        output1 << "# y12  C_nmk  C_nmk_err "
+                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
+        output2 << "# y13  C_nmk  C_nmk_err " 
+                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << endl;
+    }
 
     for (int j = 0; j < N_rap; j++) {
         double eta_local = rapidity_dis_min + j*drap;
@@ -1556,12 +1564,12 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
         double num_pair_2 = C_nmk_eta13[0][j]/total_number_of_events;
         double num_pair_2_stdsq = (C_nmk_eta13_err[0][j]/total_number_of_events
                                    - num_pair_2*num_pair_2);
-        double num_pair_2_err = 0.0;
+        num_pair_err = 0.0;
         if (num_pair_2_stdsq > 0) {
-            num_pair_2_err = sqrt(num_pair_2_stdsq/total_number_of_events);
+            num_pair_err = sqrt(num_pair_2_stdsq/total_number_of_events);
         }
         output2 << scientific << setw(18) << setprecision(8)
-                << eta_local << "  " << num_pair_2 << "  " << num_pair_2_err
+                << eta_local << "  " << num_pair_2 << "  " << num_pair_err
                 << "  ";
         for (int i = 1; i < num_corr; i++) {
             double Cnmk_avg = C_nmk_eta12[i][j]/total_number_of_events;
@@ -1584,6 +1592,7 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
                 Cnmk_err = sqrt(Cnmk_stdsq/total_number_of_events);
                 Cnmk_err = Cnmk_err/num_pair_2;
             }
+            Cnmk_stdsq = Cnmk_stdsq/num_pair;
             output2 << scientific << setw(18) << setprecision(8)
                     << Cnmk_avg << "  " << Cnmk_err << "  ";
         }
@@ -1595,41 +1604,33 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
     if (flag_charge_dependence == 1) {
         ostringstream filename_ss1, filename_ss2;
         ostringstream filename_os1, filename_os2;
-        if (rap_type == 0) {
-            filename_ss1 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta12_ss_eta_" << rap_min << "_"
-                         << rap_max << ".dat";
-            filename_os1 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta12_os_eta_" << rap_min << "_"
-                         << rap_max << ".dat";
-            filename_ss2 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta13_ss_eta_" << rap_min << "_"
-                         << rap_max << ".dat";
-            filename_os2 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta13_os_eta_" << rap_min << "_"
-                         << rap_max << ".dat";
-        } else {
-            filename_ss1 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta12_ss_y_" << rap_min << "_"
-                         << rap_max << ".dat";
-            filename_os1 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta12_os_y_" << rap_min << "_"
-                         << rap_max << ".dat";
-            filename_ss2 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta13_ss_y_" << rap_min << "_"
-                         << rap_max << ".dat";
-            filename_os2 << path << "/particle_" << particle_monval
-                         << "_Cmnk_eta13_os_y_" << rap_min << "_"
-                         << rap_max << ".dat";
-        }
+        filename_ss1 << path << "/particle_" << particle_monval
+                     << "_Cmnk_eta12_ss_pT_" << vn_rapidity_dis_pT_min
+                     << "_" << vn_rapidity_dis_pT_max << ".dat";
+        filename_os1 << path << "/particle_" << particle_monval
+                     << "_Cmnk_eta12_os_pT_" << vn_rapidity_dis_pT_min
+                     << "_" << vn_rapidity_dis_pT_max << ".dat";
+        filename_ss2 << path << "/particle_" << particle_monval
+                     << "_Cmnk_eta13_ss_pT_" << vn_rapidity_dis_pT_min
+                     << "_" << vn_rapidity_dis_pT_max << ".dat";
+        filename_os2 << path << "/particle_" << particle_monval
+                     << "_Cmnk_eta13_os_pT_" << vn_rapidity_dis_pT_min
+                     << "_" << vn_rapidity_dis_pT_max << ".dat";
         ofstream output_ss1(filename_ss1.str().c_str());
-        output_ss1 << "# eta  C_nmk_ss  C_nmk_ss_err" << endl;
         ofstream output_os1(filename_os1.str().c_str());
-        output_os1 << "# eta  C_nmk_os  C_nmk_os_err" << endl;
         ofstream output_ss2(filename_ss2.str().c_str());
-        output_ss2 << "# eta  C_nmk_ss  C_nmk_ss_err" << endl;
         ofstream output_os2(filename_os2.str().c_str());
-        output_os2 << "# eta  C_nmk_os  C_nmk_os_err" << endl;
+        if (rap_type == 0) {
+            output_ss1 << "# eta12  C_nmk_ss  C_nmk_ss_err" << endl;
+            output_os1 << "# eta12  C_nmk_os  C_nmk_os_err" << endl;
+            output_ss2 << "# eta13  C_nmk_ss  C_nmk_ss_err" << endl;
+            output_os2 << "# eta13  C_nmk_os  C_nmk_os_err" << endl;
+        } else {
+            output_ss1 << "# y12  C_nmk_ss  C_nmk_ss_err" << endl;
+            output_os1 << "# y12  C_nmk_os  C_nmk_os_err" << endl;
+            output_ss2 << "# y13  C_nmk_ss  C_nmk_ss_err" << endl;
+            output_os2 << "# y13  C_nmk_os  C_nmk_os_err" << endl;
+        }
 
         for (int j = 0; j < N_rap; j++) {
             double eta_local = rapidity_dis_min + j*drap;
@@ -1652,7 +1653,7 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
             double num_pair_os_err = 0.0;
             if (num_pair_os_stdsq > 0) {
                 num_pair_os_err = (
-                        sqrt(num_pair_os_stdsq/total_number_of_events));
+                    sqrt(num_pair_os_stdsq/total_number_of_events));
             }
             output_os1 << scientific << setw(18) << setprecision(8)
                        << eta_local << "  " << num_pair_os << "  "
@@ -1664,7 +1665,7 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
             double num_pair_ss2_err = 0.0;
             if (num_pair_ss2_stdsq > 0) {
                 num_pair_ss2_err = (
-                        sqrt(num_pair_ss2_stdsq/total_number_of_events));
+                    sqrt(num_pair_ss2_stdsq/total_number_of_events));
             }
             output_ss2 << scientific << setw(18) << setprecision(8)
                        << eta_local << "  " << num_pair_ss2 << "  "
@@ -1676,7 +1677,7 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
             double num_pair_os2_err = 0.0;
             if (num_pair_os2_stdsq > 0) {
                 num_pair_os2_err = (
-                        sqrt(num_pair_os2_stdsq/total_number_of_events));
+                    sqrt(num_pair_os2_stdsq/total_number_of_events));
             }
             output_os2 << scientific << setw(18) << setprecision(8)
                        << eta_local << "  " << num_pair_os2 << "  "
@@ -1843,7 +1844,8 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         }
         
         if (rap_local > rapidity_dis_min && rap_local < rapidity_dis_max) {
-            int rap_idx = (int)((rap_local - rapidity_dis_min)/drap);
+            int rap_idx = static_cast<int>(
+                    (rap_local - rapidity_dis_min)/drap);
             if (flag == 0) {
                 rapidity_array[rap_idx] += rap_local;
                 dNdy_array[rap_idx]++;
