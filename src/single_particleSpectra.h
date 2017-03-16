@@ -42,6 +42,7 @@ class singleParticleSpectra {
     int flag_correlation;
     double *Qn2_vector, *Qn2_vector_err;
     double **QnSP_diff_vector, **QnSP_diff_vector_err;
+    double **QnSP_eta12, **QnSP_eta12_err;
     int num_corr;
     double *C_nmk, *C_nmk_err;
     double **C_nmk_eta12, **C_nmk_eta12_err;
@@ -108,8 +109,19 @@ class singleParticleSpectra {
             double *event_Qn_real, double *event_Qn_imag,
             double **event_Qn_diff_real, double **event_Qn_diff_imag);
 
+    //! This function computes the 2-particle correlation for Qn vectors
+    //! as a function of \delta \eta within one event
+    //!     Real(Qn(eta_1)*conj(Qn(eta_2))) for n = 0, 1, ... , order_max
+    //! self correlation is subtracted when eta_1 = eta_2
+    void calculate_two_particle_correlation_deltaeta(
+            double **event_Qn_diff_real, double **event_Qn_diff_imag);
+
     //! This function outputs the event averaged two-particle flow correlation
     void output_two_particle_correlation();
+
+    //! This function outputs the two-particle flow correlation as a function
+    //! of delta eta between the two particles
+    void output_two_particle_correlation_rap();
 
     //! This function computes the 3-particle correlation for Qn vectors
     //! within one event
