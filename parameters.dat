@@ -1,0 +1,102 @@
+read_in_mode = 2              # mode for reading in particle information 
+                              # 0: reads outputs from OSCAR outputs
+                              # 1: reads outputs from UrQMD outputs
+                              # 2: reads outputs from zipped UrQMD outputs
+                              # 3: reads outputs from Sangwook's UrQMD outputs 
+                              #    (without header lines)
+                              # 4: reads outputs from UrQMD 3.3p2 outputs
+
+run_mode = 0                  # running mode for the program
+                              # 0: collect single particle spectra and vn
+                              # 1: compute HBT correlation function
+                              # 2: collect event-by-event particle yield
+                              #    distribution (pT and rapdity cuts are
+                              #    specified by pT_min, pT_max, rap_min,
+                              #    and rap_max)
+
+particle_monval = 211         # particle Monte-Carlo number
+distinguish_isospin = 1       # flag whether to distinguish the isospin of 
+                              # particles
+resonance_weak_feed_down_flag = 0    # include weak feed down contribution
+                                     # turn on only for Lambda (monval=3122)
+                                     # for Sigma^0 -> Lambda + gamma
+resonance_feed_down_flag = 0  # perform resonance feed down
+                              # (will read in all hadrons and filter particle
+                              #  after decays are performed)
+net_particle_flag = 0         # flag to collect net particle yield distribution
+
+event_buffer_size = 5000      # the number of events read in at once
+
+
+# Parameters for single particle spectra and vn
+order_max = 9                 # the maximum harmonic order of anisotropic flow
+
+npT = 41                      # number of pT points for pT-differential 
+                              # spectra and vn
+pT_min = 0.05                 # the minimum value of transverse momentum (GeV)
+pT_max = 4.05                 # the maximum value of transverse momentum (GeV)
+rap_min = -0.5                # minimum value of rapidity integration 
+                              # range for mid-rapidity observables 
+rap_max = 0.5                 # maximum value of rapidity integration
+                              # range for mid-rapidity observables 
+
+rap_type = 1                  # 0: for pseudo-rapidity; 1: for rapidity
+rapidity_distribution = 1     # 1: output particle rapidity distribution 
+n_rap = 50                    # numpber of points in rapidity distr.
+rapidity_dis_min = -4.90      # minimum value of particle rapidity 
+                              # distribution
+rapidity_dis_max = 4.90       # maximum value of particle rapidity 
+                              # distribution
+vn_rapidity_dis_pT_min = 0.15 # the minimum value of pT for vn rap. distr.
+vn_rapidity_dis_pT_max = 2.0  # the maximum value of pT for vn rap. distr.
+
+check_spatial_dis = 0         # flag to check dN/dtau distribution
+intrinsic_detas = 0.1         # deta_s in the output samples
+intrinsic_dtau = 0.01         # dtau in the output samples
+intrinsic_dx = 0.1            # dx in the output samples
+
+compute_correlation = 0       # flag to compute correlation function
+flag_charge_dependence = 0    # flag to compute charge dependence correlation
+
+# Parameters for HBT correlation functions
+reject_decay_flag = 0         # reject particles from resonance decays
+                              # 0: no rejection
+                              # 1: reject particles from all decay channels
+                              # 2: reject particles only from 
+                              #    long lived resonance decays (future)
+tau_reject = 10.              # reject decay particle whose tau_f > tau_reject
+                              # only effective when reject_decay_flag == 2
+needed_number_of_pairs = 30000000    # number of pairs for eack K point
+number_of_mixed_events = 100         # number of the mixed events in the 
+                                     # denorminator
+number_of_oversample_events = 200   # number of the combined events in the 
+                                     # numerator
+azimuthal_flag = 0                   # 0: compute the azimuthal averaged HBT 
+                                     #    correlation function
+                                     # 1: compute azimuthal dependent HBT 
+                                     #    correlation function
+
+kT_differenitial_flag = 1            # 0: integrate the pair momentum k_T over 
+                                     #    a given kT range for correlation 
+                                     #    function
+                                     # 1: compute the correlation function at 
+                                     #    each specifiec kT point
+n_KT = 6                             # number of the pair momentum k_T 
+                                     # to calculate
+KT_min = 0.0                         # minimum value of the pair momentum k_T 
+KT_max = 1.0                         # maximum value of the pair momentum k_T 
+n_Kphi = 48                          # number of the azimuthal angles for the 
+                                     # pair momentum k_T 
+                                     # (range is assumed to be from 0 to 2*pi)
+Krap_min = -0.5                      # minimum accept pair momentum rapidity
+Krap_max = 0.5                       # maximum accept pair momentum rapidity
+buffer_rapidity = 5.0                # collect particles with rapidity from 
+                                     # [Krap_min - buffer_rapidity, 
+                                     #  Krap_max + buffer_rapidity]
+
+qnpts = 31                           # number of points for momentum q 
+                                     # (difference of the pair momentum) for 
+                                     # correlaction function
+q_min = -0.15                        # minimum value for momentum q (GeV)
+q_max = 0.15                         # maximum value for momentum q (GeV)
+
