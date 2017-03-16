@@ -207,12 +207,12 @@ do
     cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
-    mv ../UrQMD_events/particle_list_$event_id.gz results/particle_list.dat
+    mv ../UrQMD_results/particle_list_$event_id.gz results/particle_list.dat
 """)
     write_analysis_spectra_and_vn_commands(script, "UrQMD")
     script.write(
 """
-    mv results/particle_list.dat ../UrQMD_events/particle_list_$event_id.gz
+    mv results/particle_list.dat ../UrQMD_results/particle_list_$event_id.gz
     mv results ../spvn_results/event_$event_id
     cd ..
 done
