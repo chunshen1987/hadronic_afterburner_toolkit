@@ -1102,10 +1102,10 @@ void singleParticleSpectra::calculate_two_particle_correlation_deltaeta(
                                         (delta_eta - rapidity_dis_min)/drap);
                 if (rap_idx >= 0 && rap_idx < N_rap) {
                     double QnSP_rap_local = (
-                        event_Qn_diff_real[i][ii]*event_Qn_diff_real[i][jj]
-                        + event_Qn_diff_imag[i][ii]*event_Qn_diff_imag[i][jj]);
+                        event_Qn_diff_real[ii][i]*event_Qn_diff_real[jj][i]
+                        + event_Qn_diff_imag[ii][i]*event_Qn_diff_imag[jj][i]);
                     if (ii == jj) {
-                        QnSP_rap_local -= event_Qn_diff_real[0][ii];
+                        QnSP_rap_local -= event_Qn_diff_real[ii][0];
                     }
                     temp_corr[rap_idx] += QnSP_rap_local;
                 }
@@ -1210,7 +1210,7 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
             output << scientific << setw(18) << setprecision(8)
                    << vn2_avg << "  " << vn2_err << "  "
                    << Qn2_avg << "  " 
-                   << Qn2_vector_err[i]/total_number_of_events << "  ";
+                   << QnSP_eta12_err[iorder][i]/total_number_of_events << "  ";
         }
         output << endl;
     }

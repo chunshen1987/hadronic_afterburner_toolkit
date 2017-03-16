@@ -14,8 +14,8 @@ run_mode = 0                  # running mode for the program
                               #    specified by pT_min, pT_max, rap_min,
                               #    and rap_max)
 
-particle_monval = 211         # particle Monte-Carlo number
-distinguish_isospin = 1       # flag whether to distinguish the isospin of 
+particle_monval = 9999         # particle Monte-Carlo number
+distinguish_isospin = 0       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
                                      # turn on only for Lambda (monval=3122)
@@ -42,21 +42,21 @@ rap_max = 0.5                 # maximum value of rapidity integration
 
 rap_type = 1                  # 0: for pseudo-rapidity; 1: for rapidity
 rapidity_distribution = 1     # 1: output particle rapidity distribution 
-n_rap = 50                    # numpber of points in rapidity distr.
-rapidity_dis_min = -4.90      # minimum value of particle rapidity 
+n_rap = 41                    # numpber of points in rapidity distr.
+rapidity_dis_min = -2.00      # minimum value of particle rapidity 
                               # distribution
-rapidity_dis_max = 4.90       # maximum value of particle rapidity 
+rapidity_dis_max = 2.00       # maximum value of particle rapidity 
                               # distribution
-vn_rapidity_dis_pT_min = 0.15 # the minimum value of pT for vn rap. distr.
-vn_rapidity_dis_pT_max = 2.0  # the maximum value of pT for vn rap. distr.
+vn_rapidity_dis_pT_min = 0.20 # the minimum value of pT for vn rap. distr.
+vn_rapidity_dis_pT_max = 3.0  # the maximum value of pT for vn rap. distr.
 
 check_spatial_dis = 0         # flag to check dN/dtau distribution
 intrinsic_detas = 0.1         # deta_s in the output samples
 intrinsic_dtau = 0.01         # dtau in the output samples
 intrinsic_dx = 0.1            # dx in the output samples
 
-compute_correlation = 0       # flag to compute correlation function
-flag_charge_dependence = 0    # flag to compute charge dependence correlation
+compute_correlation = 1       # flag to compute correlation function
+flag_charge_dependence = 1    # flag to compute charge dependence correlation
 
 # Parameters for HBT correlation functions
 reject_decay_flag = 0         # reject particles from resonance decays
