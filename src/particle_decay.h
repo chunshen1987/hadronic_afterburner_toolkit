@@ -37,22 +37,50 @@ class particle_decay {
  public:
     particle_decay();
     ~particle_decay();
+
+    //! This function reads in resonance decay table
     int read_resonances_list();
+
+    //! This is a test function to check whether the resonance table is
+    //! read in correctly
     void check_resonance_table();
+
+    //! This function returns particle width in GeV
     double get_particle_width(particle_info *part);
+
+    //! This function checks whether the particle is stable
     int check_particle_stable(particle_info *part);
+
+    //! This function returns the electric charge of particle
     int get_particle_charge(int monval);
+
+    //! This function returns the baryon number of particle
     int get_particle_baryon_number(int monval);
+
+    //! This function returns the strange number of particle
     int get_particle_strange_number(int monval);
+    
+    //! This function returns the particle mass for a given particle id
+    double get_particle_mass(int POI_monval);
+
+    //! This is a shell function to perform resonance decays
     void perform_decays(particle_info *mother,
                         std::vector<particle_info>* daughter_list);
+
+
+    //! This function perform two body decay
     void perform_two_body_decay(particle_info *mother,
                                 particle_info *daughter1,
                                 particle_info *daughter2);
+
+    //! This function perform 3 body decays
     void perform_three_body_decay(particle_info *mother,
                                   particle_info *daughter1,
                                   particle_info *daughter2,
                                   particle_info *daughter3);
+
+    //! This function sample mother particle mass according to breit-wigner
+    //! distribution
     double sample_breit_wigner(double mass, double width, double M_min);
 };
 

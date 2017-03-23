@@ -30,6 +30,7 @@ particle_decay::~particle_decay() {
     resonance_table.clear();
 }
 
+//! This function reads in resonance decay table
 int particle_decay::read_resonances_list() {
     double eps = 1e-15;
     cout << " -- Read in particle resonance decay table..." << endl;
@@ -158,6 +159,9 @@ int particle_decay::read_resonances_list() {
     return(Nparticle);
 }
 
+
+//! This is a test function to check whether the resonance table is read in
+//! correctly
 void particle_decay::check_resonance_table() {
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
         cout << "name: " << resonance_table[i]->name << endl;
@@ -183,8 +187,8 @@ void particle_decay::check_resonance_table() {
     }
 }
 
+//! This function returns particle width in GeV
 double particle_decay::get_particle_width(particle_info *part) {
-    // return particle width in GeV
     double width = 0.0;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
         if (part->monval == resonance_table[i]->monval) {
@@ -195,6 +199,7 @@ double particle_decay::get_particle_width(particle_info *part) {
     return(width);
 }
 
+//! This function checks whether the particle is stable
 int particle_decay::check_particle_stable(particle_info *part) {
     int stable = 0;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
@@ -206,6 +211,8 @@ int particle_decay::check_particle_stable(particle_info *part) {
     return(stable);
 }
 
+
+//! This function returns the electric charge of particle
 int particle_decay::get_particle_charge(int monval) {
     int charge = 0;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
@@ -217,6 +224,7 @@ int particle_decay::get_particle_charge(int monval) {
     return(charge);
 }
 
+//! This function returns the baryon number of particle
 int particle_decay::get_particle_baryon_number(int monval) {
     int baryon = 0;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
@@ -228,6 +236,7 @@ int particle_decay::get_particle_baryon_number(int monval) {
     return(baryon);
 }
 
+//! This function returns the strange number of particle
 int particle_decay::get_particle_strange_number(int monval) {
     int strange = 0;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
@@ -239,6 +248,8 @@ int particle_decay::get_particle_strange_number(int monval) {
     return(strange);
 }
 
+
+//! This is a shell function to perform resonance decays
 void particle_decay::perform_decays(
             particle_info *mother, vector<particle_info>* daughter_list) {
     particle_decay_info* mother_decay_info = NULL;
@@ -273,27 +284,8 @@ void particle_decay::perform_decays(
         int decay_part2_monval = picked_channel->decay_part[1];
         daughter1->monval = decay_part1_monval;
         daughter2->monval = decay_part2_monval;
-        double mass1 = 0.0;
-        double mass2 = 0.0;
-        for (unsigned int ipart1 = 0; ipart1 < resonance_table.size();
-                ipart1++) {
-            if (decay_part1_monval == resonance_table[ipart1]->monval) {
-                mass1 = resonance_table[ipart1]->mass;
-                break;
-            }
-        }
-        for (unsigned int ipart2 = 0; ipart2 < resonance_table.size();
-                ipart2++) {
-            if (decay_part2_monval == resonance_table[ipart2]->monval) {
-                mass2 = resonance_table[ipart2]->mass;
-                break;
-            }
-        }
-        daughter1->mass = mass1;
-        daughter2->mass = mass2;
-        //cout << "check: mother: " << mother->monval << " decay into "
-        //     << "daughter1: " << daughter1->monval << " and daughter2: "
-        //     << daughter2->monval << endl;
+        daughter1->mass = get_particle_mass(decay_part1_monval);
+        daughter2->mass = get_particle_mass(decay_part2_monval);
         perform_two_body_decay(mother, daughter1, daughter2);
         daughter_list->push_back(*daughter1);
         daughter_list->push_back(*daughter2);
@@ -309,37 +301,9 @@ void particle_decay::perform_decays(
         daughter1->monval = decay_part1_monval;
         daughter2->monval = decay_part2_monval;
         daughter3->monval = decay_part3_monval;
-        double mass1 = 0.0;
-        double mass2 = 0.0;
-        double mass3 = 0.0;
-        for (unsigned int ipart1 = 0; ipart1 < resonance_table.size();
-                ipart1++) {
-            if (decay_part1_monval == resonance_table[ipart1]->monval) {
-                mass1 = resonance_table[ipart1]->mass;
-                break;
-            }
-        }
-        for (unsigned int ipart2 = 0; ipart2 < resonance_table.size();
-                ipart2++) {
-            if (decay_part2_monval == resonance_table[ipart2]->monval) {
-                mass2 = resonance_table[ipart2]->mass;
-                break;
-            }
-        }
-        for (unsigned int ipart3 = 0; ipart3 < resonance_table.size();
-                ipart3++) {
-            if (decay_part3_monval == resonance_table[ipart3]->monval) {
-                mass3 = resonance_table[ipart3]->mass;
-                break;
-            }
-        }
-        daughter1->mass = mass1;
-        daughter2->mass = mass2;
-        daughter3->mass = mass3;
-        //cout << "check: mother: " << mother->monval << " decay into"
-        //     << " daughter1: " << daughter1->monval
-        //     << " and daughter2: " << daughter2->monval
-        //     << " and daughter3: " << daughter3->monval << endl;
+        daughter1->mass = get_particle_mass(decay_part1_monval);
+        daughter2->mass = get_particle_mass(decay_part2_monval);
+        daughter3->mass = get_particle_mass(decay_part3_monval);
         perform_three_body_decay(mother, daughter1, daughter2, daughter3);
         daughter_list->push_back(*daughter1);
         daughter_list->push_back(*daughter2);
@@ -350,11 +314,29 @@ void particle_decay::perform_decays(
     }
 }
 
+//! This function returns the particle mass for a given particle id
+double particle_decay::get_particle_mass(int POI_monval) {
+    double mass = 0.0;
+    unsigned int ipart = 0;
+    for (ipart = 0; ipart < resonance_table.size(); ipart++) {
+        if (POI_monval == resonance_table[ipart]->monval) {
+            mass = resonance_table[ipart]->mass;
+            break;
+        }
+    }
+    if (ipart == resonance_table.size() && mass < 1e-10) {
+        cout << "[Error]:particle_decay::get_particle_mass(): "
+             << "Can not find particle with monval = " << POI_monval
+             << endl;
+        exit(1);
+    }
+    return(mass);
+}
 
+//! This function perform two body decay
 void particle_decay::perform_two_body_decay(particle_info *mother,
                                             particle_info *daughter1,
                                             particle_info *daughter2) {
-    // this function perform two body decay
     double M_pole = mother->mass;
     double M_width = get_particle_width(mother);
     double m1 = daughter1->mass;
@@ -424,11 +406,12 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     return;
 }
 
+
+//! This function perform 3 body decays
 void particle_decay::perform_three_body_decay(particle_info *mother,
                                               particle_info *daughter1,
                                               particle_info *daughter2,
                                               particle_info *daughter3) {
-    // this function perform 3 body decays
     double M_pole = mother->mass;
     double M_width = get_particle_width(mother);
     double m1 = daughter1->mass;
@@ -545,6 +528,8 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     return;
 }
 
+//! This function sample mother particle mass according to breit-wigner
+//! distribution
 double particle_decay::sample_breit_wigner(double mass, double width,
                                            double M_min) {
     // this function sample the Breit Wigner distribution for the mass
