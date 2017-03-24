@@ -17,6 +17,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     paraRdr = paraRdr_in;
     path = path_in;
 
+    echo_level = paraRdr->getVal("echo_level");
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
     run_mode = paraRdr->getVal("run_mode");
@@ -44,10 +45,14 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
             || read_in_mode == 3 || read_in_mode == 4) {
         get_UrQMD_id(particle_monval);
     }
+
     resonance_feed_down_flag = paraRdr->getVal("resonance_feed_down_flag");
+    select_resonances_flag = 0;
     if (resonance_feed_down_flag == 1) {
         resonance_list = new vector< vector<particle_info>* >;
         decayer_ptr = new particle_decay;
+        select_resonances_flag = paraRdr->getVal("select_resonances_flag");
+        initialize_selected_resonance_list();
     }
 
     particle_list = new vector< vector<particle_info>* >;
@@ -197,6 +202,8 @@ particleSamples::~particleSamples() {
         resonance_list->clear();
         delete resonance_list;
         delete decayer_ptr;
+        if (select_resonances_flag == 1)
+            select_resonances_list.clear();
     }
 
     if (reconst_flag == 1) {
@@ -245,6 +252,33 @@ void particleSamples::initialize_baryon_urqmd_id_list() {
     baryon_urqmd_id_list[2] = 49;    // Xi^-
     baryon_urqmd_id_list[3] = 27;    // Lambda
     baryon_urqmd_id_list[4] = 55;    // Omega
+}
+
+void particleSamples::initialize_selected_resonance_list() {
+    ostringstream filename;
+    filename << "EOS/selected_resonances_list.dat";
+    ifstream reso_file(filename.str().c_str());
+    if (!reso_file.is_open()) {
+        cout << "[Error]:particleSamples::initialize_selected_resonance_list:"
+             << "Can not find the selected resonance list file: "
+             << filename.str() << endl;
+        exit(1);
+    }
+    int temp_id;
+    reso_file >> temp_id;
+    while (!reso_file.eof()) {
+        select_resonances_list.push_back(temp_id);
+        reso_file >> temp_id;
+    }
+    reso_file.close();
+    if (echo_level > 8) {
+        cout << "[Info]:particleSamples::initialize_selected_resonance_list:"
+             << "selected resonance list: " << endl;
+        for (unsigned int ireso = 0; ireso < select_resonances_list.size();
+                ireso++) {
+            cout << select_resonances_list[ireso] << endl;
+        }
+    }
 }
 
 void particleSamples::get_UrQMD_id(int monval) {
@@ -607,6 +641,40 @@ int particleSamples::decide_to_pick_JAM(int pid) {
     return(pick_flag);
 }
 
+int particleSamples::decide_to_pick_from_OSCAR_file(int temp_monval) {
+    int pick_flag = 0;
+    if (resonance_feed_down_flag == 1) {
+        if (select_resonances_flag == 0) {
+            // pick everything
+            pick_flag = 1;
+        } else {
+            for (unsigned int ireso = 0; ireso < select_resonances_list.size();
+                    ireso++) {
+                if (temp_monval == select_resonances_list[ireso]) {
+                    pick_flag = 1;
+                    break;
+                }
+            }
+        }
+    } else if (flag_isospin == 0) {
+        // do not distinguish the isospin of the particle
+        if (abs(temp_monval) == particle_monval) {
+            pick_flag = 1;
+        }
+    } else {
+        // distinguish the isospin of the particle
+        if (temp_monval == particle_monval) {
+            pick_flag = 1;
+        }
+        if (net_particle_flag == 1) {
+            if (temp_monval == -particle_monval) {
+                pick_flag = 2;  // set to 2 to trick anti_particle_pick_flag
+            }
+        }
+    }
+    return(pick_flag);
+}
+
 int particleSamples::decide_to_pick_OSCAR(int monval) {
     int pick_flag = 0;
     if (particle_monval == 9999) {
@@ -680,34 +748,12 @@ int particleSamples::read_in_particle_samples_OSCAR() {
             int idx = ievent;
 
             int pick_flag = 0;
-            int anti_particle_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if (resonance_feed_down_flag == 1) {
-                    pick_flag = 1;
-                } else if (flag_isospin == 0) {
-                    if (abs(temp_monval) == particle_monval) {
-                        pick_flag = 1;
-                    } else {
-                        pick_flag = 0;
-                    }
-                } else {
-                    if (temp_monval == particle_monval) {
-                        pick_flag = 1;
-                    } else {
-                        pick_flag = 0;
-                    }
-                    if (net_particle_flag == 1) {
-                        if (temp_monval == -particle_monval) {
-                            anti_particle_pick_flag = 1;
-                        }
-                    } else {
-                        anti_particle_pick_flag = 0;
-                    }
-                }
-                if (pick_flag == 1) {
+                pick_flag = decide_to_pick_from_OSCAR_file(temp_monval);
+                if (pick_flag != 0) {
                      particle_info *temp_particle_info = new particle_info;
                      temp_particle_info->monval = temp_monval;
                      temp2 >> temp_particle_info->px 
@@ -719,22 +765,12 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                            >> temp_particle_info->y
                            >> temp_particle_info->z 
                            >> temp_particle_info->t;
-                     (*particle_list)[idx]->push_back(*temp_particle_info);
-                     delete temp_particle_info;
-                }
-                if (anti_particle_pick_flag == 1) {
-                     particle_info *temp_particle_info = new particle_info;
-                     temp_particle_info->monval = temp_monval;
-                     temp2 >> temp_particle_info->px 
-                           >> temp_particle_info->py
-                           >> temp_particle_info->pz 
-                           >> temp_particle_info->E
-                           >> temp_particle_info->mass 
-                           >> temp_particle_info->x 
-                           >> temp_particle_info->y
-                           >> temp_particle_info->z 
-                           >> temp_particle_info->t;
-                     (*anti_particle_list)[idx]->push_back(*temp_particle_info);
+                     if (pick_flag == 1) {
+                        (*particle_list)[idx]->push_back(*temp_particle_info);
+                     } else if (pick_flag == 2) {
+                        (*anti_particle_list)[idx]->push_back(
+                                                        *temp_particle_info);
+                     }
                      delete temp_particle_info;
                 }
             }
@@ -898,19 +934,7 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
                 getline(inputfile_mixed_event, temp_string);
                 stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                if (resonance_feed_down_flag == 1) {
-                    pick_flag = 1;
-                } else if (flag_isospin == 0) {
-                    if (abs(temp_monval) == particle_monval)
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                } else {
-                    if (temp_monval == particle_monval)
-                        pick_flag = 1;
-                    else
-                        pick_flag = 0;
-                }
+                pick_flag = decide_to_pick_from_OSCAR_file(temp_monval);
                 if (pick_flag == 1) {
                      particle_info *temp_particle_info = new particle_info;
                      temp_particle_info->monval = temp_monval;

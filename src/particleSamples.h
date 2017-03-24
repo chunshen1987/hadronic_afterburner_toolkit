@@ -24,6 +24,7 @@ class particleSamples {
     gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
 
+    int echo_level;
     int read_in_mode;
     int run_mode;
 
@@ -32,6 +33,10 @@ class particleSamples {
 
     //! perform resonance feed down for all unstable particles
     int resonance_feed_down_flag;
+    //! perform resonance decays for only selected particle species
+    int select_resonances_flag;
+    //! store the monval of the selected resonance states
+    vector<int> select_resonances_list;
 
     //! include Sigma0 feed down of Lambda
     int resonance_weak_feed_down_flag;
@@ -94,6 +99,8 @@ class particleSamples {
     void initialize_charged_hadron_urqmd_id_list();
     void initialize_charged_hadron_pdg_list();
     void initialize_baryon_urqmd_id_list();
+    void initialize_selected_resonance_list();
+
     void get_UrQMD_id(int monval);
     int decide_to_pick_UrQMD(int pid, int iso3, int charge,
                              int parent_proc_type);
@@ -104,6 +111,7 @@ class particleSamples {
     int decide_to_pick_JAM(int pid);
     int decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
                                             int charge);
+    int decide_to_pick_from_OSCAR_file(int monval);
     int decide_to_pick_OSCAR(int monval);
 
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
