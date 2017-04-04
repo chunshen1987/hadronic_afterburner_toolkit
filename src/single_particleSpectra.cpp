@@ -1298,35 +1298,17 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
 
         double Q2_real = 0.0;
         double Q2_imag = 0.0;
-        double Q2_yield = 0.0;
         double Q3_real = 0.0;
         double Q3_imag = 0.0;
-        double Q3_yield = 0.0;
         if (flag == 1) {
             for (int j = 0; j < N_rap; j++) {
-                Q3_real += event_Q3_real[j][k]*event_Q3_real[j][0];
-                Q3_imag += event_Q3_imag[j][k]*event_Q3_real[j][0];
-                Q3_yield += event_Q3_real[j][0];
-            }
-            if (k == 0) {
-                Q3_real = Q3_yield;
-                Q3_imag = 0.0;
-            } else {
-                Q3_real /= Q3_yield;
-                Q3_imag /= Q3_yield;
+                Q3_real += event_Q3_real[j][k];
+                Q3_imag += event_Q3_imag[j][k];
             }
         } else if (flag == 2) {
             for (int j = 0; j < N_rap; j++) {
-                Q2_real += event_Q2_real[j][k]*event_Q2_real[j][0];
-                Q2_imag += event_Q2_imag[j][k]*event_Q2_real[j][0];
-                Q2_yield += event_Q2_real[j][0];
-            }
-            if (k == 0) {
-                Q2_real = Q2_yield;
-                Q2_imag = 0.0;
-            } else {
-                Q2_real /= Q2_yield;
-                Q2_imag /= Q2_yield;
+                Q2_real += event_Q2_real[j][k];
+                Q2_imag += event_Q2_imag[j][k];
             }
         }
 
