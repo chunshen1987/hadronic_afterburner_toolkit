@@ -392,8 +392,8 @@ def calcualte_vn_2(vn_data_array):
 def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     npT = 50
     pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
-    dN_event = data[:, 2]
-    dN_ref_event = data_ref[:, 2]
+    dN_event = data[:, -1]
+    dN_ref_event = data_ref[:, -1]
     pT_ref_event = data_ref[:, 0]
     dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
                                log(dN_ref_event + 1e-30)))
