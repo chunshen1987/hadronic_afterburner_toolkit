@@ -770,6 +770,7 @@ for ipart, particle_id in enumerate(particle_list):
     for ifolder in range(nev):
         results_folder = path.abspath(file_folder_list[ifolder])
         temp_data = loadtxt(path.join(results_folder, file_name))
+        temp_data = nan_to_num(temp_data)
 
         dN_dy.append(temp_data[0, 1])
 
@@ -802,7 +803,9 @@ for ipart, particle_id in enumerate(particle_list):
     for ifolder in range(nev):
         results_folder = path.abspath(file_folder_list[ifolder])
         temp_data = loadtxt(path.join(results_folder, file_name))
+        temp_data = nan_to_num(temp_data)
         temp_data_ref = loadtxt(path.join(results_folder, file_name_ref))
+        temp_data_ref = nan_to_num(temp_data_ref)
         
         dN_event = temp_data[:, 2]  # dN/(2pi dy pT dpT)
         pT_event = temp_data[:, 0]
@@ -986,6 +989,7 @@ for ipart, particle_id in enumerate(particle_list):
     for ifolder in range(nev):
         results_folder = path.abspath(file_folder_list[ifolder])
         temp_data = loadtxt(path.join(results_folder, file_name))
+        temp_data = nan_to_num(temp_data)
 
         eta_array.append(temp_data[:, 0])
         dN_array.append(temp_data[:, 1])
