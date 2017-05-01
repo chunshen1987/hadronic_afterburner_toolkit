@@ -296,7 +296,7 @@ void particleSamples::get_UrQMD_id(int monval) {
         particle_urqmd_id = 106;
         particle_urqmd_isospin = 1;
     } else if (monval == 311) {
-        // Kaon^0+
+        // Kaon^0
         particle_urqmd_id = 106;
         particle_urqmd_isospin = -1;
     } else if (monval == -321) {
