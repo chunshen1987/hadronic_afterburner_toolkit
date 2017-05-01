@@ -964,15 +964,26 @@ void singleParticleSpectra::output_Qn_vectors() {
            << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   " 
            << 0.0 << "   " << 0.0 << endl;
     for (int iorder = 1; iorder < order_max; iorder++) {
-        double vn_evavg_real = Qn_vector_real[iorder]/Qn_vector_real[0];
-        double vn_evavg_imag = Qn_vector_imag[iorder]/Qn_vector_real[0];
-        double vn_real_err = sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] 
-                                  - vn_evavg_real*vn_evavg_real)
-                             /sqrt(Qn_vector_real[0]);
-        double vn_imag_err = sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] 
-                                  - vn_evavg_imag*vn_evavg_imag)
-                             /sqrt(Qn_vector_real[0]);
-
+        double vn_evavg_real = 0.0;
+        double vn_evavg_imag = 0.0;
+        double vn_real_err = 0.0;
+        double vn_imag_err = 0.0;
+        if (Qn_vector_real[0] > 0) {
+            vn_evavg_real = Qn_vector_real[iorder]/Qn_vector_real[0];
+            vn_evavg_imag = Qn_vector_imag[iorder]/Qn_vector_real[0];
+            vn_real_err = (sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] 
+                                - vn_evavg_real*vn_evavg_real)
+                           /sqrt(Qn_vector_real[0]));
+            vn_imag_err = (sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] 
+                                - vn_evavg_imag*vn_evavg_imag)
+                           /sqrt(Qn_vector_real[0]));
+            if (isnan(vn_real_err)) {
+                vn_real_err = 0.0;
+            }
+            if (isnan(vn_imag_err)) {
+                vn_imag_err = 0.0;
+            }
+        }
         output << scientific << setw(18) << setprecision(8) << iorder << "   " 
                << vn_evavg_real << "   " << vn_real_err << "   " 
                << vn_evavg_imag << "   " << vn_imag_err << endl;
@@ -1037,6 +1048,12 @@ void singleParticleSpectra::output_Qn_vectors() {
                                 /Qn_diff_vector_real[0][ipT] 
                              - vn_evavg_imag*vn_evavg_imag)
                         /sqrt(Qn_diff_vector_real[0][ipT]));
+                if (isnan(vn_evavg_real_err)) {
+                    vn_evavg_real_err = 0.0;
+                }
+                if (isnan(vn_evavg_imag_err)) {
+                    vn_evavg_imag_err = 0.0;
+                }
                 output_diff << scientific << setw(18) << setprecision(8) 
                             << vn_evavg_real << "   " 
                             << vn_evavg_real_err << "   " 
@@ -2018,6 +2035,12 @@ void singleParticleSpectra::output_rapidity_distribution() {
                      /(vn_real_rapidity_dis_array[i][0] + 1e-30)
                      - vn_evavg_imag*vn_evavg_imag)
                 /sqrt(vn_real_rapidity_dis_array[i][0] + 1e-30));
+            if (isnan(vn_real_err)) {
+                vn_real_err = 0.0;
+            }
+            if (isnan(vn_imag_err)) {
+                vn_imag_err = 0.0;
+            }
 
             double vn_rms = sqrt(vn_evavg_real*vn_evavg_real 
                                  + vn_evavg_imag*vn_evavg_imag);
