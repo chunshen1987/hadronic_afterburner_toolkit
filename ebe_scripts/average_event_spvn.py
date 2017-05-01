@@ -1021,6 +1021,10 @@ for ipart, particle_id in enumerate(particle_list):
         # calculate symmetric cumulant coefficents with ALICE pT cut
         SC_alice = calculate_symmetric_cumulant(vn_alice_array)
 
+        # calculate vn{4}
+        vn4_cms = calculate_vn4(vn_cms_array)
+        vn4_atlas = calculate_vn4(vn_atlas_array)
+
         # calculate vn distribution for charged hadrons
         vn_phenix_dis = calculate_vn_distribution(vn_phenix_array)
         vn_star_dis = calculate_vn_distribution(vn_star_array)
@@ -1147,6 +1151,28 @@ for ipart, particle_id in enumerate(particle_list):
             f.write("%s  %.10e  %.10e\n"
                     % (symmetric_cumulant_name_list[i],
                        SC_alice[2*i], SC_alice[2*i+1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn4 for CMS pt cut
+        output_filename = ("charged_hadron_vn4_CMS.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
+        for i in range(1, 4):
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (i, vn4_cms[4*i-4], vn4_cms[4*i-3],
+                       vn4_cms[4*i-2], vn4_cms[4*i-1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn4 for ATLAS pt cut
+        output_filename = ("charged_hadron_vn4_ATLAS.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
+        for i in range(1, 4):
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (i, vn4_atlas[4*i-4], vn4_atlas[4*i-3],
+                       vn4_atlas[4*i-2], vn4_atlas[4*i-1]))
         f.close()
         shutil.move(output_filename, avg_folder)
 
