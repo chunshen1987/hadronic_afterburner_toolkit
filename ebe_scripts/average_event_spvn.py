@@ -386,7 +386,7 @@ def calcualte_vn_2(vn_data_array):
     corr = 1./(dN*(dN - 1.))*(Qn_array*conj(Qn_array) - dN)
     vn_2 = sqrt(real(mean(corr, 0))) + 1e-30
     vn_2_err = std(real(corr), 0)/sqrt(nev)/2./vn_2
-    return(vn_2, vn_2_err)
+    return(nan_to_num(vn_2), nan_to_num(vn_2_err))
 
 
 def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
@@ -459,9 +459,8 @@ def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag, vn_diff_denorm,
     vn_diff_SP = (
         mean(vn_diff_real, 0)/mean(vn_diff_denorm, 0)/vn_denorm)
     vn_diff_SP_err = sqrt(
-        ( std(vn_diff_real, 0)/sqrt(nev)/mean(vn_diff_denorm, 0)
-          /vn_denorm)**2.
-        + (vn_diff_SP*vn_denorm_err/vn_denorm)**2.)
+        (std(vn_diff_real, 0)/sqrt(nev)/mean(vn_diff_denorm, 0)/vn_denorm)**2.
+         + (vn_diff_SP*vn_denorm_err/vn_denorm)**2.)
     return(vn_diff_SP, vn_diff_SP_err)
 
 
@@ -480,7 +479,7 @@ def calculate_vn_diff_2PC(vn_diff_real, vn_diff_imag, vn_diff_denorm):
         std((vn_diff_real**2. + vn_diff_imag**2. - vn_diff_denorm)
             /(vn_diff_denorm**2. - vn_diff_denorm + 1e-15), 0)
         /sqrt(nev)/(2.*vn_diff_2PC + 1e-15))
-    return(vn_diff_2PC, vn_diff_2PC_err)
+    return(nan_to_num(vn_diff_2PC), nan_to_num(vn_diff_2PC_err))
 
 
 def calculate_vn_distribution(vn_array):
@@ -684,6 +683,7 @@ def calculate_rn_ratios(vn_event_arrays):
     rn_arrays = array(rn_arrays)
     return(rn_arrays)
 
+
 def calculate_symmetric_cumulant(vn_data_array):
     """
         this funciton computes the symmetric cumulant
@@ -741,7 +741,7 @@ def calculate_symmetric_cumulant(vn_data_array):
     #                 + (mean(v2*conj(v2))*std(v4*conj(v4)))**2.
     #                 + (mean(v4*conj(v4))*std(v2*conj(v2)))**2.)/sqrt(nev)
     SC_42 = (mean(Q_42)/mean(N4_weight)
-             - (mean(Q4_2)*mean(Q2_2))/(mean(N4_weight)**2.))
+             - (mean(Q4_2)*mean(Q2_2))/(mean(N2_weight)**2.))
     stat_err1 = (sqrt((std(Q_42)/mean(N4_weight))**2.
                       + ((std(N4_weight)*mean(Q_42))/mean(N4_weight)**2.)**2.)
                  /sqrt(nev))
@@ -754,6 +754,91 @@ def calculate_symmetric_cumulant(vn_data_array):
     results = [SC_32, SC_32_err, SC_42, SC_42_err]
     return(results)
 
+
+def calculate_vn4(vn_data_array):
+    """
+        this funciton computes the 4 particle cumulant vn{4}
+            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+    """
+    vn_data_array = array(vn_data_array)
+    nev = len(vn_data_array[:, 0])
+    dN = vn_data_array[:, 0]
+    Q1 = dN*vn_data_array[:, 1]
+    Q2 = dN*vn_data_array[:, 2]
+    Q3 = dN*vn_data_array[:, 3]
+    Q4 = dN*vn_data_array[:, 4]
+    Q5 = dN*vn_data_array[:, 5]
+    Q6 = dN*vn_data_array[:, 6]
+
+    # two-particle correlation
+    N2_weight = dN*(dN - 1.)
+    Q1_2 = abs(Q1)**2. - dN
+    Q2_2 = abs(Q2)**2. - dN
+    Q3_2 = abs(Q3)**2. - dN
+
+    # four-particle correlation
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
+             - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
+             + 2*dN*(dN - 3.))
+    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
+             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
+             + 2*dN*(dN - 3.))
+    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
+             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
+             + 2*dN*(dN - 3.))
+
+    # C_n{4}
+    C_1_4 = mean(Q1_4)/mean(N4_weight) - 2.*((mean(Q1_2)/mean(N2_weight))**2.)
+    stat_err_1 = sqrt((std(Q1_4)/mean(N4_weight))**2.
+                      + (mean(Q1_4)*std(N4_weight)/(mean(N4_weight)**2.))**2.
+                     )/sqrt(nev)
+    stat_err_2 = sqrt((std(Q1_2)/mean(N2_weight))**2.
+                      + (mean(Q1_2)*std(N2_weight)/(mean(N2_weight)**2.))**2.
+                     )/sqrt(nev)
+    C_1_4_err = sqrt(stat_err_1**2.
+                     + (4.*(mean(Q1_2)/mean(N2_weight))*stat_err_2)**2.)
+    v1_4 = 0.0
+    v1_4_err = 0.0
+    if C_1_4 < 0:
+        v1_4 = (-C_1_4)**0.25
+        v1_4_err = 0.25*((-C_1_4)**(-0.75))*C_1_4_err
+
+    
+    C_2_4 = mean(Q2_4)/mean(N4_weight) - 2.*((mean(Q2_2)/mean(N2_weight))**2.)
+    stat_err_1 = sqrt((std(Q2_4)/mean(N4_weight))**2.
+                      + (mean(Q2_4)*std(N4_weight)/(mean(N4_weight)**2.))**2.
+                     )/sqrt(nev)
+    stat_err_2 = sqrt((std(Q2_2)/mean(N2_weight))**2.
+                      + (mean(Q2_2)*std(N2_weight)/(mean(N2_weight)**2.))**2.
+                     )/sqrt(nev)
+    C_2_4_err = sqrt(stat_err_1**2.
+                     + (4.*(mean(Q2_2)/mean(N2_weight))*stat_err_2)**2.)
+    v2_4 = 0.0
+    v2_4_err = 0.0
+    if C_2_4 < 0:
+        v2_4 = (-C_2_4)**0.25
+        v2_4_err = 0.25*((-C_2_4)**(-0.75))*C_2_4_err
+
+    C_3_4 = mean(Q3_4)/mean(N4_weight) - 2.*((mean(Q3_2)/mean(N2_weight))**2.)
+    stat_err_1 = sqrt((std(Q3_4)/mean(N4_weight))**2.
+                      + (mean(Q3_4)*std(N4_weight)/(mean(N4_weight)**2.))**2.
+                     )/sqrt(nev)
+    stat_err_2 = sqrt((std(Q3_2)/mean(N2_weight))**2.
+                      + (mean(Q3_2)*std(N2_weight)/(mean(N2_weight)**2.))**2.
+                     )/sqrt(nev)
+    C_3_4_err = sqrt(stat_err_1**2.
+                     + (4.*(mean(Q3_2)/mean(N2_weight))*stat_err_2)**2.)
+    v3_4 = 0.0
+    v3_4_err = 0.0
+    if C_3_4 < 0:
+        v3_4 = (-C_3_4)**0.25
+        v3_4_err = 0.25*((-C_3_4)**(-0.75))*C_3_4_err
+
+    results = [v1_4, v1_4_err, C_1_4, C_1_4_err,
+               v2_4, v2_4_err, C_2_4, C_2_4_err,
+               v3_4, v3_4_err, C_3_4, C_3_4_err,]
+    return(results)
 
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
