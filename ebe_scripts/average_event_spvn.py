@@ -397,7 +397,7 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     pT_ref_event = data_ref[:, 0]
     dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
                                log(dN_ref_event + 1e-30)))
-    dN_ref = sum(dN_ref_interp*pT_inte_array)
+    dN_ref = sum(dN_ref_interp)
     temp_vn_real_array = []
     temp_vn_imag_array = []
     temp_vn_denorm_array = []
@@ -411,11 +411,9 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
         vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
                                     vn_ref_imag_event)
         vn_ref_real_inte = (
-            sum(vn_ref_real_interp*dN_ref_interp*pT_inte_array)
-            /sum(dN_ref_interp*pT_inte_array))
+            sum(vn_ref_real_interp*dN_ref_interp)/sum(dN_ref_interp))
         vn_ref_imag_inte = (
-            sum(vn_ref_imag_interp*dN_ref_interp*pT_inte_array)
-            /sum(dN_ref_interp*pT_inte_array))
+            sum(vn_ref_imag_interp*dN_ref_interp)/sum(dN_ref_interp))
         vn_ref = vn_ref_real_inte + 1j*vn_ref_imag_inte
         vn_pt = vn_real_event + 1j*vn_imag_event
         numerator_real = real(dN_event*vn_pt*dN_ref*conj(vn_ref))
