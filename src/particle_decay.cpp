@@ -348,7 +348,8 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
         cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2 << endl;
         exit(1);
     }
-    double M_sampled = sample_breit_wigner(M_pole, M_width, M_min);
+    //double M_sampled = sample_breit_wigner(M_pole, M_width, M_min);
+    double M_sampled = M_pole;
     double temp = M_sampled*M_sampled - m1*m1 - m2*m2;
     double p_lrf = sqrt(temp*temp - 4*m1*m1*m2*m2)/(2*M_sampled);
 
@@ -419,13 +420,17 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     double m3 = daughter3->mass;
     double M_min = m1 + m2 + m3;
     if (M_pole < M_min) {
-        cout << "Error:particleSamples::perform_two_body_decay:"
+        cout << "Error:particleSamples::perform_three_body_decay:"
              << "can not found decays!" << endl;
         cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2
              << ", m3 = " << m3 << endl;
+        cout << "reso: " << mother->monval << ", m1: " << daughter1->monval
+             << ", m2: " << daughter2->monval << ", m3: " << daughter3->monval
+             << endl;
         exit(1);
     }
-    double M_sampled = sample_breit_wigner(M_pole, M_width, M_min);
+    //double M_sampled = sample_breit_wigner(M_pole, M_width, M_min);
+    double M_sampled = M_pole;
     // generate lrf E1, E2, and theta12 using accept and reject method
     double E1_lrf, E2_lrf, E3_lrf, p1_lrf, p2_lrf, cos12_lrf;
     do {

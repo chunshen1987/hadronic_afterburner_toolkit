@@ -24,7 +24,7 @@ resonance_weak_feed_down_flag = 0    # include weak feed down contribution
 resonance_feed_down_flag = 1  # perform resonance feed down
                               # (will read in all hadrons and filter particle
                               #  after decays are performed)
-select_resonances_flag = 1    # perform resonance decays only for selected
+select_resonances_flag = 0    # perform resonance decays only for selected
                               # particle species
 net_particle_flag = 0         # flag to collect net particle yield distribution
 
@@ -58,8 +58,8 @@ intrinsic_detas = 0.1         # deta_s in the output samples
 intrinsic_dtau = 0.01         # dtau in the output samples
 intrinsic_dx = 0.1            # dx in the output samples
 
-compute_correlation = 1       # flag to compute correlation function
-flag_charge_dependence = 1    # flag to compute charge dependence correlation
+compute_correlation = 0       # flag to compute correlation function
+flag_charge_dependence = 0    # flag to compute charge dependence correlation
 
 # Parameters for HBT correlation functions
 reject_decay_flag = 0         # reject particles from resonance decays
