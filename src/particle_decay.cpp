@@ -342,7 +342,7 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     double m1 = daughter1->mass;
     double m2 = daughter2->mass;
     double M_min = m1 + m2;
-    if (M_pole < (m1 + m2)) {
+    if (M_pole < M_min) {
         cout << "Error:particleSamples::perform_two_body_decay:"
              << "can not found decays!" << endl;
         cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2 << endl;

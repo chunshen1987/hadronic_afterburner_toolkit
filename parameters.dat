@@ -1,5 +1,5 @@
 echo_level = 9                # control the mount of print messages
-read_in_mode = 0              # mode for reading in particle information 
+read_in_mode = 2              # mode for reading in particle information 
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from zipped UrQMD outputs
@@ -15,20 +15,20 @@ run_mode = 0                  # running mode for the program
                               #    specified by pT_min, pT_max, rap_min,
                               #    and rap_max)
 
-particle_monval = 211         # particle Monte-Carlo number
+particle_monval = 221         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
                                      # turn on only for Lambda (monval=3122)
                                      # for Sigma^0 -> Lambda + gamma
-resonance_feed_down_flag = 1  # perform resonance feed down
+resonance_feed_down_flag = 0  # perform resonance feed down
                               # (will read in all hadrons and filter particle
                               #  after decays are performed)
 select_resonances_flag = 0    # perform resonance decays only for selected
                               # particle species
 net_particle_flag = 0         # flag to collect net particle yield distribution
 
-event_buffer_size = 5000      # the number of events read in at once
+event_buffer_size = 500       # the number of events read in at once
 
 
 # Parameters for single particle spectra and vn
