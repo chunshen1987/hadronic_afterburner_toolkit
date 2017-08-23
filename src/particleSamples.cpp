@@ -70,7 +70,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         resonance_weak_feed_down_flag = 0;
     }
 
-    if (particle_monval == 333 || particle_monval == 221) {
+    if (particle_monval == 333) {
         // for phi(1020) meson, we need reconstruct them from (K^+ K^-) pairs
         reconst_flag = 1;
         reconst_list_1 = new vector< vector<particle_info>* >;
@@ -636,13 +636,6 @@ void particleSamples::decide_to_pick_UrQMD_reconst(
             // current particle is K^- from a decay
             *flag2 = 1;
         }
-    } else if (particle_monval == 221) {
-        // particle of interest is eta
-        // collect (gamma, gamma) pairs for reconstruction
-        if (pid == 100) {
-            *flag1 = 1;
-            *flag2 = 1;
-        }
     }
     return;
 }
@@ -886,13 +879,6 @@ int particleSamples::read_in_particle_samples_JAM() {
                             reconst_1_pick_flag = 1;
                         } else if (temp_monval == -321) {
                             // current particle is K^-
-                            reconst_2_pick_flag = 1;
-                        }
-                    } else if (particle_monval == 221) {
-                        // particle of interest is eta
-                        if (temp_monval == 22) {
-                            // current particle is gamma
-                            reconst_1_pick_flag = 1;
                             reconst_2_pick_flag = 1;
                         }
                     }
@@ -1356,11 +1342,6 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                                + net_particle_flag
                                + reconst_1_pick_flag + reconst_2_pick_flag);
                 if (trigger > 0) {
-                    cout << "p = " << pick_flag
-                         << ", recon1 = " << reconst_1_pick_flag
-                         << ", recon2 = " << reconst_2_pick_flag
-                         << endl;
-
                     particle_info *temp_particle_info = new particle_info;
                     temp2 >> temp_particle_info->mass
                           >> temp_particle_info->t
@@ -1373,8 +1354,6 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                           >> temp_particle_info->pz;
                     temp_particle_info->monval = get_pdg_id(urqmd_pid,
                                                             urqmd_iso3);
-
-                    cout << temp_particle_info->mass << endl;
 
                     if (pick_flag == 1) {
                         if (reject_decay_flag == 2 && parent_proc_type == 20) {
@@ -2183,66 +2162,6 @@ void particleSamples::perform_particle_reconstruction() {
                     if (fabs(invariant_mass - particle_mass)
                         < particle_width) {
                         // phi(1020) resonance found
-                        double spatial_distance = sqrt(
-                            (t_1 - t_2)*(t_1 - t_2)
-                            + (x_1 - x_2)*(x_1 - x_2)
-                            + (y_1 - y_2)*(y_1 - y_2)
-                            + (z_1 - z_2)*(z_1 - z_2));
-                        if (spatial_distance < 0.01) {
-                            // this is a real phi(1020)
-                            particle_info *mother = new particle_info;
-                            mother->mass = particle_mass;
-                            mother->E = E;
-                            mother->px = px;
-                            mother->py = py;
-                            mother->pz = pz;
-                            mother->t = (t_1 + t_2)/2.;
-                            mother->x = (x_1 + x_2)/2.;
-                            mother->y = (y_1 + y_2)/2.;
-                            mother->z = (z_1 + z_2)/2.;
-                            (*particle_list)[iev]->push_back(*mother);
-                        }
-                    }
-                }
-            }
-        }
-    } else if (particle_monval == 221) {
-        // particle of interest is eta
-        double particle_mass = 0.547;
-        double particle_width = 0.001;
-
-        // now we loop over events
-        for (unsigned int iev = 0; iev < reconst_list_1->size(); iev++) {
-            // we first perfrom the (gamma, gamma) pair
-            for (unsigned int i = 0; i < (*reconst_list_1)[iev]->size(); i++) {
-                double E_1 = (*(*reconst_list_1)[iev])[i].E;
-                double px_1 = (*(*reconst_list_1)[iev])[i].px;
-                double py_1 = (*(*reconst_list_1)[iev])[i].py;
-                double pz_1 = (*(*reconst_list_1)[iev])[i].pz;
-                double t_1 = (*(*reconst_list_1)[iev])[i].t;
-                double x_1 = (*(*reconst_list_1)[iev])[i].x;
-                double y_1 = (*(*reconst_list_1)[iev])[i].y;
-                double z_1 = (*(*reconst_list_1)[iev])[i].z;
-                for (unsigned int j = i + 1;
-                        j < (*reconst_list_2)[iev]->size(); j++) {
-                    double E_2 = (*(*reconst_list_2)[iev])[j].E;
-                    double px_2 = (*(*reconst_list_2)[iev])[j].px;
-                    double py_2 = (*(*reconst_list_2)[iev])[j].py;
-                    double pz_2 = (*(*reconst_list_2)[iev])[j].pz;
-                    double t_2 = (*(*reconst_list_2)[iev])[j].t;
-                    double x_2 = (*(*reconst_list_2)[iev])[j].x;
-                    double y_2 = (*(*reconst_list_2)[iev])[j].y;
-                    double z_2 = (*(*reconst_list_2)[iev])[j].z;
-
-                    // compute the invariant mass
-                    double E = E_1 + E_2;
-                    double px = px_1 + px_2;
-                    double py = py_1 + py_2;
-                    double pz = pz_1 + pz_2;
-                    double invariant_mass = sqrt(E*E - px*px - py*py - pz*pz);
-                    if (fabs(invariant_mass - particle_mass)
-                        < particle_width) {
-                        // eta resonance found
                         double spatial_distance = sqrt(
                             (t_1 - t_2)*(t_1 - t_2)
                             + (x_1 - x_2)*(x_1 - x_2)
