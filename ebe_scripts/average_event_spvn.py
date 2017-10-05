@@ -651,7 +651,7 @@ def calculate_rn_ratios(vn_event_arrays):
     # it returns rn_arrays[iorder, pT_idx, 3]
     vn_event_arrays = array(vn_event_arrays)
     rn_arrays = []
-    for iorder in range(2, 5):
+    for iorder in range(3, 6):
         # compute r2, r3, r4
         rn_array = []
         for itrig in range(3, len(vn_event_arrays[0, :, 0])):
