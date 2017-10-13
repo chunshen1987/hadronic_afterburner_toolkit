@@ -644,12 +644,33 @@ void particleSamples::decide_to_pick_UrQMD_reconst(
     return;
 }
 
-int particleSamples::decide_to_pick_JAM(int pid) {
+int particleSamples::decide_to_pick_JAM(int pid, int *charge_flag) {
     int pick_flag = 0;
     for (int i = 0; i < 6; i++) {
         if (abs(pid) == charged_hadron_pdg_list[i]) {
             // includes anti-particles
-            pick_flag = 1;
+            if (particle_monval == 9999) {
+                pick_flag = 1;
+            }
+            if (pid > 0) {
+                if (i < 4) {
+                    *charge_flag = 1;
+                } else {
+                    *charge_flag = -1;
+                }
+            } else {
+                if (i < 4) {
+                    *charge_flag = -1;
+                } else {
+                    *charge_flag = 1;
+                }
+            }
+            if (particle_monval == 9998 && *charge_flag == 1) {
+                pick_flag = 1;
+            }
+            if (particle_monval == -9998 && *charge_flag == -1) {
+                pick_flag = 1;
+            }
             break;
         }
     }
@@ -817,6 +838,16 @@ int particleSamples::read_in_particle_samples_JAM() {
         reconst_list_2->clear();
     }
     
+    
+    if (flag_charge_dependence == 1) {
+        for (unsigned int i = 0; i < positive_charge_hadron_list->size(); i++)
+            (*positive_charge_hadron_list)[i]->clear();
+        positive_charge_hadron_list->clear();
+        for (unsigned int i = 0; i < negative_charge_hadron_list->size(); i++)
+            (*negative_charge_hadron_list)[i]->clear();
+        negative_charge_hadron_list->clear();
+    }
+    
     string temp_string;
     int event_id, n_particle;
     char cdummy;
@@ -837,10 +868,30 @@ int particleSamples::read_in_particle_samples_JAM() {
                 reconst_list_1->push_back(new vector<particle_info>);
                 reconst_list_2->push_back(new vector<particle_info>);
             }
+            
+            if (flag_charge_dependence == 1) {
+                positive_charge_hadron_list->push_back(
+                                                new vector<particle_info>);
+                negative_charge_hadron_list->push_back(
+                                                new vector<particle_info>);
+            }
 
             int idx = ievent;
+            (*particle_list)[idx]->clear(); // clean out the previous record
+            if (resonance_weak_feed_down_flag == 1) {
+                (*resonance_list)[idx]->clear();
+            }
+            if (reconst_flag == 1) {
+                (*reconst_list_1)[idx]->clear();
+                (*reconst_list_2)[idx]->clear();
+            }
+            if (flag_charge_dependence == 1) {
+                (*positive_charge_hadron_list)[idx]->clear();
+                (*negative_charge_hadron_list)[idx]->clear();
+            }
 
             int pick_flag = 0;
+            int charge_flag = 0;
             int resonance_pick_flag = 0;
             int reconst_1_pick_flag = 0;
             int reconst_2_pick_flag = 0;
@@ -861,8 +912,10 @@ int particleSamples::read_in_particle_samples_JAM() {
                     else
                         pick_flag = 0;
                 }
-                if (particle_monval == 9999)
-                    pick_flag = decide_to_pick_JAM(temp_monval);
+
+                if (fabs(particle_monval) > 9990) {
+                    pick_flag = decide_to_pick_JAM(temp_monval, &charge_flag);
+                }
 
                 if (resonance_weak_feed_down_flag == 1) {
                     if (temp_monval == 3122 && particle_monval == 3212) {
@@ -908,6 +961,15 @@ int particleSamples::read_in_particle_samples_JAM() {
                         + temp_particle_info->pz*temp_particle_info->pz);
                     if (pick_flag == 1) {
                         (*particle_list)[idx]->push_back(*temp_particle_info);
+                        if (flag_charge_dependence == 1) {
+                            if (charge_flag > 0) {
+                                (*positive_charge_hadron_list)[idx]->push_back(
+                                                    *temp_particle_info);
+                            } else {
+                                (*negative_charge_hadron_list)[idx]->push_back(
+                                                    *temp_particle_info);
+                            }
+                        }
                     } else if (resonance_pick_flag == 1) {
                         temp_particle_info->monval = temp_monval;
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
@@ -1003,6 +1065,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
             int idx = ievent;
 
             int pick_flag = 0;
+            int charge_flag = 0;
             int resonance_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile_mixed_event, temp_string);
@@ -1019,8 +1082,9 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
                     else
                         pick_flag = 0;
                 }
-                if (particle_monval == 9999)
-                    pick_flag = decide_to_pick_JAM(temp_monval);
+                if (particle_monval == 9999) {
+                    pick_flag = decide_to_pick_JAM(temp_monval, &charge_flag);
+                }
 
                 if (resonance_weak_feed_down_flag == 1) {
                     // pick up Sigma^0 for Lambda

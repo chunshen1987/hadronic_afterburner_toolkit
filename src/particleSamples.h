@@ -108,7 +108,7 @@ class particleSamples {
     void decide_to_pick_UrQMD_reconst(
                 int pid, int iso3, int charge, int parent_proc_type,
                 int *flag1, int *flag2);
-    int decide_to_pick_JAM(int pid);
+    int decide_to_pick_JAM(int pid, int *charge_flag);
     int decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
                                             int charge);
     int decide_to_pick_from_OSCAR_file(int monval);

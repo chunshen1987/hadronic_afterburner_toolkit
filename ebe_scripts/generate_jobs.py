@@ -152,15 +152,37 @@ def generate_script_JAM(cluster_name, folder_name):
 """
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scratch/irulan/chun/JAM/JAM_lib/lib
 mkdir JAM_results
-for iev in `ls OSCAR_events`
+mkdir spvn_results
+for iev in `ls hydro_events --color=none | grep "surface"`
 do
-    eventid=`echo $iev | cut -f 2 -d "_" | cut -f 1 -d "."`
-    cd JAM
-    mv ../OSCAR_events/$iev ./OSCAR.DAT
+    event_id=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    cd iSS
+    if [ -d "results" ]; then
+        rm -fr results
+    fi
+    mkdir results
+    mv ../hydro_events/$iev results/surface.dat
+    cp ../hydro_events/music_input_event_$event_id results/music_input
+    ./iSS.e >> ../output.log
+    mv results/surface.dat ../hydro_events/$iev
+    cd ../JAM
+    mv ../iSS/OSCAR.DAT ./OSCAR.DAT
     rm -fr phase.dat
     ./jamgo
-    mv phase.dat ../JAM_results/particle_list_$eventid.dat
-    mv OSCAR.DAT ../OSCAR_events/OSCAR_$eventid.dat
+    mv phase.dat ../JAM_results/particle_list_$event_id.dat
+    rm -fr OSCAR.DAT
+    cd ..
+    
+    cd hadronic_afterburner_toolkit
+    rm -fr results
+    mkdir results
+    mv ../JAM_results/particle_list_$event_id.dat results/particle_list.dat
+""")
+    write_analysis_spectra_and_vn_commands(script, "JAM")
+    script.write(
+"""
+    mv results/particle_list.dat ../JAM_results/particle_list_$event_id.gz
+    mv results ../spvn_results/event_$event_id
     cd ..
 done
 """)
@@ -546,13 +568,18 @@ def generate_event_folder_UrQMD(cluster_name, working_folder, event_id, mode):
 def generate_event_folder_JAM(cluster_name, working_folder, event_id, mode):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
+    mkdir(path.join(event_folder, 'hydro_events'))
 
     if mode == 5:
-        # run JAM with OSCAR files
-        mkdir(path.join(event_folder, 'OSCAR_events'))
+        # run JAM with hydro surface files and collect particle spectra and vn
         generate_script_JAM(cluster_name, event_folder)
+        shutil.copytree('codes/iSS', 
+                        path.join(path.abspath(event_folder), 'iSS'))
         shutil.copytree('codes/JAM', 
                         path.join(path.abspath(event_folder), 'JAM'))
+        shutil.copytree('codes/hadronic_afterburner_toolkit', 
+                        path.join(path.abspath(event_folder), 
+                        'hadronic_afterburner_toolkit'))
     elif mode == 6:
         # collect particle spectra and vn with JAM outputs
         mkdir(path.join(event_folder, 'JAM_events'))
@@ -700,7 +727,7 @@ if __name__ == "__main__":
     elif mode == 5:   # run JAM with OSCAR events
         for icore in range(ncore):
             generate_event_folder_JAM(cluster_name, folder_name, icore, mode)
-        copy_OSCAR_events(ncore, from_folder, folder_name)
+        copy_hydro_events(ncore, from_folder, folder_name)
     elif mode == 6:   # collect spectra and vn with JAM events
         for icore in range(ncore):
             generate_event_folder_JAM(cluster_name, folder_name, icore, mode)
