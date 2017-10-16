@@ -1107,12 +1107,9 @@ void singleParticleSpectra::calculate_two_particle_correlation_deltaeta(
             temp_corr[j] = 0.0;
         }
         for (int ii = 0; ii < N_rap; ii++) {
-            double rap_1 = rapidity_dis_min + ii*drap;
             for (int jj = 0; jj < N_rap; jj++) {
-                double rap_2 = rapidity_dis_min + jj*drap;
-                double delta_eta = rap_1 - rap_2;
-                int rap_idx = static_cast<int>(
-                                        (delta_eta - rapidity_dis_min)/drap);
+                int rap_idx = ((ii - jj) - static_cast<int>(
+                                                    rapidity_dis_min/drap));
                 if (rap_idx >= 0 && rap_idx < N_rap) {
                     double QnSP_rap_local = (
                         event_Qn_diff_real[ii][i]*event_Qn_diff_real[jj][i]
@@ -1329,12 +1326,9 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
             temp_corr[kk] = 0.0;
         }
         for (int ii = 0; ii < N_rap; ii++) {
-            double rap_1 = rapidity_dis_min + ii*drap;
             for (int jj = 0; jj < N_rap; jj++) {
-                double rap_2 = rapidity_dis_min + jj*drap;
-                double delta_eta = rap_1 - rap_2;
-                int rap_idx = static_cast<int>(
-                                        (delta_eta - rapidity_dis_min)/drap);
+                int rap_idx = ((ii - jj) - static_cast<int>(
+                                                    rapidity_dis_min/drap));
                 if (rap_idx >= 0 && rap_idx < N_rap) {
                     double Qn_Qm_Qkstar = 0.0;
                     double Qn_Qnstar = 0.0;
