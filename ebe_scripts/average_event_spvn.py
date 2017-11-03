@@ -48,11 +48,11 @@ except IndexError:
     print("Usage: average_event_spvn.py working_folder results_folder")
     exit(1)
 
-particle_list = ['211', '-211', '321', '-321', '311', '-311', '2212', '-2212', 
+particle_list = ['211', '-211', '321', '-321', '2212', '-2212', 
                  '3122', '-3122', '3312', '-3312', '3334', '-3334',
                  '333', '9999']
 particle_name_list = ['pion_p', 'pion_m', 'kaon_p', 'kaon_m',
-                      'kaon_0', 'anti_kaon_0', 'proton', 'anti_proton',
+                      'proton', 'anti_proton',
                       'Lambda', 'anti_Lambda', 'Xi_m', 'anti_Xi_p',
                       'Omega', 'anti_Omega', 'phi', 'charged_hadron']
 nonlinear_reponse_correlator_name_list = [
@@ -392,12 +392,13 @@ def calcualte_vn_2(vn_data_array):
 def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     npT = 50
     pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
+    dpT = pT_inte_array[1] - pT_inte_array[0]
     dN_event = data[:, -1]
     dN_ref_event = data_ref[:, -1]
     pT_ref_event = data_ref[:, 0]
     dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
                                log(dN_ref_event + 1e-30)))
-    dN_ref = sum(dN_ref_interp)
+    dN_ref = sum(dN_ref_interp)*dpT
     temp_vn_real_array = []
     temp_vn_imag_array = []
     temp_vn_denorm_array1 = []
@@ -423,8 +424,8 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
         denorm2 = real(dN_ref*vn_ref*dN_ref*conj(vn_ref))
         temp_vn_real_array.append(numerator_real)
         temp_vn_imag_array.append(numerator_imag)
+        temp_vn_denorm_array2.append(denorm2)
     temp_vn_denorm_array1.append(denorm1)
-    temp_vn_denorm_array2.append(denorm2)
     return(temp_vn_real_array, temp_vn_imag_array,
            temp_vn_denorm_array1, temp_vn_denorm_array2)
 
@@ -464,8 +465,10 @@ def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag,
     #vn_denorm_err = vn_2_err.reshape(len(vn_2_err), 1)
     dn_diff_denorm = mean(vn_diff_denorm1, 0)
     dn_diff_denorm_err = std(vn_diff_denorm1, 0)/sqrt(nev)
-    vn_denorm = (sqrt(mean(vn_diff_denorm2, 0))).reshape(len(vn_denorm), 1)
-    vn_denorm_err = (std(vn_diff_denorm2, 0)/sqrt(nev)).reshape(len(vn_denorm), 1)
+    vn_denorm = sqrt(mean(vn_diff_denorm2, 0))
+    vn_denorm_err = (std(vn_diff_denorm2, 0)/sqrt(nev)/2./vn_denorm)
+    vn_denorm = vn_denorm.reshape(len(vn_denorm), 1)
+    vn_denorm_err = vn_denorm_err.reshape(len(vn_denorm), 1)
 
     vn_diff_SP = mean(vn_diff_real, 0)/dn_diff_denorm/vn_denorm
     vn_diff_SP_err = sqrt(
@@ -1088,9 +1091,9 @@ for ipart, particle_id in enumerate(particle_list):
     
     # then particle rapidity distribution
     if particle_id == '9999':
-        file_name = 'particle_%s_dNdeta_pT_0.15_2.dat' % particle_id
+        file_name = 'particle_%s_dNdeta_pT_0.2_3.dat' % particle_id
     else:
-        file_name = 'particle_%s_dNdy_pT_0.15_2.dat' % particle_id
+        file_name = 'particle_%s_dNdy_pT_0.2_3.dat' % particle_id
 
     eta_array = []
     dN_array = []
