@@ -40,7 +40,7 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
     buffer_rapidity = paraRdr->getVal("buffer_rapidity");
 
     dKT = (KT_max - KT_min)/(n_KT - 1);
-    dKphi = 2*M_PI/(n_Kphi - 1);
+    dKphi = 2*M_PI/n_Kphi;                  // does not need 0 and 2*pi
     
     KT_array = new double [n_KT];
     number_of_pairs_numerator_KTdiff = new unsigned long long int [n_KT];
@@ -52,8 +52,9 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
     }
       
     Kphi_array = new double [n_Kphi];
-    for (int i = 0; i < n_Kphi; i++)
+    for (int i = 0; i < n_Kphi; i++) {
         Kphi_array[i] = 0.0 + i*dKphi;
+    }
 
     number_of_pairs_numerator_KTKphidiff = new unsigned long long int* [n_KT];
     number_of_pairs_denormenator_KTKphidiff = (
@@ -75,33 +76,33 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
     number_pairs_num = 0;
     number_pairs_denorm = 0;
     if (azimuthal_flag == 0) {
-        q_out_mean = new double ***[n_KT];
-        q_side_mean = new double ***[n_KT];
-        q_long_mean = new double ***[n_KT];
-        correl_3d_num = new double *** [n_KT];
-        correl_3d_num_count = new double *** [n_KT];
-        correl_3d_denorm = new double *** [n_KT];
+        q_out_mean = new double*** [n_KT];
+        q_side_mean = new double*** [n_KT];
+        q_long_mean = new double*** [n_KT];
+        correl_3d_num = new double*** [n_KT];
+        correl_3d_num_count = new double*** [n_KT];
+        correl_3d_denorm = new double*** [n_KT];
         for (int iK = 0; iK < n_KT; iK++) {
-            q_out_mean[iK] = new double ** [qnpts];
-            q_side_mean[iK] = new double ** [qnpts];
-            q_long_mean[iK] = new double ** [qnpts];
-            correl_3d_num[iK] = new double ** [qnpts];
-            correl_3d_num_count[iK] = new double ** [qnpts];
-            correl_3d_denorm[iK] = new double ** [qnpts];
+            q_out_mean[iK] = new double** [qnpts];
+            q_side_mean[iK] = new double** [qnpts];
+            q_long_mean[iK] = new double** [qnpts];
+            correl_3d_num[iK] = new double** [qnpts];
+            correl_3d_num_count[iK] = new double** [qnpts];
+            correl_3d_denorm[iK] = new double** [qnpts];
             for (int i = 0; i < qnpts; i++) {
-                q_out_mean[iK][i] = new double * [qnpts];
-                q_side_mean[iK][i] = new double * [qnpts];
-                q_long_mean[iK][i] = new double * [qnpts];
-                correl_3d_num[iK][i] = new double * [qnpts];
-                correl_3d_num_count[iK][i] = new double * [qnpts];
-                correl_3d_denorm[iK][i] = new double * [qnpts];
+                q_out_mean[iK][i] = new double* [qnpts];
+                q_side_mean[iK][i] = new double* [qnpts];
+                q_long_mean[iK][i] = new double* [qnpts];
+                correl_3d_num[iK][i] = new double* [qnpts];
+                correl_3d_num_count[iK][i] = new double* [qnpts];
+                correl_3d_denorm[iK][i] = new double* [qnpts];
                 for (int j = 0; j < qnpts; j++) {
-                    q_out_mean[iK][i][j] = new double [qnpts];
-                    q_side_mean[iK][i][j] = new double [qnpts];
-                    q_long_mean[iK][i][j] = new double [qnpts];
-                    correl_3d_num[iK][i][j] = new double [qnpts];
-                    correl_3d_num_count[iK][i][j] = new double [qnpts];
-                    correl_3d_denorm[iK][i][j] = new double [qnpts];
+                    q_out_mean[iK][i][j] = new double[qnpts];
+                    q_side_mean[iK][i][j] = new double[qnpts];
+                    q_long_mean[iK][i][j] = new double[qnpts];
+                    correl_3d_num[iK][i][j] = new double[qnpts];
+                    correl_3d_num_count[iK][i][j] = new double[qnpts];
+                    correl_3d_denorm[iK][i][j] = new double[qnpts];
                     for (int k = 0; k < qnpts; k++) {
                         q_out_mean[iK][i][j][k] = 0.0;
                         q_side_mean[iK][i][j][k] = 0.0;
@@ -114,46 +115,46 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
             }
         }
     } else {
-        q_out_diff_mean = new double **** [n_KT];
-        q_side_diff_mean = new double **** [n_KT];
-        q_long_diff_mean = new double **** [n_KT];
-        correl_3d_Kphi_diff_num = new double **** [n_KT];
-        correl_3d_Kphi_diff_num_count = new double **** [n_KT];
-        correl_3d_Kphi_diff_denorm = new double **** [n_KT];
+        q_out_diff_mean = new double**** [n_KT];
+        q_side_diff_mean = new double**** [n_KT];
+        q_long_diff_mean = new double**** [n_KT];
+        correl_3d_Kphi_diff_num = new double**** [n_KT];
+        correl_3d_Kphi_diff_num_count = new double**** [n_KT];
+        correl_3d_Kphi_diff_denorm = new double**** [n_KT];
         for (int iK = 0; iK < n_KT; iK++) {
-            q_out_diff_mean[iK] = new double *** [n_Kphi];
-            q_side_diff_mean[iK] = new double *** [n_Kphi];
-            q_long_diff_mean[iK] = new double *** [n_Kphi];
-            correl_3d_Kphi_diff_num[iK] = new double *** [n_Kphi];
-            correl_3d_Kphi_diff_num_count[iK] = new double *** [n_Kphi];
-            correl_3d_Kphi_diff_denorm[iK] = new double *** [n_Kphi];
+            q_out_diff_mean[iK] = new double*** [n_Kphi];
+            q_side_diff_mean[iK] = new double*** [n_Kphi];
+            q_long_diff_mean[iK] = new double*** [n_Kphi];
+            correl_3d_Kphi_diff_num[iK] = new double*** [n_Kphi];
+            correl_3d_Kphi_diff_num_count[iK] = new double*** [n_Kphi];
+            correl_3d_Kphi_diff_denorm[iK] = new double*** [n_Kphi];
             for (int iphi = 0; iphi < n_Kphi; iphi++) {
-                q_out_diff_mean[iK][iphi] = new double ** [qnpts];
-                q_side_diff_mean[iK][iphi] = new double ** [qnpts];
-                q_long_diff_mean[iK][iphi] = new double ** [qnpts];
-                correl_3d_Kphi_diff_num[iK][iphi] = new double ** [qnpts];
-                correl_3d_Kphi_diff_num_count[iK][iphi] = new double ** [qnpts];
-                correl_3d_Kphi_diff_denorm[iK][iphi] = new double ** [qnpts];
+                q_out_diff_mean[iK][iphi] = new double** [qnpts];
+                q_side_diff_mean[iK][iphi] = new double** [qnpts];
+                q_long_diff_mean[iK][iphi] = new double** [qnpts];
+                correl_3d_Kphi_diff_num[iK][iphi] = new double** [qnpts];
+                correl_3d_Kphi_diff_num_count[iK][iphi] = new double** [qnpts];
+                correl_3d_Kphi_diff_denorm[iK][iphi] = new double** [qnpts];
                 for (int i = 0; i < qnpts; i++) {
-                    q_out_diff_mean[iK][iphi][i] = new double * [qnpts];
-                    q_side_diff_mean[iK][iphi][i] = new double * [qnpts];
-                    q_long_diff_mean[iK][iphi][i] = new double * [qnpts];
+                    q_out_diff_mean[iK][iphi][i] = new double* [qnpts];
+                    q_side_diff_mean[iK][iphi][i] = new double* [qnpts];
+                    q_long_diff_mean[iK][iphi][i] = new double* [qnpts];
                     correl_3d_Kphi_diff_num[iK][iphi][i] = (
-                                                        new double * [qnpts]);
+                                                        new double* [qnpts]);
                     correl_3d_Kphi_diff_num_count[iK][iphi][i] = (
-                                                        new double * [qnpts]);
+                                                        new double* [qnpts]);
                     correl_3d_Kphi_diff_denorm[iK][iphi][i] = (
-                                                        new double * [qnpts]);
+                                                        new double* [qnpts]);
                     for (int j = 0; j < qnpts; j++) {
                         q_out_diff_mean[iK][iphi][i][j] = new double [qnpts];
                         q_side_diff_mean[iK][iphi][i][j] = new double [qnpts];
                         q_long_diff_mean[iK][iphi][i][j] = new double [qnpts];
                         correl_3d_Kphi_diff_num[iK][iphi][i][j] = (
-                                                        new double [qnpts]);
+                                                        new double[qnpts]);
                         correl_3d_Kphi_diff_num_count[iK][iphi][i][j] = (
-                                                        new double [qnpts]);
+                                                        new double[qnpts]);
                         correl_3d_Kphi_diff_denorm[iK][iphi][i][j] = (
-                                                        new double [qnpts]);
+                                                        new double[qnpts]);
                         for (int k = 0; k < qnpts; k++) {
                             q_out_diff_mean[iK][iphi][i][j][k] = 0.0;
                             q_side_diff_mean[iK][iphi][i][j][k] = 0.0;
@@ -295,10 +296,11 @@ void HBT_correlation::calculate_HBT_correlation_function() {
             delete [] mixed_event_list;
         }
     }
-    if (azimuthal_flag == 0)
+    if (azimuthal_flag == 0) {
         output_correlation_function();
-    else
+    } else {
         output_correlation_function_Kphi_differential();
+    }
 }
 
 void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
@@ -655,37 +657,31 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
 
 void HBT_correlation::output_correlation_function()
 {
-    for(int iK = 0; iK < n_KT - 1; iK++)
-    {
-        double npair_ratio = ((double)number_of_pairs_numerator_KTdiff[iK]
-                            /(double)number_of_pairs_denormenator_KTdiff[iK]);
+    for (int iK = 0; iK < n_KT - 1; iK++) {
+        double npair_ratio = (
+                static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
+                /static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
         ostringstream filename;
         filename << path << "/HBT_correlation_function_KT_" 
                  << KT_array[iK] << "_" << KT_array[iK+1] << ".dat";
         ofstream output(filename.str().c_str());
-        for(int iqlong = 0; iqlong < qnpts; iqlong++)
-        {
-            for(int iqout = 0; iqout < qnpts; iqout++)
-            {
-                for(int iqside = 0; iqside < qnpts; iqside++)
-                {
+        for (int iqlong = 0; iqlong < qnpts; iqlong++) {
+            for (int iqout = 0; iqout < qnpts; iqout++) {
+                for (int iqside = 0; iqside < qnpts; iqside++) {
                     int npart_num = 
                         correl_3d_num_count[iK][iqout][iqside][iqlong];
                     int npart_denorm = 
                         correl_3d_denorm[iK][iqout][iqside][iqlong];
                     double q_out_local, q_side_local, q_long_local;
                     double correl_fun_num, correl_fun_denorm, correl_fun_val;
-                    if(npart_num < 2 || npart_denorm < 2)
-                    {
+                    if (npart_num < 2 || npart_denorm < 2) {
                         q_out_local = q_out[iqout];
                         q_side_local = q_side[iqside];
                         q_long_local = q_long[iqlong];
                         correl_fun_num = 0.0;
                         correl_fun_denorm = npart_denorm;
                         correl_fun_val = 0.0;
-                    }
-                    else
-                    {
+                    } else {
                         q_out_local = (q_out_mean[iK][iqout][iqside][iqlong]
                                        /npart_num);
                         q_side_local = (q_side_mean[iK][iqout][iqside][iqlong]
@@ -693,8 +689,10 @@ void HBT_correlation::output_correlation_function()
                         q_long_local = (
                             q_long_mean[iK][iqout][iqside][iqlong]/npart_num);
 
-                        correl_fun_num = correl_3d_num[iK][iqout][iqside][iqlong];
-                        correl_fun_denorm = correl_3d_denorm[iK][iqout][iqside][iqlong];
+                        correl_fun_num = (
+                                correl_3d_num[iK][iqout][iqside][iqlong]);
+                        correl_fun_denorm = (
+                                correl_3d_denorm[iK][iqout][iqside][iqlong]);
                         correl_fun_val = (correl_fun_num
                                           /(correl_fun_denorm*npair_ratio));
                     }
@@ -712,26 +710,20 @@ void HBT_correlation::output_correlation_function()
     }
 }
 
-void HBT_correlation::output_correlation_function_Kphi_differential()
-{
-    for(int iK = 0; iK < n_KT - 1; iK++)
-    {
-        for(int iKphi = 0; iKphi < n_Kphi; iKphi++)
-        {
+void HBT_correlation::output_correlation_function_Kphi_differential() {
+    for (int iK = 0; iK < n_KT - 1; iK++) {
+        for (int iKphi = 0; iKphi < n_Kphi; iKphi++) {
             double npair_ratio = (
-                (double)number_of_pairs_numerator_KTKphidiff[iK][iKphi]
-                /(double)number_of_pairs_denormenator_KTKphidiff[iK][iKphi]);
+                static_cast<double>(number_of_pairs_numerator_KTKphidiff[iK][iKphi])
+                /static_cast<double>(number_of_pairs_denormenator_KTKphidiff[iK][iKphi]));
             ostringstream filename;
             filename << path << "/HBT_correlation_function_KT_" 
                      << KT_array[iK] << "_" << KT_array[iK+1] << "_Kphi_" 
                      << Kphi_array[iKphi] << ".dat";
             ofstream output(filename.str().c_str());
-            for(int iqlong = 0; iqlong < qnpts; iqlong++)
-            {
-                for(int iqout = 0; iqout < qnpts; iqout++)
-                {
-                    for(int iqside = 0; iqside < qnpts; iqside++)
-                    {
+            for (int iqlong = 0; iqlong < qnpts; iqlong++) {
+                for (int iqout = 0; iqout < qnpts; iqout++) {
+                    for (int iqside = 0; iqside < qnpts; iqside++) {
                         int npart_num = 
                             correl_3d_Kphi_diff_num_count[iK][iKphi][iqout][iqside][iqlong];
                         int npart_denorm = 
@@ -739,17 +731,14 @@ void HBT_correlation::output_correlation_function_Kphi_differential()
                         double q_out_local, q_side_local, q_long_local;
                         double correl_fun_num, correl_fun_denorm;
                         double correl_fun_val;
-                        if(npart_num < 2 || npart_denorm < 2)
-                        {
+                        if (npart_num < 2 || npart_denorm < 2) {
                             q_out_local = q_out[iqout];
                             q_side_local = q_side[iqside];
                             q_long_local = q_long[iqlong];
                             correl_fun_num = 0.0;
                             correl_fun_denorm = npart_denorm;
                             correl_fun_val = 0.0;
-                        }
-                        else
-                        {
+                        } else {
                             q_out_local = (
                                 q_out_diff_mean[iK][iKphi][iqout][iqside][iqlong]
                                 /npart_num);
