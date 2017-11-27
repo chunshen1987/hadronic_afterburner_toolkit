@@ -75,6 +75,7 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
                              paraRdr->getVal("number_of_oversample_events");
     number_pairs_num = 0;
     number_pairs_denorm = 0;
+    psi_ref = 0.;
     if (azimuthal_flag == 0) {
         q_out_mean = new double*** [n_KT];
         q_side_mean = new double*** [n_KT];
@@ -265,8 +266,11 @@ void HBT_correlation::calculate_HBT_correlation_function() {
         particle_list->read_in_particle_samples();
         particle_list->read_in_particle_samples_mixed_event();
         cout << " processing ..." << endl;
+        if (azimuthal_flag == 1) {
+            calculate_flow_event_plane_angle(2);
+        }
         int nev = particle_list->get_number_of_events();
-        int n_skip_ev = (int)(nev/number_of_oversample_events);
+        int n_skip_ev = static_cast<int>(nev/number_of_oversample_events);
         // first pairs from the same event
         cout << "Compute pairs from the same event ..." << endl;
         for (int iev = 0; iev < n_skip_ev; iev++) {
@@ -302,6 +306,29 @@ void HBT_correlation::calculate_HBT_correlation_function() {
         output_correlation_function_Kphi_differential();
     }
 }
+
+
+//! This function computes the flow event plane angle Psi_n
+//! The results is stored in the variable psi_ref
+//! This is needed when computing the azimuthal dependent HBT radii
+void HBT_correlation::calculate_flow_event_plane_angle(int n_order) {
+    int nev = particle_list->get_number_of_events();
+    double vn_real = 0.0;
+    double vn_imag = 0.0;
+    for (int iev = 0; iev < nev; iev++) {
+        int event_number_particle = (
+                                particle_list->get_number_of_particles(iev));
+        for (int i = 0; i < event_number_particle; i++) {
+            double temp_px = particle_list->get_particle(iev, i).px;
+            double temp_py = particle_list->get_particle(iev, i).py;
+            double temp_phi = atan2(temp_py, temp_px);
+            vn_real += cos(n_order*temp_phi);
+            vn_imag += sin(n_order*temp_phi);
+        }
+    }
+    psi_ref = atan2(vn_imag, vn_real)/n_order;
+}
+
 
 void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
     double hbarC_inv = 1./hbarC;
@@ -430,7 +457,14 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                         number_of_pairs_numerator_KTdiff[Kperp_idx]++;
                     } else {
                         local_K_phi = atan2(K_y, K_x);
-                        Kphi_idx = (int)((local_K_phi)/dKphi);
+                        double delta_phi = local_K_phi - psi_ref;
+                        if (delta_phi < - M_PI) {
+                            delta_phi += 2*M_PI;
+                        }
+                        if (delta_phi > M_PI) {
+                            delta_phi -= 2*M_PI;
+                        }
+                        Kphi_idx = static_cast<int>(delta_phi/dKphi);
                         if (number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]
                                 > needed_number_of_pairs) {
                             continue;
@@ -632,8 +666,14 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                         }
                         number_of_pairs_denormenator_KTdiff[Kperp_idx]++;
                     } else {
-                        local_K_phi = atan2(K_y, K_x);
-                        Kphi_idx = (int)((local_K_phi)/dKphi);
+                        double delta_phi = local_K_phi - psi_ref;
+                        if (delta_phi < - M_PI) {
+                            delta_phi += 2*M_PI;
+                        }
+                        if (delta_phi > M_PI) {
+                            delta_phi -= 2*M_PI;
+                        }
+                        Kphi_idx = static_cast<int>(delta_phi/dKphi);
                         if (number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx]
                                         > needed_number_of_pairs) {
                             continue;
@@ -655,8 +695,7 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
     temp_particle_list_2.clear();
 }
 
-void HBT_correlation::output_correlation_function()
-{
+void HBT_correlation::output_correlation_function() {
     for (int iK = 0; iK < n_KT - 1; iK++) {
         double npair_ratio = (
                 static_cast<double>(number_of_pairs_numerator_KTdiff[iK])

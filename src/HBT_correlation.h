@@ -24,6 +24,7 @@ class HBT_correlation
         double q_min, q_max, delta_q;
 
         int azimuthal_flag;
+        double psi_ref;
         int n_KT, n_Kphi;
         double dKT, dKphi;
         double KT_min, KT_max;
@@ -54,6 +55,7 @@ class HBT_correlation
                         particleSamples *particle_list_in);
         ~HBT_correlation();
 
+        void calculate_flow_event_plane_angle(int n_order);
         void calculate_HBT_correlation_function();
         void combine_and_bin_particle_pairs(int* event_list);
         void combine_and_bin_particle_pairs_mixed_events(
