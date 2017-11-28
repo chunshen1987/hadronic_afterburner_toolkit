@@ -447,7 +447,6 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                             (local_q_long - (q_min - delta_q/2.))/delta_q);
                     if (qlong_idx >= qnpts) continue;
 
-                    double local_K_phi;
                     int Kphi_idx;
                     if (azimuthal_flag == 0) {
                         if (number_of_pairs_numerator_KTdiff[Kperp_idx]
@@ -456,15 +455,21 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                         }
                         number_of_pairs_numerator_KTdiff[Kperp_idx]++;
                     } else {
-                        local_K_phi = atan2(K_y, K_x);
+                        double local_K_phi = atan2(K_y, K_x);
                         double delta_phi = local_K_phi - psi_ref;
-                        if (delta_phi < - M_PI) {
-                            delta_phi += 2*M_PI;
+                        while (delta_phi < 0.) {
+                            delta_phi += 2.*M_PI;
                         }
-                        if (delta_phi > M_PI) {
-                            delta_phi -= 2*M_PI;
+                        while (delta_phi > 2.*M_PI) {
+                            delta_phi -= 2.*M_PI;
                         }
                         Kphi_idx = static_cast<int>(delta_phi/dKphi);
+                        if (Kphi_idx < 0 || Kphi_idx >= n_Kphi) {
+                            cout << "[Warning] delta_phi = " << delta_phi
+                                 << " is out of bound of [0, 2pi]! "
+                                 << "Kphi_idx = " << Kphi_idx << endl;
+                            continue;
+                        }
                         if (number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]
                                 > needed_number_of_pairs) {
                             continue;
@@ -657,7 +662,6 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                             (local_q_long - (q_min - delta_q/2.))/delta_q);
                     if (qlong_idx >= qnpts) continue;
                     
-                    double local_K_phi;
                     int Kphi_idx;
                     if (azimuthal_flag == 0) {
                         if (number_of_pairs_denormenator_KTdiff[Kperp_idx]
@@ -666,14 +670,21 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                         }
                         number_of_pairs_denormenator_KTdiff[Kperp_idx]++;
                     } else {
+                        double local_K_phi = atan2(K_y, K_x);
                         double delta_phi = local_K_phi - psi_ref;
-                        if (delta_phi < - M_PI) {
-                            delta_phi += 2*M_PI;
+                        while (delta_phi < 0.) {
+                            delta_phi += 2.*M_PI;
                         }
-                        if (delta_phi > M_PI) {
-                            delta_phi -= 2*M_PI;
+                        while (delta_phi > 2.*M_PI) {
+                            delta_phi -= 2.*M_PI;
                         }
                         Kphi_idx = static_cast<int>(delta_phi/dKphi);
+                        if (Kphi_idx < 0 || Kphi_idx >= n_Kphi) {
+                            cout << "[Warning] delta_phi = " << delta_phi
+                                 << " is out of bound of [0, 2pi]! "
+                                 << "Kphi_idx = " << Kphi_idx << endl;
+                            continue;
+                        }
                         if (number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx]
                                         > needed_number_of_pairs) {
                             continue;
