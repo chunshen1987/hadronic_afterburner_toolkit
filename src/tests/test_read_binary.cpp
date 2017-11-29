@@ -13,7 +13,7 @@ string gzreadline(gzFile gzfp) {
     char buffer[1];
     int len = gzread(gzfp, buffer, 1);
     while (len == 1 && buffer[0] != '\n') {
-        line << buffer;
+        line << buffer[0];
         len = gzread(gzfp, buffer, 1);
     }
     return(line.str());
