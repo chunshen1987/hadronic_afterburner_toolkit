@@ -854,6 +854,83 @@ def calculate_vn4(vn_data_array):
                v3_4, v3_4_err, C_3_4, C_3_4_err,]
     return(results)
 
+
+def calculate_vn4_over_vn2(vn_data_array):
+    """
+        this funciton computes the ratio of
+        the 4-particle cumulant vn{4} over the 2-particle cumulant vn{2}
+            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+            vn{2} = (<v_n*conj(v_n)>)**(1/2)
+
+        we will use Jackknife resampling method to estimate
+        the statistical error
+    """
+    vn_data_array = array(vn_data_array)
+    nev = len(vn_data_array[:, 0])
+    dN = vn_data_array[:, 0]
+    Q1 = dN*vn_data_array[:, 1]
+    Q2 = dN*vn_data_array[:, 2]
+    Q3 = dN*vn_data_array[:, 3]
+    Q4 = dN*vn_data_array[:, 4]
+    Q5 = dN*vn_data_array[:, 5]
+    Q6 = dN*vn_data_array[:, 6]
+
+    # two-particle correlation
+    N2_weight = dN*(dN - 1.)
+    Q1_2 = abs(Q1)**2. - dN
+    Q2_2 = abs(Q2)**2. - dN
+    Q3_2 = abs(Q3)**2. - dN
+
+    # four-particle correlation
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
+             - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
+             + 2*dN*(dN - 3.))
+    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
+             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
+             + 2*dN*(dN - 3.))
+    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
+             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
+             + 2*dN*(dN - 3.))
+
+    # calcualte observables with Jackknife resampling method
+    r1_array = zeros(nev)
+    r2_array = zeros(nev)
+    r3_array = zeros(nev)
+    for iev in range(len(nev)):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+
+        # C_n{4}
+        C_1_4 = (mean(Q1_4[idx])/mean(N4_weight[idx])
+                 - 2.*((mean(Q1_2[idx])/mean(N2_weight[idx]))**2.))
+        C_1_2 = mean(Q1_2[idx])/mean(N2_weight[idx])
+        if C_1_4 < 0. and C_1_2 > 0.:
+            r1_array[iev] = (-C_1_4)**0.25/sqrt(C_1_2)
+
+        C_2_4 = (mean(Q2_4[idx])/mean(N4_weight[idx])
+                 - 2.*((mean(Q2_2[idx])/mean(N2_weight[idx]))**2.))
+        C_2_2 = mean(Q2_2[idx])/mean(N2_weight[idx])
+        if C_2_4 < 0. and C_2_2 > 0.:
+            r2_array[iev] = (-C_2_4)**0.25/sqrt(C_2_2)
+
+        C_3_4 = (mean(Q3_4[idx])/mean(N4_weight[idx])
+                 - 2.*((mean(Q3_2[idx])/mean(N2_weight[idx]))**2.))
+        C_3_2 = mean(Q3_2[idx])/mean(N2_weight[idx])
+        if C_3_4 < 0. and C_3_2 > 0.:
+            r3_array[iev] = (-C_3_4)**0.25/sqrt(C_3_2)
+
+    r1_mean = mean(r1_array)
+    r1_err = std(r1_array)*sqrt(nev - 1)/sqrt(nev)
+    r2_mean = mean(r2_array)
+    r2_err = std(r2_array)*sqrt(nev - 1)/sqrt(nev)
+    r3_mean = mean(r3_array)
+    r3_err = std(r3_array)*sqrt(nev - 1)/sqrt(nev)
+
+    results = [r1_mean, r1_err, r2_mean, r2_err, r3_mean, r3_err]
+    return(results)
+
+
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
 for ipart, particle_id in enumerate(particle_list):
