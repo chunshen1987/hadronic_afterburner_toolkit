@@ -37,7 +37,7 @@ try:
     print("output folder: %s" % avg_folder)
     if(path.isdir(avg_folder)):
         print("folder %s already exists!" % avg_folder)
-        var = raw_input("do you want to delete it? [y/N]")
+        var = input("do you want to delete it? [y/N]")
         if 'y' in var:
             shutil.rmtree(avg_folder)
         else:
@@ -48,13 +48,13 @@ except IndexError:
     print("Usage: average_event_spvn.py working_folder results_folder")
     exit(1)
 
-particle_list = ['211', '-211', '321', '-321', '2212', '-2212', 
+particle_list = ['9999', '211', '-211', '321', '-321', '2212', '-2212', 
                  '3122', '-3122', '3312', '-3312', '3334', '-3334',
-                 '333', '9999']
-particle_name_list = ['pion_p', 'pion_m', 'kaon_p', 'kaon_m',
+                 '333']
+particle_name_list = ['charged_hadron', 'pion_p', 'pion_m', 'kaon_p', 'kaon_m',
                       'proton', 'anti_proton',
                       'Lambda', 'anti_Lambda', 'Xi_m', 'anti_Xi_p',
-                      'Omega', 'anti_Omega', 'phi', 'charged_hadron']
+                      'Omega', 'anti_Omega', 'phi']
 nonlinear_reponse_correlator_name_list = [
                 'v4_L', 'v4(Psi2)', 'rho_422', 'chi_422',
                 'v5_L', 'v5(Psi23)', 'rho_523', 'chi_523',
@@ -859,6 +859,8 @@ def calculate_vn4_over_vn2(vn_data_array):
     """
         this funciton computes the ratio of
         the 4-particle cumulant vn{4} over the 2-particle cumulant vn{2}
+        and Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))
+
             vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
             vn{2} = (<v_n*conj(v_n)>)**(1/2)
 
@@ -897,37 +899,61 @@ def calculate_vn4_over_vn2(vn_data_array):
     r1_array = zeros(nev)
     r2_array = zeros(nev)
     r3_array = zeros(nev)
-    for iev in range(len(nev)):
+    F1_array = zeros(nev)
+    F2_array = zeros(nev)
+    F3_array = zeros(nev)
+    for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
 
         # C_n{4}
-        C_1_4 = (mean(Q1_4[idx])/mean(N4_weight[idx])
-                 - 2.*((mean(Q1_2[idx])/mean(N2_weight[idx]))**2.))
-        C_1_2 = mean(Q1_2[idx])/mean(N2_weight[idx])
+        C_1_4 = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
+                 - 2.*((mean(Q1_2[array_idx])/mean(N2_weight[array_idx]))**2.))
+        C_1_2 = mean(Q1_2[array_idx])/mean(N2_weight[array_idx])
         if C_1_4 < 0. and C_1_2 > 0.:
-            r1_array[iev] = (-C_1_4)**0.25/sqrt(C_1_2)
+            v1_4 = (-C_1_4)**0.25
+            v1_2 = sqrt(C_1_2)
+            r1_array[iev] = v1_4/(v1_2 + 1e-15)
+            F1_array[iev] = sqrt((v1_2**2. - v1_4**2.)
+                                 /(v1_2**2. + v1_4**2. + 1e-15))
 
-        C_2_4 = (mean(Q2_4[idx])/mean(N4_weight[idx])
-                 - 2.*((mean(Q2_2[idx])/mean(N2_weight[idx]))**2.))
-        C_2_2 = mean(Q2_2[idx])/mean(N2_weight[idx])
+        C_2_4 = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
+                 - 2.*((mean(Q2_2[array_idx])/mean(N2_weight[array_idx]))**2.))
+        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
         if C_2_4 < 0. and C_2_2 > 0.:
-            r2_array[iev] = (-C_2_4)**0.25/sqrt(C_2_2)
+            v2_4 = (-C_2_4)**0.25
+            v2_2 = sqrt(C_2_2)
+            r2_array[iev] = v2_4/v2_2
+            F2_array[iev] = sqrt((v2_2**2. - v2_4**2.)
+                                 /(v2_2**2. + v2_4**2. + 1e-15))
 
-        C_3_4 = (mean(Q3_4[idx])/mean(N4_weight[idx])
-                 - 2.*((mean(Q3_2[idx])/mean(N2_weight[idx]))**2.))
-        C_3_2 = mean(Q3_2[idx])/mean(N2_weight[idx])
+        C_3_4 = (mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
+                 - 2.*((mean(Q3_2[array_idx])/mean(N2_weight[array_idx]))**2.))
+        C_3_2 = mean(Q3_2[array_idx])/mean(N2_weight[array_idx])
         if C_3_4 < 0. and C_3_2 > 0.:
-            r3_array[iev] = (-C_3_4)**0.25/sqrt(C_3_2)
+            v3_4 = (-C_3_4)**0.25
+            v3_2 = sqrt(C_3_2)
+            r3_array[iev] = v3_4/v3_2
+            F3_array[iev] = sqrt((v3_2**2. - v3_4**2.)
+                                 /(v3_2**2. + v3_4**2. + 1e-15))
 
     r1_mean = mean(r1_array)
-    r1_err = std(r1_array)*sqrt(nev - 1)/sqrt(nev)
+    r1_err = sqrt((nev - 1.)/nev*sum((r1_array - r1_mean)**2.))
     r2_mean = mean(r2_array)
-    r2_err = std(r2_array)*sqrt(nev - 1)/sqrt(nev)
+    r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
     r3_mean = mean(r3_array)
-    r3_err = std(r3_array)*sqrt(nev - 1)/sqrt(nev)
+    r3_err = sqrt((nev - 1.)/nev*sum((r3_array - r3_mean)**2.))
+    
+    F1_mean = mean(F1_array)
+    F1_err = sqrt((nev - 1.)/nev*sum((F1_array - F1_mean)**2.))
+    F2_mean = mean(F2_array)
+    F2_err = sqrt((nev - 1.)/nev*sum((F2_array - F2_mean)**2.))
+    F3_mean = mean(F3_array)
+    F3_err = sqrt((nev - 1.)/nev*sum((F3_array - F3_mean)**2.))
 
-    results = [r1_mean, r1_err, r2_mean, r2_err, r3_mean, r3_err]
+    results = [r1_mean, r1_err, F1_mean, F1_err,
+               r2_mean, r2_err, F2_mean, F2_err,
+               r3_mean, r3_err, F3_mean, F3_err]
     return(results)
 
 
@@ -1122,8 +1148,12 @@ for ipart, particle_id in enumerate(particle_list):
         SC_alice = calculate_symmetric_cumulant(vn_alice_array)
 
         # calculate vn{4}
+        vn4_alice = calculate_vn4(vn_alice_array)
         vn4_cms = calculate_vn4(vn_cms_array)
         vn4_atlas = calculate_vn4(vn_atlas_array)
+        vn4_over_vn2_alice = calculate_vn4_over_vn2(vn_alice_array)
+        vn4_over_vn2_cms = calculate_vn4_over_vn2(vn_cms_array)
+        vn4_over_vn2_atlas = calculate_vn4_over_vn2(vn_atlas_array)
 
         # calculate vn distribution for charged hadrons
         vn_phenix_dis = calculate_vn_distribution(vn_phenix_array)
@@ -1254,6 +1284,17 @@ for ipart, particle_id in enumerate(particle_list):
         f.close()
         shutil.move(output_filename, avg_folder)
         
+        # output vn4 for ALICE pt cut
+        output_filename = ("charged_hadron_vn4_ALICE.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
+        for i in range(1, 4):
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (i, vn4_alice[4*i-4], vn4_alice[4*i-3],
+                       vn4_alice[4*i-2], vn4_alice[4*i-1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
         # output vn4 for CMS pt cut
         output_filename = ("charged_hadron_vn4_CMS.dat")
         f = open(output_filename, 'w')
@@ -1273,6 +1314,42 @@ for ipart, particle_id in enumerate(particle_list):
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (i, vn4_atlas[4*i-4], vn4_atlas[4*i-3],
                        vn4_atlas[4*i-2], vn4_atlas[4*i-1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn4/vn2 ratio for ALICE pt cut
+        output_filename = ("charged_hadron_vn4_over_vn2_ALICE.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err \n")
+        f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2)) \n")
+        for i in range(1, 4):
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (i, vn4_over_vn2_alice[4*i-4], vn4_over_vn2_alice[4*i-3],
+                       vn4_over_vn2_alice[4*i-2], vn4_over_vn2_alice[4*i-1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn4/vn2 ratio for CMS pt cut
+        output_filename = ("charged_hadron_vn4_over_vn2_CMS.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err \n")
+        f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2)) \n")
+        for i in range(1, 4):
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (i, vn4_over_vn2_cms[4*i-4], vn4_over_vn2_cms[4*i-3],
+                       vn4_over_vn2_cms[4*i-2], vn4_over_vn2_cms[4*i-1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn4/vn2 ratio for ATLAS pt cut
+        output_filename = ("charged_hadron_vn4_over_vn2_ATLAS.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err \n")
+        f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2)) \n")
+        for i in range(1, 4):
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (i, vn4_over_vn2_atlas[4*i-4], vn4_over_vn2_atlas[4*i-3],
+                       vn4_over_vn2_atlas[4*i-2], vn4_over_vn2_atlas[4*i-1]))
         f.close()
         shutil.move(output_filename, avg_folder)
 
