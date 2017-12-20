@@ -675,24 +675,29 @@ def calculate_rn_ratios(vn_event_arrays):
             vn_trig_array = vn_event_arrays[:, itrig, iorder]
             nev = len(vn_trig_array)
             denorm2_array = abs(vn_trig_array)**2.
-            denorm2 = sqrt(mean(denorm2_array))
-            denorm2_err = std(denorm2_array)/sqrt(nev)/(2.*denorm2)
+
             for iasso in range(0, itrig+1):
                 pT_asso = real(vn_event_arrays[0, iasso, 0])
                 vn_asso_array = vn_event_arrays[:, iasso, iorder]
                 num_array = real(vn_asso_array*conj(vn_trig_array))
-                num = mean(num_array)
-                num_err = std(num_array)/sqrt(nev)
                 denorm1_array = abs(vn_asso_array)**2.
-                denorm1 = sqrt(mean(denorm1_array))
-                denorm1_err = std(denorm1_array)/sqrt(nev)/(2.*denorm1)
 
-                rn_temp = num/(denorm1*denorm2)
-                rn_temp_err = sqrt(
-                    (num_err/(denorm1*denorm2))**2.
-                    + (num*denorm1_err/((denorm1**2.)*denorm2))**2.
-                    + (num*denorm2_err/(denorm1*(denorm2**2.)))**2.)
-                rn_array.append([pT_trig - pT_asso, rn_temp, rn_temp_err])
+                rn_jackknife = zeros(nev)
+                for iev in range(nev):
+                    array_idx = [True]*nev
+                    array_idx[iev] = False
+
+                    num = mean(num_array[array_idx])
+                    denorm1 = mean(denorm1_array[array_idx])
+                    denorm2 = mean(denorm2_array[array_idx])
+
+                    if denorm1 > 0. and denorm2 > 0.:
+                        rn_jackknife[iev] = num/sqrt(denorm1*denorm2)
+
+                rn_mean = mean(rn_jackknife)
+                rn_err = sqrt((nev - 1.)/nev*sum((rn_jackknife - rn_mean)**2.))
+                rn_array.append([pT_trig - pT_asso, rn_mean, rn_err])
+
         rn_arrays.append(rn_array)
     rn_arrays = array(rn_arrays)
     return(rn_arrays)
