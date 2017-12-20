@@ -957,6 +957,72 @@ def calculate_vn4_over_vn2(vn_data_array):
     return(results)
 
 
+def calculate_vn6_over_vn4(vn_data_array):
+    """
+        this funciton computes the ratio of
+        the 6-particle cumulant vn{6} over the 4-particle cumulant vn{4}
+            cn{6} = <<6>> - 9<<2>><<4>> + 12<<2>>^3
+            vn{6} = (cn{6}/4)**(1/6)
+            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+        we will use Jackknife resampling method to estimate
+        the statistical error
+    """
+    vn_data_array = array(vn_data_array)
+    nev = len(vn_data_array[:, 0])
+    dN = vn_data_array[:, 0]
+    Q1 = dN*vn_data_array[:, 1]
+    Q2 = dN*vn_data_array[:, 2]
+    Q3 = dN*vn_data_array[:, 3]
+    Q4 = dN*vn_data_array[:, 4]
+    Q5 = dN*vn_data_array[:, 5]
+    Q6 = dN*vn_data_array[:, 6]
+
+    # two-particle correlation
+    N2_weight = dN*(dN - 1.)
+    Q2_2 = abs(Q2)**2. - dN
+
+    # four-particle correlation
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
+             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
+             + 2*dN*(dN - 3.))
+
+    # six-particle correlation
+    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
+    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
+            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
+            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
+            - 12.*real(Q6*conj(Q4)*conj(Q2))
+            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
+            + 4.*(abs(Q6)**2.)
+            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
+            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
+            - 6.*dN*(dN - 4.)*(dN - 5.))
+
+    # calcualte observables with Jackknife resampling method
+    r2_array = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+
+        # C_n{4}
+        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
+        C_2_4 = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
+                 - 2.*(C_2_2**2.))
+        C_2_6 = (mean(Q2_6[array_idx])/mean(N6_weight[array_idx])
+                 - 9.*C_2_2*C_2_4 + 12.*(C_2_2**3.))
+        if C_2_6 > 0. and C_2_4 < 0.:
+            v2_6 = (C_2_6/4.)**(1./6.)
+            v2_4 = (-C_2_4)**0.25
+            r2_array[iev] = v2_6/v2_4
+
+    r2_mean = mean(r2_array)
+    r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
+    
+    results = [r2_mean, r2_err]
+    return(results)
+
+
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
 for ipart, particle_id in enumerate(particle_list):
