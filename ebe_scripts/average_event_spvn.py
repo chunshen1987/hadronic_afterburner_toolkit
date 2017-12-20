@@ -742,7 +742,7 @@ def calculate_symmetric_cumulant(vn_data_array):
         # SC(3,2)
         SC32_array[iev] = (mean(Q_32[array_idx])/mean(N4_weight[array_idx])
                            - (mean(Q3_2[array_idx])*mean(Q2_2[array_idx]))
-                             /(mean(N2_weight[array_idx)**2.))
+                             /(mean(N2_weight[array_idx])**2.))
 
         # SC(4,2)
         SC42_array[iev] = (mean(Q_42[array_idx])/mean(N4_weight[array_idx])
