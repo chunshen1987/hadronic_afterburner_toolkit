@@ -954,6 +954,9 @@ def calculate_vn6_over_vn4(vn_data_array):
             cn{6} = <<6>> - 9<<2>><<4>> + 12<<2>>^3
             vn{6} = (cn{6}/4)**(1/6)
             vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+        and compute skewness estimator gamma_1
+            gamma_1 = -6\sqrt{2}*vn{4}^2*(vn{4} - vn{6})
+                                         /(vn{2}^2 - vn{4}^2)^(3/2)
         we will use Jackknife resampling method to estimate
         the statistical error
     """
@@ -991,6 +994,7 @@ def calculate_vn6_over_vn4(vn_data_array):
 
     # calcualte observables with Jackknife resampling method
     r2_array = zeros(nev)
+    gamma1_array = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
@@ -1000,16 +1004,22 @@ def calculate_vn6_over_vn4(vn_data_array):
         C_2_4 = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
                  - 2.*(C_2_2**2.))
         C_2_6 = (mean(Q2_6[array_idx])/mean(N6_weight[array_idx])
-                 - 9.*C_2_2*C_2_4 + 12.*(C_2_2**3.))
-        if C_2_6 > 0. and C_2_4 < 0.:
+                 - 9.*C_2_2*mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
+                 + 12.*(C_2_2**3.))
+        if C_2_6 > 0. and C_2_4 < 0. and C_2_2 > 0.:
+            v2_2 = sqrt(C_2_2)
             v2_6 = (C_2_6/4.)**(1./6.)
-            v2_4 = (-C_2_4)**0.25
+            v2_4 = (-C_2_4)**(1./4.)
             r2_array[iev] = v2_6/v2_4
+            gamma1_array[iev] = (-6.*sqrt(2)*(v2_4**2.)*(v2_4 - v2_6)
+                                 /(v2_2**2. - v2_4**2.)**(1.5))
 
     r2_mean = mean(r2_array)
     r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
+    gamma1_mean = mean(gamma1_array)
+    gamma1_err = sqrt((nev - 1.)/nev*sum((gamma1_array - gamma1_mean)**2.))
     
-    results = [r2_mean, r2_err]
+    results = [r2_mean, r2_err, gamma1_mean, gamma1_err]
     return(results)
 
 
@@ -1207,9 +1217,13 @@ for ipart, particle_id in enumerate(particle_list):
         vn4_alice = calculate_vn4(vn_alice_array)
         vn4_cms = calculate_vn4(vn_cms_array)
         vn4_atlas = calculate_vn4(vn_atlas_array)
+        # calculate vn{4}/vn{2} and vn{6}/vn{4}
         vn4_over_vn2_alice = calculate_vn4_over_vn2(vn_alice_array)
         vn4_over_vn2_cms = calculate_vn4_over_vn2(vn_cms_array)
         vn4_over_vn2_atlas = calculate_vn4_over_vn2(vn_atlas_array)
+        vn6_over_vn4_alice = calculate_vn6_over_vn4(vn_alice_array)
+        vn6_over_vn4_cms = calculate_vn6_over_vn4(vn_cms_array)
+        vn6_over_vn4_atlas = calculate_vn6_over_vn4(vn_atlas_array)
 
         # calculate vn distribution for charged hadrons
         vn_phenix_dis = calculate_vn_distribution(vn_phenix_array)
@@ -1406,6 +1420,36 @@ for ipart, particle_id in enumerate(particle_list):
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (i, vn4_over_vn2_atlas[4*i-4], vn4_over_vn2_atlas[4*i-3],
                        vn4_over_vn2_atlas[4*i-2], vn4_over_vn2_atlas[4*i-1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn6/vn4 ratio for ALICE pt cut
+        output_filename = ("charged_hadron_vn6_over_vn4_ALICE.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  gamma_1  gamma_1_err \n")
+        f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                % (2, vn6_over_vn4_alice[0], vn6_over_vn4_alice[1],
+                   vn6_over_vn4_alice[2], vn6_over_vn4_alice[3]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn6/vn4 ratio for CMS pt cut
+        output_filename = ("charged_hadron_vn6_over_vn4_CMS.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  gamma_1  gamma_1_err \n")
+        f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                % (2, vn6_over_vn4_cms[0], vn6_over_vn4_cms[1],
+                   vn6_over_vn4_cms[2], vn6_over_vn4_cms[3]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+        
+        # output vn6/vn4 ratio for ATLAS pt cut
+        output_filename = ("charged_hadron_vn6_over_vn4_ATLAS.dat")
+        f = open(output_filename, 'w')
+        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  gamma_1  gamma_1_err \n")
+        f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                % (2, vn6_over_vn4_atlas[0], vn6_over_vn4_atlas[1],
+                   vn6_over_vn4_atlas[2], vn6_over_vn4_atlas[3]))
         f.close()
         shutil.move(output_filename, avg_folder)
 
