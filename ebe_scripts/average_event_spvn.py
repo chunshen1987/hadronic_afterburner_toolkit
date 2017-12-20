@@ -96,72 +96,87 @@ def calcualte_inte_vn(pT_low, pT_high, data):
 
 
 def calculate_chi_422(vn_array):
+    """
+        chi_422 = Re(v4*conj(v2)**2.)/|v2|^4
+    """
     v2_array = vn_array[:, 1]
-    nev = len(v2_array)
     v4_array = vn_array[:, 3]
-    chi_422_num = v4_array*(v2_array.conjugate())**2
+    nev = len(v2_array)
+
+    chi_422_num = v4_array*(conj(v2_array)**2)
     chi_422_den = (abs(v2_array))**4
-    chi_422_num_ave = mean(chi_422_num)
-    chi_422_den_ave = mean(chi_422_den)
-    chi_422_num_err = std(chi_422_num)/sqrt(nev)
-    chi_422_den_err = std(chi_422_den)/sqrt(nev)
-    chi_422 = chi_422_num_ave/chi_422_den_ave
-    chi_422_err = sqrt(
-        (chi_422_num_err/chi_422_den_ave)**2.
-        + (chi_422_num_ave*chi_422_den_err/(chi_422_den_ave)**2.)**2.)
-    return(chi_422.real, chi_422_err.real)
+
+    chi_422_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+
+        chi_422_JK[iev] = (real(mean(chi_422_num[array_idx]))
+                                /mean(chi_422_den[array_idx]))
+    chi_422_mean = mean(chi_422_JK)
+    chi_422_err = sqrt((nev - 1.)/nev*sum((chi_422_JK - chi_422_mean)**2.))
+    return(chi_422_mean, chi_422_err)
 
 
 def calculate_chi_523(vn_array):
     v2_array = vn_array[:, 1]
-    nev = len(v2_array)
     v3_array = vn_array[:, 2]
     v5_array = vn_array[:, 4]
-    chi_523_num = v5_array*(v2_array.conjugate()*v3_array.conjugate())
+    nev = len(v2_array)
+
+    chi_523_num = v5_array*(conj(v2_array)*conj(v3_array))
     chi_523_den = (abs(v2_array))**2*(abs(v3_array))**2
-    chi_523_num_ave = mean(chi_523_num)
-    chi_523_den_ave = mean(chi_523_den)
-    chi_523_num_err = std(chi_523_num)/sqrt(nev)
-    chi_523_den_err = std(chi_523_den)/sqrt(nev)
-    chi_523 = chi_523_num_ave/chi_523_den_ave
-    chi_523_err = sqrt(
-        (chi_523_num_err/chi_523_den_ave)**2.
-        + (chi_523_num_ave*chi_523_den_err/(chi_523_den_ave)**2.)**2.)
-    return(chi_523.real, chi_523_err.real)
+
+    chi_523_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+
+        chi_523_JK[iev] = (real(mean(chi_523_num[array_idx]))
+                                /mean(chi_523_den[array_idx]))
+    chi_523_mean = mean(chi_523_JK)
+    chi_523_err = sqrt((nev - 1.)/nev*sum((chi_523_JK - chi_523_mean)**2.))
+    return(chi_523_mean, chi_523_err)
 
 
 def calculate_chi_6222(vn_array):
     v6_array = vn_array[:, 5]
     v2_array = vn_array[:, 1]
     nev = len(v2_array)
+
     chi_6222_num = v6_array*((v2_array.conjugate())**3)
     chi_6222_den = (abs(v2_array))**6
-    chi_6222_num_ave = mean(chi_6222_num)
-    chi_6222_den_ave = mean(chi_6222_den)
-    chi_6222_num_err = std(chi_6222_num)/sqrt(nev)
-    chi_6222_den_err = std(chi_6222_den)/sqrt(nev)
-    chi_6222 = chi_6222_num_ave/chi_6222_den_ave
-    chi_6222_err = sqrt(
-        (chi_6222_num_err/chi_6222_den_ave)**2.
-        + (chi_6222_num_ave*chi_6222_den_err/(chi_6222_den_ave)**2.)**2.)
-    return(chi_6222.real, chi_6222_err.real)
+
+    chi_6222_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+
+        chi_6222_JK[iev] = (real(mean(chi_6222_num[array_idx]))
+                                 /mean(chi_6222_den[array_idx]))
+    chi_6222_mean = mean(chi_6222_JK)
+    chi_6222_err = sqrt((nev - 1.)/nev*sum((chi_6222_JK - chi_6222_mean)**2.))
+    return(chi_6222_mean, chi_6222_err)
 
 
 def calculate_chi_633(vn_array):
     v6_array = vn_array[:, 5]
     v3_array = vn_array[:, 2]
     nev = len(v3_array)
+
     chi_633_num = v6_array*((v3_array.conjugate())**2)
-    chi_633_den = (abs(v3_array))**4                  
-    chi_633_num_ave = mean(chi_633_num)
-    chi_633_den_ave = mean(chi_633_den)
-    chi_633_num_err = std(chi_633_num)/sqrt(nev)
-    chi_633_den_err = std(chi_633_den)/sqrt(nev)
-    chi_633 = chi_633_num_ave/chi_633_den_ave
-    chi_633_err = sqrt(
-        (chi_633_num_err/chi_633_den_ave)**2.
-        + (chi_633_num_ave*chi_633_den_err/(chi_633_den_ave)**2.)**2.)
-    return(chi_633.real, chi_633_err.real)
+    chi_633_den = (abs(v3_array))**4
+    
+    chi_633_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+
+        chi_633_JK[iev] = (real(mean(chi_633_num[array_idx]))
+                                /mean(chi_633_den[array_idx]))
+    chi_633_mean = mean(chi_633_JK)
+    chi_633_err = sqrt((nev - 1.)/nev*sum((chi_633_JK - chi_633_mean)**2.))
+    return(chi_633_mean, chi_633_err)
 
 
 def calculate_v4_Psi2(chi_422, chi_422_err, vn_array):
@@ -537,103 +552,79 @@ def calcualte_event_plane_correlations(vn_array):
     """
     vn_array = array(vn_array)
     nev = len(vn_array[:, 0])
-    # cos(4(Psi_2 - Psi_4))
     v2_array = vn_array[:, 1]
-    v4_array = vn_array[:, 3]
-    v2_2 = mean(abs(v2_array)**2.)
-    v4_2 = mean(abs(v4_array)**2.)
-    v2_2_err = std(abs(v2_array)**2.)/sqrt(nev)
-    v4_2_err = std(abs(v4_array)**2.)/sqrt(nev)
-    corr_224_num = mean(real(v2_array**2.*conj(v4_array)))
-    corr_224_num_err = std(real(v2_array**2.*conj(v4_array)))/sqrt(nev)
-    corr_224_denorm = sqrt(v2_2**2.*v4_2)
-    corr_224_denorm_err = sqrt((v2_2_err/(v2_2**2.*sqrt(v4_2)))**2.
-                               + (v4_2_err/(2.*v2_2*v4_2**1.5))**2.)
-    corr_224 = corr_224_num/sqrt(v2_2*v2_2*v4_2)
-    corr_224_err = sqrt(
-        (corr_224_num_err/corr_224_denorm)**2.
-         + (corr_224_denorm_err*corr_224_num)**2.)
-
-    # cos(6(Psi_2 - Psi_3))
     v3_array = vn_array[:, 2]
-    v3_2 = mean(abs(v3_array)**2.)
-    v3_2_err = std(abs(v3_array)**2.)/sqrt(nev)
-    corr_22233_num = mean(real(v2_array**3.*conj(v3_array)**2.))
-    corr_22233_num_err = std(real(v2_array**3.*conj(v3_array)**2.))/sqrt(nev)
-    corr_22233_denorm = sqrt(v2_2**3.*v3_2**2.)
-    corr_22233_denorm_err = sqrt((3.*v2_2_err/(2.*v2_2**2.5*v3_2))**2.
-                                 + (v3_2_err/(v2_2**1.5*v3_2**2.))**2.)
-    corr_22233 = corr_22233_num/corr_22233_denorm
-    corr_22233_err = sqrt(
-        (corr_22233_num_err/corr_22233_denorm)**2.
-        + (corr_22233_denorm_err*corr_22233_num)**2.)
-
-    # cos(6(Psi_2 - Psi_6))
-    v6_array = vn_array[:, 5]
-    v6_2 = mean(abs(v6_array)**2.)
-    v6_2_err = std(abs(v6_array)**2.)/sqrt(nev)
-    corr_2226_num = mean(real(v2_array**3.*conj(v6_array)))
-    corr_2226_num_err = std(real(v2_array**3.*conj(v6_array)))/sqrt(nev)
-    corr_2226_denorm = sqrt(v2_2**3.*v6_2)
-    corr_2226_denorm_err = sqrt(
-        (3.*v2_2_err/(2.*v2_2**2.5*sqrt(v6_2)))**2.
-        + (v6_2_err/(2.*v2_2**1.5*v6_2**1.5))**2.)
-    corr_2226 = corr_2226_num/corr_2226_denorm
-    corr_2226_err = sqrt(
-        (corr_2226_num_err/corr_2226_denorm)**2.
-        + (corr_2226_num*corr_2226_denorm_err)**2.)
-
-    # cos(6(Psi_3 - Psi_6))
-    corr_336_num = mean(real(v3_array**2.*conj(v6_array)))
-    corr_336_num_err = std(real(v3_array**2.*conj(v6_array)))/sqrt(nev)
-    corr_336_denorm = sqrt(v3_2**2.*v6_2)
-    corr_336_denorm_err = sqrt(
-            (v3_2_err/(v3_2**2.*sqrt(v6_2)))**2.
-            + (v6_2_err/(2.*v3_2*v6_2**1.5))**2.)
-    corr_336 = corr_336_num/corr_336_denorm
-    corr_336_err = sqrt(
-            (corr_336_num_err/corr_336_denorm)**2.
-            + (corr_336_num*corr_336_denorm_err)**2.)
-
-    # cos(2Psi_2 + 3Psi_3 - 5Psi_5)
+    v4_array = vn_array[:, 3]
     v5_array = vn_array[:, 4]
-    v5_2 = mean(abs(v5_array)**2.)
-    v5_2_err = std(abs(v5_array)**2.)/sqrt(nev)
-    corr_235_num = mean(real(v2_array*v3_array*conj(v5_array)))
-    corr_235_num_err = std(real(v2_array*v3_array*conj(v5_array)))/sqrt(nev)
-    corr_235_denorm = sqrt(v2_2*v3_2*v5_2)
-    corr_235_denorm_err = sqrt((v2_2_err/(2.*v2_2*sqrt(v3_2*v5_2)))**2.
-                               + (v3_2_err/(2.*v3_2*sqrt(v2_2*v5_2)))**2.
-                               + (v5_2_err/(2.*v5_2*sqrt(v2_2*v3_2)))**2.)
-    corr_235 = corr_235_num/corr_235_denorm
-    corr_235_err = sqrt(
-            (corr_235_num_err/corr_235_denorm)**2.
-            + (corr_235_num*corr_235_denorm_err)**2.)
+    v6_array = vn_array[:, 5]
 
-    # cos(2Psi_2 + 4Psi_4 - 6Psi_6)
-    corr_246_num = mean(real(v2_array*v4_array*conj(v6_array)))
-    corr_246_num_err = std(real(v2_array*v4_array*conj(v6_array)))/sqrt(nev)
-    corr_246_denorm = sqrt(v2_2*v4_2*v6_2)
-    corr_246_denorm_err = sqrt((v2_2_err/(2.*v2_2*sqrt(v4_2*v6_2)))**2.
-                               + (v4_2_err/(2.*v4_2*sqrt(v2_2*v6_2)))**2.
-                               + (v6_2_err/(2.*v6_2*sqrt(v2_2*v4_2)))**2.)
-    corr_246 = corr_246_num/corr_246_denorm
-    corr_246_err = sqrt(
-        (corr_246_num_err/corr_246_denorm)**2.
-        + (corr_246_num*corr_246_denorm_err)**2.)
+    corr_224_JK = zeros(nev)
+    corr_22233_JK = zeros(nev)
+    corr_2226_JK = zeros(nev)
+    corr_336_JK = zeros(nev)
+    corr_235_JK = zeros(nev)
+    corr_246_JK = zeros(nev)
+    corr_234_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
 
-    # cos(2Psi_2 - 6Psi_3 + 4Psi_4)
-    corr_234_num = mean(real(v2_array*conj(v3_array)**2.*v4_array))
-    corr_234_num_err = std(real(v2_array*conj(v3_array)**2.*v4_array))/sqrt(nev)
-    corr_234_denorm = sqrt(v2_2*v3_2**2.*v4_2)
-    corr_234_denorm_err = sqrt(
-            (v2_2_err/(2.*v2_2**1.5*v3_2*sqrt(v4_2)))**2.
-            + (v3_2_err/(sqrt(v2_2*v4_2)*v3_2**2.))**2.
-            + (v4_2_err/(2.*sqrt(v2_2)*v3_2*v4_2**1.5))**2.)
-    corr_234 = corr_234_num/corr_234_denorm
-    corr_234_err = sqrt(
-        (corr_234_num_err/corr_234_denorm)**2.
-        + (corr_234_num*corr_234_denorm_err)**2.)
+        v2_2 = mean(abs(v2_array[array_idx])**2.)
+        v3_2 = mean(abs(v3_array[array_idx])**2.)
+        v4_2 = mean(abs(v4_array[array_idx])**2.)
+        v5_2 = mean(abs(v5_array[array_idx])**2.)
+        v6_2 = mean(abs(v6_array[array_idx])**2.)
+
+        # cos(4(Psi_2 - Psi_4))
+        corr_224_num = mean(real((v2_array[array_idx]**2.)
+                                 *conj(v4_array[array_idx])))
+        corr_224_JK[iev] = corr_224_num/sqrt(v2_2*v2_2*v4_2)
+
+        # cos(6(Psi_2 - Psi_3))
+        corr_22233_num = mean(real((v2_array[array_idx]**3.)
+                                   *conj(v3_array[array_idx])**2.))
+        corr_22233_JK[iev] = corr_22233_num/sqrt(v2_2**3.*v3_2**2.)
+
+        # cos(6(Psi_2 - Psi_6))
+        corr_2226_num = mean(real(v2_array[array_idx]**3.
+                                  *conj(v6_array[array_idx])))
+        corr_2226_JK[iev] = corr_2226_num/sqrt((v2_2**3.)*v6_2)
+
+        # cos(6(Psi_3 - Psi_6))
+        corr_336_num = mean(real((v3_array[array_idx]**2.)
+                                 *conj(v6_array[array_idx])))
+        corr_336_JK[iev] = corr_336_num/sqrt((v3_2**2.)*v6_2)
+
+        # cos(2Psi_2 + 3Psi_3 - 5Psi_5)
+        corr_235_num = mean(real(v2_array[array_idx]*v3_array[array_idx]
+                                 *conj(v5_array[array_idx])))
+        corr_235_JK[iev] = corr_235_num/sqrt(v2_2*v3_2*v5_2)
+
+        # cos(2Psi_2 + 4Psi_4 - 6Psi_6)
+        corr_246_num = mean(real(v2_array[array_idx]*v4_array[array_idx]
+                                 *conj(v6_array[array_idx])))
+        corr_246_JK[iev] = corr_246_num/sqrt(v2_2*v4_2*v6_2)
+
+        # cos(2Psi_2 - 6Psi_3 + 4Psi_4)
+        corr_234_num = mean(real(v2_array[array_idx]
+                                 *(conj(v3_array[array_idx])**2.)
+                                 *v4_array[array_idx]))
+        corr_234_JK[iev] = corr_234_num/sqrt(v2_2*(v3_2**2.)*v4_2)
+
+    corr_224 = mean(corr_224_JK)
+    corr_224_err = sqrt((nev - 1.)/nev*sum((corr_224_JK - corr_224)**2.))
+    corr_22233 = mean(corr_22233_JK)
+    corr_22233_err = sqrt((nev - 1.)/nev*sum((corr_22233_JK - corr_22233)**2.))
+    corr_2226 = mean(corr_2226_JK)
+    corr_2226_err = sqrt((nev - 1.)/nev*sum((corr_2226_JK - corr_2226)**2.))
+    corr_336 = mean(corr_336_JK)
+    corr_336_err = sqrt((nev - 1.)/nev*sum((corr_336_JK - corr_336)**2.))
+    corr_235 = mean(corr_235_JK)
+    corr_235_err = sqrt((nev - 1.)/nev*sum((corr_235_JK - corr_235)**2.))
+    corr_246 = mean(corr_246_JK)
+    corr_246_err = sqrt((nev - 1.)/nev*sum((corr_246_JK - corr_246)**2.))
+    corr_234 = mean(corr_234_JK)
+    corr_234_err = sqrt((nev - 1.)/nev*sum((corr_234_JK - corr_234)**2.))
 
     results = [corr_224, corr_22233, corr_2226, corr_336,
                corr_235, corr_246, corr_234]
