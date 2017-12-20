@@ -703,6 +703,7 @@ def calculate_symmetric_cumulant(vn_data_array):
         this funciton computes the symmetric cumulant
             SC(m,n) = <v_m*conj(v_m)*v_n*conj(v_n)>
                       - <v_m*conj(v_m)>*<v_n*conj(v_n)>
+        we use Jackknife resampling method to estimate the statistical error
     """
     vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
@@ -731,41 +732,30 @@ def calculate_symmetric_cumulant(vn_data_array):
         - (dN - 4.)*(abs(Q2)**2. + abs(Q4)**2.) + dN*(dN - 6.)
     )
 
-    # SC(3,2)
-    #SC_32 = real(mean(v2*conj(v2)*v3*conj(v3))
-    #             - mean(v2*conj(v2))*mean(v3*conj(v3)))
-    #SC_32_err = sqrt(real(std(v2*conj(v2)*v3*conj(v3)))**2.
-    #                 + (mean(v2*conj(v2))*std(v3*conj(v3)))**2.
-    #                 + (mean(v3*conj(v3))*std(v2*conj(v2)))**2.)/sqrt(nev)
-    SC_32 = (mean(Q_32)/mean(N4_weight)
-             - (mean(Q3_2)*mean(Q2_2))/(mean(N2_weight)**2.))
-    stat_err1 = (sqrt((std(Q_32)/mean(N4_weight))**2.
-                      + ((std(N4_weight)*mean(Q_32))/mean(N4_weight)**2.)**2.)
-                 /sqrt(nev))
-    stat_err2 = (sqrt((std(Q3_2)*mean(Q2_2)/(mean(N2_weight)**2.))**2.
-            + (std(Q2_2)*mean(Q3_2)/(mean(N2_weight)**2.))**2.
-            + (mean(Q2_2)*mean(Q3_2)*std(N2_weight)/mean(N2_weight)**3.)**2.
-            )/sqrt(nev))
-    SC_32_err = sqrt(stat_err1**2. + stat_err2**2.)
+    # calcualte observables with Jackknife resampling method
+    SC32_array = zeros(nev)
+    SC42_array = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
 
-    # SC(4,2)
-    #SC_42 = real(mean(v2*conj(v2)*v4*conj(v4))
-    #             - mean(v2*conj(v2))*mean(v4*conj(v4)))
-    #SC_32_err = sqrt(real(std(v2*conj(v2)*v4*conj(v4)))**2.
-    #                 + (mean(v2*conj(v2))*std(v4*conj(v4)))**2.
-    #                 + (mean(v4*conj(v4))*std(v2*conj(v2)))**2.)/sqrt(nev)
-    SC_42 = (mean(Q_42)/mean(N4_weight)
-             - (mean(Q4_2)*mean(Q2_2))/(mean(N2_weight)**2.))
-    stat_err1 = (sqrt((std(Q_42)/mean(N4_weight))**2.
-                      + ((std(N4_weight)*mean(Q_42))/mean(N4_weight)**2.)**2.)
-                 /sqrt(nev))
-    stat_err2 = (sqrt((std(Q4_2)*mean(Q2_2)/(mean(N2_weight)**2.))**2.
-            + (std(Q2_2)*mean(Q4_2)/(mean(N2_weight)**2.))**2.
-            + (mean(Q2_2)*mean(Q4_2)*std(N2_weight)/mean(N2_weight)**3.)**2.
-            )/sqrt(nev))
-    SC_42_err = sqrt(stat_err1**2. + stat_err2**2.)
+        # SC(3,2)
+        SC32_array[iev] = (mean(Q_32[array_idx])/mean(N4_weight[array_idx])
+                           - (mean(Q3_2[array_idx])*mean(Q2_2[array_idx]))
+                             /(mean(N2_weight[array_idx)**2.))
 
-    results = [SC_32, SC_32_err, SC_42, SC_42_err]
+        # SC(4,2)
+        SC42_array[iev] = (mean(Q_42[array_idx])/mean(N4_weight[array_idx])
+                           - (mean(Q4_2[array_idx])*mean(Q2_2[array_idx]))
+                             /(mean(N2_weight[array_idx])**2.))
+
+    SC32_mean = mean(SC32_array)
+    SC32_err = sqrt((nev - 1.)/nev*sum((SC32_array - SC32_mean)**2.))
+
+    SC42_mean = mean(SC42_array)
+    SC42_err = sqrt((nev - 1.)/nev*sum((SC42_array - SC42_mean)**2.))
+
+    results = [SC32_mean, SC32_err, SC42_mean, SC42_err]
     return(results)
 
 
