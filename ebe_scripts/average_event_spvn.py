@@ -99,7 +99,7 @@ def calculate_chi_422(vn_array):
     """
         chi_422 = Re(v4*conj(v2)**2.)/|v2|^4
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
@@ -127,7 +127,8 @@ def calculate_chi_422(vn_array):
 
 
 def calculate_chi_523(vn_array):
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
+    Q1 = dN*vn_array[:, 1]
     Q2 = dN*vn_array[:, 2]
     Q3 = dN*vn_array[:, 3]
     Q5 = dN*vn_array[:, 5]
@@ -158,7 +159,7 @@ def calculate_chi_523(vn_array):
 
 
 def calculate_chi_6222(vn_array):
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
     Q6 = dN*vn_array[:, 6]
@@ -195,7 +196,7 @@ def calculate_chi_6222(vn_array):
 
 
 def calculate_chi_633(vn_array):
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q3 = dN*vn_array[:, 3]
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
@@ -226,7 +227,7 @@ def calculate_v4_Psi2(chi_422, chi_422_err, vn_array):
     """
         v4(Psi2) = chi_422*sqrt(<abs(V2)**4>)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
@@ -248,9 +249,11 @@ def calculate_v5_Psi23(chi_523, chi_523_err, vn_array):
     """
         v5(Psi23) = chi_523*sqrt(<abs(V2)**2*abs(V3)**2>)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
+    Q1 = dN*vn_array[:, 1]
     Q2 = dN*vn_array[:, 2]
     Q3 = dN*vn_array[:, 3]
+    Q5 = dN*vn_array[:, 5]
     nev = len(dN)
     
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
@@ -271,7 +274,7 @@ def calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array):
     """
         v6(Psi2) = chi_6222*sqrt(<abs(V2)**6>)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
     Q6 = dN*vn_array[:, 6]
@@ -300,7 +303,7 @@ def calculate_v6_Psi3(chi_633, chi_633_err, vn_array):
     """
         v6(Psi3) = chi_633*sqrt(<abs(V3)**4>)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q3 = dN*vn_array[:, 3]
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
@@ -322,7 +325,7 @@ def calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array):
     """
         rho_422 = v4(Psi2)/v4(Psi4)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
 
@@ -342,7 +345,7 @@ def calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array):
     """
         rho_523 = v5(Psi23)/v5(Psi5)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
 
@@ -362,7 +365,7 @@ def calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array):
     """
         rho_6222 = v6(Psi2)/v6(Psi6)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
 
@@ -382,7 +385,7 @@ def calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array):
     """
         rho_633 = v6(Psi3)/v6(Psi6)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
 
@@ -402,7 +405,7 @@ def calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array):
     """
         v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
     
@@ -421,7 +424,7 @@ def calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array):
     """
         v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)
     """
-    dN = vn_data_array[:, 0]
+    dN = vn_array[:, 0]
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
     
@@ -442,10 +445,10 @@ def calculate_v6_L(chi_6222, chi_6222_err, chi_633, chi_633_err, vn_array):
         v6_L = sqrt(v6(Psi6)^2 - chi_6222^2 v2^6
                     - chi_633^2 v3^4 - 2 Re(chi_6222*chi_633*v2^3 v3^{2*}))
     """
-    dN = vn_data_array[:, 0]
-    v2_array = dN*vn_array[:, 2]
-    v3_array = dN*vn_array[:, 3]
-    v6_array = dN*vn_array[:, 6]
+    dN = vn_array[:, 0]
+    v2_array = vn_array[:, 2]
+    v3_array = vn_array[:, 3]
+    v6_array = vn_array[:, 6]
     nev = len(dN)
     
     v6_Psi6_sq = mean(abs(v6_array)**2.)
@@ -667,11 +670,11 @@ def calcualte_event_plane_correlations(vn_array):
     """
     vn_array = array(vn_array)
     nev = len(vn_array[:, 0])
-    v2_array = vn_array[:, 1]
-    v3_array = vn_array[:, 2]
-    v4_array = vn_array[:, 3]
-    v5_array = vn_array[:, 4]
-    v6_array = vn_array[:, 5]
+    v2_array = vn_array[:, 2]
+    v3_array = vn_array[:, 3]
+    v4_array = vn_array[:, 4]
+    v5_array = vn_array[:, 5]
+    v6_array = vn_array[:, 6]
 
     corr_224_JK = zeros(nev)
     corr_22233_JK = zeros(nev)
