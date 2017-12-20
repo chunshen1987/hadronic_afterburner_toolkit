@@ -1540,7 +1540,7 @@ for ipart, particle_id in enumerate(particle_list):
         # output vn6/vn4 ratio for ALICE pt cut
         output_filename = ("charged_hadron_vn6_over_vn4_ALICE.dat")
         f = open(output_filename, 'w')
-        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  gamma_1  gamma_1_err \n")
+        f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err \n")
         f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                 % (2, vn6_over_vn4_alice[0], vn6_over_vn4_alice[1],
                    vn6_over_vn4_alice[2], vn6_over_vn4_alice[3]))
@@ -1550,7 +1550,7 @@ for ipart, particle_id in enumerate(particle_list):
         # output vn6/vn4 ratio for CMS pt cut
         output_filename = ("charged_hadron_vn6_over_vn4_CMS.dat")
         f = open(output_filename, 'w')
-        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  gamma_1  gamma_1_err \n")
+        f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err \n")
         f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                 % (2, vn6_over_vn4_cms[0], vn6_over_vn4_cms[1],
                    vn6_over_vn4_cms[2], vn6_over_vn4_cms[3]))
@@ -1560,7 +1560,7 @@ for ipart, particle_id in enumerate(particle_list):
         # output vn6/vn4 ratio for ATLAS pt cut
         output_filename = ("charged_hadron_vn6_over_vn4_ATLAS.dat")
         f = open(output_filename, 'w')
-        f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  gamma_1  gamma_1_err \n")
+        f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err \n")
         f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                 % (2, vn6_over_vn4_atlas[0], vn6_over_vn4_atlas[1],
                    vn6_over_vn4_atlas[2], vn6_over_vn4_atlas[3]))
