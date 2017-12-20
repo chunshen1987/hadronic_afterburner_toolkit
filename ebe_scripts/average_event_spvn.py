@@ -99,81 +99,124 @@ def calculate_chi_422(vn_array):
     """
         chi_422 = Re(v4*conj(v2)**2.)/|v2|^4
     """
-    v2_array = vn_array[:, 1]
-    v4_array = vn_array[:, 3]
-    nev = len(v2_array)
-
-    chi_422_num = v4_array*(conj(v2_array)**2)
-    chi_422_den = (abs(v2_array))**4
+    dN = vn_data_array[:, 0]
+    Q2 = dN*vn_array[:, 2]
+    Q4 = dN*vn_array[:, 4]
+    nev = len(dN)
+    
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
+             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
+             + 2*dN*(dN - 3.))
+    
+    N3_weight = dN*(dN - 1.)*(dN - 2.)
+    chi_422_num = Q4*conj(Q2)*conj(Q2) - 2.*Q2*conj(Q2) - Q4*conj(Q4) + 2.*dN
 
     chi_422_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
 
-        chi_422_JK[iev] = (real(mean(chi_422_num[array_idx]))
-                                /mean(chi_422_den[array_idx]))
+        chi_422_JK[iev] = (
+            real(mean(chi_422_num[array_idx]))/mean(N3_weight[array_idx])
+            /(real(mean(Q2_4[array_idx]))/mean(N4_weight[array_idx])))
+
     chi_422_mean = mean(chi_422_JK)
     chi_422_err = sqrt((nev - 1.)/nev*sum((chi_422_JK - chi_422_mean)**2.))
     return(chi_422_mean, chi_422_err)
 
 
 def calculate_chi_523(vn_array):
-    v2_array = vn_array[:, 1]
-    v3_array = vn_array[:, 2]
-    v5_array = vn_array[:, 4]
-    nev = len(v2_array)
+    dN = vn_data_array[:, 0]
+    Q2 = dN*vn_array[:, 2]
+    Q3 = dN*vn_array[:, 3]
+    Q5 = dN*vn_array[:, 5]
+    nev = len(dN)
 
-    chi_523_num = v5_array*(conj(v2_array)*conj(v3_array))
-    chi_523_den = (abs(v2_array))**2*(abs(v3_array))**2
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
+        - 2.*real(Q3*conj(Q1)*conj(Q2)) + abs(Q5)**2. + abs(Q1)**2.
+        - (dN - 4.)*(abs(Q2)**2. + abs(Q3)**2.) + dN*(dN - 6.)
+    )
+    
+    N3_weight = dN*(dN - 1.)*(dN - 2.)
+    chi_523_num = (Q5*conj(Q2)*conj(Q3) - Q3*conj(Q3) - Q2*conj(Q2)
+                   - Q5*conj(Q5) + 2.*dN)
 
     chi_523_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
 
-        chi_523_JK[iev] = (real(mean(chi_523_num[array_idx]))
-                                /mean(chi_523_den[array_idx]))
+        chi_523_JK[iev] = (
+            real(mean(chi_523_num[array_idx]))/mean(N3_weight[array_idx])
+            /(real(mean(Q_32[array_idx]))/mean(N4_weight[array_idx])))
+
     chi_523_mean = mean(chi_523_JK)
     chi_523_err = sqrt((nev - 1.)/nev*sum((chi_523_JK - chi_523_mean)**2.))
     return(chi_523_mean, chi_523_err)
 
 
 def calculate_chi_6222(vn_array):
-    v6_array = vn_array[:, 5]
-    v2_array = vn_array[:, 1]
-    nev = len(v2_array)
+    dN = vn_data_array[:, 0]
+    Q2 = dN*vn_array[:, 2]
+    Q4 = dN*vn_array[:, 4]
+    Q6 = dN*vn_array[:, 6]
+    nev = len(dN)
 
-    chi_6222_num = v6_array*((v2_array.conjugate())**3)
-    chi_6222_den = (abs(v2_array))**6
+    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
+    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
+            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
+            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
+            - 12.*real(Q6*conj(Q4)*conj(Q2))
+            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
+            + 4.*(abs(Q6)**2.)
+            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
+            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
+            - 6.*dN*(dN - 4.)*(dN - 5.))
+
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    chi_6222_num = (Q6*conj(Q2)*conj(Q2)*conj(Q2) - 3.*Q6*conj(Q4)*conj(Q2)
+                    - 3.*Q4*conj(Q2)*conj(Q2) + 2.*Q6*conj(Q6) + 6.*Q2*conj(Q2)
+                    + 3.*Q4*conj(Q4) - 6.*dN)
 
     chi_6222_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
 
-        chi_6222_JK[iev] = (real(mean(chi_6222_num[array_idx]))
-                                 /mean(chi_6222_den[array_idx]))
+        chi_6222_JK[iev] = (
+            real(mean(chi_6222_num[array_idx]))/mean(N4_weight[array_idx])
+            /(real(mean(Q2_6[array_idx]))/mean(N6_weight[array_idx])))
+
     chi_6222_mean = mean(chi_6222_JK)
     chi_6222_err = sqrt((nev - 1.)/nev*sum((chi_6222_JK - chi_6222_mean)**2.))
     return(chi_6222_mean, chi_6222_err)
 
 
 def calculate_chi_633(vn_array):
-    v6_array = vn_array[:, 5]
-    v3_array = vn_array[:, 2]
-    nev = len(v3_array)
+    dN = vn_data_array[:, 0]
+    Q3 = dN*vn_array[:, 3]
+    Q6 = dN*vn_array[:, 6]
+    nev = len(dN)
 
-    chi_633_num = v6_array*((v3_array.conjugate())**2)
-    chi_633_den = (abs(v3_array))**4
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
+             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
+             + 2*dN*(dN - 3.))
+
+    N3_weight = dN*(dN - 1.)*(dN - 2.)
+    chi_633_num = Q6*conj(Q3)*conj(Q3) - 2.*Q3*conj(Q3) - Q6*conj(Q6) + 2.*dN
     
     chi_633_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
 
-        chi_633_JK[iev] = (real(mean(chi_633_num[array_idx]))
-                                /mean(chi_633_den[array_idx]))
+        chi_633_JK[iev] = (
+            real(mean(chi_633_num[array_idx]))/mean(N3_weight[array_idx])
+            /(real(mean(Q3_4[array_idx]))/mean(N4_weight[array_idx])))
+
     chi_633_mean = mean(chi_633_JK)
     chi_633_err = sqrt((nev - 1.)/nev*sum((chi_633_JK - chi_633_mean)**2.))
     return(chi_633_mean, chi_633_err)
@@ -183,11 +226,18 @@ def calculate_v4_Psi2(chi_422, chi_422_err, vn_array):
     """
         v4(Psi2) = chi_422*sqrt(<abs(V2)**4>)
     """
-    v2_array = vn_array[:, 1]
-    nev = len(v2_array)
-    temp_array = abs(v2_array)**4
-    v2_factor = sqrt(mean(temp_array))
-    v2_factor_err = std(temp_array)/(2.*v2_factor)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q2 = dN*vn_array[:, 2]
+    Q4 = dN*vn_array[:, 4]
+    nev = len(dN)
+
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
+             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
+             + 2*dN*(dN - 3.))
+
+    v2_factor = sqrt(mean(Q2_4)/mean(N4_weight))
+    v2_factor_err = std(Q2_4)/mean(N4_weight)/(2.*v2_factor)/sqrt(nev)
     v4_Psi2 = chi_422*v2_factor
     v4_Psi2_err = sqrt((chi_422_err*v2_factor)**2.
                        + (chi_422*v2_factor_err)**2.)
@@ -198,12 +248,19 @@ def calculate_v5_Psi23(chi_523, chi_523_err, vn_array):
     """
         v5(Psi23) = chi_523*sqrt(<abs(V2)**2*abs(V3)**2>)
     """
-    v2_array = vn_array[:, 1]
-    v3_array = vn_array[:, 2]
-    nev = len(v2_array)
-    temp_array = abs(v2_array)**2.*abs(v3_array)**2.
-    v23_factor = sqrt(mean(temp_array))
-    v23_factor_err = std(temp_array)/(2.*v23_factor)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q2 = dN*vn_array[:, 2]
+    Q3 = dN*vn_array[:, 3]
+    nev = len(dN)
+    
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
+        - 2.*real(Q3*conj(Q1)*conj(Q2)) + abs(Q5)**2. + abs(Q1)**2.
+        - (dN - 4.)*(abs(Q2)**2. + abs(Q3)**2.) + dN*(dN - 6.)
+    )
+
+    v23_factor = sqrt(mean(Q_32)/mean(N4_weight))
+    v23_factor_err = std(Q_32)/mean(N4_weight)/(2.*v23_factor)/sqrt(nev)
     v5_Psi23 = chi_523*v23_factor
     v5_Psi23_err = sqrt((chi_523_err*v23_factor)**2.
                         + (chi_523*v23_factor_err)**2.)
@@ -214,11 +271,25 @@ def calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array):
     """
         v6(Psi2) = chi_6222*sqrt(<abs(V2)**6>)
     """
-    v2_array = vn_array[:, 1]
-    nev = len(v2_array)
-    temp_array = abs(v2_array)**6.
-    v2_factor = sqrt(mean(temp_array))
-    v2_factor_err = std(temp_array)/(2.*v2_factor)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q2 = dN*vn_array[:, 2]
+    Q4 = dN*vn_array[:, 4]
+    Q6 = dN*vn_array[:, 6]
+    nev = len(dN)
+
+    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
+    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
+            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
+            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
+            - 12.*real(Q6*conj(Q4)*conj(Q2))
+            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
+            + 4.*(abs(Q6)**2.)
+            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
+            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
+            - 6.*dN*(dN - 4.)*(dN - 5.))
+
+    v2_factor = sqrt(mean(Q2_6)/mean(N6_weight))
+    v2_factor_err = std(Q2_6)/mean(N6_weight)/(2.*v2_factor)/sqrt(nev)
     v6_Psi2 = chi_6222*v2_factor
     v6_Psi2_err = sqrt((chi_6222_err*v2_factor)**2.
                         + (chi_6222*v2_factor_err)**2.)
@@ -229,11 +300,18 @@ def calculate_v6_Psi3(chi_633, chi_633_err, vn_array):
     """
         v6(Psi3) = chi_633*sqrt(<abs(V3)**4>)
     """
-    v3_array = vn_array[:, 2]
-    nev = len(v3_array)
-    temp_array = abs(v3_array)**4.
-    v3_factor = sqrt(mean(temp_array))
-    v3_factor_err = std(temp_array)/(2.*v3_factor)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q3 = dN*vn_array[:, 3]
+    Q6 = dN*vn_array[:, 6]
+    nev = len(dN)
+
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
+             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
+             + 2*dN*(dN - 3.))
+
+    v3_factor = sqrt(mean(Q3_4)/mean(N4_weight))
+    v3_factor_err = std(Q3_4)/mean(N4_weight)/(2.*v3_factor)/sqrt(nev)
     v6_Psi3 = chi_633*v3_factor
     v6_Psi3_err = sqrt((chi_633_err*v3_factor)**2.
                         + (chi_633*v3_factor_err)**2.)
@@ -244,10 +322,16 @@ def calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array):
     """
         rho_422 = v4(Psi2)/v4(Psi4)
     """
-    v4_array = vn_array[:, 3]
-    nev = len(v4_array)
-    v4_Psi4 = sqrt(mean(abs(v4_array)**2.))
-    v4_Psi4_err = std(abs(v4_array)**2.)/(2.*v4_Psi4)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q4 = dN*vn_array[:, 4]
+    nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q4_2 = abs(Q4)**2. - dN
+
+    v4_Psi4 = sqrt(mean(Q4_2)/mean(N2_weight))
+    v4_Psi4_err = std(Q4_2)/mean(N2_weight)/(2.*v4_Psi4)/sqrt(nev)
+
     rho_422 = v4_Psi2/v4_Psi4
     rho_422_err = sqrt((v4_Psi2_err/v4_Psi4)**2.
                        + (v4_Psi2*v4_Psi4_err/v4_Psi4**2.)**2.)
@@ -258,10 +342,16 @@ def calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array):
     """
         rho_523 = v5(Psi23)/v5(Psi5)
     """
-    v5_array = vn_array[:, 4]
-    nev = len(v5_array)
-    v5_Psi5 = sqrt(mean(abs(v5_array)**2.))
-    v5_Psi5_err = std(abs(v5_array)**2.)/(2.*v5_Psi5)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q5 = dN*vn_array[:, 5]
+    nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q5_2 = abs(Q5)**2. - dN
+
+    v5_Psi5 = sqrt(mean(Q5_2)/mean(N2_weight))
+    v5_Psi5_err = std(Q5_2)/mean(N2_weight)/(2.*v5_Psi5)/sqrt(nev)
+
     rho_523 = v5_Psi23/v5_Psi5
     rho_523_err = sqrt((v5_Psi23_err/v5_Psi5)**2.
                        + (v5_Psi23*v5_Psi5_err/v5_Psi5**2.)**2.)
@@ -272,10 +362,16 @@ def calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array):
     """
         rho_6222 = v6(Psi2)/v6(Psi6)
     """
-    v6_array = vn_array[:, 5]
-    nev = len(v6_array)
-    v6_Psi6 = sqrt(mean(abs(v6_array)**2.))
-    v6_Psi6_err = std(abs(v6_array)**2.)/(2.*v6_Psi6)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q6 = dN*vn_array[:, 6]
+    nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q6_2 = abs(Q6)**2. - dN
+
+    v6_Psi6 = sqrt(mean(Q6_2)/mean(N2_weight))
+    v6_Psi6_err = std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev)
+
     rho_6222 = v6_Psi2/v6_Psi6
     rho_6222_err = sqrt((v6_Psi2_err/v6_Psi6)**2.
                         + (v6_Psi2*v6_Psi6_err/v6_Psi6**2.)**2.)
@@ -286,10 +382,16 @@ def calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array):
     """
         rho_633 = v6(Psi3)/v6(Psi6)
     """
-    v6_array = vn_array[:, 5]
-    nev = len(v6_array)
-    v6_Psi6 = sqrt(mean(abs(v6_array)**2.))
-    v6_Psi6_err = std(abs(v6_array)**2.)/(2.*v6_Psi6)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q6 = dN*vn_array[:, 6]
+    nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q6_2 = abs(Q6)**2. - dN
+
+    v6_Psi6 = sqrt(mean(Q6_2)/mean(N2_weight))
+    v6_Psi6_err = std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev)
+
     rho_633 = v6_Psi3/v6_Psi6
     rho_633_err = sqrt((v6_Psi3_err/v6_Psi6)**2.
                         + (v6_Psi3*v6_Psi6_err/v6_Psi6**2.)**2.)
@@ -300,10 +402,15 @@ def calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array):
     """
         v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)
     """
-    v4_array = vn_array[:, 3]
-    nev = len(v4_array)
-    v4_Psi4_sq = mean(abs(v4_array)**2.)
-    v4_Psi4_sq_err = std(abs(v4_array)**2.)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q4 = dN*vn_array[:, 4]
+    nev = len(dN)
+    
+    N2_weight = dN*(dN - 1.)
+    Q4_2 = abs(Q4)**2. - dN
+
+    v4_Psi4_sq = mean(Q4_2)/mean(N2_weight)
+    v4_Psi4_sq_err = std(Q4_2)/mean(N2_weight)/sqrt(nev)
     v4_L = sqrt(v4_Psi4_sq - v4_Psi2**2.)
     v4_L_err = (sqrt(v4_Psi4_sq_err**2. + (2.*v4_Psi2*v4_Psi2_err)**2.)
                 /(2.*v4_L))
@@ -314,10 +421,16 @@ def calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array):
     """
         v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)
     """
-    v5_array = vn_array[:, 4]
-    nev = len(v5_array)
-    v5_Psi5_sq = mean(abs(v5_array)**2.)
-    v5_Psi5_sq_err = std(abs(v5_array)**2.)/sqrt(nev)
+    dN = vn_data_array[:, 0]
+    Q5 = dN*vn_array[:, 5]
+    nev = len(dN)
+    
+    N2_weight = dN*(dN - 1.)
+    Q5_2 = abs(Q5)**2. - dN
+
+    v5_Psi5_sq = mean(Q5_2)/mean(N2_weight)
+    v5_Psi5_sq_err = std(Q5_2)/mean(N2_weight)/sqrt(nev)
+
     v5_L = sqrt(v5_Psi5_sq - v5_Psi23**2.)
     v5_L_err = (sqrt(v5_Psi5_sq_err**2. + (2.*v5_Psi23*v5_Psi23_err)**2.)
                 /(2.*v5_L))
@@ -329,10 +442,12 @@ def calculate_v6_L(chi_6222, chi_6222_err, chi_633, chi_633_err, vn_array):
         v6_L = sqrt(v6(Psi6)^2 - chi_6222^2 v2^6
                     - chi_633^2 v3^4 - 2 Re(chi_6222*chi_633*v2^3 v3^{2*}))
     """
-    v6_array = vn_array[:, 5]
-    v2_array = vn_array[:, 1]
-    v3_array = vn_array[:, 2]
-    nev = len(v6_array)
+    dN = vn_data_array[:, 0]
+    v2_array = dN*vn_array[:, 2]
+    v3_array = dN*vn_array[:, 3]
+    v6_array = dN*vn_array[:, 6]
+    nev = len(dN)
+    
     v6_Psi6_sq = mean(abs(v6_array)**2.)
     v6_Psi6_sq_err = std(abs(v6_array)**2.)/sqrt(nev)
     v2_6 = mean(abs(v2_array)**6.)
