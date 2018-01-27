@@ -8,6 +8,14 @@ if ( ZIB_FOUND )
     include_directories( ${ZLIB_INCLUDE_DIRS} )
 endif ( ZIB_FOUND)
 
+message("source directory:" ${CMAKE_SOURCE_DIR})
+message("binary directory:" ${CMAKE_BINARY_DIR})
+
 set (CMAKE_CXX_FLAGS "-g -Wall")
 
 add_subdirectory (src)
+
+option(unit_tests "Build all unit tests." OFF)
+if (unit_tests)
+    add_subdirectory (unit_tests)
+endif (unit_tests)

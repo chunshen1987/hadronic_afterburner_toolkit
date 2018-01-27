@@ -32,6 +32,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     // program title
+    cout << "*********************************************************";
     cout << endl
          << "               iHBT_afterbuner         " << endl
          << endl
