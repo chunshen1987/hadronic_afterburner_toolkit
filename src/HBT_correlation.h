@@ -53,6 +53,8 @@ class HBT_correlation {
                     particleSamples *particle_list_in);
     ~HBT_correlation();
 
+    double get_psi_ref() {return(psi_ref);};
+
     void calculate_flow_event_plane_angle(int n_order);
     void calculate_HBT_correlation_function();
     void combine_and_bin_particle_pairs(int* event_list);

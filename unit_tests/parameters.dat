@@ -15,7 +15,7 @@ run_mode = 1                  # running mode for the program
                               #    specified by pT_min, pT_max, rap_min,
                               #    and rap_max)
 
-particle_monval = 111         # particle Monte-Carlo number
+particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
