@@ -37,4 +37,33 @@ TEST(HBT_correlation, calculate_flow_event_plane_angle) {
     EXPECT_NEAR(psi_ref, 0.06674083818478263, 1e-8);
 }
 
+TEST(HBT_correlation, calculate_HBT_correlation_function_inv) {
+    ParameterReader *paraRdr = new ParameterReader;
+    paraRdr->readFromFile("parameters.dat");
+    paraRdr->setVal("run_mode", 1);
+    paraRdr->setVal("number_of_oversample_events", 2);
+    paraRdr->setVal("number_of_mixed_events", 1);
+    paraRdr->setVal("invariant_radius_flag", 1);
+    string path="test_gzip_reader";
+    particleSamples particle_list(paraRdr, path);
+    HBT_correlation test(paraRdr, path, &particle_list);
+    test.calculate_HBT_correlation_function();
+    EXPECT_EQ(0, 0);
+}
+
+TEST(HBT_correlation, calculate_HBT_correlation_function) {
+    ParameterReader *paraRdr = new ParameterReader;
+    paraRdr->readFromFile("parameters.dat");
+    paraRdr->setVal("run_mode", 1);
+    paraRdr->setVal("number_of_oversample_events", 2);
+    paraRdr->setVal("number_of_mixed_events", 1);
+    paraRdr->setVal("invariant_radius_flag", 0);
+    paraRdr->setVal("azimuthal_flag", 0);
+    string path="test_gzip_reader";
+    particleSamples particle_list(paraRdr, path);
+    HBT_correlation test(paraRdr, path, &particle_list);
+    test.calculate_HBT_correlation_function();
+    EXPECT_EQ(0, 0);
+}
+
 }  // namespace
