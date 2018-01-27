@@ -31,6 +31,8 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
     needed_number_of_pairs = paraRdr->getVal("needed_number_of_pairs");
 
     azimuthal_flag = paraRdr->getVal("azimuthal_flag");
+    invariant_radius_flag = paraRdr->getVal("invariant_radius_flag");
+
     n_KT = paraRdr->getVal("n_KT");
     n_Kphi = paraRdr->getVal("n_Kphi");
     KT_min = paraRdr->getVal("KT_min");
@@ -56,27 +58,50 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
         Kphi_array[i] = 0.0 + i*dKphi;
     }
 
-    number_of_pairs_numerator_KTKphidiff = new unsigned long long int* [n_KT];
-    number_of_pairs_denormenator_KTKphidiff = (
-                                          new unsigned long long int* [n_KT]);
-    for (int i = 0; i < n_KT; i++) {
-        number_of_pairs_numerator_KTKphidiff[i] = (
-                                          new unsigned long long int [n_Kphi]);
-        number_of_pairs_denormenator_KTKphidiff[i] = (
-                                          new unsigned long long int [n_Kphi]);
-        for (int j = 0; j < n_Kphi; j++) {
-            number_of_pairs_numerator_KTKphidiff[i][j] = 0;
-            number_of_pairs_denormenator_KTKphidiff[i][j] = 0;
+    if (azimuthal_flag == 1) {
+        number_of_pairs_numerator_KTKphidiff = (
+                                        new unsigned long long int* [n_KT]);
+        number_of_pairs_denormenator_KTKphidiff = (
+                                        new unsigned long long int* [n_KT]);
+        for (int i = 0; i < n_KT; i++) {
+            number_of_pairs_numerator_KTKphidiff[i] = (
+                                        new unsigned long long int [n_Kphi]);
+            number_of_pairs_denormenator_KTKphidiff[i] = (
+                                        new unsigned long long int [n_Kphi]);
+            for (int j = 0; j < n_Kphi; j++) {
+                number_of_pairs_numerator_KTKphidiff[i][j] = 0;
+                number_of_pairs_denormenator_KTKphidiff[i][j] = 0;
+            }
         }
     }
     
     number_of_mixed_events = paraRdr->getVal("number_of_mixed_events");
-    number_of_oversample_events = 
-                             paraRdr->getVal("number_of_oversample_events");
+    number_of_oversample_events = (
+                             paraRdr->getVal("number_of_oversample_events"));
     number_pairs_num = 0;
     number_pairs_denorm = 0;
     psi_ref = 0.;
-    if (azimuthal_flag == 0) {
+
+    if (invariant_radius_flag == 1) {
+        q_inv_mean = new double* [n_KT];
+        correl_1d_inv_num = new double* [n_KT];
+        correl_1d_inv_num_count = new double* [n_KT];
+        correl_1d_inv_denorm = new double* [n_KT];
+        for (int iK = 0; iK < n_KT; iK++) {
+            q_inv_mean[iK] = new double[qnpts];
+            correl_1d_inv_num[iK] = new double[qnpts];
+            correl_1d_inv_num_count[iK] = new double[qnpts];
+            correl_1d_inv_denorm[iK] = new double[qnpts];
+            for (int k = 0; k < qnpts; k++) {
+                q_inv_mean[iK][k] = 0.0;
+                correl_1d_inv_num[iK][k] = 0.0;
+                correl_1d_inv_num_count[iK][k] = 0.0;
+                correl_1d_inv_denorm[iK][k] = 0.0;
+            }
+        }
+    }
+
+    if (invariant_radius_flag == 0 && azimuthal_flag == 0) {
         q_out_mean = new double*** [n_KT];
         q_side_mean = new double*** [n_KT];
         q_long_mean = new double*** [n_KT];
@@ -115,7 +140,8 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
                 }
             }
         }
-    } else {
+    }
+    if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
         q_out_diff_mean = new double**** [n_KT];
         q_side_diff_mean = new double**** [n_KT];
         q_long_diff_mean = new double**** [n_KT];
@@ -175,7 +201,20 @@ HBT_correlation::~HBT_correlation() {
     delete[] q_out;
     delete[] q_side;
     delete[] q_long;
-    if (azimuthal_flag == 0) {
+    if (invariant_radius_flag == 1) {
+        for (int iK = 0; iK < n_KT; iK++) {
+            delete[] q_inv_mean[iK];
+            delete[] correl_1d_inv_num[iK];
+            delete[] correl_1d_inv_num_count[iK];
+            delete[] correl_1d_inv_denorm[iK];
+        }
+        delete[] q_inv_mean;
+        delete[] correl_1d_inv_num;
+        delete[] correl_1d_inv_num_count;
+        delete[] correl_1d_inv_denorm;
+    }
+
+    if (invariant_radius_flag == 0 && azimuthal_flag == 0) {
         for (int iK = 0; iK < n_KT; iK++) {
             for (int i = 0; i < qnpts; i++) {
                 for (int j = 0; j < qnpts; j++) {
@@ -206,7 +245,9 @@ HBT_correlation::~HBT_correlation() {
         delete[] correl_3d_num;
         delete[] correl_3d_num_count;
         delete[] correl_3d_denorm;
-    } else {
+    }
+
+    if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
         for (int iK = 0; iK < n_KT; iK++) {
             for (int iphi = 0; iphi < n_Kphi; iphi++) {
                 for (int i = 0; i < qnpts; i++) {
@@ -246,13 +287,17 @@ HBT_correlation::~HBT_correlation() {
         delete[] correl_3d_Kphi_diff_num_count;
         delete[] correl_3d_Kphi_diff_denorm;
     }
+
     delete [] KT_array;
-    for (int i = 0; i < n_KT; i++) {
-        delete[] number_of_pairs_numerator_KTKphidiff[i];
-        delete[] number_of_pairs_denormenator_KTKphidiff[i];
+
+    if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
+        for (int i = 0; i < n_KT; i++) {
+            delete[] number_of_pairs_numerator_KTKphidiff[i];
+            delete[] number_of_pairs_denormenator_KTKphidiff[i];
+        }
+        delete[] number_of_pairs_numerator_KTKphidiff;
+        delete[] number_of_pairs_denormenator_KTKphidiff;
     }
-    delete[] number_of_pairs_numerator_KTKphidiff;
-    delete[] number_of_pairs_denormenator_KTKphidiff;
     delete[] number_of_pairs_numerator_KTdiff;
     delete[] number_of_pairs_denormenator_KTdiff;
 }
@@ -266,7 +311,7 @@ void HBT_correlation::calculate_HBT_correlation_function() {
         particle_list->read_in_particle_samples();
         particle_list->read_in_particle_samples_mixed_event();
         cout << " processing ..." << endl;
-        if (azimuthal_flag == 1) {
+        if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
             calculate_flow_event_plane_angle(2);
         }
         int nev = particle_list->get_number_of_events();
@@ -300,9 +345,10 @@ void HBT_correlation::calculate_HBT_correlation_function() {
             delete [] mixed_event_list;
         }
     }
-    if (azimuthal_flag == 0) {
+    if (invariant_radius_flag == 0 && azimuthal_flag == 0) {
         output_correlation_function();
-    } else {
+    }
+    if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
         output_correlation_function_Kphi_differential();
     }
 }

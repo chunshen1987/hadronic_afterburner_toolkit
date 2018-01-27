@@ -24,6 +24,7 @@ class HBT_correlation
         double q_min, q_max, delta_q;
 
         int azimuthal_flag;
+        int invariant_radius_flag;
         double psi_ref;
         int n_KT, n_Kphi;
         double dKT, dKphi;
@@ -41,6 +42,11 @@ class HBT_correlation
         unsigned long long int *number_of_pairs_denormenator_KTdiff;
         unsigned long long int **number_of_pairs_numerator_KTKphidiff;
         unsigned long long int **number_of_pairs_denormenator_KTKphidiff;
+
+        // arrays for the invariant radius
+        double **q_inv_mean;
+        double **correl_1d_inv_num, **correl_1d_inv_denorm;
+        double **correl_1d_inv_num_count;
 
         double ****q_out_mean, ****q_side_mean, ****q_long_mean;
         double ****correl_3d_num, ****correl_3d_denorm;
