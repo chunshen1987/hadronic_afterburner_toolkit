@@ -345,6 +345,9 @@ void HBT_correlation::calculate_HBT_correlation_function() {
             delete [] mixed_event_list;
         }
     }
+    if (invariant_radius_flag == 1) {
+        output_correlation_function_inv();
+    }
     if (invariant_radius_flag == 0 && azimuthal_flag == 0) {
         output_correlation_function();
     }
@@ -807,6 +810,43 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
     }
     temp_particle_list_1.clear();
     temp_particle_list_2.clear();
+}
+
+
+void HBT_correlation::output_correlation_function_inv() {
+    for (int iK = 0; iK < n_KT - 1; iK++) {
+        double npair_ratio = (
+                static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
+                /static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
+        ostringstream filename;
+        filename << path << "/HBT_correlation_function_inv_KT_" 
+                 << KT_array[iK] << "_" << KT_array[iK+1] << ".dat";
+        ofstream output(filename.str().c_str());
+        for (int iqinv = 0; iqinv < qnpts; iqinv++) {
+            int npart_num = correl_1d_inv_num_count[iK][iqinv];
+            int npart_denorm = correl_1d_inv_denorm[iK][iqinv];
+            double q_inv_local;
+            double correl_fun_num, correl_fun_denorm, correl_fun_val;
+            if (npart_num < 2 || npart_denorm < 2) {
+                q_inv_local = q_out[iqinv];
+                correl_fun_num = 0.0;
+                correl_fun_denorm = npart_denorm;
+                correl_fun_val = 0.0;
+            } else {
+                q_inv_local = q_inv_mean[iK][iqinv]/npart_num;
+                correl_fun_num = correl_1d_inv_num[iK][iqinv];
+                correl_fun_denorm = correl_1d_inv_denorm[iK][iqinv];
+                correl_fun_val = (correl_fun_num
+                                  /(correl_fun_denorm*npair_ratio));
+            }
+            output << scientific << setw(18) << setprecision(8) 
+                   << q_inv_local << "    "
+                   << npart_num << "    " << correl_fun_num << "    "  
+                   << correl_fun_denorm << "    "
+                   << correl_fun_val << "    " << 0.0 << endl;
+        }
+        output.close();
+    }
 }
 
 void HBT_correlation::output_correlation_function() {

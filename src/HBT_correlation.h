@@ -67,6 +67,7 @@ class HBT_correlation
         void combine_and_bin_particle_pairs_mixed_events(
                                           int event_id, int* mixed_event_list);
 
+        void output_correlation_function_inv();
         void output_correlation_function();
         void output_correlation_function_Kphi_differential();
 
