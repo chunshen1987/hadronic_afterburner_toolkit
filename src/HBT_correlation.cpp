@@ -450,100 +450,131 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                     double K_perp = sqrt(K_perp_sq);
                     int Kperp_idx = (int)((K_perp - KT_min)/dKT);
 
-                    // calculate qout and qside in lcms
-                    double cos_K_phi = K_x/K_perp;
-                    double sin_K_phi = K_y/K_perp;
+                    // calculate q_inv
                     double q_x = particle_1_px - particle_2_px;
                     double q_y = particle_1_py - particle_2_py;
-
-                    double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
-                    if (local_q_out < (q_min - delta_q/2. + 1e-8)
-                        || local_q_out > (q_max + delta_q/2. - 1e-8)) {
-                        continue;
-                    }
-                    
-                    int qout_idx = static_cast<int>(
-                            (local_q_out - (q_min - delta_q/2.))/delta_q);
-                    if (qout_idx >= qnpts) continue;
-
-                    double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
-                    if (local_q_side < (q_min - delta_q/2. + 1e-8)
-                        || local_q_side > (q_max + delta_q/2. - 1e-8)) {
-                        continue;
-                    }
-                    
-                    int qside_idx = static_cast<int>(
-                            (local_q_side - (q_min - delta_q/2.))/delta_q);
-                    if (qside_idx >= qnpts) continue;
-
-                    // calcualte qlong in the lcms
                     double q_z = particle_1_pz - particle_2_pz;
                     double q_E = particle_1_E - particle_2_E;
-                    double Mt = sqrt(K_E*K_E - K_z*K_z);
-                    double boost_gamma = K_E/Mt;
-                    double boost_beta = K_z_over_K_E;
-                    // boost qz to lcms
-                    double local_q_long = boost_gamma*(q_z - boost_beta*q_E);  
+                    double local_q_inv = sqrt(
+                                - (q_E*q_E - q_x*q_x - q_y*q_y - q_z*q_z));
 
-                    if (local_q_long < (q_min - delta_q/2. + 1e-8)
-                        || local_q_long > (q_max + delta_q/2. - 1e-8)) {
-                        continue;
-                    }
-                    int qlong_idx = static_cast<int>(
-                            (local_q_long - (q_min - delta_q/2.))/delta_q);
-                    if (qlong_idx >= qnpts) continue;
-
-                    int Kphi_idx;
-                    if (azimuthal_flag == 0) {
-                        if (number_of_pairs_numerator_KTdiff[Kperp_idx]
-                            > needed_number_of_pairs) {
-                            continue;
-                        }
-                        number_of_pairs_numerator_KTdiff[Kperp_idx]++;
-                    } else {
-                        double local_K_phi = atan2(K_y, K_x);
-                        double delta_phi = local_K_phi - psi_ref;
-                        while (delta_phi < 0.) {
-                            delta_phi += 2.*M_PI;
-                        }
-                        while (delta_phi > 2.*M_PI) {
-                            delta_phi -= 2.*M_PI;
-                        }
-                        Kphi_idx = static_cast<int>(delta_phi/dKphi);
-                        if (Kphi_idx < 0 || Kphi_idx >= n_Kphi) {
-                            cout << "[Warning] delta_phi = " << delta_phi
-                                 << " is out of bound of [0, 2pi]! "
-                                 << "Kphi_idx = " << Kphi_idx << endl;
-                            continue;
-                        }
-                        if (number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]
-                                > needed_number_of_pairs) {
-                            continue;
-                        }
-                        number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]++;
-                    }
-                    
                     double t_diff = particle_1_t - particle_2_t;
                     double x_diff = particle_1_x - particle_2_x;
                     double y_diff = particle_1_y - particle_2_y;
                     double z_diff = particle_1_z - particle_2_z;
 
-                    double cos_qx = cos(hbarC_inv
-                        *(q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff));
+                    if (invariant_radius_flag == 1) {
+                        if (local_q_inv < (q_min - delta_q/2. + 1e-8)
+                            || local_q_inv > (q_max + delta_q/2. - 1e-8)) {
+                            continue;
+                        }
+                        int qinv_idx = static_cast<int>(
+                                (local_q_inv - (q_min - delta_q/2.))/delta_q);
+                        if (qinv_idx >= qnpts) continue;
+                        if (number_of_pairs_numerator_KTdiff[Kperp_idx]
+                                > needed_number_of_pairs) {
+                            continue;
+                        }
+                        number_of_pairs_numerator_KTdiff[Kperp_idx]++;
+                        double cos_qx = cos(hbarC_inv*(q_E*t_diff
+                                                       - q_x*x_diff
+                                                       - q_y*y_diff
+                                                       - q_z*z_diff));
+                        correl_1d_inv_num_count[Kperp_idx][qinv_idx]++;
+                        q_inv_mean[Kperp_idx][qinv_idx] += local_q_inv;
+                        correl_1d_inv_num[Kperp_idx][qinv_idx] += cos_qx;
+                    }
 
-                    // bin results
-                    if (azimuthal_flag == 0) {
-                        correl_3d_num_count[Kperp_idx][qout_idx][qside_idx][qlong_idx]++;
-                        q_out_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_out;
-                        q_side_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
-                        q_long_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
-                        correl_3d_num[Kperp_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
-                    } else {
-                        correl_3d_Kphi_diff_num_count[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx]++;
-                        q_out_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_out;
-                        q_side_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
-                        q_long_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
-                        correl_3d_Kphi_diff_num[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
+                    if (invariant_radius_flag == 0) {
+                        // calculate qout and qside in lcms
+                        double cos_K_phi = K_x/K_perp;
+                        double sin_K_phi = K_y/K_perp;
+
+                        double local_q_out = q_x*cos_K_phi + q_y*sin_K_phi;
+                        if (local_q_out < (q_min - delta_q/2. + 1e-8)
+                            || local_q_out > (q_max + delta_q/2. - 1e-8)) {
+                            continue;
+                        }
+                        
+                        int qout_idx = static_cast<int>(
+                                (local_q_out - (q_min - delta_q/2.))/delta_q);
+                        if (qout_idx >= qnpts) continue;
+
+                        double local_q_side = q_y*cos_K_phi - q_x*sin_K_phi;
+                        if (local_q_side < (q_min - delta_q/2. + 1e-8)
+                            || local_q_side > (q_max + delta_q/2. - 1e-8)) {
+                            continue;
+                        }
+                        
+                        int qside_idx = static_cast<int>(
+                                (local_q_side - (q_min - delta_q/2.))/delta_q);
+                        if (qside_idx >= qnpts) continue;
+
+                        // calcualte qlong in the lcms
+                        double Mt = sqrt(K_E*K_E - K_z*K_z);
+                        double boost_gamma = K_E/Mt;
+                        double boost_beta = K_z_over_K_E;
+                        // boost qz to lcms
+                        double local_q_long = (
+                                        boost_gamma*(q_z - boost_beta*q_E));
+
+                        if (local_q_long < (q_min - delta_q/2. + 1e-8)
+                            || local_q_long > (q_max + delta_q/2. - 1e-8)) {
+                            continue;
+                        }
+                        int qlong_idx = static_cast<int>(
+                                (local_q_long - (q_min - delta_q/2.))/delta_q);
+                        if (qlong_idx >= qnpts) continue;
+
+                        int Kphi_idx;
+                        if (azimuthal_flag == 0) {
+                            if (number_of_pairs_numerator_KTdiff[Kperp_idx]
+                                > needed_number_of_pairs) {
+                                continue;
+                            }
+                            number_of_pairs_numerator_KTdiff[Kperp_idx]++;
+                        } else {
+                            double local_K_phi = atan2(K_y, K_x);
+                            double delta_phi = local_K_phi - psi_ref;
+                            while (delta_phi < 0.) {
+                                delta_phi += 2.*M_PI;
+                            }
+                            while (delta_phi > 2.*M_PI) {
+                                delta_phi -= 2.*M_PI;
+                            }
+                            Kphi_idx = static_cast<int>(delta_phi/dKphi);
+                            if (Kphi_idx < 0 || Kphi_idx >= n_Kphi) {
+                                cout << "[Warning] delta_phi = " << delta_phi
+                                     << " is out of bound of [0, 2pi]! "
+                                     << "Kphi_idx = " << Kphi_idx << endl;
+                                continue;
+                            }
+                            if (number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]
+                                    > needed_number_of_pairs) {
+                                continue;
+                            }
+                            number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]++;
+                        }
+
+                        double cos_qx = cos(hbarC_inv*(q_E*t_diff - q_x*x_diff
+                                                       - q_y*y_diff
+                                                       - q_z*z_diff));
+
+                        // bin results
+                        if (invariant_radius_flag == 0 && azimuthal_flag == 0) {
+                            correl_3d_num_count[Kperp_idx][qout_idx][qside_idx][qlong_idx]++;
+                            q_out_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_out;
+                            q_side_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
+                            q_long_mean[Kperp_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
+                            correl_3d_num[Kperp_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
+                        }
+                        if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
+                            correl_3d_Kphi_diff_num_count[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx]++;
+                            q_out_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_out;
+                            q_side_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_side;
+                            q_long_diff_mean[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += local_q_long;
+                            correl_3d_Kphi_diff_num[Kperp_idx][Kphi_idx][qout_idx][qside_idx][qlong_idx] += cos_qx;
+                        }
                     }
                 }
             }
