@@ -72,8 +72,11 @@ tau_reject = 10.              # reject decay particle whose tau_f > tau_reject
 needed_number_of_pairs = 30000000    # number of pairs for eack K point
 number_of_mixed_events = 100         # number of the mixed events in the 
                                      # denorminator
-number_of_oversample_events = 200   # number of the combined events in the 
+number_of_oversample_events = 200    # number of the combined events in the 
                                      # numerator
+invariant_radius_flag = 0            # 0: compute 3D HBT correlation function
+                                     # 1: compute 1D HBT correlation function
+                                     #    for q_inv
 azimuthal_flag = 0                   # 0: compute the azimuthal averaged HBT 
                                      #    correlation function
                                      # 1: compute azimuthal dependent HBT 
