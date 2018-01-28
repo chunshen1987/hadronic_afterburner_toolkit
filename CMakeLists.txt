@@ -11,7 +11,11 @@ endif ( ZIB_FOUND)
 message("source directory:" ${CMAKE_SOURCE_DIR})
 message("binary directory:" ${CMAKE_BINARY_DIR})
 
-set (CMAKE_CXX_FLAGS "-g -Wall -pthread")
+if (APPLE)
+    set (CMAKE_CXX_FLAGS "-g -Wall")
+else ()
+    set (CMAKE_CXX_FLAGS "-g -Wall -pthread")
+endif ()
 
 add_subdirectory (src)
 
