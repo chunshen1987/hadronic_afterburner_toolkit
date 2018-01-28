@@ -11,7 +11,7 @@ endif ( ZIB_FOUND)
 message("source directory:" ${CMAKE_SOURCE_DIR})
 message("binary directory:" ${CMAKE_BINARY_DIR})
 
-set (CMAKE_CXX_FLAGS "-g -Wall")
+set (CMAKE_CXX_FLAGS "-g -Wall -pthread")
 
 add_subdirectory (src)
 
