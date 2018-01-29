@@ -839,11 +839,14 @@ void HBT_correlation::output_correlation_function_inv() {
                 correl_fun_val = (correl_fun_num
                                   /(correl_fun_denorm*npair_ratio));
             }
-            output << scientific << setw(18) << setprecision(8) 
-                   << q_inv_local << "    "
-                   << npart_num << "    " << correl_fun_num << "    "  
-                   << correl_fun_denorm << "    "
-                   << correl_fun_val << "    " << 0.0 << endl;
+
+            if (q_inv_local > 0.) {
+                output << scientific << setw(18) << setprecision(8) 
+                       << q_inv_local << "    "
+                       << npart_num << "    " << correl_fun_num << "    "  
+                       << correl_fun_denorm << "    "
+                       << correl_fun_val << "    " << 0.0 << endl;
+            }
         }
         output.close();
     }
