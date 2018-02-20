@@ -116,6 +116,7 @@ def calculate_chi_422(vn_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         chi_422_JK[iev] = (
             real(mean(chi_422_num[array_idx]))/mean(N3_weight[array_idx])
@@ -148,6 +149,7 @@ def calculate_chi_523(vn_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         chi_523_JK[iev] = (
             real(mean(chi_523_num[array_idx]))/mean(N3_weight[array_idx])
@@ -185,6 +187,7 @@ def calculate_chi_6222(vn_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         chi_6222_JK[iev] = (
             real(mean(chi_6222_num[array_idx]))/mean(N4_weight[array_idx])
@@ -213,6 +216,7 @@ def calculate_chi_633(vn_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         chi_633_JK[iev] = (
             real(mean(chi_633_num[array_idx]))/mean(N3_weight[array_idx])
@@ -686,6 +690,7 @@ def calcualte_event_plane_correlations(vn_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         v2_2 = mean(abs(v2_array[array_idx])**2.)
         v3_2 = mean(abs(v3_array[array_idx])**2.)
@@ -807,6 +812,7 @@ def calculate_rn_ratios(vn_event_arrays):
                 for iev in range(nev):
                     array_idx = [True]*nev
                     array_idx[iev] = False
+                    array_idx = array(array_idx)
 
                     num = mean(num_array[array_idx])/mean(num_dN[array_idx])
                     denorm1 = (mean(denorm1_array[array_idx])
@@ -865,6 +871,7 @@ def calculate_symmetric_cumulant(vn_data_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         # SC(3,2)
         SC32_array[iev] = (mean(Q_32[array_idx])/mean(N4_weight[array_idx])
@@ -1022,6 +1029,7 @@ def calculate_vn4_over_vn2(vn_data_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         # C_n{4}
         C_1_4 = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
@@ -1125,6 +1133,7 @@ def calculate_vn6_over_vn4(vn_data_array):
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
+        array_idx = array(array_idx)
 
         # C_n{4}
         C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
