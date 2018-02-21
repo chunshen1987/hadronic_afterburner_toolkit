@@ -63,6 +63,10 @@ class particleSamples {
     int charged_hadron_urqmd_id_list[5];
     int baryon_urqmd_id_list[5];
 
+    //! this list store all particle samples
+    vector< vector<particle_info>* >* full_particle_list;
+    vector< vector<particle_info>* >* full_particle_list_mixed_event;
+
     //! particle list to store the select particle sample
     vector< vector<particle_info>* >* particle_list;
 
@@ -137,6 +141,8 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_Sangwook();
     int read_in_particle_samples_gzipped();
     int read_in_particle_samples_mixed_event_gzipped();
+    void filter_particles(vector< vector<particle_info>* >* full_list,
+                          vector< vector<particle_info>* >* filted_list);
 
     string gz_readline(gzFile gzfp);
     bool end_of_file() {
