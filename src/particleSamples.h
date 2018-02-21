@@ -135,17 +135,19 @@ class particleSamples {
     int read_in_particle_samples_UrQMD_3p3_mixed_event();
     int read_in_particle_samples_Sangwook();
     int read_in_particle_samples_mixed_event_Sangwook();
+    int read_in_particle_samples_gzipped();
+    int read_in_particle_samples_mixed_event_gzipped();
 
     string gz_readline(gzFile gzfp);
     bool end_of_file() {
-        if (read_in_mode == 2) {
+        if (read_in_mode == 2 || read_in_mode == 10) {
             return(gzeof(inputfile_gz));
         } else {
             return(inputfile.eof());
         }
     }
     bool end_of_file_mixed_event() {
-        if (read_in_mode == 2) {
+        if (read_in_mode == 2 || read_in_mode == 10) {
             return(gzeof(inputfile_mixed_event_gz));
         } else {
             return(inputfile_mixed_event.eof());

@@ -483,7 +483,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
 
     // start the loop
     while (!particle_list->end_of_file()) {
-        cout << "Reading event: " << event_id+1 
+        cout << "Reading event: " << event_id + 1 
              << "-" << event_id + buffer_size << " ... " << flush;
         particle_list->read_in_particle_samples();
         cout << " processing ..." << flush;

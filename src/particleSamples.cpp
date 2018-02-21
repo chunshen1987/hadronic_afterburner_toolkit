@@ -97,9 +97,12 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
                || read_in_mode == 4 || read_in_mode == 5) {
         filename << path << "/particle_list.dat";
         filename_mixed_event << path << "/particle_list_mixed_event.dat";
+    } else if (read_in_mode == 10) {
+        filename << path << "/particle_samples.gz";
+        filename_mixed_event << path << "/particle_samples_mixed_event.gz";
     }
 
-    if (read_in_mode != 2) {
+    if (read_in_mode != 2 && read_in_mode != 10) {
         inputfile.open(filename.str().c_str());
         if (!inputfile.is_open()) {
             cout << "particleSamples:: Error: input file: " << filename.str() 
@@ -158,13 +161,13 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
 }
 
 particleSamples::~particleSamples() {
-    if (read_in_mode != 2) {
+    if (read_in_mode != 2 && read_in_mode != 10) {
         inputfile.close();
     } else {
         gzclose(inputfile_gz);
     }
     if (run_mode == 1) {
-        if (read_in_mode != 2) {
+        if (read_in_mode != 2 && read_in_mode != 10) {
             inputfile_mixed_event.close();
         } else {
             gzclose(inputfile_mixed_event_gz);
@@ -439,6 +442,10 @@ int particleSamples::read_in_particle_samples() {
         read_in_particle_samples_UrQMD_3p3();
     } else if (read_in_mode == 5) {
         read_in_particle_samples_JAM();
+    } else if (read_in_mode == 10) {
+        read_in_particle_samples_gzipped();
+        resonance_weak_feed_down_flag = 0;
+        reconst_flag = 0;
     }
 
     if (resonance_weak_feed_down_flag == 1) {
@@ -470,7 +477,10 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         read_in_particle_samples_UrQMD_3p3_mixed_event();
     } else if (read_in_mode == 5) {
         read_in_particle_samples_JAM_mixed_event();
+    } else if (read_in_mode == 10) {
+        read_in_particle_samples_mixed_event_gzipped();
     }
+
     if (resonance_weak_feed_down_flag == 1) {
         perform_weak_resonance_feed_down();
     }
@@ -1467,6 +1477,62 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
     return(0);
 }
 
+
+int particleSamples::read_in_particle_samples_gzipped() {
+    // clean out the previous record
+    for (unsigned int i = 0; i < particle_list->size(); i++) {
+        (*particle_list)[i]->clear();
+    }
+    particle_list->clear();
+    
+    string temp_string;
+    int n_particle;
+    int temp_monval;
+    for (int ievent = 0; ievent < event_buffer_size; ievent++) {
+        temp_string = gz_readline(inputfile_gz);
+        if (!gzeof(inputfile_gz)) {
+            // create one event
+            particle_list->push_back(new vector<particle_info> );
+
+            // get number of particles within the event
+            stringstream temp1(temp_string);
+            temp1 >> n_particle;
+            //cout << "first line: " << temp_string << endl;
+            //cout << "check n_particle = " << n_particle << endl;
+
+            int idx = ievent;
+            (*particle_list)[idx]->clear(); // clean out the previous record
+
+            int pick_flag = 0;
+            for (int ipart = 0; ipart < n_particle; ipart++) {
+                temp_string = gz_readline(inputfile_gz);
+                stringstream temp2(temp_string);
+                temp2 >> temp_monval;
+                pick_flag = decide_to_pick_from_OSCAR_file(temp_monval);
+                if (pick_flag != 0) {
+                    particle_info *temp_particle_info = new particle_info;
+                    temp_particle_info->monval = temp_monval;
+                    temp2 >> temp_particle_info->mass
+                          >> temp_particle_info->t
+                          >> temp_particle_info->x 
+                          >> temp_particle_info->y
+                          >> temp_particle_info->z 
+                          >> temp_particle_info->E
+                          >> temp_particle_info->px 
+                          >> temp_particle_info->py
+                          >> temp_particle_info->pz;
+
+                    (*particle_list)[idx]->push_back(*temp_particle_info);
+                    delete temp_particle_info;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    return(0);
+}
+
 int particleSamples::read_in_particle_samples_UrQMD_3p3() {
     // clean out the previous record
     for (unsigned int i = 0; i < particle_list->size(); i++)
@@ -1791,6 +1857,59 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
                     } else if (resonance_pick_flag == 1) {
                         (*resonance_list)[idx]->push_back(*temp_particle_info);
                     }
+                    delete temp_particle_info;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    return(0);
+}
+
+int particleSamples::read_in_particle_samples_mixed_event_gzipped() {
+    // clean out the previous record
+    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
+        (*particle_list_mixed_event)[i]->clear();
+    particle_list_mixed_event->clear();
+    
+    string temp_string;
+    int n_particle;
+    int temp_monval;
+    for (int ievent = 0; ievent < event_buffer_size; ievent++) {
+        temp_string = gz_readline(inputfile_mixed_event_gz);
+        if (!gzeof(inputfile_mixed_event_gz)) {
+            particle_list_mixed_event->push_back(new vector<particle_info> );
+            // get number of particles within the event
+            stringstream temp1(temp_string);
+            temp1 >> n_particle;
+            // clean out the previous record
+            int idx = ievent;
+            (*particle_list_mixed_event)[idx]->clear(); 
+
+            int pick_flag = 0;
+            for (int ipart = 0; ipart < n_particle; ipart++) {
+                temp_string = gz_readline(inputfile_mixed_event_gz);
+                stringstream temp2(temp_string);
+                temp2 >> temp_monval;
+
+                pick_flag = decide_to_pick_OSCAR(temp_monval);
+
+                if (pick_flag != 0) {
+                    particle_info *temp_particle_info = new particle_info;
+                    temp_particle_info->monval = temp_monval;
+                    temp2 >> temp_particle_info->mass
+                          >> temp_particle_info->t
+                          >> temp_particle_info->x
+                          >> temp_particle_info->y
+                          >> temp_particle_info->z
+                          >> temp_particle_info->E
+                          >> temp_particle_info->px
+                          >> temp_particle_info->py
+                          >> temp_particle_info->pz;
+
+                    (*particle_list_mixed_event)[idx]->push_back(
+                                                           *temp_particle_info);
                     delete temp_particle_info;
                 }
             }
