@@ -1194,8 +1194,10 @@ def calculate_rn_eta(dN_array, vn_array):
         array_idx      = [True]*nev
         array_idx[iev] = False
         array_idx      = array(array_idx)
-        rn_ev          = mean(rn_num, axis=0)/(mean(rn_den, axis=0) + 1e-15)
-        rnn_ev         = mean(rnn_num, axis=0)/(mean(rnn_den, axis=0) + 1e-15)
+        rn_ev          = (mean(rn_num[array_idx], axis=0)
+                          /(mean(rn_den[array_idx], axis=0) + 1e-15))
+        rnn_ev         = (mean(rnn_num[array_idx], axis=0)
+                          /(mean(rnn_den[array_idx], axis=0) + 1e-15))
         rn_array[iev, :, :]  = rn_ev
         rnn_array[iev, :, :] = rnn_ev
     rn_mean  = mean(rn_array, axis=0)
