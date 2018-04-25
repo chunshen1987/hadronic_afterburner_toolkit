@@ -1173,6 +1173,37 @@ def calculate_vn_eta(dN_array, vn_array):
     return([vn_SP_mean, vn_SP_err])
 
 
+def calculate_rn_eta(dN_array, vn_array):
+    ieta_ref  = 21
+    nev, neta = dN_array.shape
+    dN_array  = dN_array.reshape((nev, 1, neta))
+    Qn_array  = vn_array
+    Qnshape   = Qn_array.shape
+    nQn       = Qnshape[1]
+    Qn_ref1   = Qn_array[:, :,  ieta_ref].reshape((nev, nQn, 1))
+    Qn_ref2   = Qn_array[:, :, -ieta_ref].reshape((nev, nQn, 1))
+    rn_num    = real(Qn_array[:, :, ::-1]*conj(Qn_ref1))
+    rn_den    = real(Qn_array*conj(Qn_ref1))
+    rnn_num   = real((Qn_ref2*conj(Qn_array))
+                     *(Qn_array[:, :, ::-1]*conj(Qn_ref1)))
+    rnn_den   = real((Qn_ref2*conj(Qn_array[:, :, ::-1]))
+                     *(Qn_array*conj(Qn_ref1)))
+    rn_array  = zeros([nev, nQn, neta])
+    rnn_array = zeros([nev, nQn, neta])
+    for iev in range(nev):
+        array_idx      = [True]*nev
+        array_idx[iev] = False
+        array_idx      = array(array_idx)
+        rn_ev          = mean(rn_num, axis=0)/(mean(rn_den, axis=0) + 1e-15)
+        rnn_ev         = mean(rnn_num, axis=0)/(mean(rnn_den, axis=0) + 1e-15)
+        rn_array[iev, :, :]  = rn_ev
+        rnn_array[iev, :, :] = rnn_ev
+    rn_mean  = mean(rn_array, axis=0)
+    rn_err   = sqrt((nev - 1.)/nev*sum((rn_array - rn_mean)**2., axis=0))
+    rnn_mean = mean(rnn_array, axis=0)
+    rnn_err  = sqrt((nev - 1.)/nev*sum((rnn_array - rnn_mean)**2., axis=0))
+    return([rn_mean, rn_err, rnn_mean, rnn_err])
+
 
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
@@ -1458,9 +1489,8 @@ for ipart, particle_id in enumerate(particle_list):
     eta_point = mean(eta_array, 0)
     dNdeta = mean(dN_array, 0)
     dNdeta_err = std(dN_array, 0)/sqrt(nev)
-    vn_eta, vn_eta_err = calculate_vn_eta(dN_array, vn_array)
-    #vn_eta = sqrt(mean(abs(vn_array)**2., 0))
-    #vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
+    vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(dN_array, vn_array)
+    rn_eta, rn_eta_err, rnn_eta, rnn_eta_err = calculate_rn_eta(dN_array, vn_array)
     vn_eta_real = mean(real(vn_array), 0)
     vn_eta_real_err = std(real(vn_array), 0)/sqrt(nev)
    
@@ -1737,7 +1767,8 @@ for ipart, particle_id in enumerate(particle_list):
                 % (eta_point[ieta], dNdeta[ieta], dNdeta_err[ieta]))
         for iorder in range(1, n_order):
             f.write("%.10e  %.10e  %.10e  %.10e  "
-                    % (vn_eta[iorder-1, ieta], vn_eta_err[iorder-1, ieta],
+                    % (vn_SP_eta[iorder-1, ieta],
+                       vn_SP_eta_err[iorder-1, ieta],
                        vn_eta_real[iorder-1, ieta],
                        vn_eta_real_err[iorder-1, ieta]))
         f.write("\n")
@@ -1841,6 +1872,22 @@ for ipart, particle_id in enumerate(particle_list):
                                           pT_trig[ipTtrig+1]))
                     f = open(output_filename, 'w')
                     f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
+
+        output_filename = ("%s_rn_eta.dat" 
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#eta  rn(eta)  rn_err(eta)  rnn(eta)  rnn_err(eta)\n")
+        for ieta in range(len(eta_point)-1):
+            f.write("%.10e  " % eta_point[ieta])
+            for iorder in range(0, n_order-1):
+                f.write("%.10e  %.10e  %.10e  %.10e  "
+                        % (rn_eta[iorder, ieta],
+                           rn_eta_err[iorder, ieta],
+                           rnn_eta[iorder, ieta],
+                           rnn_eta_err[iorder, ieta]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
         
         # output flow event-plane correlation
         output_filename = ("%s_event_plane_correlation_ALICE.dat"
