@@ -1152,6 +1152,28 @@ def calculate_vn6_over_vn4(vn_data_array):
     return(results)
 
 
+def calculate_vn_eta(dN_array, vn_array):
+    nev, neta   = dN_array.shape
+    dN_array    = dN_array.reshape((nev, 1, neta))
+    vn_ref      = sum(dN_array*vn_array, axis=2)/sum(dN_array, axis=2)
+    vnshape     = vn_ref.shape
+    nvn         = vnshape[1]
+    vn_ref      = vn_ref.reshape((vnshape[0], vnshape[1], 1))
+    vn_SP_ev    = real(vn_array*conj(vn_ref))
+    vn_SP_array = zeros([nev, nvn, neta])
+    for iev in range(nev):
+        array_idx      = [True]*nev
+        array_idx[iev] = False
+        array_idx      = array(array_idx)
+        vn_den         = mean(abs(vn_ref[array_idx, :, :])**2., axis=0)
+        vn_SP          = mean(vn_SP_ev[array_idx, :, :], axis=0)/sqrt(vn_den)
+        vn_SP_array[iev, :, :] = vn_SP
+    vn_SP_mean = mean(vn_SP_array, axis=0)
+    vn_SP_err  = sqrt((nev - 1.)/nev*sum((vn_SP_array - vn_SP_mean)**2., axis=0))
+    return([vn_SP_mean, vn_SP_err])
+
+
+
 file_folder_list = glob(path.join(working_folder, '*'))
 nev = len(file_folder_list)
 for ipart, particle_id in enumerate(particle_list):
@@ -1436,8 +1458,9 @@ for ipart, particle_id in enumerate(particle_list):
     eta_point = mean(eta_array, 0)
     dNdeta = mean(dN_array, 0)
     dNdeta_err = std(dN_array, 0)/sqrt(nev)
-    vn_eta = sqrt(mean(abs(vn_array)**2., 0))
-    vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
+    vn_eta, vn_eta_err = calculate_vn_eta(dN_array, vn_array)
+    #vn_eta = sqrt(mean(abs(vn_array)**2., 0))
+    #vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
     vn_eta_real = mean(real(vn_array), 0)
     vn_eta_real_err = std(real(vn_array), 0)/sqrt(nev)
    
