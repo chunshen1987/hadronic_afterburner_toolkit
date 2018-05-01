@@ -331,12 +331,13 @@ void HBT_correlation::calculate_HBT_correlation_function() {
 
         // then pairs from mixed events
         cout << "Compute pairs from the mixed event ..." << endl;
+        int mixed_nev = particle_list->get_number_of_mixed_events();
         for (int iev = 0; iev < nev; iev++) {
             cout << "progess: " << iev << "/" << nev << endl;
             int *mixed_event_list = new int [number_of_mixed_events];
             int count = 0;
             while (count < number_of_mixed_events) {
-                int mixed_event_id = rand() % nev;
+                int mixed_event_id = rand() % mixed_nev;
                 mixed_event_list[count] = mixed_event_id;
                 count++;
             }
