@@ -1155,7 +1155,7 @@ def calculate_vn6_over_vn4(vn_data_array):
 def calculate_vn_eta(dN_array, vn_array):
     nev, neta   = dN_array.shape
     dN_array    = dN_array.reshape((nev, 1, neta))
-    vn_ref      = sum(dN_array*vn_array, axis=2)/sum(dN_array, axis=2)
+    vn_ref      = sum(dN_array*vn_array, axis=2)/(sum(dN_array, axis=2) + 1e-15)
     vnshape     = vn_ref.shape
     nvn         = vnshape[1]
     vn_ref      = vn_ref.reshape((vnshape[0], vnshape[1], 1))
@@ -1165,7 +1165,7 @@ def calculate_vn_eta(dN_array, vn_array):
         array_idx      = [True]*nev
         array_idx[iev] = False
         array_idx      = array(array_idx)
-        vn_den         = mean(abs(vn_ref[array_idx, :, :])**2., axis=0)
+        vn_den         = mean((absolute(vn_ref[array_idx, :, :]))**2., axis=0)
         vn_SP          = mean(vn_SP_ev[array_idx, :, :], axis=0)/sqrt(vn_den)
         vn_SP_array[iev, :, :] = vn_SP
     vn_SP_mean = mean(vn_SP_array, axis=0)
@@ -1195,8 +1195,8 @@ def calculate_rn_eta(eta_array, dN_array, vn_array):
         for iorder in range(nQn):
             Qn1_interp = interp(eta_ref1_tmp, eta_array, Qn_array[iev, iorder, :])
             Qn2_interp = interp(eta_ref2_tmp, eta_array, Qn_array[iev, iorder, :])
-            Qn_ref1_vec.append(sum(dN1_interp*Qn1_interp)/sum(dN1_interp))
-            Qn_ref2_vec.append(sum(dN2_interp*Qn2_interp)/sum(dN2_interp))
+            Qn_ref1_vec.append(sum(dN1_interp*Qn1_interp)/(sum(dN1_interp) + 1e-15))
+            Qn_ref2_vec.append(sum(dN2_interp*Qn2_interp)/(sum(dN2_interp) + 1e-15))
         Qn_ref1.append(Qn_ref1_vec)
         Qn_ref2.append(Qn_ref2_vec)
     Qn_ref1 = array(Qn_ref1).reshape((nev, nQn, 1))
