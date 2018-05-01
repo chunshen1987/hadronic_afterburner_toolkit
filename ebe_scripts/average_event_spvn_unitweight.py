@@ -1173,15 +1173,35 @@ def calculate_vn_eta(dN_array, vn_array):
     return([vn_SP_mean, vn_SP_err])
 
 
-def calculate_rn_eta(dN_array, vn_array):
-    ieta_ref  = 21
+def calculate_rn_eta(eta_array, dN_array, vn_array):
     nev, neta = dN_array.shape
     dN_array  = dN_array.reshape((nev, 1, neta))
     Qn_array  = vn_array
     Qnshape   = Qn_array.shape
     nQn       = Qnshape[1]
-    Qn_ref1   = Qn_array[:, :,  ieta_ref].reshape((nev, nQn, 1))
-    Qn_ref2   = Qn_array[:, :, -ieta_ref].reshape((nev, nQn, 1))
+    
+    # calculate the reference flow vector for every event
+    eta_b_min    = 2.5
+    eta_b_max    = 4.0
+    eta_ref1_tmp = linspace(eta_b_min, eta_b_max, 16)
+    eta_ref2_tmp = linspace(-eta_b_max, -eta_b_min, 16)
+    Qn_ref1      = [] 
+    Qn_ref2      = [] 
+    for iev in range(nev):
+        dN1_interp = interp(eta_ref1_tmp, eta_array, dN_array[iev, 0, :])
+        dN2_interp = interp(eta_ref2_tmp, eta_array, dN_array[iev, 0, :])
+        Qn_ref1_vec = []
+        Qn_ref2_vec = []
+        for iorder in range(nQn):
+            Qn1_interp = interp(eta_ref1_tmp, eta_array, Qn_array[iev, iorder, :])
+            Qn2_interp = interp(eta_ref2_tmp, eta_array, Qn_array[iev, iorder, :])
+            Qn_ref1_vec.append(sum(dN1_interp*Qn1_interp)/sum(dN1_interp))
+            Qn_ref2_vec.append(sum(dN2_interp*Qn2_interp)/sum(dN2_interp))
+        Qn_ref1.append(Qn_ref1_vec)
+        Qn_ref2.append(Qn_ref2_vec)
+    Qn_ref1 = array(Qn_ref1).reshape((nev, nQn, 1))
+    Qn_ref2 = array(Qn_ref2).reshape((nev, nQn, 1))
+
     rn_num    = real(Qn_array[:, :, ::-1]*conj(Qn_ref1))
     rn_den    = real(Qn_array*conj(Qn_ref1))
     rnn_num   = real((Qn_ref2*conj(Qn_array))
@@ -1492,7 +1512,7 @@ for ipart, particle_id in enumerate(particle_list):
     dNdeta = mean(dN_array, 0)
     dNdeta_err = std(dN_array, 0)/sqrt(nev)
     vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(dN_array, vn_array)
-    rn_eta, rn_eta_err, rnn_eta, rnn_eta_err = calculate_rn_eta(dN_array, vn_array)
+    rn_eta, rn_eta_err, rnn_eta, rnn_eta_err = calculate_rn_eta(eta_point, dN_array, vn_array)
     vn_eta_real = mean(real(vn_array), 0)
     vn_eta_real_err = std(real(vn_array), 0)/sqrt(nev)
    
