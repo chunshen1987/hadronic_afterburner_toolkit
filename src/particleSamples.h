@@ -5,6 +5,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <map>
+#include <utility>
 
 #include "zlib.h"
 
@@ -62,6 +64,8 @@ class particleSamples {
     int charged_hadron_urqmd_id_list[5];
     int baryon_urqmd_id_list[5];
 
+    std::map<std::pair<int,int>, int> urqmd_to_pdg;
+
     //! this list store all particle samples
     std::vector< std::vector<particle_info>* >* full_particle_list;
     std::vector< std::vector<particle_info>* >* full_particle_list_mixed_event;
@@ -103,6 +107,7 @@ class particleSamples {
     void initialize_charged_hadron_pdg_list();
     void initialize_baryon_urqmd_id_list();
     void initialize_selected_resonance_list();
+    void build_map_urqmd_to_pdg_id();
 
     void get_UrQMD_id(int monval);
     int decide_to_pick_UrQMD(int pid, int iso3, int charge,
@@ -140,8 +145,12 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_Sangwook();
     int read_in_particle_samples_gzipped();
     int read_in_particle_samples_mixed_event_gzipped();
+    void clear_out_previous_record(
+                    std::vector< std::vector<particle_info>* >* plist);
     void filter_particles(std::vector< std::vector<particle_info>* >* full_list,
                           std::vector< std::vector<particle_info>* >* filted_list);
+    void filter_particles_into_lists(
+                    std::vector< std::vector<particle_info>* >* full_list);
 
     std::string gz_readline(gzFile gzfp);
     bool end_of_file() {

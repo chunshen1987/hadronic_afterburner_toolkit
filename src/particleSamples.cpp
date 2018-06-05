@@ -268,6 +268,40 @@ void particleSamples::initialize_baryon_urqmd_id_list() {
     baryon_urqmd_id_list[4] = 55;    // Omega
 }
 
+void particleSamples::build_map_urqmd_to_pdg_id() {
+    // mesorns
+    urqmd_to_pdg[std::make_pair( 101,  2)] =  211;  // pi^+
+    urqmd_to_pdg[std::make_pair( 101,  0)] =  111;  // pi^0
+    urqmd_to_pdg[std::make_pair( 101, -2)] = -211;  // pi^-
+    urqmd_to_pdg[std::make_pair( 106,  1)] =  321;  // K^+
+    urqmd_to_pdg[std::make_pair( 106, -1)] =  311;  // K^0
+    urqmd_to_pdg[std::make_pair(-106,  1)] = -311;  // anti K^0
+    urqmd_to_pdg[std::make_pair(-106, -1)] = -321;  // K^-
+    urqmd_to_pdg[std::make_pair( 109,  0)] =  333;  // phi(1020)
+    urqmd_to_pdg[std::make_pair( 102,  0)] =  221;  // eta
+    urqmd_to_pdg[std::make_pair( 100,  0)] =   22;  // photon
+
+    // baryons
+    urqmd_to_pdg[std::make_pair(   1,  1)] =  2212;  // p
+    urqmd_to_pdg[std::make_pair(   1, -1)] =  2112;  // n
+    urqmd_to_pdg[std::make_pair(  -1, -1)] = -2212;  // anti p
+    urqmd_to_pdg[std::make_pair(  -1,  1)] = -2112;  // anti n
+    urqmd_to_pdg[std::make_pair(  40,  2)] =  3222;  // Sigma^+
+    urqmd_to_pdg[std::make_pair( -40, -2)] = -3222;  // anti Sigma^-
+    urqmd_to_pdg[std::make_pair(  40,  0)] =  3212;  // Sigma^0
+    urqmd_to_pdg[std::make_pair( -40,  0)] = -3212;  // anti Sigma^0
+    urqmd_to_pdg[std::make_pair(  40, -2)] =  3112;  // Sigma^-
+    urqmd_to_pdg[std::make_pair( -40,  2)] = -3112;  // anti Sigma^+
+    urqmd_to_pdg[std::make_pair(  49,  1)] =  3322;  // Xi^0
+    urqmd_to_pdg[std::make_pair( -49, -1)] = -3322;  // anti Xi^0
+    urqmd_to_pdg[std::make_pair(  49, -1)] =  3312;  // Xi^-
+    urqmd_to_pdg[std::make_pair( -49,  1)] = -3312;  // anti Xi^+
+    urqmd_to_pdg[std::make_pair(  27,  0)] =  3122;  // Labmda
+    urqmd_to_pdg[std::make_pair( -27,  0)] = -3122;  // anti Labmda
+    urqmd_to_pdg[std::make_pair(  55,  0)] =  3334;  // Omega
+    urqmd_to_pdg[std::make_pair( -55,  0)] = -3334;  // anti Omega
+}
+
 void particleSamples::initialize_selected_resonance_list() {
     ostringstream filename;
     filename << "EOS/selected_resonances_list.dat";
@@ -429,12 +463,7 @@ void particleSamples::get_UrQMD_id(int monval) {
 }
 
 int particleSamples::get_pdg_id(int urqmd_id, int urqmd_isospin) {
-    int monval = 0;
-    if (urqmd_id == 40 && urqmd_isospin == 0) {
-        monval = 3212;
-    } else if (urqmd_id == -40 && urqmd_isospin == 0) {
-        monval = -3212;
-    }
+    int monval = urqmd_to_pdg[std::make_pair(urqmd_id, urqmd_isospin)];
     return(monval);
 }
 
@@ -1545,9 +1574,8 @@ void particleSamples::filter_particles(
                     vector< vector<particle_info>* >* full_list,
                     vector< vector<particle_info>* >* filted_list) {
     // clean out the previous record
-    for (auto &ev_i: (*filted_list)) {
+    for (auto &ev_i: (*filted_list))
         ev_i->clear();
-    }
     filted_list->clear();
 
     int i = 0;
@@ -1563,6 +1591,60 @@ void particleSamples::filter_particles(
         i++;
     }
 }
+
+
+void particleSamples::clear_out_previous_record(
+                    vector< vector<particle_info>* >* plist) {
+    for (auto &ev_i: (*plist))
+        ev_i->clear();
+    plist->clear();
+}
+
+
+void particleSamples::filter_particles_into_lists(
+                    vector< vector<particle_info>* >* full_list) {
+    // clean out the previous record
+    clear_out_previous_record(particle_list);
+    
+    if (resonance_weak_feed_down_flag == 1)
+        clear_out_previous_record(resonance_list);
+    
+    if (net_particle_flag == 1)
+        clear_out_previous_record(anti_particle_list);
+
+    if (reconst_flag == 1) {
+        clear_out_previous_record(reconst_list_1);
+        clear_out_previous_record(reconst_list_2);
+    }
+
+    if (flag_charge_dependence == 1) {
+        clear_out_previous_record(positive_charge_hadron_list);
+        clear_out_previous_record(negative_charge_hadron_list);
+    }
+    
+    int i = 0;
+    for (auto &ev_i: (*full_list)) {
+        particle_list->push_back(new vector<particle_info> );
+        if (resonance_weak_feed_down_flag == 1)
+            resonance_list->push_back(new vector<particle_info>);
+
+        if (net_particle_flag == 1)
+            anti_particle_list->push_back(new vector<particle_info>);
+
+        if (reconst_flag == 1) {
+            reconst_list_1->push_back(new vector<particle_info>);
+            reconst_list_2->push_back(new vector<particle_info>);
+        }
+
+        if (flag_charge_dependence == 1) {
+            positive_charge_hadron_list->push_back(
+                                            new vector<particle_info>);
+            negative_charge_hadron_list->push_back(
+                                            new vector<particle_info>);
+        }
+    }
+}
+                    
 
 int particleSamples::read_in_particle_samples_UrQMD_3p3() {
     // clean out the previous record
