@@ -1,15 +1,15 @@
 #ifndef SRC_single_particleSpectra_h_
 #define SRC_single_particleSpectra_h_
 
-#include "./ParameterReader.h"
-#include "./particleSamples.h"
+#include <string>
 
-using namespace std;
+#include "ParameterReader.h"
+#include "particleSamples.h"
 
 class singleParticleSpectra {
  private:
     ParameterReader *paraRdr;
-    string path;
+    std::string path;
     particleSamples *particle_list;
 
     int particle_monval;
@@ -71,7 +71,7 @@ class singleParticleSpectra {
     double *eta_s_array, *dNdetas_array;
 
  public:
-    singleParticleSpectra(ParameterReader *paraRdr_in, string path_in, 
+    singleParticleSpectra(ParameterReader *paraRdr_in, std::string path_in, 
                           particleSamples *particle_list_in);
     ~singleParticleSpectra();
 

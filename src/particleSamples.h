@@ -4,22 +4,21 @@
 
 #include <fstream>
 #include <vector>
+#include <string>
 
 #include "zlib.h"
 
-#include "./ParameterReader.h"
-#include "./particle_info.h"
-#include "./particle_decay.h"
-
-using namespace std;
+#include "ParameterReader.h"
+#include "particle_info.h"
+#include "particle_decay.h"
 
 class particleSamples {
  private:
     ParameterReader *paraRdr;
     //! path for results folder
-    string path;
-    ifstream inputfile;
-    ifstream inputfile_mixed_event;
+    std::string path;
+    std::ifstream inputfile;
+    std::ifstream inputfile_mixed_event;
     gzFile inputfile_gz;
     gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
@@ -36,7 +35,7 @@ class particleSamples {
     //! perform resonance decays for only selected particle species
     int select_resonances_flag;
     //! store the monval of the selected resonance states
-    vector<int> select_resonances_list;
+    std::vector<int> select_resonances_list;
 
     //! include Sigma0 feed down of Lambda
     int resonance_weak_feed_down_flag;
@@ -64,40 +63,40 @@ class particleSamples {
     int baryon_urqmd_id_list[5];
 
     //! this list store all particle samples
-    vector< vector<particle_info>* >* full_particle_list;
-    vector< vector<particle_info>* >* full_particle_list_mixed_event;
+    std::vector< std::vector<particle_info>* >* full_particle_list;
+    std::vector< std::vector<particle_info>* >* full_particle_list_mixed_event;
 
     //! particle list to store the select particle sample
-    vector< vector<particle_info>* >* particle_list;
+    std::vector< std::vector<particle_info>* >* particle_list;
 
     //! particle list to store anti-particles
     //! (used when net_particle_flag == 1)
-    vector< vector<particle_info>* >* anti_particle_list;
+    std::vector< std::vector<particle_info>* >* anti_particle_list;
 
     //! particle list to store the selected particle sample from a mix event
     //! (used when run_mode == 1 for HBT calculation)
-    vector< vector<particle_info>* >* particle_list_mixed_event;
+    std::vector< std::vector<particle_info>* >* particle_list_mixed_event;
 
     //! particle list to store the resonance particles (Sigma0)
     //! (used when resonance_weak_feed_down_flag == 1)
-    vector< vector<particle_info>* >* resonance_list;
+    std::vector< std::vector<particle_info>* >* resonance_list;
 
     //! particle list to store the (K^+ and K^-) pairs
     //! (used when reconst_flag == 1)
-    vector< vector<particle_info>* >* reconst_list_1;
-    vector< vector<particle_info>* >* reconst_list_2;
+    std::vector< std::vector<particle_info>* >* reconst_list_1;
+    std::vector< std::vector<particle_info>* >* reconst_list_2;
     
     //! particle list to store the positive hadrons
     //! (used when flag_charge_dependence == 1)
-    vector< vector<particle_info>* >* positive_charge_hadron_list;
+    std::vector< std::vector<particle_info>* >* positive_charge_hadron_list;
     //! particle list to store the negative hadrons
     //! (used when flag_charge_dependence == 1)
-    vector< vector<particle_info>* >* negative_charge_hadron_list;
+    std::vector< std::vector<particle_info>* >* negative_charge_hadron_list;
 
     //! particle decay
     particle_decay *decayer_ptr;
  public:
-    particleSamples(ParameterReader* paraRdr_in, string path_in);
+    particleSamples(ParameterReader* paraRdr_in, std::string path_in);
     ~particleSamples();
 
     void initialize_charged_hadron_urqmd_id_list();
@@ -121,7 +120,7 @@ class particleSamples {
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
 
     void perform_resonance_feed_down(
-                vector< vector<particle_info>* >* input_particle_list);
+                std::vector< std::vector<particle_info>* >* input_particle_list);
     void perform_weak_resonance_feed_down();
     void perform_particle_reconstruction(); 
 
@@ -141,10 +140,10 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_Sangwook();
     int read_in_particle_samples_gzipped();
     int read_in_particle_samples_mixed_event_gzipped();
-    void filter_particles(vector< vector<particle_info>* >* full_list,
-                          vector< vector<particle_info>* >* filted_list);
+    void filter_particles(std::vector< std::vector<particle_info>* >* full_list,
+                          std::vector< std::vector<particle_info>* >* filted_list);
 
-    string gz_readline(gzFile gzfp);
+    std::string gz_readline(gzFile gzfp);
     bool end_of_file() {
         if (read_in_mode == 2 || read_in_mode == 10) {
             return(gzeof(inputfile_gz));

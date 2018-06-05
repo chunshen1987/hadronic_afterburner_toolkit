@@ -3,8 +3,8 @@
 #define SRC_particle_decay_h_
 
 #include <vector>
-#include <cstring>
-#include "./particle_info.h"
+#include <string>
+#include "particle_info.h"
 
 typedef struct {
     int decay_Npart;

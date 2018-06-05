@@ -1,15 +1,15 @@
 #ifndef HBT_correlation_h
 #define HBT_correlation_h
 
+#include <string>
+
 #include "ParameterReader.h"
 #include "particleSamples.h"
-
-using namespace std;
 
 class HBT_correlation {
  private:
     ParameterReader *paraRdr;
-    string path;
+    std::string path;
     particleSamples *particle_list;
 
     int qnpts;
@@ -49,7 +49,7 @@ class HBT_correlation {
     double *****correl_3d_Kphi_diff_num_count;
 
  public:
-    HBT_correlation(ParameterReader* paraRdr_in, string path_in, 
+    HBT_correlation(ParameterReader* paraRdr_in, std::string path_in, 
                     particleSamples *particle_list_in);
     ~HBT_correlation();
 

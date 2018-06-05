@@ -1,15 +1,15 @@
 #ifndef SRC_particle_yield_distribution_h_
 #define SRC_particle_yield_distribution_h_
 
-#include "./ParameterReader.h"
-#include "./particleSamples.h"
+#include <string>
 
-using namespace std;
+#include "ParameterReader.h"
+#include "particleSamples.h"
 
 class particle_yield_distribution {
  private:
     ParameterReader *paraRdr;
-    string path;
+    std::string path;
     particleSamples *particle_list;
 
     int particle_monval;
@@ -27,7 +27,7 @@ class particle_yield_distribution {
     int *number_of_events;
 
  public:
-    particle_yield_distribution(ParameterReader *paraRdr_in, string path_in, 
+    particle_yield_distribution(ParameterReader *paraRdr_in, std::string path_in, 
                                 particleSamples *particle_list_in);
     ~particle_yield_distribution();
 

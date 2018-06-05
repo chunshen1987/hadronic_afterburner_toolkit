@@ -8,12 +8,10 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
-double stringToDouble(string);
-vector<double> stringToDoubles(string);
-string toLower(string str);
-string trim(string str);
+double stringToDouble(std::string);
+std::vector<double> stringToDoubles(std::string);
+std::string toLower(std::string str);
+std::string trim(std::string str);
 
 #endif
 
