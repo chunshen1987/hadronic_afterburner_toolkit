@@ -1545,25 +1545,22 @@ void particleSamples::filter_particles(
                     vector< vector<particle_info>* >* full_list,
                     vector< vector<particle_info>* >* filted_list) {
     // clean out the previous record
-    for (unsigned int i = 0; i < filted_list->size(); i++) {
-        (*filted_list)[i]->clear();
+    for (auto &ev_i: (*filted_list)) {
+        ev_i->clear();
     }
     filted_list->clear();
 
-    for (unsigned int i = 0; i < full_list->size(); i++) {
+    int i = 0;
+    for (auto &ev_i: (*full_list)) {
         filted_list->push_back(new vector<particle_info> );
-        // clean out the previous record
-        (*filted_list)[i]->clear();
-
-        for (unsigned int ipart = 0; ipart < (*full_list)[i]->size();
-             ipart++) {
+        for (auto &part_i: (*ev_i)) {
             int pick_flag = 0;
-            int temp_monval = (*(*full_list)[i])[ipart].monval;
+            int temp_monval = part_i.monval;
             pick_flag = decide_to_pick_from_OSCAR_file(temp_monval);
-            if (pick_flag != 0) {
-                (*filted_list)[i]->push_back((*(*full_list)[i])[ipart]);
-            }
+            if (pick_flag != 0)
+                (*filted_list)[i]->push_back(part_i);
         }
+        i++;
     }
 }
 

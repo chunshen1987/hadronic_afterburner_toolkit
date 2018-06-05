@@ -12,9 +12,9 @@ message("source directory:" ${CMAKE_SOURCE_DIR})
 message("binary directory:" ${CMAKE_BINARY_DIR})
 
 if (APPLE)
-    set (CMAKE_CXX_FLAGS "-g -Wall")
+    set (CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 else ()
-    set (CMAKE_CXX_FLAGS "-g -Wall -pthread")
+    set (CMAKE_CXX_FLAGS "-g -Wall -pthread -std=c++11")
 endif ()
 
 add_subdirectory (src)
