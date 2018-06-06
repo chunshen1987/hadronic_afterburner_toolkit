@@ -465,19 +465,20 @@ int particleSamples::read_in_particle_samples() {
         resonance_weak_feed_down_flag = 0;
         reconst_flag = 0;
     }
+
+    if (resonance_feed_down_flag == 1)
+        perform_resonance_feed_down(full_particle_list);
+
     filter_particles_into_lists(full_particle_list);
 
-    if (resonance_weak_feed_down_flag == 1) {
+
+    // perform Sigma^0 -> Lambda
+    if (resonance_weak_feed_down_flag == 1)
         perform_weak_resonance_feed_down();
-    }
 
-    if (resonance_feed_down_flag == 1) {
-        perform_resonance_feed_down(particle_list);
-    }
-
-    if (reconst_flag == 1) {
+    // reconst phi(1020) from K^+ and K^- pair
+    if (reconst_flag == 1)
         perform_particle_reconstruction();
-    }
 
     return(0);
 }
@@ -499,15 +500,11 @@ int particleSamples::read_in_particle_samples_mixed_event() {
     } else if (read_in_mode == 10) {
         read_in_particle_samples_mixed_event_gzipped();
     }
-    filter_particles(full_particle_list_mixed_event, particle_list_mixed_event);
 
-    if (resonance_weak_feed_down_flag == 1) {
-        perform_weak_resonance_feed_down();
-    }
-    
-    if (resonance_feed_down_flag == 1) {
-        perform_resonance_feed_down(particle_list_mixed_event);
-    }
+    if (resonance_feed_down_flag == 1)
+        perform_resonance_feed_down(full_particle_list_mixed_event);
+
+    filter_particles(full_particle_list_mixed_event, particle_list_mixed_event);
 
     return(0);
 }
@@ -779,40 +776,6 @@ int particleSamples::decide_to_pick_JAM(int pid, int *charge_flag) {
                 pick_flag = 1;
             }
             break;
-        }
-    }
-    return(pick_flag);
-}
-
-int particleSamples::decide_to_pick_from_OSCAR_file(int temp_monval) {
-    int pick_flag = 0;
-    if (resonance_feed_down_flag == 1) {
-        if (select_resonances_flag == 0) {
-            // pick everything
-            pick_flag = 1;
-        } else {
-            for (unsigned int ireso = 0; ireso < select_resonances_list.size();
-                    ireso++) {
-                if (temp_monval == select_resonances_list[ireso]) {
-                    pick_flag = 1;
-                    break;
-                }
-            }
-        }
-    } else if (flag_isospin == 0) {
-        // do not distinguish the isospin of the particle
-        if (abs(temp_monval) == particle_monval) {
-            pick_flag = 1;
-        }
-    } else {
-        // distinguish the isospin of the particle
-        if (temp_monval == particle_monval) {
-            pick_flag = 1;
-        }
-        if (net_particle_flag == 1) {
-            if (temp_monval == -particle_monval) {
-                pick_flag = 2;  // set to 2 to trick anti_particle_pick_flag
-            }
         }
     }
     return(pick_flag);
@@ -1198,7 +1161,7 @@ void particleSamples::filter_particles(
     for (auto &ev_i: (*full_list)) {
         filted_list->push_back(new vector<particle_info> );
         for (auto &part_i: (*ev_i)) {
-            int pick_flag = decide_to_pick_from_OSCAR_file(part_i.monval);
+            int pick_flag = decide_to_pick_OSCAR(part_i.monval);
             if (pick_flag != 0)
                 (*filted_list)[i]->push_back(part_i);
         }
@@ -1680,38 +1643,33 @@ void particleSamples::perform_resonance_feed_down(
                     vector< vector<particle_info>* >* input_particle_list) {
     cout << "perform resonance decays... " << endl;
     // loop over events
-    unsigned int nev = input_particle_list->size();
-    for (unsigned int ievent = 0; ievent < nev; ievent++) {
+    int ievent = 0;
+    for (auto &ev_i: (*input_particle_list)) {
         // create a temporary particle list
         vector<particle_info> temp_list;
+
         // copy all particles into the temp list
-        unsigned int Npart = (*input_particle_list)[ievent]->size();
-        for (unsigned int ipart = 0; ipart < Npart; ipart++) {
-            temp_list.push_back((*(*input_particle_list)[ievent])[ipart]);
-        }
+        for (auto &part_i: (*ev_i))
+            temp_list.push_back(part_i);
+
         (*input_particle_list)[ievent]->clear();
+
         // perform resonance decays
-        for (unsigned int ipart = 0; ipart < temp_list.size(); ipart++) {
+        for (auto &part_i: temp_list) {
             vector<particle_info> *daughter_list = new vector<particle_info>;
-            decayer_ptr->perform_decays(&temp_list[ipart], daughter_list);
-            for (unsigned int idaughter = 0; idaughter < daughter_list->size();
-                    idaughter++) {
-                if (decayer_ptr->check_particle_stable(
-                                        &(*daughter_list)[idaughter]) == 1) {
-                    int flag = decide_to_pick_OSCAR(
-                                (*daughter_list)[idaughter].monval);
-                    if (flag == 1) {
-                        (*input_particle_list)[ievent]->push_back(
-                                            (*daughter_list)[idaughter]);
-                    }
+            decayer_ptr->perform_decays(&part_i, daughter_list);
+            for (auto &daughter_i: (*daughter_list)) {
+                if (decayer_ptr->check_particle_stable(&daughter_i) == 1) {
+                    (*input_particle_list)[ievent]->push_back(daughter_i);
                 } else {
-                    temp_list.push_back((*daughter_list)[idaughter]);
+                    temp_list.push_back(daughter_i);
                 }
             }
             daughter_list->clear();
             delete daughter_list;
         }
         temp_list.clear();
+        ievent++;
     }
 }
 

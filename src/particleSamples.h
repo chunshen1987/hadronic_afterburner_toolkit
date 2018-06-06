@@ -129,8 +129,6 @@ class particleSamples {
     int decide_to_pick_charge(int monval);
     int decide_to_pick_OSCAR(int monval);
 
-    int decide_to_pick_from_OSCAR_file(int monval);
-
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
 
     void perform_resonance_feed_down(
