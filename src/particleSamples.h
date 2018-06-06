@@ -54,16 +54,6 @@ class particleSamples {
     //! flag to collect positive and negative charged hadron seperately
     int flag_charge_dependence;
 
-    //! flag to reject from decay particles in the sample
-    int reject_decay_flag;
-    double tau_reject;
-
-    int particle_urqmd_id, particle_urqmd_isospin;
-
-    int charged_hadron_pdg_list[6];
-    int charged_hadron_urqmd_id_list[5];
-    int baryon_urqmd_id_list[5];
-
     std::map<std::pair<int,int>, int> urqmd_to_pdg;
 
     //! this list store all particle samples
@@ -103,36 +93,18 @@ class particleSamples {
     particleSamples(ParameterReader* paraRdr_in, std::string path_in);
     ~particleSamples();
 
-    void initialize_charged_hadron_urqmd_id_list();
-    void initialize_charged_hadron_pdg_list();
-    void initialize_baryon_urqmd_id_list();
-    void initialize_selected_resonance_list();
+    int get_pdg_id(int urqmd_id, int urqmd_isospin);
     void build_map_urqmd_to_pdg_id();
 
-    void get_UrQMD_id(int monval);
-    int decide_to_pick_UrQMD(int pid, int iso3, int charge,
-                             int parent_proc_type);
-
-    int decide_to_pick_UrQMD_resonance(int pid, int iso3, int charge);
     int decide_to_pick_resonance(int monval);
-
-    void decide_to_pick_UrQMD_reconst(
-                int pid, int iso3, int charge, int parent_proc_type,
-                int *flag1, int *flag2);
     int decide_to_pick_reconst(int monval);
-
-    int decide_to_pick_JAM(int pid, int *charge_flag);
-    int decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
-                                            int charge);
-
     int decide_to_pick_anti_particles(int monval);
     int decide_to_pick_charge(int monval);
     int decide_to_pick_OSCAR(int monval);
 
-    int get_pdg_id(int urqmd_id, int urqmd_isospin);
-
+    void initialize_selected_resonance_list();
     void perform_resonance_feed_down(
-                std::vector< std::vector<particle_info>* >* input_particle_list);
+            std::vector< std::vector<particle_info>* >* input_particle_list);
     void perform_weak_resonance_feed_down();
     void perform_particle_reconstruction(); 
 
@@ -154,8 +126,9 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_gzipped();
     void clear_out_previous_record(
                     std::vector< std::vector<particle_info>* >* plist);
-    void filter_particles(std::vector< std::vector<particle_info>* >* full_list,
-                          std::vector< std::vector<particle_info>* >* filted_list);
+    void filter_particles(
+                    std::vector< std::vector<particle_info>* >* full_list,
+                    std::vector< std::vector<particle_info>* >* filted_list);
     void filter_particles_into_lists(
                     std::vector< std::vector<particle_info>* >* full_list);
 

@@ -21,13 +21,6 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
     run_mode = paraRdr->getVal("run_mode");
-    if (run_mode == 1) {
-        reject_decay_flag = paraRdr->getVal("reject_decay_flag");
-        tau_reject = paraRdr->getVal("tau_reject");
-    } else {
-        reject_decay_flag = 0;
-        tau_reject = 10000.;
-    }
 
     if (run_mode == 2) {
         net_particle_flag = paraRdr->getVal("net_particle_flag");
@@ -41,10 +34,6 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
     flag_isospin = paraRdr->getVal("distinguish_isospin");
-    if (read_in_mode == 1 || read_in_mode == 2
-            || read_in_mode == 3 || read_in_mode == 4) {
-        get_UrQMD_id(particle_monval);
-    }
 
     resonance_feed_down_flag = paraRdr->getVal("resonance_feed_down_flag");
     select_resonances_flag = 0;
@@ -158,8 +147,6 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         }
     }
 
-    initialize_charged_hadron_pdg_list();
-    initialize_charged_hadron_urqmd_id_list();
     build_map_urqmd_to_pdg_id();
 }
 
@@ -221,30 +208,6 @@ particleSamples::~particleSamples() {
     }
 }
 
-void particleSamples::initialize_charged_hadron_pdg_list() {
-    charged_hadron_pdg_list[0] = 211;       // pion
-    charged_hadron_pdg_list[1] = 321;       // kaon
-    charged_hadron_pdg_list[2] = 2212;      // proton
-    charged_hadron_pdg_list[3] = 3222;      // Sigma^+
-    charged_hadron_pdg_list[4] = 3112;      // Sigma^-
-    charged_hadron_pdg_list[5] = 3312;      // Xi^-
-}
-
-void particleSamples::initialize_charged_hadron_urqmd_id_list() {
-    charged_hadron_urqmd_id_list[0] = 101;   // pion
-    charged_hadron_urqmd_id_list[1] = 106;   // kaon
-    charged_hadron_urqmd_id_list[2] = 1;     // proton
-    charged_hadron_urqmd_id_list[3] = 40;    // Sigma^+ and Sigma^-
-    charged_hadron_urqmd_id_list[4] = 49;    // Xi^-
-}
-
-void particleSamples::initialize_baryon_urqmd_id_list() {
-    baryon_urqmd_id_list[0] = 1;     // proton and neturon
-    baryon_urqmd_id_list[1] = 40;    // Sigma^+, Sigma^0, and Sigma^-
-    baryon_urqmd_id_list[2] = 49;    // Xi^-
-    baryon_urqmd_id_list[3] = 27;    // Lambda
-    baryon_urqmd_id_list[4] = 55;    // Omega
-}
 
 void particleSamples::build_map_urqmd_to_pdg_id() {
     // mesorns
@@ -280,6 +243,7 @@ void particleSamples::build_map_urqmd_to_pdg_id() {
     urqmd_to_pdg[std::make_pair( -55,  0)] = -3334;  // anti Omega
 }
 
+
 void particleSamples::initialize_selected_resonance_list() {
     ostringstream filename;
     filename << "EOS/selected_resonances_list.dat";
@@ -307,143 +271,12 @@ void particleSamples::initialize_selected_resonance_list() {
     }
 }
 
-void particleSamples::get_UrQMD_id(int monval) {
-    // find the corresponding UrQMD id number
-    if (monval == 211) {
-        // pion^+
-        particle_urqmd_id = 101;
-        particle_urqmd_isospin = 2;
-    } else if (monval == -211) {
-        // pion^-
-        particle_urqmd_id = 101;
-        particle_urqmd_isospin = -2;
-    } else if (monval == 111) {
-        // pion^0
-        particle_urqmd_id = 101;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 321) {
-        // Kaon^+
-        particle_urqmd_id = 106;
-        particle_urqmd_isospin = 1;
-    } else if (monval == 311) {
-        // Kaon^0
-        particle_urqmd_id = 106;
-        particle_urqmd_isospin = -1;
-    } else if (monval == -321) {
-        // Kaon^-
-        particle_urqmd_id = -106;
-        particle_urqmd_isospin = -1;
-    } else if (monval == -311) {
-        // anti-Kaon^0
-        particle_urqmd_id = -106;
-        particle_urqmd_isospin = 1;
-    } else if (monval == 2212) {
-        // proton
-        particle_urqmd_id = 1;
-        particle_urqmd_isospin = 1;
-    } else if (monval == -2212) {
-        // anti-proton
-        particle_urqmd_id = -1;
-        particle_urqmd_isospin = -1;
-    } else if (monval == 3222) {
-        // Sigma^+
-        particle_urqmd_id = 40;
-        particle_urqmd_isospin = 2;
-    } else if (monval == -3222) {
-        // anti-Sigma^+
-        particle_urqmd_id = -40;
-        particle_urqmd_isospin = -2;
-    } else if (monval == 3212) {
-        // Sigma^0
-        particle_urqmd_id = 40;
-        particle_urqmd_isospin = 0;
-    } else if (monval == -3212) {
-        // anti-Sigma^0
-        particle_urqmd_id = -40;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 3112) {
-        // Sigma^-
-        particle_urqmd_id = 40;
-        particle_urqmd_isospin = -2;
-    } else if (monval == -3112) {
-        // anti-Sigma^-
-        particle_urqmd_id = -40;
-        particle_urqmd_isospin = 2;
-    } else if (monval == 3312) {
-        // Xi^-
-        particle_urqmd_id = 49;
-        particle_urqmd_isospin = -1;
-    } else if (monval == -3312) {
-        // anti-Xi^-
-        particle_urqmd_id = -49;
-        particle_urqmd_isospin = 1;
-    } else if (monval == 3122) {
-        // Lambda
-        particle_urqmd_id = 27;
-        particle_urqmd_isospin = 0;
-    } else if (monval == -3122) {
-        // anti-Lambda
-        particle_urqmd_id = -27;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 3334) {
-        // Omega
-        particle_urqmd_id = 55;
-        particle_urqmd_isospin = 0;
-    } else if (monval == -3334) {
-        // anti-Omega
-        particle_urqmd_id = -55;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 333) {
-        // phi(1020) meson
-        particle_urqmd_id = 109;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 221) {
-        // eta meson
-        particle_urqmd_id = 102;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 22) {
-        // photons
-        particle_urqmd_id = 100;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 9996) {
-        // all strange hadrons
-        particle_urqmd_id = 9996;
-        particle_urqmd_isospin = 0;
-    } else if (monval == -9996) {
-        // all anti-strange hadrons
-        particle_urqmd_id = -9996;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 9997) {
-        // all baryons
-        particle_urqmd_id = 9997;
-        particle_urqmd_isospin = 0;
-    } else if (monval == -9997) {
-        // all anti-baryons
-        particle_urqmd_id = -9997;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 9998) {
-        // all positive charged hadrons
-        particle_urqmd_id = 9998;
-        particle_urqmd_isospin = 0;
-    } else if (monval == -9998) {
-        // all negative charged hadrons
-        particle_urqmd_id = -9998;
-        particle_urqmd_isospin = 0;
-    } else if (monval == 9999) {
-        // all charged hadrons
-        particle_urqmd_id = 9999;
-        particle_urqmd_isospin = 0;
-    } else if (monval == -1) {
-        // all hadrons
-        particle_urqmd_id = -1;
-        particle_urqmd_isospin = 0;
-    }
-}
 
 int particleSamples::get_pdg_id(int urqmd_id, int urqmd_isospin) {
     int monval = urqmd_to_pdg[std::make_pair(urqmd_id, urqmd_isospin)];
     return(monval);
 }
+
 
 int particleSamples::read_in_particle_samples() {
     if (read_in_mode == 0) {
@@ -483,6 +316,7 @@ int particleSamples::read_in_particle_samples() {
     return(0);
 }
 
+
 int particleSamples::read_in_particle_samples_mixed_event() {
     if (read_in_mode == 0) {
         read_in_particle_samples_OSCAR_mixed_event();
@@ -509,126 +343,6 @@ int particleSamples::read_in_particle_samples_mixed_event() {
     return(0);
 }
 
-int particleSamples::decide_to_pick_UrQMD(int pid, int iso3, int charge,
-                                          int parent_proc_type) {
-    int pick_flag = 0;
-    if (resonance_feed_down_flag == 1) {  // all hadrons
-        pick_flag = 1;
-    } else if (particle_urqmd_id == 9999) {  // charged hadrons
-        int in_flag = 0;
-        for (int i = 0; i < 5; i++) {
-            if (abs(pid) == charged_hadron_urqmd_id_list[i]) {
-                in_flag = 1;
-                break;
-            }
-        }
-        if (in_flag == 1 && charge != 0)
-            pick_flag = 1;
-    } else if (particle_urqmd_id == 9998) {
-        // all positive charged hadrons
-        int in_flag = 0;
-        for (int i = 0; i < 5; i++) {
-            if (abs(pid) == charged_hadron_urqmd_id_list[i]) {
-                in_flag = 1;
-                break;
-            }
-        }
-        if (in_flag == 1 && charge > 0)
-            pick_flag = 1;
-    } else if (particle_urqmd_id == -9998) {
-        // all negative charged hadrons
-        int in_flag = 0;
-        for (int i = 0; i < 5; i++) {
-            if (abs(pid) == charged_hadron_urqmd_id_list[i]) {
-                in_flag = 1;
-                break;
-            }
-        }
-        if (in_flag == 1 && charge < 0)
-            pick_flag = 1;
-    } else if (particle_urqmd_id == 9997) {
-        // all baryons
-        int in_flag = 0;
-        for (int i = 0; i < 5; i++) {
-            if (pid == baryon_urqmd_id_list[i]) {
-                in_flag = 1;
-                break;
-            }
-        }
-        if (in_flag == 1)
-            pick_flag = 1;
-    } else if (particle_urqmd_id == -9997) {
-        // all anti-baryons
-        int in_flag = 0;
-        for (int i = 0; i < 5; i++) {
-            if (pid == -baryon_urqmd_id_list[i]) {
-                in_flag = 1;
-                break;
-            }
-        }
-        if (in_flag == 1)
-            pick_flag = 1;
-    } else {
-        // identified particle
-        if (flag_isospin == 0) {
-            if (pid == particle_urqmd_id) {
-                if (reject_decay_flag == 1 && parent_proc_type == 20) {
-                    pick_flag = 0;
-                } else {
-                    pick_flag = 1;
-                }
-            }
-        } else {
-            if (pid == particle_urqmd_id && iso3 == particle_urqmd_isospin) {
-                if (reject_decay_flag == 1 && parent_proc_type == 20) {
-                    pick_flag = 0;
-                } else {
-                    pick_flag = 1;
-                }
-            }
-        }
-    }
-    return(pick_flag);
-}
-
-int particleSamples::decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
-                                                         int charge) {
-    // this function judge whether particle is the anti-particle of the
-    // particle of interest
-    int pick_flag = 0;
-    if (particle_urqmd_id == 9998) {
-        // anti-particles for all positive charged hadrons
-        // pick all negative charged hadrons
-        int in_flag = 0;
-        for (int i = 0; i < 5; i++) {
-            if (abs(pid) == charged_hadron_urqmd_id_list[i]) {
-                in_flag = 1;
-                break;
-            }
-        }
-        if (in_flag == 1 && charge < 0)
-            pick_flag = 1;
-    } else if (particle_urqmd_id == 9997) {
-        // anti-particles for all baryons:
-        // pick all anti-baryons
-        int in_flag = 0;
-        for (int i = 0; i < 5; i++) {
-            if (pid == -baryon_urqmd_id_list[i]) {
-                in_flag = 1;
-                break;
-            }
-        }
-        if (in_flag == 1)
-            pick_flag = 1;
-    } else {
-        // for identified particle: pick its anti-particle
-        if (pid == -particle_urqmd_id && iso3 == -particle_urqmd_isospin) {
-            pick_flag = 1;
-        }
-    }
-    return(pick_flag);
-}
-
 
 int particleSamples::decide_to_pick_anti_particles(int monval) {
     // this function judge whether particle is the anti-particle of the
@@ -641,14 +355,14 @@ int particleSamples::decide_to_pick_anti_particles(int monval) {
         if (charge < 0) {
             pick_flag = 1;
         }
-    } else if (particle_urqmd_id == 9997) {
+    } else if (particle_monval == 9997) {
         // anti-particles for all baryons:
         // pick all anti-baryons
         int baryon = decayer_ptr->get_particle_baryon_number(monval);
         if (baryon < 0) {
             pick_flag = 1;
         }
-    } else if (particle_urqmd_id == 9996) {
+    } else if (particle_monval == 9996) {
         // anti-particles for all strangness particles:
         // pick all anti-strangness particles
         int strange = decayer_ptr->get_particle_strange_number(monval);
@@ -675,25 +389,6 @@ int particleSamples::decide_to_pick_charge(int monval) {
     return(pick_flag);
 }
 
-int particleSamples::decide_to_pick_UrQMD_resonance(int pid, int iso3,
-                                                    int charge) {
-    int pick_flag = 0;
-    if (particle_urqmd_id == 27) {
-        // Lambda particles, we will consider feed down from Sigma^0
-        if (pid == 40 && iso3 == 0 && charge == 0) {
-            pick_flag = 1;
-        }
-    } else if (particle_urqmd_id == -27) {
-        // Anti-Lambda particles, we will consider feed down from Anti-Sigma^0
-        if (pid == -40 && iso3 == 0 && charge == 0) {
-            pick_flag = 1;
-        }
-    } else {
-        // Other particles do not have weak decay contributions
-        pick_flag = 0;
-    }
-    return(pick_flag);
-}
 
 
 int particleSamples::decide_to_pick_resonance(int monval) {
@@ -708,28 +403,6 @@ int particleSamples::decide_to_pick_resonance(int monval) {
             pick_flag = 1;
     }
     return(pick_flag);
-}
-
-void particleSamples::decide_to_pick_UrQMD_reconst(
-                    int pid, int iso3, int charge, int parent_proc_type,
-                    int *flag1, int *flag2) {
-    *flag1 = 0;
-    *flag2 = 0;
-    if (particle_monval == 333) {
-        // particle of interest is phi(1020)
-        // collect (K^+, K^-) pairs for reconstruction
-        if (pid == 106 && iso3 == 1
-            && charge == 1 && parent_proc_type == 20) {
-            // current particle is K^+ from a decay
-            *flag1 = 1;
-        }
-        if (pid == -106 && iso3 == -1
-            && charge == -1 && parent_proc_type == 20) {
-            // current particle is K^- from a decay
-            *flag2 = 1;
-        }
-    }
-    return;
 }
 
 
@@ -748,38 +421,6 @@ int particleSamples::decide_to_pick_reconst(int monval) {
     return(flag);
 }
 
-int particleSamples::decide_to_pick_JAM(int pid, int *charge_flag) {
-    int pick_flag = 0;
-    for (int i = 0; i < 6; i++) {
-        if (abs(pid) == charged_hadron_pdg_list[i]) {
-            // includes anti-particles
-            if (particle_monval == 9999) {
-                pick_flag = 1;
-            }
-            if (pid > 0) {
-                if (i < 4) {
-                    *charge_flag = 1;
-                } else {
-                    *charge_flag = -1;
-                }
-            } else {
-                if (i < 4) {
-                    *charge_flag = -1;
-                } else {
-                    *charge_flag = 1;
-                }
-            }
-            if (particle_monval == 9998 && *charge_flag == 1) {
-                pick_flag = 1;
-            }
-            if (particle_monval == -9998 && *charge_flag == -1) {
-                pick_flag = 1;
-            }
-            break;
-        }
-    }
-    return(pick_flag);
-}
 
 int particleSamples::decide_to_pick_OSCAR(int monval) {
     int pick_flag = 0;
