@@ -35,6 +35,10 @@ int particle_decay::read_resonances_list() {
     double eps = 1e-15;
     cout << " -- Read in particle resonance decay table..." << endl;
     ifstream resofile("EOS/pdg.dat");
+    if (!resofile) {
+        cout << "can not find the file EOS/pdg.dat!" << endl;
+        exit(1);
+    }
     int dummy_int;
     int particle_monval;
     resofile >> particle_monval;
@@ -346,6 +350,9 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
         cout << "Error:particleSamples::perform_two_body_decay:"
              << "can not found decays!" << endl;
         cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2 << endl;
+        cout << "Mother: " << mother->monval
+             << ", daugther1: " << daughter1->monval
+             << ", daugther2: " << daughter2->monval << endl;
         exit(1);
     }
     //double M_sampled = sample_breit_wigner(M_pole, M_width, M_min);

@@ -1,6 +1,7 @@
 
 #include "../src/particleSamples.h"
 #include "gtest/gtest.h"
+#include "zlib.h"
 
 #include <string>
 
@@ -139,9 +140,9 @@ TEST(particleSamples, read_in_particle_samples_gzipped) {
     EXPECT_EQ(nev, 2);
 
     int n_particles = particle_list.get_number_of_particles(0);
-    EXPECT_EQ(n_particles, 571);
+    EXPECT_EQ(n_particles, 619);
     n_particles = particle_list.get_number_of_particles(1);
-    EXPECT_EQ(n_particles, 640);
+    EXPECT_EQ(n_particles, 635);
 }
 
 TEST(particleSamples, read_in_particle_samples_mixed_event_gzipped) {
@@ -157,9 +158,29 @@ TEST(particleSamples, read_in_particle_samples_mixed_event_gzipped) {
     EXPECT_EQ(nev, 2);
 
     int n_particles = particle_list.get_number_of_particles_mixed_event(0);
-    EXPECT_EQ(n_particles, 571);
+    EXPECT_EQ(n_particles, 619);
     n_particles = particle_list.get_number_of_particles_mixed_event(1);
-    EXPECT_EQ(n_particles, 640);
+    EXPECT_EQ(n_particles, 635);
+}
+
+
+TEST(particleSamples, perform_resonance_feed_down) {
+    ParameterReader *paraRdr = new ParameterReader;
+    paraRdr->readFromFile("parameters.dat");
+    paraRdr->setVal("run_mode", 0);
+    paraRdr->setVal("read_in_mode", 10);
+    paraRdr->setVal("particle_monval", 211);
+    paraRdr->setVal("resonance_feed_down_flag", 1);
+    string path="test_gzip_reader";
+    particleSamples particle_list(paraRdr, path);
+    particle_list.read_in_particle_samples();
+    int nev = particle_list.get_number_of_events();
+    EXPECT_EQ(nev, 2);
+
+    int n_particles = particle_list.get_number_of_particles(0);
+    EXPECT_EQ(n_particles, 744);
+    n_particles = particle_list.get_number_of_particles(1);
+    EXPECT_EQ(n_particles, 780);
 }
 
 TEST(particleSamples, map_urqmd_to_pdg) {

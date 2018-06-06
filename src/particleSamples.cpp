@@ -297,7 +297,7 @@ void particleSamples::initialize_selected_resonance_list() {
         reso_file >> temp_id;
     }
     reso_file.close();
-    if (echo_level > 8) {
+    if (select_resonances_flag == 1 && echo_level > 8) {
         cout << "[Info]:particleSamples::initialize_selected_resonance_list:"
              << "selected resonance list: " << endl;
         for (unsigned int ireso = 0; ireso < select_resonances_list.size();
@@ -1109,7 +1109,7 @@ int particleSamples::read_in_particle_samples_gzipped() {
     // clean out the previous record
     clear_out_previous_record(full_particle_list);
     
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     int temp_monval;
     for (int ievent = 0; ievent < event_buffer_size; ievent++) {
@@ -1119,7 +1119,7 @@ int particleSamples::read_in_particle_samples_gzipped() {
             full_particle_list->push_back(new vector<particle_info> );
 
             // get number of particles within the event
-            stringstream temp1(temp_string);
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             
             // clean out the previous record
@@ -1127,7 +1127,7 @@ int particleSamples::read_in_particle_samples_gzipped() {
 
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 temp_string = gz_readline(inputfile_gz);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> temp_monval;
                 particle_info *temp_particle_info = new particle_info;
                 temp_particle_info->monval = temp_monval;
@@ -1649,8 +1649,9 @@ void particleSamples::perform_resonance_feed_down(
         vector<particle_info> temp_list;
 
         // copy all particles into the temp list
-        for (auto &part_i: (*ev_i))
+        for (auto &part_i: (*ev_i)) {
             temp_list.push_back(part_i);
+        }
 
         (*input_particle_list)[ievent]->clear();
 
