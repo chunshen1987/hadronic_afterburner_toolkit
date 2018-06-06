@@ -1,6 +1,10 @@
 #include "../src/HBT_correlation.h"
 #include "gtest/gtest.h"
 
+#include <string>
+
+using std::string;
+
 namespace {
 // Tests the Glauber class
 

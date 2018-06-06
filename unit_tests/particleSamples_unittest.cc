@@ -1,14 +1,18 @@
+
 #include "../src/particleSamples.h"
 #include "gtest/gtest.h"
 
+#include <string>
+
+using std::string;
+
 namespace {
-// Tests the Glauber class
 
 TEST(particleSamples, DefaultConstructor) {
     ParameterReader *paraRdr = new ParameterReader;
     paraRdr->readFromFile("parameters.dat");
     paraRdr->setVal("run_mode", 0);
-    string path="test_files";
+    string path="test_reader_files";
     particleSamples particle_list(paraRdr, path);
         
     EXPECT_EQ(0, 0);
@@ -122,6 +126,16 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event_zipped) {
     EXPECT_EQ(n_particles, 97);
 }
 
-//    EXPECT_NEAR(1.5, z_test, 1e-8);
-//    EXPECT_DOUBLE_EQ(2.6571870894737679, t_test);
+TEST(particleSamples, map_urqmd_to_pdg) {
+    ParameterReader *paraRdr = new ParameterReader;
+    paraRdr->readFromFile("parameters.dat");
+    paraRdr->setVal("run_mode", 0);
+    string path="test_reader_files";
+    particleSamples particle_list(paraRdr, path);
+    EXPECT_EQ(particle_list.get_pdg_id(1, 1), 2212);
+    EXPECT_EQ(particle_list.get_pdg_id(101, 2), 211);
+    EXPECT_EQ(particle_list.get_pdg_id(40, 2), 3222);
+    EXPECT_EQ(particle_list.get_pdg_id(23, 0), 0);
+}
+
 }  // namespace

@@ -160,6 +160,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
 
     initialize_charged_hadron_pdg_list();
     initialize_charged_hadron_urqmd_id_list();
+    build_map_urqmd_to_pdg_id();
 }
 
 particleSamples::~particleSamples() {
