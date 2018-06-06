@@ -54,6 +54,12 @@ class particleSamples {
     //! flag to collect positive and negative charged hadron seperately
     int flag_charge_dependence;
 
+    //! particle monte-carlo number of balance function
+    int particle_monval_a;
+    int particle_monval_abar;
+    int particle_monval_b;
+    int particle_monval_bbar;
+
     std::map<std::pair<int,int>, int> urqmd_to_pdg;
 
     //! this list store all particle samples
@@ -86,6 +92,12 @@ class particleSamples {
     //! particle list to store the negative hadrons
     //! (used when flag_charge_dependence == 1)
     std::vector< std::vector<particle_info>* >* negative_charge_hadron_list;
+    
+    //! particle list to store the select particle samples for balance function
+    std::vector< std::vector<particle_info>* >* balance_function_particle_a;
+    std::vector< std::vector<particle_info>* >* balance_function_particle_b;
+    std::vector< std::vector<particle_info>* >* balance_function_particle_abar;
+    std::vector< std::vector<particle_info>* >* balance_function_particle_bbar;
 
     //! particle decay
     particle_decay *decayer_ptr;
@@ -133,7 +145,7 @@ class particleSamples {
                     std::vector< std::vector<particle_info>* >* full_list);
 
     std::string gz_readline(gzFile gzfp);
-    bool end_of_file() {
+    bool end_of_file() const {
         if (read_in_mode == 2 || read_in_mode == 10) {
             return(gzeof(inputfile_gz));
         } else {
@@ -148,9 +160,9 @@ class particleSamples {
         }
     }
 
-    int get_event_buffer_size() {return(event_buffer_size);}
+    int get_event_buffer_size() const {return(event_buffer_size);}
 
-    int get_number_of_events() {return(particle_list->size());}
+    int get_number_of_events() const {return(particle_list->size());}
     int get_number_of_events_anti_particle() {
         return(anti_particle_list->size());
     }
@@ -188,6 +200,22 @@ class particleSamples {
     }
     particle_info get_negative_particle(int event_id, int part_id) {
         return((*(*negative_charge_hadron_list)[event_id])[part_id]);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_a() const {
+        return(balance_function_particle_a);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_abar() const {
+        return(balance_function_particle_abar);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_b() const {
+        return(balance_function_particle_b);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_bbar() const {
+        return(balance_function_particle_bbar);
     }
 };
 

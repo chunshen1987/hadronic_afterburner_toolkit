@@ -65,7 +65,7 @@ void ParameterReader::phraseEquationWithoutComments(string equation)
 
 
 //----------------------------------------------------------------------
-long ParameterReader::find(string name) {
+long ParameterReader::find(string name) const {
 /*
   Check if the parameter with "name" already exists in the internal 
   "names" list. If yes, it returns its
@@ -160,7 +160,7 @@ void ParameterReader::setVal(string name, double value)
 
 
 //----------------------------------------------------------------------
-double ParameterReader::getVal(string name)
+double ParameterReader::getVal(string name) const
 /*
   Get the value for the parameter with "name".
 */

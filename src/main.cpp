@@ -18,15 +18,16 @@
 #include<math.h>
 #include<sys/time.h>
 
-#include "./Stopwatch.h"
-#include "./parameters.h"
-#include "./arsenal.h"
-#include "./ParameterReader.h"
-#include "./particleSamples.h"
-#include "./HBT_correlation.h"
-#include "./single_particleSpectra.h"
-#include "./particle_yield_distribution.h"
-#include "./particle_decay.h"
+#include "Stopwatch.h"
+#include "parameters.h"
+#include "arsenal.h"
+#include "ParameterReader.h"
+#include "particleSamples.h"
+#include "HBT_correlation.h"
+#include "BalanceFunction.h"
+#include "single_particleSpectra.h"
+#include "particle_yield_distribution.h"
+#include "particle_decay.h"
 
 using namespace std;
 
@@ -68,6 +69,10 @@ int main(int argc, char *argv[]) {
         // collect event-by-event particle yield distribution
         particle_yield_distribution test_dis(paraRdr, path, &particle_list);
         test_dis.collect_particle_yield_distribution();
+    } else if (run_mode == 3) {
+        // compute balance function
+        BalanceFunction test(paraRdr, path, &particle_list);
+        test.calculate_balance_function();
     } else {
         cout << "Error: unrecognized run_mode: " << run_mode << endl;
         exit(1);

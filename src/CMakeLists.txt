@@ -7,6 +7,7 @@ add_executable (hadronic_afterburner_tools.e
   single_particleSpectra.cpp
   particle_yield_distribution.cpp
   particle_decay.cpp
+  BalanceFunction.cpp
   )
 target_link_libraries (hadronic_afterburner_tools.e ${LIBS} ${ZLIB_LIBRARIES})
 

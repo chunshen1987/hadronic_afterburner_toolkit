@@ -22,7 +22,7 @@ class ParameterReader
     void phraseEquationWithoutComments(std::string equation); 
 
     // give the index of parameter with "name", or -1 if it does not exist
-    long find(std::string name); 
+    long find(std::string name) const; 
 
   public:
     ParameterReader();
@@ -45,7 +45,7 @@ class ParameterReader
     // set the parameter with "name" to value "value"
     void setVal(std::string name, double value); 
 
-    double getVal(std::string name); // return the value for parameter with "name"
+    double getVal(std::string name) const; // return the value for parameter with "name"
 
     void echo(); // print out all parameters to the screen
 };

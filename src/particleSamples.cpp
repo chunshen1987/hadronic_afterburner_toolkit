@@ -35,6 +35,17 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     particle_monval = paraRdr->getVal("particle_monval");
     flag_isospin = paraRdr->getVal("distinguish_isospin");
 
+    if (run_mode == 3) {
+        particle_monval_a    = paraRdr->getVal("particle_alpha");
+        particle_monval_abar = -particle_monval_a;
+        particle_monval_b    = paraRdr->getVal("particle_beta");
+        particle_monval_bbar = -particle_monval_b;
+        balance_function_particle_a    = new vector< vector<particle_info>* >;
+        balance_function_particle_abar = new vector< vector<particle_info>* >;
+        balance_function_particle_b    = new vector< vector<particle_info>* >;
+        balance_function_particle_bbar = new vector< vector<particle_info>* >;
+    }
+
     resonance_feed_down_flag = paraRdr->getVal("resonance_feed_down_flag");
     select_resonances_flag = 0;
     if (resonance_feed_down_flag == 1) {
@@ -205,6 +216,13 @@ particleSamples::~particleSamples() {
         delete positive_charge_hadron_list;
         clear_out_previous_record(negative_charge_hadron_list);
         delete negative_charge_hadron_list;
+    }
+
+    if (run_mode == 3) {
+        clear_out_previous_record(balance_function_particle_a);
+        clear_out_previous_record(balance_function_particle_abar);
+        clear_out_previous_record(balance_function_particle_b);
+        clear_out_previous_record(balance_function_particle_bbar);
     }
 }
 
@@ -377,6 +395,7 @@ int particleSamples::decide_to_pick_anti_particles(int monval) {
     }
     return(pick_flag);
 }
+
 
 
 int particleSamples::decide_to_pick_charge(int monval) {
@@ -839,6 +858,13 @@ void particleSamples::filter_particles_into_lists(
         clear_out_previous_record(positive_charge_hadron_list);
         clear_out_previous_record(negative_charge_hadron_list);
     }
+
+    if (run_mode == 3) {
+        clear_out_previous_record(balance_function_particle_a);
+        clear_out_previous_record(balance_function_particle_abar);
+        clear_out_previous_record(balance_function_particle_b);
+        clear_out_previous_record(balance_function_particle_bbar);
+    }
     
     int iev = 0;
     for (auto &ev_i: (*full_list)) {
@@ -858,6 +884,17 @@ void particleSamples::filter_particles_into_lists(
             positive_charge_hadron_list->push_back(
                                             new vector<particle_info>);
             negative_charge_hadron_list->push_back(
+                                            new vector<particle_info>);
+        }
+
+        if (run_mode == 3) {
+            balance_function_particle_a->push_back(
+                                            new vector<particle_info>);
+            balance_function_particle_abar->push_back(
+                                            new vector<particle_info>);
+            balance_function_particle_b->push_back(
+                                            new vector<particle_info>);
+            balance_function_particle_bbar->push_back(
                                             new vector<particle_info>);
         }
 
@@ -893,6 +930,17 @@ void particleSamples::filter_particles_into_lists(
                     (*positive_charge_hadron_list)[iev]->push_back(part_i);
                 else if (charge_flag == -1)
                     (*negative_charge_hadron_list)[iev]->push_back(part_i);
+            }
+
+            if (run_mode == 3) {
+                if (particle_monval_a == part_i.monval)
+                    (*balance_function_particle_a)[iev]->push_back(part_i);
+                if (particle_monval_abar == part_i.monval)
+                    (*balance_function_particle_abar)[iev]->push_back(part_i);
+                if (particle_monval_b == part_i.monval)
+                    (*balance_function_particle_b)[iev]->push_back(part_i);
+                if (particle_monval_bbar == part_i.monval)
+                    (*balance_function_particle_bbar)[iev]->push_back(part_i);
             }
         }
         iev++;
