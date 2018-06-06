@@ -112,15 +112,24 @@ class particleSamples {
     void get_UrQMD_id(int monval);
     int decide_to_pick_UrQMD(int pid, int iso3, int charge,
                              int parent_proc_type);
+
     int decide_to_pick_UrQMD_resonance(int pid, int iso3, int charge);
+    int decide_to_pick_resonance(int monval);
+
     void decide_to_pick_UrQMD_reconst(
                 int pid, int iso3, int charge, int parent_proc_type,
                 int *flag1, int *flag2);
+    int decide_to_pick_reconst(int monval);
+
     int decide_to_pick_JAM(int pid, int *charge_flag);
     int decide_to_pick_UrQMD_anti_particles(int pid, int iso3,
                                             int charge);
-    int decide_to_pick_from_OSCAR_file(int monval);
+
+    int decide_to_pick_anti_particles(int monval);
+    int decide_to_pick_charge(int monval);
     int decide_to_pick_OSCAR(int monval);
+
+    int decide_to_pick_from_OSCAR_file(int monval);
 
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
 
