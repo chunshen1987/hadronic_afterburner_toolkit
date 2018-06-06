@@ -44,7 +44,7 @@ TEST(particleSamples, read_in_particle_samples_OSCAR_mixed_event) {
     paraRdr->setVal("particle_monval", 211);
     string path="test_reader_files";
     particleSamples particle_list(paraRdr, path);
-    particle_list.read_in_particle_samples_OSCAR_mixed_event();
+    particle_list.read_in_particle_samples_mixed_event();
     int nev = particle_list.get_number_of_mixed_events();
     EXPECT_EQ(nev, 2);
 
