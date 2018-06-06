@@ -452,13 +452,16 @@ int particleSamples::read_in_particle_samples() {
         reconst_flag = 0;
     } else if (read_in_mode == 1) {
         read_in_particle_samples_UrQMD();
+        filter_particles_into_lists(full_particle_list);
     } else if (read_in_mode == 2) {
         read_in_particle_samples_UrQMD_zipped();
         filter_particles_into_lists(full_particle_list);
     } else if (read_in_mode == 3) {
         read_in_particle_samples_Sangwook();
+        filter_particles_into_lists(full_particle_list);
     } else if (read_in_mode == 4) {
         read_in_particle_samples_UrQMD_3p3();
+        filter_particles_into_lists(full_particle_list);
     } else if (read_in_mode == 5) {
         read_in_particle_samples_JAM();
     } else if (read_in_mode == 10) {
@@ -489,12 +492,20 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         resonance_weak_feed_down_flag = 0;
     } else if (read_in_mode == 1) {
         read_in_particle_samples_UrQMD_mixed_event();
+        filter_particles(full_particle_list_mixed_event,
+                         particle_list_mixed_event);
     } else if (read_in_mode == 2) {
         read_in_particle_samples_UrQMD_mixed_event_zipped();
+        filter_particles(full_particle_list_mixed_event,
+                         particle_list_mixed_event);
     } else if (read_in_mode == 3) {
         read_in_particle_samples_mixed_event_Sangwook();
+        filter_particles(full_particle_list_mixed_event,
+                         particle_list_mixed_event);
     } else if (read_in_mode == 4) {
         read_in_particle_samples_UrQMD_3p3_mixed_event();
+        filter_particles(full_particle_list_mixed_event,
+                         particle_list_mixed_event);
     } else if (read_in_mode == 5) {
         read_in_particle_samples_JAM_mixed_event();
     } else if (read_in_mode == 10) {
@@ -1240,33 +1251,9 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
 
 int particleSamples::read_in_particle_samples_UrQMD() {
     // clean out the previous record
-    for (unsigned int i = 0; i < particle_list->size(); i++)
-        (*particle_list)[i]->clear();
-    particle_list->clear();
-    
-    if (resonance_weak_feed_down_flag == 1) {
-        for (unsigned int i = 0; i < resonance_list->size(); i++)
-            (*resonance_list)[i]->clear();
-        resonance_list->clear();
-    }
+    clear_out_previous_record(full_particle_list);
 
-    if (net_particle_flag == 1) {
-        for (unsigned int i = 0; i < anti_particle_list->size(); i++) {
-            (*anti_particle_list)[i]->clear();
-        }
-        anti_particle_list->clear();
-    }
-
-    if (reconst_flag == 1) {
-        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
-            (*reconst_list_1)[i]->clear();
-        reconst_list_1->clear();
-        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
-            (*reconst_list_2)[i]->clear();
-        reconst_list_2->clear();
-    }
-
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     double dummy;
     int parent_proc_type;
@@ -1277,116 +1264,41 @@ int particleSamples::read_in_particle_samples_UrQMD() {
         getline(inputfile, temp_string);
         if (!inputfile.eof()) {
             // create one event
-            particle_list->push_back(new vector<particle_info> );
-            if (resonance_weak_feed_down_flag == 1) {
-                resonance_list->push_back(new vector<particle_info>);
-            }
-            if (reconst_flag == 1) {
-                reconst_list_1->push_back(new vector<particle_info>);
-                reconst_list_2->push_back(new vector<particle_info>);
-            }
-            if (net_particle_flag == 1) {
-                anti_particle_list->push_back(new vector<particle_info>);
-            }
+            full_particle_list->push_back(new vector<particle_info> );
 
             // first skip the header
             for (int i = 0; i < 16; i++)
                 getline(inputfile, temp_string);
+
             // then get number of particles within the event
             getline(inputfile, temp_string);
-            stringstream temp1(temp_string);
+
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             getline(inputfile, temp_string);  // then get one useless line
 
-            int idx = ievent;
-            (*particle_list)[idx]->clear(); // clean out the previous record
-            if (resonance_weak_feed_down_flag == 1) {
-                (*resonance_list)[idx]->clear();
-            }
-            if (net_particle_flag == 1) {
-                (*anti_particle_list)[idx]->clear();
-            }
-            if (reconst_flag == 1) {
-                (*reconst_list_1)[idx]->clear();
-                (*reconst_list_2)[idx]->clear();
-            }
-
-            int pick_flag = 0;
-            int resonance_pick_flag = 0;
-            int reconst_1_pick_flag = 0;
-            int reconst_2_pick_flag = 0;
-            int anti_particle_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile, temp_string);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                pick_flag = decide_to_pick_UrQMD(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
-
-                if (resonance_weak_feed_down_flag == 1) {
-                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
-
-                if (net_particle_flag == 1) {
-                    anti_particle_pick_flag =
-                        decide_to_pick_UrQMD_anti_particles(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
-
-                if (reconst_flag == 1) {
-                    decide_to_pick_UrQMD_reconst(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type,
-                        &reconst_1_pick_flag, &reconst_2_pick_flag);
-                }
-
-                int trigger = (pick_flag + resonance_pick_flag
-                               + net_particle_flag
-                               + reconst_1_pick_flag + reconst_2_pick_flag);
-                if (trigger > 0) {
-                    particle_info *temp_particle_info = new particle_info;
-                    temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x 
-                          >> temp_particle_info->y
-                          >> temp_particle_info->z 
-                          >> temp_particle_info->E
-                          >> temp_particle_info->px 
-                          >> temp_particle_info->py
-                          >> temp_particle_info->pz;
-                    temp_particle_info->mass = temp_mass;
-                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                            urqmd_iso3);
-                    if (pick_flag == 1) {
-                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
-                            double tau = sqrt(
-                                temp_particle_info->t*temp_particle_info->t
-                                - temp_particle_info->z*temp_particle_info->z);
-                            if (tau > tau_reject) {
-                                pick_flag = 0;
-                            } else {
-                                pick_flag = 1;
-                            }
-                        }
-                        if (pick_flag == 1) {
-                            (*particle_list)[idx]->push_back(
-                                                        *temp_particle_info);
-                        }
-                    } else if (resonance_pick_flag == 1) {
-                        (*resonance_list)[idx]->push_back(*temp_particle_info);
-                    } else if (reconst_1_pick_flag == 1) {
-                        (*reconst_list_1)[idx]->push_back(*temp_particle_info);
-                    } else if (reconst_2_pick_flag == 1) {
-                        (*reconst_list_2)[idx]->push_back(*temp_particle_info);
-                    } else if (anti_particle_pick_flag == 1) {
-                        (*anti_particle_list)[idx]->push_back(
-                                                        *temp_particle_info);
-                    }
-                    delete temp_particle_info;
-                }
+                particle_info *temp_particle_info = new particle_info;
+                temp2 >> temp_particle_info->t
+                      >> temp_particle_info->x 
+                      >> temp_particle_info->y
+                      >> temp_particle_info->z 
+                      >> temp_particle_info->E
+                      >> temp_particle_info->px 
+                      >> temp_particle_info->py
+                      >> temp_particle_info->pz;
+                temp_particle_info->mass = temp_mass;
+                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                        urqmd_iso3);
+                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
+                delete temp_particle_info;
             }
         } else {
             break;
@@ -1494,17 +1406,13 @@ void particleSamples::filter_particles(
                     vector< vector<particle_info>* >* full_list,
                     vector< vector<particle_info>* >* filted_list) {
     // clean out the previous record
-    for (auto &ev_i: (*filted_list))
-        ev_i->clear();
-    filted_list->clear();
+    clear_out_previous_record(filted_list);
 
     int i = 0;
     for (auto &ev_i: (*full_list)) {
         filted_list->push_back(new vector<particle_info> );
         for (auto &part_i: (*ev_i)) {
-            int pick_flag = 0;
-            int temp_monval = part_i.monval;
-            pick_flag = decide_to_pick_from_OSCAR_file(temp_monval);
+            int pick_flag = decide_to_pick_from_OSCAR_file(part_i.monval);
             if (pick_flag != 0)
                 (*filted_list)[i]->push_back(part_i);
         }
@@ -1604,26 +1512,9 @@ void particleSamples::filter_particles_into_lists(
 
 int particleSamples::read_in_particle_samples_UrQMD_3p3() {
     // clean out the previous record
-    for (unsigned int i = 0; i < particle_list->size(); i++)
-        (*particle_list)[i]->clear();
-    particle_list->clear();
-    
-    if (resonance_weak_feed_down_flag == 1) {
-        for (unsigned int i = 0; i < resonance_list->size(); i++)
-            (*resonance_list)[i]->clear();
-        resonance_list->clear();
-    }
-    
-    if (reconst_flag == 1) {
-        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
-            (*reconst_list_1)[i]->clear();
-        reconst_list_1->clear();
-        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
-            (*reconst_list_2)[i]->clear();
-        reconst_list_2->clear();
-    }
+    clear_out_previous_record(full_particle_list);
 
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     double dummy;
     int parent_proc_type;
@@ -1634,99 +1525,39 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
         getline(inputfile, temp_string);
         if (!inputfile.eof()) {
             // create one event
-            particle_list->push_back(new vector<particle_info> );
-            if (resonance_weak_feed_down_flag == 1) {
-                resonance_list->push_back(new vector<particle_info>);
-            }
-            if (reconst_flag == 1) {
-                reconst_list_1->push_back(new vector<particle_info>);
-                reconst_list_2->push_back(new vector<particle_info>);
-            }
+            full_particle_list->push_back(new vector<particle_info> );
 
             // first skip the header
             for (int i = 0; i < 13; i++)
                 getline(inputfile, temp_string);
             // then get number of particles within the event
             getline(inputfile, temp_string);
-            stringstream temp1(temp_string);
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             getline(inputfile, temp_string);  // then get one useless line
 
-            int idx = ievent;
-            (*particle_list)[idx]->clear(); // clean out the previous record
-            if (resonance_weak_feed_down_flag == 1) {
-                (*resonance_list)[idx]->clear();
-            }
-            if (reconst_flag == 1) {
-                (*reconst_list_1)[idx]->clear();
-                (*reconst_list_2)[idx]->clear();
-            }
-
-            int pick_flag = 0;
-            int resonance_pick_flag = 0;
-            int reconst_1_pick_flag = 0;
-            int reconst_2_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile, temp_string);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                pick_flag = decide_to_pick_UrQMD(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
-
-                if (resonance_weak_feed_down_flag == 1) {
-                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
-
-                if (reconst_flag == 1) {
-                    decide_to_pick_UrQMD_reconst(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type,
-                        &reconst_1_pick_flag, &reconst_2_pick_flag);
-                }
-                
-                int trigger = (pick_flag + resonance_pick_flag
-                               + reconst_1_pick_flag + reconst_2_pick_flag);
-                if (trigger > 0) {
-                    particle_info *temp_particle_info = new particle_info;
-                    temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x 
-                          >> temp_particle_info->y
-                          >> temp_particle_info->z 
-                          >> temp_particle_info->E
-                          >> temp_particle_info->px 
-                          >> temp_particle_info->py
-                          >> temp_particle_info->pz;
-                    temp_particle_info->mass = temp_mass;
-                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                            urqmd_iso3);
-                    if (pick_flag == 1) {
-                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
-                            double tau = sqrt(
-                                temp_particle_info->t*temp_particle_info->t
-                                - temp_particle_info->z*temp_particle_info->z);
-                            if (tau > tau_reject) {
-                                pick_flag = 0;
-                            } else {
-                                pick_flag = 1;
-                            }
-                        }
-                        if (pick_flag == 1) {
-                            (*particle_list)[idx]->push_back(
-                                                        *temp_particle_info);
-                        }
-                    } else if (resonance_pick_flag == 1) {
-                        (*resonance_list)[idx]->push_back(*temp_particle_info);
-                    } else if (reconst_1_pick_flag == 1) {
-                        (*reconst_list_1)[idx]->push_back(*temp_particle_info);
-                    } else if (reconst_2_pick_flag == 1) {
-                        (*reconst_list_2)[idx]->push_back(*temp_particle_info);
-                    }
-                    delete temp_particle_info;
-                }
+                particle_info *temp_particle_info = new particle_info;
+                temp2 >> temp_particle_info->t
+                      >> temp_particle_info->x 
+                      >> temp_particle_info->y
+                      >> temp_particle_info->z 
+                      >> temp_particle_info->E
+                      >> temp_particle_info->px 
+                      >> temp_particle_info->py
+                      >> temp_particle_info->pz;
+                temp_particle_info->mass = temp_mass;
+                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                        urqmd_iso3);
+                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
+                delete temp_particle_info;
             }
         } else {
             break;
@@ -1735,19 +1566,12 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
     return(0);
 }
 
+
 int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
     // clean out the previous record
-    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
-        (*particle_list_mixed_event)[i]->clear();
-    particle_list_mixed_event->clear();
-    
-    if (resonance_weak_feed_down_flag == 1) {
-        for (unsigned int i = 0; i < resonance_list->size(); i++)
-            (*resonance_list)[i]->clear();
-        resonance_list->clear();
-    }
+    clear_out_previous_record(full_particle_list_mixed_event);
 
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     double dummy;
     int parent_proc_type;
@@ -1757,81 +1581,42 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
     for (ievent = 0; ievent < event_buffer_size; ievent++) {
         getline(inputfile_mixed_event, temp_string);
         if (!inputfile_mixed_event.eof()) {
-            particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_weak_feed_down_flag == 1) {
-                resonance_list->push_back(new vector<particle_info>);
-            }
+            full_particle_list_mixed_event->push_back(
+                                                new vector<particle_info> );
 
             // first skip the header
             for(int i = 0; i < 16; i++)
                 getline(inputfile_mixed_event, temp_string);
             // then get number of particles within the event
             getline(inputfile_mixed_event, temp_string);
-            stringstream temp1(temp_string);
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             // then get one useless line
             getline(inputfile_mixed_event, temp_string);  
 
-            // clean out the previous record
-            int idx = ievent;
-            (*particle_list_mixed_event)[idx]->clear(); 
-            if (resonance_weak_feed_down_flag == 1) {
-                (*resonance_list)[idx]->clear();
-            }
-
-            int pick_flag = 0;
-            int resonance_pick_flag = 0;
-            for(int ipart = 0; ipart < n_particle; ipart++)
-            {
+            for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile_mixed_event, temp_string);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                pick_flag = decide_to_pick_UrQMD(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
-
-                if (resonance_weak_feed_down_flag == 1) {
-                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
-                
-                int trigger = pick_flag + resonance_pick_flag;
-                if (trigger > 0) {
-                    particle_info *temp_particle_info = new particle_info;
-                    temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x 
-                          >> temp_particle_info->y
-                          >> temp_particle_info->z 
-                          >> temp_particle_info->E
-                          >> temp_particle_info->px 
-                          >> temp_particle_info->py
-                          >> temp_particle_info->pz ;
-                    temp_particle_info->mass = temp_mass;
-                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                            urqmd_iso3);
-                    if (pick_flag == 1) {
-                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
-                            double tau = sqrt(
-                                temp_particle_info->t*temp_particle_info->t
-                                - temp_particle_info->z*temp_particle_info->z);
-                            if (tau > tau_reject) {
-                                pick_flag = 0;
-                            } else {
-                                pick_flag = 1;
-                            }
-                        }
-                        if (pick_flag == 1) {
-                            (*particle_list_mixed_event)[idx]->push_back(
-                                                           *temp_particle_info);
-                        }
-                    } else if (resonance_pick_flag == 1) {
-                        (*resonance_list)[idx]->push_back(*temp_particle_info);
-                    }
-                    delete temp_particle_info;
-                }
+                particle_info *temp_particle_info = new particle_info;
+                temp2 >> temp_particle_info->t
+                      >> temp_particle_info->x 
+                      >> temp_particle_info->y
+                      >> temp_particle_info->z 
+                      >> temp_particle_info->E
+                      >> temp_particle_info->px 
+                      >> temp_particle_info->py
+                      >> temp_particle_info->pz ;
+                temp_particle_info->mass = temp_mass;
+                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                        urqmd_iso3);
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                                                        *temp_particle_info);
+                delete temp_particle_info;
             }
         } else {
             break;
@@ -1842,17 +1627,9 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
 
 int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
     // clean out the previous record
-    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
-        (*particle_list_mixed_event)[i]->clear();
-    particle_list_mixed_event->clear();
-    
-    if (resonance_weak_feed_down_flag == 1) {
-        for (unsigned int i = 0; i < resonance_list->size(); i++)
-            (*resonance_list)[i]->clear();
-        resonance_list->clear();
-    }
+    clear_out_previous_record(full_particle_list_mixed_event);
 
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     double dummy;
     int parent_proc_type;
@@ -1860,74 +1637,37 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
     for (int ievent = 0; ievent < event_buffer_size; ievent++) {
         temp_string = gz_readline(inputfile_mixed_event_gz);
         if (!gzeof(inputfile_mixed_event_gz)) {
-            particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_weak_feed_down_flag == 1) {
-                resonance_list->push_back(new vector<particle_info>);
-            }
+            full_particle_list_mixed_event->push_back(
+                                                new vector<particle_info> );
 
             // get number of particles within the event
-            stringstream temp1(temp_string);
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             // then get one useless line
             temp_string = gz_readline(inputfile_mixed_event_gz);  
 
-            // clean out the previous record
-            int idx = ievent;
-            (*particle_list_mixed_event)[idx]->clear(); 
-            if (resonance_weak_feed_down_flag == 1) {
-                (*resonance_list)[idx]->clear();
-            }
-
-            int pick_flag = 0;
-            int resonance_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 temp_string = gz_readline(inputfile_mixed_event_gz);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                pick_flag = decide_to_pick_UrQMD(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
-
-                if (resonance_weak_feed_down_flag == 1) {
-                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
                 
-                int trigger = pick_flag + resonance_pick_flag;
-                if (trigger > 0) {
-                    particle_info *temp_particle_info = new particle_info;
-                    temp2 >> temp_particle_info->mass
-                          >> temp_particle_info->t
-                          >> temp_particle_info->x
-                          >> temp_particle_info->y
-                          >> temp_particle_info->z
-                          >> temp_particle_info->E
-                          >> temp_particle_info->px
-                          >> temp_particle_info->py
-                          >> temp_particle_info->pz;
-                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                            urqmd_iso3);
-                    if (pick_flag == 1) {
-                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
-                            double tau = sqrt(
-                                temp_particle_info->t*temp_particle_info->t
-                                - temp_particle_info->z*temp_particle_info->z);
-                            if (tau > tau_reject) {
-                                pick_flag = 0;
-                            } else {
-                                pick_flag = 1;
-                            }
-                        }
-                        if (pick_flag == 1) {
-                            (*particle_list_mixed_event)[idx]->push_back(
-                                                           *temp_particle_info);
-                        }
-                    } else if (resonance_pick_flag == 1) {
-                        (*resonance_list)[idx]->push_back(*temp_particle_info);
-                    }
-                    delete temp_particle_info;
-                }
+                particle_info *temp_particle_info = new particle_info;
+                temp2 >> temp_particle_info->mass
+                      >> temp_particle_info->t
+                      >> temp_particle_info->x
+                      >> temp_particle_info->y
+                      >> temp_particle_info->z
+                      >> temp_particle_info->E
+                      >> temp_particle_info->px
+                      >> temp_particle_info->py
+                      >> temp_particle_info->pz;
+                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                        urqmd_iso3);
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                                                        *temp_particle_info);
+                delete temp_particle_info;
             }
         } else {
             break;
@@ -1989,17 +1729,9 @@ int particleSamples::read_in_particle_samples_mixed_event_gzipped() {
 
 int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
     // clean out the previous record
-    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
-        (*particle_list_mixed_event)[i]->clear();
-    particle_list_mixed_event->clear();
+    clear_out_previous_record(full_particle_list_mixed_event);
 
-    if (resonance_weak_feed_down_flag == 1) {
-        for (unsigned int i = 0; i < resonance_list->size(); i++)
-            (*resonance_list)[i]->clear();
-        resonance_list->clear();
-    }
-
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     double dummy;
     int parent_proc_type;
@@ -2009,80 +1741,42 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
     for (ievent = 0; ievent < event_buffer_size; ievent++) {
         getline(inputfile_mixed_event, temp_string);
         if (!inputfile_mixed_event.eof()) {
-            particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_weak_feed_down_flag == 1) {
-                resonance_list->push_back(new vector<particle_info>);
-            }
+            full_particle_list_mixed_event->push_back(
+                                                new vector<particle_info> );
 
             // first skip the header
             for (int i = 0; i < 13; i++)
                 getline(inputfile_mixed_event, temp_string);
             // then get number of particles within the event
             getline(inputfile_mixed_event, temp_string);
-            stringstream temp1(temp_string);
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             // then get one useless line
             getline(inputfile_mixed_event, temp_string);
 
-            // clean out the previous record
-            int idx = ievent;
-            (*particle_list_mixed_event)[idx]->clear();
-            if (resonance_weak_feed_down_flag == 1) {
-                (*resonance_list)[idx]->clear();
-            }
-
-            int pick_flag = 0;
-            int resonance_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile_mixed_event, temp_string);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                pick_flag = decide_to_pick_UrQMD(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
-
-                if (resonance_weak_feed_down_flag == 1) {
-                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
-                
-                int trigger = pick_flag + resonance_pick_flag;
-                if (trigger > 0) {
-                    particle_info *temp_particle_info = new particle_info;
-                    temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x 
-                          >> temp_particle_info->y
-                          >> temp_particle_info->z 
-                          >> temp_particle_info->E
-                          >> temp_particle_info->px 
-                          >> temp_particle_info->py
-                          >> temp_particle_info->pz ;
-                    temp_particle_info->mass = temp_mass;
-                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                            urqmd_iso3);
-                    if (pick_flag == 1) {
-                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
-                            double tau = sqrt(
-                                temp_particle_info->t*temp_particle_info->t
-                                - temp_particle_info->z*temp_particle_info->z);
-                            if (tau > tau_reject) {
-                                pick_flag = 0;
-                            } else {
-                                pick_flag = 1;
-                            }
-                        }
-                        if (pick_flag == 1) {
-                            (*particle_list_mixed_event)[idx]->push_back(
-                                                           *temp_particle_info);
-                        }
-                    } else if (resonance_pick_flag == 1) {
-                        (*resonance_list)[idx]->push_back(*temp_particle_info);
-                    }
-                    delete temp_particle_info;
-                }
+                particle_info *temp_particle_info = new particle_info;
+                temp2 >> temp_particle_info->t
+                      >> temp_particle_info->x 
+                      >> temp_particle_info->y
+                      >> temp_particle_info->z 
+                      >> temp_particle_info->E
+                      >> temp_particle_info->px 
+                      >> temp_particle_info->py
+                      >> temp_particle_info->pz ;
+                temp_particle_info->mass = temp_mass;
+                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                        urqmd_iso3);
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                                                        *temp_particle_info);
+                delete temp_particle_info;
             }
         } else {
             break;
@@ -2093,26 +1787,9 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
 
 int particleSamples::read_in_particle_samples_Sangwook() {
     // clean out the previous record
-    for (unsigned int i = 0; i < particle_list->size(); i++)
-        (*particle_list)[i]->clear();
-    particle_list->clear();
+    clear_out_previous_record(full_particle_list);
 
-    if (resonance_weak_feed_down_flag == 1) {
-        for (unsigned int i = 0; i < resonance_list->size(); i++)
-            (*resonance_list)[i]->clear();
-        resonance_list->clear();
-    }
-
-    if (reconst_flag == 1) {
-        for (unsigned int i = 0; i < reconst_list_1->size(); i++)
-            (*reconst_list_1)[i]->clear();
-        reconst_list_1->clear();
-        for (unsigned int i = 0; i < reconst_list_2->size(); i++)
-            (*reconst_list_2)[i]->clear();
-        reconst_list_2->clear();
-    }
-
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     double dummy;
     int parent_proc_type;
@@ -2123,95 +1800,34 @@ int particleSamples::read_in_particle_samples_Sangwook() {
         getline(inputfile, temp_string);
         if (!inputfile.eof()) {
             // create one event
-            particle_list->push_back(new vector<particle_info> );
-            if (resonance_weak_feed_down_flag == 1) {
-                resonance_list->push_back(new vector<particle_info>);
-            }
-            if (reconst_flag == 1) {
-                reconst_list_1->push_back(new vector<particle_info>);
-                reconst_list_2->push_back(new vector<particle_info>);
-            }
-
+            full_particle_list->push_back(new vector<particle_info> );
+            
             // get number of particles within the event
-            stringstream temp1(temp_string);
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             getline(inputfile, temp_string);  // then get one useless line
 
-            int idx = ievent;
-            (*particle_list)[idx]->clear();  // clean out the previous record
-            if (resonance_weak_feed_down_flag == 1) {
-                (*resonance_list)[idx]->clear();
-            }
-            if (reconst_flag == 1) {
-                (*reconst_list_1)[idx]->clear();
-                (*reconst_list_2)[idx]->clear();
-            }
-
-            int pick_flag = 0;
-            int resonance_pick_flag = 0;
-            int reconst_1_pick_flag = 0;
-            int reconst_2_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile, temp_string);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                pick_flag = decide_to_pick_UrQMD(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
-
-                if (resonance_weak_feed_down_flag == 1) {
-                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
-
-                if (reconst_flag == 1) {
-                    decide_to_pick_UrQMD_reconst(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type,
-                        &reconst_1_pick_flag, &reconst_2_pick_flag);
-                }
-
-                int trigger = (pick_flag + resonance_pick_flag
-                               + reconst_1_pick_flag + reconst_2_pick_flag);
-                if (trigger > 0) {
-                    particle_info *temp_particle_info = new particle_info;
-                    temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x
-                          >> temp_particle_info->y
-                          >> temp_particle_info->z
-                          >> temp_particle_info->E
-                          >> temp_particle_info->px
-                          >> temp_particle_info->py
-                          >> temp_particle_info->pz;
-                    temp_particle_info->mass = temp_mass;
-                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                            urqmd_iso3);
-                    if (pick_flag == 1) {
-                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
-                            double tau = sqrt(
-                                temp_particle_info->t*temp_particle_info->t
-                                - temp_particle_info->z*temp_particle_info->z);
-                            if (tau > tau_reject) {
-                                pick_flag = 0;
-                            } else {
-                                pick_flag = 1;
-                            }
-                        }
-                        if (pick_flag == 1) {
-                            (*particle_list)[idx]->push_back(
-                                                        *temp_particle_info);
-                        }
-                    } else if (resonance_pick_flag == 1) {
-                        (*resonance_list)[idx]->push_back(*temp_particle_info);
-                    } else if (reconst_1_pick_flag == 1) {
-                        (*reconst_list_1)[idx]->push_back(*temp_particle_info);
-                    } else if (reconst_2_pick_flag == 1) {
-                        (*reconst_list_2)[idx]->push_back(*temp_particle_info);
-                    }
-                    delete temp_particle_info;
-                }
+                particle_info *temp_particle_info = new particle_info;
+                temp2 >> temp_particle_info->t
+                      >> temp_particle_info->x
+                      >> temp_particle_info->y
+                      >> temp_particle_info->z
+                      >> temp_particle_info->E
+                      >> temp_particle_info->px
+                      >> temp_particle_info->py
+                      >> temp_particle_info->pz;
+                temp_particle_info->mass = temp_mass;
+                temp_particle_info->monval = get_pdg_id(urqmd_pid, urqmd_iso3);
+                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
+                delete temp_particle_info;
             }
         } else {
             break;
@@ -2222,17 +1838,9 @@ int particleSamples::read_in_particle_samples_Sangwook() {
 
 int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
     // clean out the previous record
-    for (unsigned int i = 0; i < particle_list_mixed_event->size(); i++)
-        (*particle_list_mixed_event)[i]->clear();
-    particle_list_mixed_event->clear();
+    clear_out_previous_record(full_particle_list_mixed_event);
 
-    if (resonance_weak_feed_down_flag == 1) {
-        for (unsigned int i = 0; i < resonance_list->size(); i++)
-            (*resonance_list)[i]->clear();
-        resonance_list->clear();
-    }
-
-    string temp_string;
+    std::string temp_string;
     int n_particle;
     double dummy;
     int parent_proc_type;
@@ -2242,76 +1850,38 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
     for (ievent = 0; ievent < event_buffer_size; ievent++) {
         getline(inputfile_mixed_event, temp_string);
         if (!inputfile_mixed_event.eof()) {
-            particle_list_mixed_event->push_back(new vector<particle_info> );
-            if (resonance_weak_feed_down_flag == 1) {
-                resonance_list->push_back(new vector<particle_info>);
-            }
+            full_particle_list_mixed_event->push_back(
+                                                new vector<particle_info> );
 
             // get number of particles within the event
-            stringstream temp1(temp_string);
+            std::stringstream temp1(temp_string);
             temp1 >> n_particle;
             // then get one useless line
             getline(inputfile_mixed_event, temp_string);
 
-            // clean out the previous record
-            int idx = ievent;
-            (*particle_list_mixed_event)[idx]->clear();
-            if (resonance_weak_feed_down_flag == 1) {
-                (*resonance_list)[idx]->clear();
-            }
-
-            int pick_flag = 0;
-            int resonance_pick_flag = 0;
             for (int ipart = 0; ipart < n_particle; ipart++) {
                 getline(inputfile_mixed_event, temp_string);
-                stringstream temp2(temp_string);
+                std::stringstream temp2(temp_string);
                 temp2 >> dummy >> dummy >> dummy >> dummy
                       >> dummy >> dummy >> dummy >> dummy
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                pick_flag = decide_to_pick_UrQMD(
-                        urqmd_pid, urqmd_iso3, urqmd_charge, parent_proc_type);
-
-                if (resonance_weak_feed_down_flag == 1) {
-                    resonance_pick_flag = decide_to_pick_UrQMD_resonance(
-                                        urqmd_pid, urqmd_iso3, urqmd_charge);
-                }
-
-                int trigger = pick_flag + resonance_pick_flag;
-                if (trigger > 0) {
-                    particle_info *temp_particle_info = new particle_info;
-                    temp2 >> temp_particle_info->t
-                          >> temp_particle_info->x
-                          >> temp_particle_info->y
-                          >> temp_particle_info->z
-                          >> temp_particle_info->E
-                          >> temp_particle_info->px
-                          >> temp_particle_info->py
-                          >> temp_particle_info->pz;
-                    temp_particle_info->mass = temp_mass;
-                    temp_particle_info->monval = get_pdg_id(urqmd_pid,
-                                                            urqmd_iso3);
-                    if (pick_flag == 1) {
-                        if (reject_decay_flag == 2 && parent_proc_type == 20) {
-                            double tau = sqrt(
-                                temp_particle_info->t*temp_particle_info->t
-                                - temp_particle_info->z*temp_particle_info->z);
-                            if (tau > tau_reject) {
-                                pick_flag = 0;
-                            } else {
-                                pick_flag = 1;
-                            }
-                        }
-                        if (pick_flag == 1) {
-                            (*particle_list_mixed_event)[idx]->push_back(
+                particle_info *temp_particle_info = new particle_info;
+                temp2 >> temp_particle_info->t
+                      >> temp_particle_info->x
+                      >> temp_particle_info->y
+                      >> temp_particle_info->z
+                      >> temp_particle_info->E
+                      >> temp_particle_info->px
+                      >> temp_particle_info->py
+                      >> temp_particle_info->pz;
+                temp_particle_info->mass = temp_mass;
+                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                                                        urqmd_iso3);
+                (*full_particle_list_mixed_event)[ievent]->push_back(
                                                         *temp_particle_info);
-                        }
-                    } else if (resonance_pick_flag == 1) {
-                        (*resonance_list)[idx]->push_back(*temp_particle_info);
-                    }
-                    delete temp_particle_info;
-                }
+                delete temp_particle_info;
             }
         } else {
             break;
