@@ -112,6 +112,6 @@ q_max = 0.15                         # maximum value for momentum q (GeV)
 particle_alpha = 211                 # monte carlo number for particle alpha
 particle_beta = -211                 # monte carlo number for particle beta
 
-Bnpts = 21                           # number of bins for the balance function
-Brap_max = 2.0                       # the maximum \Delta y rapidity for balance function
+Bnpts = 31                           # number of bins for the balance function
+Brap_max = 3.0                       # the maximum \Delta y rapidity for balance function
 

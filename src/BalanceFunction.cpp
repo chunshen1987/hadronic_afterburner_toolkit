@@ -26,7 +26,7 @@ BalanceFunction::BalanceFunction(
         same_species = false;
 
     Bnpts    = paraRdr->getVal("Bnpts");
-    Brap_min = 1e-3;
+    Brap_min = 0.0;
     Brap_max = paraRdr->getVal("Brap_max");
     drap = (Brap_max - Brap_min)/(Bnpts - 1);
 
@@ -87,6 +87,7 @@ void BalanceFunction::combine_and_bin_particle_pairs(
         for (auto const& part_a: (*(*plist_a)[iev])) {
             for (auto const& part_b: (*(*plist_b)[iev])) {
                 auto delta_y_local = std::abs(part_a.rap_y - part_b.rap_y);
+                if (delta_y_local < 1e-15) continue;
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
