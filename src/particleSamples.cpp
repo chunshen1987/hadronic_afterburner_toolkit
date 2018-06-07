@@ -319,6 +319,7 @@ int particleSamples::read_in_particle_samples() {
 
     for (auto &ev_i: (*full_particle_list)) {
         for (auto &part_i: (*ev_i)) {
+            part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
             part_i.phi_p = atan2(part_i.py, part_i.px);
             part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
                                    /(part_i.E - part_i.pz));

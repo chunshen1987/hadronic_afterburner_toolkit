@@ -25,10 +25,12 @@ BalanceFunction::BalanceFunction(
     else
         same_species = false;
 
+    BpT_min  = paraRdr->getVal("BpT_min");
+    BpT_max  = paraRdr->getVal("BpT_max");
     Bnpts    = paraRdr->getVal("Bnpts");
     Brap_min = 0.0;
     Brap_max = paraRdr->getVal("Brap_max");
-    drap = (Brap_max - Brap_min)/(Bnpts - 1);
+    drap     = (Brap_max - Brap_min)/(Bnpts - 1);
 
     Delta_y.assign(Bnpts, 0.);
     for (int i = 0; i < Bnpts; i++)
@@ -45,8 +47,8 @@ void BalanceFunction::calculate_balance_function() {
     int event_id = 0;
     const int buffer_size = particle_list->get_event_buffer_size();
 
-    int N_b    = 0;
-    int N_bbar = 0;
+    double N_b    = 0.;
+    double N_bbar = 0.;
     while (!particle_list->end_of_file()) {
         cout << "Reading event: " << event_id + 1 << "-" 
              << event_id + buffer_size << " ... " << std::flush;
@@ -85,7 +87,9 @@ void BalanceFunction::combine_and_bin_particle_pairs(
     int nev = plist_a->size();
     for (int iev = 0; iev < nev; iev++) {
         for (auto const& part_a: (*(*plist_a)[iev])) {
+            if (part_a.pT < BpT_min || part_a.pT > BpT_max) continue;
             for (auto const& part_b: (*(*plist_b)[iev])) {
+                if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
                 auto delta_y_local = std::abs(part_a.rap_y - part_b.rap_y);
                 if (delta_y_local < 1e-15) continue;
                 int y_bin_idx = static_cast<int>(

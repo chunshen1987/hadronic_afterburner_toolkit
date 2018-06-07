@@ -23,7 +23,7 @@ distinguish_isospin = 1       # flag whether to distinguish the isospin of
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
                                      # turn on only for Lambda (monval=3122)
                                      # for Sigma^0 -> Lambda + gamma
-resonance_feed_down_flag = 0  # perform resonance feed down
+resonance_feed_down_flag = 1  # perform resonance feed down
                               # (will read in all hadrons and filter particle
                               #  after decays are performed)
 select_resonances_flag = 0    # perform resonance decays only for selected
@@ -114,4 +114,6 @@ particle_beta = -211                 # monte carlo number for particle beta
 
 Bnpts = 31                           # number of bins for the balance function
 Brap_max = 3.0                       # the maximum \Delta y rapidity for balance function
+BpT_min = 0.0                        # the minimum pT cut for particles used in balance function
+BpT_max = 3.0                        # the maximum pT cut for particles used in balance function
 

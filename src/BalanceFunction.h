@@ -24,6 +24,7 @@ class BalanceFunction {
     double Brap_min;
     double Brap_max;
     double drap;
+    double BpT_min, BpT_max;
     std::vector<double> Delta_y;
     std::vector<double> N_ab;
     std::vector<double> N_abarbbar;
