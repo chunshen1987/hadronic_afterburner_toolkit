@@ -42,6 +42,10 @@ class BalanceFunction {
                 std::vector<double> &hist,
                 const std::vector< std::vector<particle_info>* >* plist_a,
                 const std::vector< std::vector<particle_info>* >* plist_b);
+    void combine_and_bin_particle_pairs1(
+                std::vector<double> &hist,
+                const std::vector< std::vector<particle_info>* >* plist_a,
+                const std::vector< std::vector<particle_info>* >* plist_b);
     int get_number_of_particles(
                 const std::vector< std::vector<particle_info>* >* plist_b);
     void output_balance_function();

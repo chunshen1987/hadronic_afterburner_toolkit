@@ -85,11 +85,8 @@ void BalanceFunction::combine_and_bin_particle_pairs(
     int nev = plist_a->size();
     for (int iev = 0; iev < nev; iev++) {
         for (auto const& part_a: (*(*plist_a)[iev])) {
-            auto y_a = 0.5*log((part_a.E + part_a.pz)/(part_a.E - part_a.pz));
             for (auto const& part_b: (*(*plist_b)[iev])) {
-                auto y_b = 0.5*log((part_b.E + part_b.pz)
-                                    /(part_b.E - part_b.pz))/2.;
-                auto delta_y_local = std::abs(y_a - y_b);
+                auto delta_y_local = std::abs(part_a.rap_y - part_b.rap_y);
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
@@ -99,6 +96,26 @@ void BalanceFunction::combine_and_bin_particle_pairs(
         }
     }
 }
+
+
+void BalanceFunction::combine_and_bin_particle_pairs1(
+                std::vector<double> &hist,
+                const std::vector< std::vector<particle_info>* >* plist_a,
+                const std::vector< std::vector<particle_info>* >* plist_b) {
+    int nev = plist_a->size();
+    for (int iev = 0; iev < nev; iev++) {
+        int npart = (*plist_a)[iev]->size();
+        for (int ipart = 0; ipart < npart; ipart++) {
+            auto delta_y_local = std::abs(
+                    (*(*plist_a)[iev])[ipart].rap_y - (*(*plist_b)[iev])[ipart].rap_y);
+            int y_bin_idx = static_cast<int>((delta_y_local - Brap_min)/drap);
+            if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
+                hist[y_bin_idx] += 1.;
+            }
+        }
+    }
+}
+
 
 int BalanceFunction::get_number_of_particles(
                 const std::vector< std::vector<particle_info>* >* plist_b) {
