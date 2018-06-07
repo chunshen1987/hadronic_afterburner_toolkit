@@ -7,6 +7,7 @@ typedef struct {
     double mass;
     double px, py, pz, E;
     double x, y, z, t;
+    double rap_y, phi_p;
 } particle_info;
 
 #endif  // SRC_particle_info_h_

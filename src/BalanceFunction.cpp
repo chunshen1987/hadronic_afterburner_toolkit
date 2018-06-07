@@ -77,6 +77,7 @@ void BalanceFunction::calculate_balance_function() {
     output_balance_function();
 }
 
+
 void BalanceFunction::combine_and_bin_particle_pairs(
                 std::vector<double> &hist,
                 const std::vector< std::vector<particle_info>* >* plist_a,

@@ -317,6 +317,14 @@ int particleSamples::read_in_particle_samples() {
         reconst_flag = 0;
     }
 
+    for (auto &ev_i: (*full_particle_list)) {
+        for (auto &part_i: (*ev_i)) {
+            part_i.phi_p = atan2(part_i.py, part_i.px);
+            part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
+                                   /(part_i.E - part_i.pz));
+        }
+    }
+
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list);
 
@@ -351,6 +359,14 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         read_in_particle_samples_JAM_mixed_event();
     } else if (read_in_mode == 10) {
         read_in_particle_samples_mixed_event_gzipped();
+    }
+
+    for (auto &ev_i: (*full_particle_list_mixed_event)) {
+        for (auto &part_i: (*ev_i)) {
+            part_i.phi_p = atan2(part_i.py, part_i.px);
+            part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
+                                   /(part_i.E - part_i.pz));
+        }
     }
 
     if (resonance_feed_down_flag == 1)
