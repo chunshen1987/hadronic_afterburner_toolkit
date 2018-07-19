@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
      This script performs event averaging for particle 
      spectra and anisotropic flow coefficients calculated 
@@ -37,7 +37,7 @@ try:
     print("output folder: %s" % avg_folder)
     if(path.isdir(avg_folder)):
         print("folder %s already exists!" % avg_folder)
-        var = raw_input("do you want to delete it? [y/N]")
+        var = input("do you want to delete it? [y/N]")
         if 'y' in var:
             shutil.rmtree(avg_folder)
         else:
@@ -48,7 +48,7 @@ except IndexError:
     print("Usage: average_event_spvn.py working_folder results_folder")
     exit(1)
 
-rap_region = "-1_1"
+rap_region = "-0.5_0.5"
 
 n_order = 7
 
@@ -153,13 +153,19 @@ def calcualte_three_plane_correlations(
     Q3_A = Qn_array_A[:, 2]
     Q4_A = Qn_array_A[:, 3]
     Q5_A = Qn_array_A[:, 4]
+    Q6_A = Qn_array_A[:, 5]
     Q1_B = Qn_array_B[:, 0]
     Q2_B = Qn_array_B[:, 1]
     Q3_B = Qn_array_B[:, 2]
+    Q4_B = Qn_array_B[:, 3]
+    Q5_B = Qn_array_B[:, 4]
+    Q6_B = Qn_array_B[:, 5]
+    Q1_ref = Qn_array_ref[:, 0]
     Q2_ref = Qn_array_ref[:, 1]
     Q3_ref = Qn_array_ref[:, 2]
     Q4_ref = Qn_array_ref[:, 3]
     Q5_ref = Qn_array_ref[:, 4]
+    Q6_ref = Qn_array_ref[:, 5]
 
     # C_112 = <Re{(V_1)(V_1)conj(V_2)}>
     if type == 0:
@@ -220,9 +226,54 @@ def calcualte_three_plane_correlations(
         )
     corr_235 = mean(real(corr_235_data))
     corr_235_err = std(real(corr_235_data))/sqrt(nev)
+    
+    # C_134 = <Re{(V_1)(V_3)conj(V_4)}>
+    if type == 0:
+        corr_134_data = 1./(dN_A*dN_B*dN_ref)*Q1_A*Q3_B*conj(Q4_ref)
+    elif type == 1:
+        corr_134_data = 1./(dN_A*dN_B*(dN_ref - 2.))*(
+            Q1_A*Q3_B*conj(Q4_ref) - Q1_A*conj(Q1_B) - Q3_B*conj(Q3_A)
+        )
+    elif type == 2:
+        corr_134_data = 1./(dN_A*(dN_B - 1.)*(dN_ref - 2.))*(
+            Q1_A*Q3_B*conj(Q4_ref) - Q1_A*conj(Q1_B) - Q3_B*conj(Q3_A)
+            - Q4_A*conj(Q4_ref) + 2.*dN_A
+        )
+    corr_134 = mean(real(corr_134_data))
+    corr_134_err = std(real(corr_134_data))/sqrt(nev)
 
-    results = [corr_112, corr_123, corr_224, corr_235]
-    results_err = [corr_112_err, corr_123_err, corr_224_err, corr_235_err]
+    # C_246 = <Re{(V_2)(V_4)conj(V_6)}>
+    if type == 0:
+        corr_246_data = 1./(dN_A*dN_B*dN_ref)*Q2_A*Q4_B*conj(Q6_ref)
+    elif type == 1:
+        corr_246_data = 1./(dN_A*dN_B*(dN_ref - 2.))*(
+            Q2_A*Q4_B*conj(Q6_ref) - Q2_A*conj(Q2_B) - Q4_B*conj(Q4_A)
+        )
+    elif type == 2:
+        corr_246_data = 1./(dN_A*(dN_B - 1.)*(dN_ref - 2.))*(
+            Q2_A*Q4_B*conj(Q6_ref) - Q2_A*conj(Q2_B) - Q4_B*conj(Q4_A)
+            - Q6_A*conj(Q6_ref) + 2.*dN_A
+        )
+    corr_246 = mean(real(corr_246_data))
+    corr_246_err = std(real(corr_246_data))/sqrt(nev)
+
+    # C_336 = <Re{(V_3)(V_3)conj(V_6)}>
+    if type == 0:
+        corr_336_data = 1./(dN_A*dN_B*dN_ref)*Q3_A*Q3_B*conj(Q6_ref)
+    elif type == 1:
+        corr_336_data = 1./(dN_A*dN_B*(dN_ref - 2.))*(
+            Q3_A*Q3_B*conj(Q6_ref) - Q3_A*conj(Q3_B) - Q3_B*conj(Q3_A)
+        )
+    elif type == 2:
+        corr_336_data = 1./(dN_A*(dN_B - 1.)*(dN_ref - 2.))*(
+            Q3_A*Q3_B*conj(Q6_ref) - Q3_A*conj(Q3_B) - Q3_B*conj(Q3_A)
+            - Q6_A*conj(Q6_ref) + 2.*dN_A
+        )
+    corr_336 = mean(real(corr_336_data))
+    corr_336_err = std(real(corr_336_data))/sqrt(nev)
+
+    results = [corr_112, corr_123, corr_224, corr_235, corr_134, corr_246 corr_336]
+    results_err = [corr_112_err, corr_123_err, corr_224_err, corr_235_err, corr_134_err, corr_246_err, corr_336_err]
     return(results, results_err)
 
 
@@ -233,8 +284,8 @@ print("processing three particle correlations ...")
 file_name_pos = 'particle_9998_vndata_diff_eta_%s.dat' % rap_region
 file_name_neg = 'particle_-9998_vndata_diff_eta_%s.dat' % rap_region
 file_name_ch = 'particle_9999_vndata_diff_eta_%s.dat' % rap_region
-file_name_ch_1 = 'particle_9999_vndata_diff_eta_-2.5_-0.5.dat'
-file_name_ch_2 = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
+file_name_ch_1 = 'particle_9999_vndata_diff_eta_-2_-0.5.dat'
+file_name_ch_2 = 'particle_9999_vndata_diff_eta_0.5_2.dat'
    
 vn_pos_phenix_array = []; vn_neg_phenix_array = []; vn_ch_phenix_array = []
 vn_pos_star_array = []; vn_neg_star_array = []; vn_ch_star_array = []
@@ -260,11 +311,11 @@ for ifolder in range(nev):
     vn_neg_phenix_array.append(temp_vn_array)
 
     # vn with STAR pT cut
-    temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_ch)
+    temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_ch)
     vn_ch_star_array.append(temp_vn_array)
-    temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_pos)
+    temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_pos)
     vn_pos_star_array.append(temp_vn_array)
-    temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_neg)
+    temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_neg)
     vn_neg_star_array.append(temp_vn_array)
 
     # vn with ALICE pT cut
@@ -301,9 +352,9 @@ vn_phenix_2, vn_phenix_2_err = calcualte_vn_2(vn_ch_phenix_array)
 vn_star_2, vn_star_2_err = calcualte_vn_2(vn_ch_star_array)
 vn_alice_2, vn_alice_2_err = calcualte_vn_2(vn_ch_alice_array)
 vn_cms_2, vn_cms_2_err = calcualte_vn_2(vn_ch_cms_array)
-print(vn_cms_2, vn_cms_2_err)
-vn_cms_2, vn_cms_2_err = calcualte_vn_2_delta_eta(vn_ch_cms_array_1, vn_ch_cms_array_2)
-print(vn_cms_2, vn_cms_2_err)
+#print(vn_cms_2, vn_cms_2_err)
+#vn_cms_2, vn_cms_2_err = calcualte_vn_2_delta_eta(vn_ch_cms_array_1, vn_ch_cms_array_2)
+#print(vn_cms_2, vn_cms_2_err)
 vn_atlas_2, vn_atlas_2_err = calcualte_vn_2(vn_ch_atlas_array)
 
 # calculate flow event-plane correlation
@@ -311,16 +362,80 @@ corr_os_cms, corr_os_cms_err = calcualte_three_plane_correlations(
             vn_pos_cms_array, vn_neg_cms_array, vn_ch_cms_array, 1)
 corr_ss_cms, corr_ss_cms_err = calcualte_three_plane_correlations(
             vn_pos_cms_array, vn_pos_cms_array, vn_ch_cms_array, 2)
+corr_os_star, corr_os_star_err = calcualte_three_plane_correlations(
+            vn_pos_star_array, vn_neg_star_array, vn_ch_star_array, 1)
+corr_pp_star, corr_pp_star_err = calcualte_three_plane_correlations(
+            vn_pos_star_array, vn_pos_star_array, vn_ch_star_array, 2)
+corr_mm_star, corr_mm_star_err = calcualte_three_plane_correlations(
+            vn_neg_star_array, vn_neg_star_array, vn_ch_star_array, 2)
+corr_ch_star, corr_ch_star_err = calcualte_three_plane_correlations(
+            vn_ch_star_array, vn_ch_star_array, vn_ch_star_array, 2)
 
 ###########################################################################
 # finally, output all the results
 ###########################################################################
     
+# output charged hadron flow coefficients
+output_filename = ("charged_hadron_vn_STAR.dat")
+f = open(output_filename, 'w')
+f.write("#v1{2}  v1{2}_err  v2{2}  v2{2}_err  v3{2}  v3{2}_err  "
+        +"v4{2}  v4{2}_err  v5{2}  v5{2}_err  v6{2}  v6{2}_err  "
+        +"v7{2}  v7{2}_err\n")
+for i in range(n_order-1):
+    f.write("%.5e  %.5e  " % (vn_star_2[i], vn_star_2_err[i]))
+f.close()
+shutil.move(output_filename, avg_folder)
+
 # output flow event-plane correlation
+output_filename = ("three_plane_correlation_os_STAR.dat")
+f = open(output_filename, 'w')
+f.write("#v2{2}  v2{2}_err  C_112  C_112_err  C_123  C_123_err  "
+        +"C_224  C_224_err  C_235  C_235_err  C_134  C_134_err  "
+        +"C_246  C_246_err  C_336  C_336_err\n")
+f.write("%.5e  %.5e  " % (vn_star_2[1], vn_star_2_err[1]))
+for i in range(len(corr_os_star)):
+    f.write("%.5e  %.5e  " % (corr_os_star[i], corr_os_star_err[i]))
+f.close()
+shutil.move(output_filename, avg_folder)
+
+output_filename = ("three_plane_correlation_pp_STAR.dat")
+f = open(output_filename, 'w')
+f.write("#v2{2}  v2{2}_err  C_112  C_112_err  C_123  C_123_err  "
+        +"C_224  C_224_err  C_235  C_235_err  C_134  C_134_err  "
+        +"C_246  C_246_err  C_336  C_336_err\n")
+f.write("%.5e  %.5e  " % (vn_star_2[1], vn_star_2_err[1]))
+for i in range(len(corr_pp_star)):
+    f.write("%.5e  %.5e  " % (corr_pp_star[i], corr_pp_star_err[i]))
+f.close()
+shutil.move(output_filename, avg_folder)
+
+output_filename = ("three_plane_correlation_mm_STAR.dat")
+f = open(output_filename, 'w')
+f.write("#v2{2}  v2{2}_err  C_112  C_112_err  C_123  C_123_err  "
+        +"C_224  C_224_err  C_235  C_235_err  C_134  C_134_err  "
+        +"C_246  C_246_err  C_336  C_336_err\n")
+f.write("%.5e  %.5e  " % (vn_star_2[1], vn_star_2_err[1]))
+for i in range(len(corr_mm_star)):
+    f.write("%.5e  %.5e  " % (corr_mm_star[i], corr_mm_star_err[i]))
+f.close()
+shutil.move(output_filename, avg_folder)
+
+output_filename = ("three_plane_correlation_ch_STAR.dat")
+f = open(output_filename, 'w')
+f.write("#v2{2}  v2{2}_err  C_112  C_112_err  C_123  C_123_err  "
+        +"C_224  C_224_err  C_235  C_235_err  C_134  C_134_err  "
+        +"C_246  C_246_err  C_336  C_336_err\n")
+f.write("%.5e  %.5e  " % (vn_star_2[1], vn_star_2_err[1]))
+for i in range(len(corr_ch_star)):
+    f.write("%.5e  %.5e  " % (corr_ch_star[i], corr_ch_star_err[i]))
+f.close()
+shutil.move(output_filename, avg_folder)
+
 output_filename = ("three_plane_correlation_os_CMS.dat")
 f = open(output_filename, 'w')
-f.write("#v2{2}  v2{2}_err C_112  C_112_err  C_123  C_123_err  "
-        +"C_224  C_224_err  C_235  C_235_err\n")
+f.write("#v2{2}  v2{2}_err  C_112  C_112_err  C_123  C_123_err  "
+        +"C_224  C_224_err  C_235  C_235_err  C_134  C_134_err  "
+        +"C_246  C_246_err  C_336  C_336_err\n")
 f.write("%.5e  %.5e  " % (vn_cms_2[1], vn_cms_2_err[1]))
 for i in range(len(corr_os_cms)):
     f.write("%.5e  %.5e  " % (corr_os_cms[i], corr_os_cms_err[i]))
@@ -329,13 +444,14 @@ shutil.move(output_filename, avg_folder)
 
 output_filename = ("three_plane_correlation_pp_CMS.dat")
 f = open(output_filename, 'w')
-f.write("#v2{2}  v2{2}_err C_112  C_112_err  C_123  C_123_err  "
-        +"C_224  C_224_err  C_235  C_235_err\n")
+f.write("#v2{2}  v2{2}_err  C_112  C_112_err  C_123  C_123_err  "
+        +"C_224  C_224_err  C_235  C_235_err  C_134  C_134_err  "
+        +"C_246  C_246_err  C_336  C_336_err\n")
 f.write("%.5e  %.5e  " % (vn_cms_2[1], vn_cms_2_err[1]))
 for i in range(len(corr_ss_cms)):
     f.write("%.5e  %.5e  " % (corr_ss_cms[i], corr_ss_cms_err[i]))
 f.close()
 shutil.move(output_filename, avg_folder)
 
-print "Analysis is done."
+print("Analysis is done.")
 
