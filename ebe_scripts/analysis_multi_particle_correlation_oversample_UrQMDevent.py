@@ -272,7 +272,7 @@ def calcualte_three_plane_correlations(
     corr_336 = mean(real(corr_336_data))
     corr_336_err = std(real(corr_336_data))/sqrt(nev)
 
-    results = [corr_112, corr_123, corr_224, corr_235, corr_134, corr_246 corr_336]
+    results = [corr_112, corr_123, corr_224, corr_235, corr_134, corr_246, corr_336]
     results_err = [corr_112_err, corr_123_err, corr_224_err, corr_235_err, corr_134_err, corr_246_err, corr_336_err]
     return(results, results_err)
 
