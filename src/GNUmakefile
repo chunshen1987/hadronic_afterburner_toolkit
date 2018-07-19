@@ -11,7 +11,7 @@
 ##  
 
 CC := icpc
-CFLAGS= -O3 -Wall -lz
+CFLAGS= -O3 -Wall -lz -std=c++11
 
 RM		=	rm -f
 O               =       .o
@@ -27,13 +27,13 @@ endif
 SRC		=	main.cpp arsenal.cpp \
             ParameterReader.cpp particleSamples.cpp HBT_correlation.cpp \
             single_particleSpectra.cpp particle_yield_distribution.cpp \
-			particle_decay.cpp
+			particle_decay.cpp BalanceFunction.cpp
 
 INC		= 	parameters.h arsenal.h ParameterReader.h \
             Stopwatch.h particleSamples.h \
             HBT_correlation.h single_particleSpectra.h \
 			particle_yield_distribution.h particle_decay.h \
-			particle_info.h
+			particle_info.h BalanceFunction.h
 
 # -------------------------------------------------
 
