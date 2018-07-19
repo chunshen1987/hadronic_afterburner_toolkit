@@ -46,11 +46,11 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         balance_function_particle_bbar = new vector< vector<particle_info>* >;
     }
 
+    decayer_ptr = new particle_decay;
     resonance_feed_down_flag = paraRdr->getVal("resonance_feed_down_flag");
     select_resonances_flag = 0;
     if (resonance_feed_down_flag == 1) {
         resonance_list = new vector< vector<particle_info>* >;
-        decayer_ptr = new particle_decay;
         select_resonances_flag = paraRdr->getVal("select_resonances_flag");
         initialize_selected_resonance_list();
     }
@@ -66,7 +66,6 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         if (resonance_weak_feed_down_flag == 1) {
             // include Sigma0 feed down to Lambda
             resonance_list = new vector< vector<particle_info>* >;
-            decayer_ptr = new particle_decay;
         }
     } else {
         resonance_weak_feed_down_flag = 0;
@@ -192,16 +191,15 @@ particleSamples::~particleSamples() {
         delete anti_particle_list;
     }
 
+    delete decayer_ptr;
     if (resonance_feed_down_flag == 1) {
         clear_out_previous_record(resonance_list);
         delete resonance_list;
-        delete decayer_ptr;
         if (select_resonances_flag == 1)
             select_resonances_list.clear();
     } else if (resonance_weak_feed_down_flag == 1) {
         clear_out_previous_record(resonance_list);
         delete resonance_list;
-        delete decayer_ptr;
     }
 
     if (reconst_flag == 1) {
