@@ -90,17 +90,20 @@ output_filename = ("two_particle_correlation_delta_eta12_STAR.dat")
 f = open(output_filename, 'w')
 f.write("# rap  vn{2}^2  vn{2}^2_err\n")
 Npair = mean(Qn2_array[:, :, 3], axis=0)
-Npair_err = sqrt(mean(Qn2_array[:, :, 4], axis=0) - Npair**2.)/sqrt(nev)
+#Npair_err = sqrt(mean(Qn2_array[:, :, 4], axis=0) - Npair**2.)/sqrt(nev)
+Npair_err = std(Qn2_array[:, :, 3], axis=0)/sqrt(nev)
 output = []
 output.append(Qn2_array[0, :, 0])
 output.append(Npair)
 output.append(Npair_err)
 for ii in range(1, 9):
-    vn2_ch = mean(Qn2_array[:, :, 4*ii+3], axis=0)
-    vn2_ch_err = sqrt(mean(Qn2_array[:, :, 4*ii+4], axis=0)
-                      - vn2_ch**2.)/sqrt(nev)
-    vn2_ch = vn2_ch/Npair
-    vn2_ch_err = vn2_ch_err/Npair
+    #vn2_ch = mean(Qn2_array[:, :, 4*ii+3], axis=0)
+    #vn2_ch_err = sqrt(mean(Qn2_array[:, :, 4*ii+4], axis=0)
+    #                  - vn2_ch**2.)/sqrt(nev)
+    #vn2_ch = vn2_ch/Npair
+    #vn2_ch_err = vn2_ch_err/Npair
+    vn2_ch = mean(Qn2_array[:, :, 4*ii+1]*Qn2_array[:, :, 3], axis=0)/Npair
+    vn2_ch_err = sqrt(mean(Qn2_array[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
     output.append(vn2_ch)
     output.append(vn2_ch_err)
 output = array(output)
