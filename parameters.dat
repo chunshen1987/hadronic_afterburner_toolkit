@@ -17,7 +17,7 @@ run_mode = 0                  # running mode for the program
                               #    and rap_max)
                               # 3: compute balance function
 
-particle_monval = 211         # particle Monte-Carlo number
+particle_monval = 9999         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
@@ -61,7 +61,7 @@ intrinsic_dtau = 0.01         # dtau in the output samples
 intrinsic_dx = 0.1            # dx in the output samples
 
 compute_correlation = 1       # flag to compute correlation function
-flag_charge_dependence = 0    # flag to compute charge dependence correlation
+flag_charge_dependence = 1    # flag to compute charge dependence correlation
 
 # Parameters for HBT correlation functions
 reject_decay_flag = 0         # reject particles from resonance decays

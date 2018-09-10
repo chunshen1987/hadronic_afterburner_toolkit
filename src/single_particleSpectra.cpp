@@ -212,7 +212,24 @@ singleParticleSpectra::singleParticleSpectra(
             }
         }
         flag_charge_dependence = paraRdr->getVal("flag_charge_dependence");
+        if (particle_monval != 9999) flag_charge_dependence = 0;
         if (flag_charge_dependence == 1) {
+            Cn2_ss     = std::vector<double> (order_max, 0.);
+            Cn2_ss_err = std::vector<double> (order_max, 0.);
+            Cn2_os     = std::vector<double> (order_max, 0.);
+            Cn2_os_err = std::vector<double> (order_max, 0.);
+
+            Cn2_ss_eta12.resize(order_max);
+            Cn2_ss_eta12_err.resize(order_max);
+            Cn2_os_eta12.resize(order_max);
+            Cn2_os_eta12_err.resize(order_max);
+            for (int i = 0; i < order_max; i++) {
+                Cn2_ss_eta12[i].resize(N_rap, 0.);
+                Cn2_ss_eta12_err[i].resize(N_rap, 0.);
+                Cn2_os_eta12[i].resize(N_rap, 0.);
+                Cn2_os_eta12_err[i].resize(N_rap, 0.);
+            }
+
             C_nmk_ss = new double[num_corr];
             C_nmk_ss_err = new double[num_corr];
             C_nmk_os = new double[num_corr];
@@ -541,6 +558,24 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                         event_Qn_m_imag, event_Qn_m_imag_err,
                         event_Qn_m_diff_real, event_Qn_m_diff_real_err,
                         event_Qn_m_diff_imag, event_Qn_m_diff_imag_err);
+
+                    calculate_two_particle_correlation_charge_dep(
+                            event_Qn_p_real, event_Qn_p_imag,
+                            event_Qn_p_real, event_Qn_p_imag, 0,
+                            Cn2_ss, Cn2_ss_err);
+                    calculate_two_particle_correlation_charge_dep(
+                            event_Qn_m_real, event_Qn_m_imag,
+                            event_Qn_m_real, event_Qn_m_imag, 0,
+                            Cn2_ss, Cn2_ss_err);
+                    calculate_two_particle_correlation_charge_dep(
+                            event_Qn_p_real, event_Qn_p_imag,
+                            event_Qn_m_real, event_Qn_m_imag, 1,
+                            Cn2_os, Cn2_os_err);
+                    calculate_two_particle_correlation_charge_dep(
+                            event_Qn_m_real, event_Qn_m_imag,
+                            event_Qn_p_real, event_Qn_p_imag, 1,
+                            Cn2_os, Cn2_os_err);
+
                     calculate_three_particle_correlation(
                             event_Qn_p_real, event_Qn_p_imag,
                             event_Qn_p_real, event_Qn_p_imag,
@@ -602,6 +637,24 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                                 event_Qn_m_rap_real, event_Qn_m_rap_real_err,
                                 event_Qn_m_rap_imag, event_Qn_m_rap_imag_err,
                                 2);
+                        
+                        calculate_two_particle_correlation_deltaeta_chdep(
+                                event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                                event_Qn_p_rap_real, event_Qn_p_rap_imag, 0,
+                                Cn2_ss_eta12, Cn2_ss_eta12_err);
+                        calculate_two_particle_correlation_deltaeta_chdep(
+                                event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                                event_Qn_m_rap_real, event_Qn_m_rap_imag, 0,
+                                Cn2_ss_eta12, Cn2_ss_eta12_err);
+                        calculate_two_particle_correlation_deltaeta_chdep(
+                                event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                                event_Qn_m_rap_real, event_Qn_m_rap_imag, 1,
+                                Cn2_os_eta12, Cn2_os_eta12_err);
+                        calculate_two_particle_correlation_deltaeta_chdep(
+                                event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                                event_Qn_p_rap_real, event_Qn_p_rap_imag, 1,
+                                Cn2_os_eta12, Cn2_os_eta12_err);
+
                         calculate_three_particle_correlation_deltaeta(
                                 event_Qn_p_rap_real, event_Qn_p_rap_imag,
                                 event_Qn_m_rap_real, event_Qn_m_rap_imag,
@@ -1077,6 +1130,28 @@ void singleParticleSpectra::output_Qn_vectors() {
     output_diff.close();
 }
 
+
+//! This function computes the 2-particle correlation for Qn vectors
+//! within one event with charge dependence
+//!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
+//!     Real(Qn(pT)*conj(Qn)) for n = 0, 1, ... , order_max
+//! self correlation is subtracted when flag == 0 (full overlap)
+void singleParticleSpectra::calculate_two_particle_correlation_charge_dep(
+        double *event_Q1_real, double *event_Q1_imag,
+        double *event_Q2_real, double *event_Q2_imag, int flag,
+        std::vector<double> &corr, std::vector<double> &corr_err) {
+    for (int i = 0; i < order_max; i++) {
+        double Q2_local = (event_Q1_real[i]*event_Q2_real[i]
+                            + event_Q1_imag[i]*event_Q2_imag[i]);
+        if (flag == 0) {
+            // subtract the self correlation
+            Q2_local -= event_Q1_real[0];
+        }
+        corr[i] += Q2_local;
+        corr_err[i] += Q2_local*Q2_local;
+    }
+}
+
 //! This function computes the 2-particle correlation for Qn vectors
 //! within one event
 //!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
@@ -1137,6 +1212,43 @@ void singleParticleSpectra::calculate_two_particle_correlation_deltaeta(
     delete[] temp_corr;
 }
 
+//! This function computes the 2-particle correlation for Qn vectors
+//! as a function of \delta \eta within one event with charge depenedence
+//!     Real(Qn(eta_1)*conj(Qn(eta_2))) for n = 0, 1, ... , order_max
+//! self correlation is subtracted when eta_1 = eta_2 and flag == 0
+void singleParticleSpectra::calculate_two_particle_correlation_deltaeta_chdep(
+        double **event_Q1_diff_real, double **event_Q1_diff_imag,
+        double **event_Q2_diff_real, double **event_Q2_diff_imag, int flag,
+        std::vector<std::vector<double>> &corr,
+        std::vector<std::vector<double>> &corr_err) {
+    std::vector<double> temp_corr (N_rap, 0.);
+    for (int i = 0; i < order_max; i++) {
+        for (int j = 0; j < N_rap; j++) {
+            temp_corr[j] = 0.0;
+        }
+        for (int ii = 0; ii < N_rap; ii++) {
+            for (int jj = 0; jj < N_rap; jj++) {
+                int rap_idx = ((ii - jj) - static_cast<int>(
+                                                    rapidity_dis_min/drap));
+                if (rap_idx >= 0 && rap_idx < N_rap) {
+                    double QnSP_rap_local = (
+                          event_Q1_diff_real[ii][i]*event_Q2_diff_real[jj][i]
+                        + event_Q1_diff_imag[ii][i]*event_Q2_diff_imag[jj][i]);
+                    if (ii == jj && flag == 0) {
+                        QnSP_rap_local -= event_Q1_diff_real[ii][0];
+                    }
+                    temp_corr[rap_idx] += QnSP_rap_local;
+                }
+            }
+        }
+        for (int j = 0; j < N_rap; j++) {
+            corr[i][j] += temp_corr[j];
+            corr_err[i][j] += temp_corr[j]*temp_corr[j];
+        }
+    }
+}
+
+
 //! This function outputs the event averaged two-particle flow correlation
 void singleParticleSpectra::output_two_particle_correlation() {
     ostringstream filename;
@@ -1180,6 +1292,82 @@ void singleParticleSpectra::output_two_particle_correlation() {
                << Qn2_avg << "  " << Qn2_vector_err[i]/total_number_of_events
                << endl;
     }
+    output.close();
+
+    if (flag_charge_dependence == 1) {
+        ostringstream filename_ss;
+        ostringstream filename_os;
+        if (rap_type == 0) {
+            filename_ss << path << "/particle_" << particle_monval << "_Cn2_ss"
+                        << "_eta_" << rap_min << "_" << rap_max << ".dat";
+            filename_os << path << "/particle_" << particle_monval << "_Cn2_os"
+                        << "_eta_" << rap_min << "_" << rap_max << ".dat";
+        } else {
+            filename_ss << path << "/particle_" << particle_monval << "_Cn2_ss"
+                        << "_y_" << rap_min << "_" << rap_max << ".dat";
+            filename_os << path << "/particle_" << particle_monval << "_Cn2_os"
+                        << "_y_" << rap_min << "_" << rap_max << ".dat";
+        }
+        ofstream output_ss(filename_ss.str().c_str());
+        ofstream output_os(filename_os.str().c_str());
+        output_ss << "# n  Cn2_ss  Cn2_ss_err" << endl;
+        output_os << "# n  Cn2_os  Cn2_os_err" << endl;
+        
+        double num_pair_ss = Cn2_ss[0]/total_number_of_events;
+        double num_pair_ss_stdsq = (
+                Cn2_ss_err[0]/total_number_of_events
+                - num_pair_ss*num_pair_ss);
+        double num_pair_ss_err = 0.0;
+        if (num_pair_ss_stdsq > 0) {
+            num_pair_ss_err = sqrt(num_pair_ss_stdsq/total_number_of_events);
+        }
+        output_ss << scientific << setw(18) << setprecision(8)
+                  << 0 << "  " << num_pair_ss << "  " << num_pair_ss_err
+                  << endl;
+        double num_pair_os = Cn2_os[0]/total_number_of_events;
+        double num_pair_os_stdsq = (
+                Cn2_os_err[0]/total_number_of_events
+                - num_pair_os*num_pair_os);
+        double num_pair_os_err = 0.0;
+        if (num_pair_os_stdsq > 0) {
+            num_pair_os_err = sqrt(num_pair_os_stdsq/total_number_of_events);
+        }
+        output_os << scientific << setw(18) << setprecision(8)
+                  << 0 << "  " << num_pair_os << "  " << num_pair_os_err
+                  << endl;
+
+        for (int i = 1; i < order_max; i++) {
+            double Cn2_ss_avg = Cn2_ss[i]/total_number_of_events;
+            double Cn2_ss_stdsq = (
+                    Cn2_ss_err[i]/total_number_of_events
+                    - Cn2_ss_avg*Cn2_ss_avg);
+            Cn2_ss_avg = Cn2_ss_avg/num_pair_ss;
+            double Cn2_ss_err = 0.0;
+            if (Cn2_ss_stdsq > 0) {
+                Cn2_ss_err = sqrt(Cn2_ss_stdsq/total_number_of_events);
+                Cn2_ss_err = Cn2_ss_err/num_pair;
+            }
+            output_ss << scientific << setw(18) << setprecision(8)
+                      << i << "  " << Cn2_ss_avg << "  " << Cn2_ss_err
+                      << endl;
+            
+            double Cn2_os_avg = Cn2_os[i]/total_number_of_events;
+            double Cn2_os_stdsq = (
+                    Cn2_os_err[i]/total_number_of_events
+                    - Cn2_os_avg*Cn2_ss_avg);
+            Cn2_os_avg = Cn2_os_avg/num_pair_ss;
+            double Cn2_os_err = 0.0;
+            if (Cn2_os_stdsq > 0) {
+                Cn2_os_err = sqrt(Cn2_os_stdsq/total_number_of_events);
+                Cn2_os_err = Cn2_os_err/num_pair;
+            }
+            output_os << scientific << setw(18) << setprecision(8)
+                      << i << "  " << Cn2_os_avg << "  " << Cn2_os_err
+                      << endl;
+        }
+        output_ss.close();
+        output_os.close();
+    }
 }
 
 //! This function outputs the two-particle flow correlation as a function of
@@ -1204,8 +1392,7 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
         double num_pair_stdsq = (
             QnSP_eta12_err[0][i]/total_number_of_events - num_pair*num_pair);
         double num_pair_err = 0.0;
-        if (num_pair_stdsq > 0) {
-            num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
+        if (num_pair_stdsq > 0) { num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
         }
         output << scientific << setw(18) << setprecision(8)
                << eta_local << "  " << num_pair << "  " << num_pair_err
@@ -1233,6 +1420,86 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
         output << endl;
     }
     output.close();
+    
+    if (flag_charge_dependence == 1) {
+        ostringstream filename_ss, filename_os;
+        filename_ss << path << "/particle_" << particle_monval
+                    << "_vn2_eta12_ss"
+                    << "_pT_" << vn_rapidity_dis_pT_min << "_"
+                    << vn_rapidity_dis_pT_max << ".dat";
+        filename_os << path << "/particle_" << particle_monval
+                    << "_vn2_eta12_os"
+                    << "_pT_" << vn_rapidity_dis_pT_min << "_"
+                    << vn_rapidity_dis_pT_max << ".dat";
+        ofstream output_ss(filename_ss.str().c_str());
+        ofstream output_os(filename_os.str().c_str());
+        if (rap_type == 0) {
+            output_ss << "# eta  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+            output_os << "# eta  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+        } else {
+            output_ss << "# y  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+            output_os << "# y  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+        }
+        for (int j = 0; j < N_rap; j++) {
+            double eta_local = rapidity_dis_min + j*drap;
+            double num_pair_ss = Cn2_ss_eta12[0][j]/total_number_of_events;
+            double num_pair_ss_stdsq = (
+                    Cn2_ss_eta12_err[0][j]/total_number_of_events
+                    - num_pair_ss*num_pair_ss);
+            double num_pair_ss_err = 0.0;
+            if (num_pair_ss_stdsq > 0) {
+                num_pair_ss_err = (
+                        sqrt(num_pair_ss_stdsq/total_number_of_events));
+            }
+            output_ss << scientific << setw(18) << setprecision(8)
+                      << eta_local << "  " << num_pair_ss << "  "
+                      << num_pair_ss_err << "  ";
+            double num_pair_os = Cn2_os_eta12[0][j]/total_number_of_events;
+            double num_pair_os_stdsq = (
+                    Cn2_os_eta12_err[0][j]/total_number_of_events
+                    - num_pair_os*num_pair_os);
+            double num_pair_os_err = 0.0;
+            if (num_pair_os_stdsq > 0) {
+                num_pair_os_err = (
+                        sqrt(num_pair_os_stdsq/total_number_of_events));
+            }
+            output_os << scientific << setw(18) << setprecision(8)
+                      << eta_local << "  " << num_pair_os << "  "
+                      << num_pair_os_err << "  ";
+            for (int i = 1; i < order_max; i++) {
+                double Cn2_ss_avg = (
+                        Cn2_ss_eta12[i][j]/total_number_of_events);
+                double Cn2_ss_stdsq = (
+                        Cn2_ss_eta12_err[i][j]/total_number_of_events
+                        - Cn2_ss_avg*Cn2_ss_avg);
+                Cn2_ss_avg = Cn2_ss_avg/num_pair_ss;
+                double Cn2_ss_err = 0.0;
+                if (Cn2_ss_stdsq > 0) {
+                    Cn2_ss_err = sqrt(Cn2_ss_stdsq/total_number_of_events);
+                    Cn2_ss_err = Cn2_ss_err/num_pair_ss;
+                }
+                output_ss << scientific << setw(18) << setprecision(8)
+                          << Cn2_ss_avg << "  " << Cn2_ss_err << "  ";
+                double Cn2_os_avg = (
+                        Cn2_os_eta12[i][j]/total_number_of_events);
+                double Cn2_os_stdsq = (
+                        Cn2_os_eta12_err[i][j]/total_number_of_events
+                        - Cn2_os_avg*Cn2_os_avg);
+                Cn2_os_avg = Cn2_os_avg/num_pair_os;
+                double Cn2_os_err = 0.0;
+                if (Cn2_os_stdsq > 0) {
+                    Cn2_os_err = sqrt(Cn2_os_stdsq/total_number_of_events);
+                    Cn2_os_err = Cn2_os_err/num_pair_os;
+                }
+                output_os << scientific << setw(18) << setprecision(8)
+                          << Cn2_os_avg << "  " << Cn2_os_err << "  ";
+            }
+            output_ss << endl;
+            output_os << endl;
+        }
+        output_ss.close();
+        output_os.close();
+    }
 }
 
 //! This function computes the 3-particle correlation for Qn vectors

@@ -44,6 +44,15 @@ class singleParticleSpectra {
     double *Qn2_vector, *Qn2_vector_err;
     double **QnSP_diff_vector, **QnSP_diff_vector_err;
     double **QnSP_eta12, **QnSP_eta12_err;
+    std::vector<double> Cn2_ss;
+    std::vector<double> Cn2_ss_err;
+    std::vector<double> Cn2_os;
+    std::vector<double> Cn2_os_err;
+    std::vector<std::vector<double>> Cn2_ss_eta12;
+    std::vector<std::vector<double>> Cn2_ss_eta12_err;
+    std::vector<std::vector<double>> Cn2_os_eta12;
+    std::vector<std::vector<double>> Cn2_os_eta12_err;
+
     int num_corr;
     double *C_nmk, *C_nmk_err;
     double **C_nmk_eta12, **C_nmk_eta12_err;
@@ -104,6 +113,17 @@ class singleParticleSpectra {
     //! and flow coefficients
     void output_Qn_vectors();
 
+
+    //! This function computes the 2-particle correlation for Qn vectors
+    //! within one event with charge dependence
+    //!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
+    //!     Real(Qn(pT)*conj(Qn)) for n = 0, 1, ... , order_max
+    //! self correlation is subtracted when flag == 0 (full overlap)
+    void calculate_two_particle_correlation_charge_dep(
+        double *event_Q1_real, double *event_Q1_imag,
+        double *event_Q2_real, double *event_Q2_imag, int flag,
+        std::vector<double> &corr, std::vector<double> &corr_err);
+
     //! This function computes the 2-particle correlation for Qn vectors
     //! within one event
     //!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
@@ -119,6 +139,16 @@ class singleParticleSpectra {
     //! self correlation is subtracted when eta_1 = eta_2
     void calculate_two_particle_correlation_deltaeta(
             double **event_Qn_diff_real, double **event_Qn_diff_imag);
+
+    //! This function computes the 2-particle correlation for Qn vectors
+    //! as a function of \delta \eta within one event with charge depenedence
+    //!     Real(Qn(eta_1)*conj(Qn(eta_2))) for n = 0, 1, ... , order_max
+    //! self correlation is subtracted when eta_1 = eta_2 and flag == 0
+    void calculate_two_particle_correlation_deltaeta_chdep(
+        double **event_Q1_diff_real, double **event_Q1_diff_imag,
+        double **event_Q2_diff_real, double **event_Q2_diff_imag, int flag,
+        std::vector<std::vector<double>> &corr,
+        std::vector<std::vector<double>> &corr_err);
 
     //! This function outputs the event averaged two-particle flow correlation
     void output_two_particle_correlation();
