@@ -48,7 +48,7 @@ except IndexError:
     print("Usage: %s working_folder results_folder" % argv[0])
     exit(1)
 
-rap_region = "-1_1"
+rap_region = "-0.5_0.5"
 
 n_order = 7
 
@@ -59,18 +59,18 @@ print("processing two particle correlations ...")
 file_name_ch = 'particle_9999_vn2_eta_%s.dat' % rap_region
 file_name_ss = 'particle_9999_Cn2_ss_eta_%s.dat' % rap_region
 file_name_os = 'particle_9999_Cn2_os_eta_%s.dat' % rap_region
-Qn2_array = []
+Qn2_array_ch = []
 Qn2_array_ss = []
 Qn2_array_os = []
 for ifolder in range(nev):
     results_folder = path.abspath(file_folder_list[ifolder])
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ch))
-    Qn2_array.append(temp_data_vn2)
+    Qn2_array_ch.append(temp_data_vn2)
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ss))
     Qn2_array_ss.append(temp_data_vn2)
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_os))
     Qn2_array_os.append(temp_data_vn2)
-Qn2_array = array(Qn2_array)
+Qn2_array_ch = array(Qn2_array_ch)
 Qn2_array_ss = array(Qn2_array_ss)
 Qn2_array_os = array(Qn2_array_os)
 output_filename = ("two_particle_correlation_STAR.dat")
@@ -82,26 +82,30 @@ f_os = open(output_filename_os, 'w')
 f.write("# n  vn{2}^2  vn{2}^2_err\n")
 f_ss.write("# n  C_n{2}  C_n{2}_err\n")
 f_os.write("# n  C_n{2}  C_n{2}_err\n")
-Npair = mean(Qn2_array[:, 0, 3])
-Npair_err = sqrt(mean(Qn2_array[:, 0, 4]) - Npair**2.)/sqrt(nev)
+Npair = mean(Qn2_array_ch[:, 0, 3])
+Npair_err = sqrt(mean(Qn2_array_ch[:, 0, 4]) - Npair**2.)/sqrt(nev)
 f.write("%s  %.5e  %.5e\n" % (0, Npair, Npair_err))
-Npair_ss = mean(Qn2_array_ss[:, 0, 1])
-Npair_ss_err = sqrt(mean(Qn2_array_ss[:, 0, 2]) - Npair_ss**2.)/sqrt(nev)
+Npair_ss = mean(Qn2_array_ss[:, 0, 3])
+Npair_ss_err = sqrt(mean(Qn2_array_ss[:, 0, 4]) - Npair_ss**2.)/sqrt(nev)
 f_ss.write("%s  %.5e  %.5e\n" % (0, Npair_ss, Npair_ss_err))
-Npair_os = mean(Qn2_array_os[:, 0, 1])
-Npair_os_err = sqrt(mean(Qn2_array_os[:, 0, 2]) - Npair_os**2.)/sqrt(nev)
+Npair_os = mean(Qn2_array_os[:, 0, 3])
+Npair_os_err = sqrt(mean(Qn2_array_os[:, 0, 4]) - Npair_os**2.)/sqrt(nev)
 f_os.write("%s  %.5e  %.5e\n" % (0, Npair_os, Npair_os_err))
 for ii in range(1, 9):
-    vn2_ch = mean(Qn2_array[:, ii, 3])
-    vn2_ch_err = sqrt(mean(Qn2_array[:, ii, 4]) - vn2_ch**2.)/sqrt(nev)
+    vn2_ch = mean(Qn2_array_ch[:, ii, 3])
+    vn2_ch_err = sqrt(mean(Qn2_array_ch[:, ii, 4]) - vn2_ch**2.)/sqrt(nev)
     vn2_ch = vn2_ch/Npair
     vn2_ch_err = vn2_ch_err/Npair
     f.write("%s  %.5e  %.5e\n" % (ii, vn2_ch, vn2_ch_err))
-    vn2_ss = mean(Qn2_array_ss[:, ii, 1])
-    vn2_ss_err = sqrt(mean(Qn2_array_ss[:, ii, 2]) - vn2_ss**2.)/sqrt(nev)
+    vn2_ss = mean(Qn2_array_ss[:, ii, 3])
+    vn2_ss_err = sqrt(mean(Qn2_array_ss[:, ii, 4]) - vn2_ss**2.)/sqrt(nev)
+    vn2_ss = vn2_ss/Npair_ss
+    vn2_ss_err = vn2_ss_err/Npair_ss
     f_ss.write("%s  %.5e  %.5e\n" % (ii, vn2_ss, vn2_ss_err))
-    vn2_os = mean(Qn2_array_os[:, ii, 1])
-    vn2_os_err = sqrt(mean(Qn2_array_os[:, ii, 2]) - vn2_os**2.)/sqrt(nev)
+    vn2_os = mean(Qn2_array_os[:, ii, 3])
+    vn2_os_err = sqrt(mean(Qn2_array_os[:, ii, 4]) - vn2_os**2.)/sqrt(nev)
+    vn2_os = vn2_os/Npair_os
+    vn2_os_err = vn2_os_err/Npair_os
     f_os.write("%s  %.5e  %.5e\n" % (ii, vn2_os, vn2_os_err))
 f.close()
 f_ss.close()
@@ -114,18 +118,18 @@ print("processing two particle correlations delta eta dependence ...")
 file_name_ch = 'particle_9999_vn2_eta12_pT_0.2_3.dat'
 file_name_ss = 'particle_9999_vn2_eta12_ss_pT_0.2_3.dat'
 file_name_os = 'particle_9999_vn2_eta12_os_pT_0.2_3.dat'
-Qn2_array = []
+Qn2_array_ch = []
 Qn2_array_ss = []
 Qn2_array_os = []
 for ifolder in range(nev):
     results_folder = path.abspath(file_folder_list[ifolder])
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ch))
-    Qn2_array.append(temp_data_vn2)
+    Qn2_array_ch.append(temp_data_vn2)
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ss))
     Qn2_array_ss.append(temp_data_vn2)
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_os))
     Qn2_array_os.append(temp_data_vn2)
-Qn2_array = array(Qn2_array)
+Qn2_array_ch = array(Qn2_array_ch)
 Qn2_array_ss = array(Qn2_array_ss)
 Qn2_array_os = array(Qn2_array_os)
 output_filename = ("two_particle_correlation_delta_eta12_STAR.dat")
@@ -137,11 +141,11 @@ f_ss = open(output_filename_ss, 'w')
 f_ss.write("# rap  vn{2}^2  vn{2}^2_err\n")
 f_os = open(output_filename_os, 'w')
 f_os.write("# rap  vn{2}^2  vn{2}^2_err\n")
-Npair = mean(Qn2_array[:, :, 3], axis=0)
+Npair = mean(Qn2_array_ch[:, :, 3], axis=0)
 #Npair_err = sqrt(mean(Qn2_array[:, :, 4], axis=0) - Npair**2.)/sqrt(nev)
-Npair_err = std(Qn2_array[:, :, 3], axis=0)/sqrt(nev)
+Npair_err = std(Qn2_array_ch[:, :, 3], axis=0)/sqrt(nev)
 output = []
-output.append(Qn2_array[0, :, 0])
+output.append(Qn2_array_ch[0, :, 0])
 output.append(Npair)
 output.append(Npair_err)
 Npair_ss = mean(Qn2_array_ss[:, :, 3], axis=0)
@@ -162,18 +166,18 @@ for ii in range(1, 9):
     #                  - vn2_ch**2.)/sqrt(nev)
     #vn2_ch = vn2_ch/Npair
     #vn2_ch_err = vn2_ch_err/Npair
-    vn2_ch = mean(Qn2_array[:, :, 4*ii+1]*Qn2_array[:, :, 3], axis=0)/Npair
-    vn2_ch_err = sqrt(mean(Qn2_array[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
+    vn2_ch = mean(Qn2_array_ch[:, :, 4*ii+1]*Qn2_array_ch[:, :, 3], axis=0)/Npair
+    vn2_ch_err = sqrt(mean(Qn2_array_ch[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
     output.append(vn2_ch)
     output.append(vn2_ch_err)
     vn2_ss = mean(Qn2_array_ss[:, :, 4*ii+1]*Qn2_array_ss[:, :, 3], axis=0)/Npair_ss
     vn2_ss_err = sqrt(mean(Qn2_array_ss[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
-    output.append(vn2_ss)
-    output.append(vn2_ss_err)
+    output_ss.append(vn2_ss)
+    output_ss.append(vn2_ss_err)
     vn2_os = mean(Qn2_array_os[:, :, 4*ii+1]*Qn2_array_os[:, :, 3], axis=0)/Npair_os
     vn2_os_err = sqrt(mean(Qn2_array_os[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
-    output.append(vn2_os)
-    output.append(vn2_os_err)
+    output_os.append(vn2_os)
+    output_os.append(vn2_os_err)
 output = array(output)
 output = output.transpose()
 output_ss = array(output_ss)
