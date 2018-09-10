@@ -1310,8 +1310,8 @@ void singleParticleSpectra::output_two_particle_correlation() {
         }
         ofstream output_ss(filename_ss.str().c_str());
         ofstream output_os(filename_os.str().c_str());
-        output_ss << "# n  Cn2_ss  Cn2_ss_err" << endl;
-        output_os << "# n  Cn2_os  Cn2_os_err" << endl;
+        output_ss << "# n  vn{2}  vn{2}_err  Cn2_ss  Cn2_ss_err" << endl;
+        output_os << "# n  vn{2}  vn{2}_err  Cn2_os  Cn2_os_err" << endl;
         
         double num_pair_ss = Cn2_ss[0]/total_number_of_events;
         double num_pair_ss_stdsq = (
@@ -1323,6 +1323,8 @@ void singleParticleSpectra::output_two_particle_correlation() {
         }
         output_ss << scientific << setw(18) << setprecision(8)
                   << 0 << "  " << num_pair_ss << "  " << num_pair_ss_err
+                  << "  " << num_pair_ss << "  "
+                  << Cn2_os_err[0]/total_number_of_events
                   << endl;
         double num_pair_os = Cn2_os[0]/total_number_of_events;
         double num_pair_os_stdsq = (
@@ -1334,35 +1336,49 @@ void singleParticleSpectra::output_two_particle_correlation() {
         }
         output_os << scientific << setw(18) << setprecision(8)
                   << 0 << "  " << num_pair_os << "  " << num_pair_os_err
+                  << "  " << num_pair_os << "  " 
+                  << Cn2_os_err[0]/total_number_of_events
                   << endl;
 
         for (int i = 1; i < order_max; i++) {
+            double vn2_avg = 0.0;
+            double vn2_err = 0.0;
             double Cn2_ss_avg = Cn2_ss[i]/total_number_of_events;
-            double Cn2_ss_stdsq = (
-                    Cn2_ss_err[i]/total_number_of_events
-                    - Cn2_ss_avg*Cn2_ss_avg);
-            Cn2_ss_avg = Cn2_ss_avg/num_pair_ss;
-            double Cn2_ss_err = 0.0;
-            if (Cn2_ss_stdsq > 0) {
-                Cn2_ss_err = sqrt(Cn2_ss_stdsq/total_number_of_events);
-                Cn2_ss_err = Cn2_ss_err/num_pair;
+            if (Cn2_ss_avg > 0.) {
+                vn2_avg = sqrt(Cn2_ss_avg/num_pair_ss);
+                double Cn2_ss_stdsq = (
+                        Cn2_ss_err[i]/total_number_of_events
+                        - Cn2_ss_avg*Cn2_ss_avg);
+                if (Cn2_ss_stdsq > 0) {
+                    double Qn2_ss_err = sqrt(Cn2_ss_stdsq
+                                             /total_number_of_events);
+                    vn2_err = Qn2_ss_err/num_pair_ss;
+                }
             }
             output_ss << scientific << setw(18) << setprecision(8)
-                      << i << "  " << Cn2_ss_avg << "  " << Cn2_ss_err
+                      << i << "  " << vn2_avg << "  " << vn2_err << "  "
+                      << Cn2_ss_avg << "  "
+                      << Cn2_ss_err[i]/total_number_of_events
                       << endl;
             
+            vn2_avg = 0.0;
+            vn2_err = 0.0;
             double Cn2_os_avg = Cn2_os[i]/total_number_of_events;
-            double Cn2_os_stdsq = (
-                    Cn2_os_err[i]/total_number_of_events
-                    - Cn2_os_avg*Cn2_ss_avg);
-            Cn2_os_avg = Cn2_os_avg/num_pair_ss;
-            double Cn2_os_err = 0.0;
-            if (Cn2_os_stdsq > 0) {
-                Cn2_os_err = sqrt(Cn2_os_stdsq/total_number_of_events);
-                Cn2_os_err = Cn2_os_err/num_pair;
+            if (Cn2_os_avg > 0.) {
+                vn2_avg = sqrt(Cn2_os_avg/num_pair_os);
+                double Cn2_os_stdsq = (
+                        Cn2_os_err[i]/total_number_of_events
+                        - Cn2_os_avg*Cn2_os_avg);
+                if (Cn2_os_stdsq > 0) {
+                    double Qn2_os_err = sqrt(Cn2_os_stdsq
+                                             /total_number_of_events);
+                    vn2_err = Qn2_os_err/num_pair_os;
+                }
             }
             output_os << scientific << setw(18) << setprecision(8)
-                      << i << "  " << Cn2_os_avg << "  " << Cn2_os_err
+                      << i << "  " << vn2_avg << "  " << vn2_err << "  "
+                      << Cn2_os_avg << "  "
+                      << Cn2_os_err[i]/total_number_of_events
                       << endl;
         }
         output_ss.close();
@@ -1392,7 +1408,8 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
         double num_pair_stdsq = (
             QnSP_eta12_err[0][i]/total_number_of_events - num_pair*num_pair);
         double num_pair_err = 0.0;
-        if (num_pair_stdsq > 0) { num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
+        if (num_pair_stdsq > 0) {
+            num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
         }
         output << scientific << setw(18) << setprecision(8)
                << eta_local << "  " << num_pair << "  " << num_pair_err
@@ -1434,14 +1451,15 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
         ofstream output_ss(filename_ss.str().c_str());
         ofstream output_os(filename_os.str().c_str());
         if (rap_type == 0) {
-            output_ss << "# eta  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
-            output_os << "# eta  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+            output_ss << "# eta  vn{2}  vn{2}_err  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+            output_os << "# eta  vn{2}  vn{2}_err  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
         } else {
-            output_ss << "# y  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
-            output_os << "# y  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+            output_ss << "# y  vn{2}  vn{2}_err  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
+            output_os << "# y  vn{2}  vn{2}_err  <Qn*conj(Qn)>  <(Qn*conj(Qn))^2>" << endl;
         }
         for (int j = 0; j < N_rap; j++) {
             double eta_local = rapidity_dis_min + j*drap;
+
             double num_pair_ss = Cn2_ss_eta12[0][j]/total_number_of_events;
             double num_pair_ss_stdsq = (
                     Cn2_ss_eta12_err[0][j]/total_number_of_events
@@ -1453,7 +1471,9 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
             }
             output_ss << scientific << setw(18) << setprecision(8)
                       << eta_local << "  " << num_pair_ss << "  "
-                      << num_pair_ss_err << "  ";
+                      << num_pair_ss_err << "  " << num_pair_ss << "  "
+                      << Cn2_ss_eta12_err[0][j]/total_number_of_events;
+
             double num_pair_os = Cn2_os_eta12[0][j]/total_number_of_events;
             double num_pair_os_stdsq = (
                     Cn2_os_eta12_err[0][j]/total_number_of_events
@@ -1465,34 +1485,51 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
             }
             output_os << scientific << setw(18) << setprecision(8)
                       << eta_local << "  " << num_pair_os << "  "
-                      << num_pair_os_err << "  ";
+                      << num_pair_os_err << "  " << num_pair_os << "  "
+                      << Cn2_os_eta12_err[0][j]/total_number_of_events;
+
             for (int i = 1; i < order_max; i++) {
+                double vn2_avg = 0.0;
+                double vn2_err = 0.0;
                 double Cn2_ss_avg = (
                         Cn2_ss_eta12[i][j]/total_number_of_events);
-                double Cn2_ss_stdsq = (
-                        Cn2_ss_eta12_err[i][j]/total_number_of_events
-                        - Cn2_ss_avg*Cn2_ss_avg);
-                Cn2_ss_avg = Cn2_ss_avg/num_pair_ss;
-                double Cn2_ss_err = 0.0;
-                if (Cn2_ss_stdsq > 0) {
-                    Cn2_ss_err = sqrt(Cn2_ss_stdsq/total_number_of_events);
-                    Cn2_ss_err = Cn2_ss_err/num_pair_ss;
+                if (Cn2_ss_avg > 0.) {
+                    vn2_avg = sqrt(Cn2_ss_avg/num_pair_ss);
+                    double Cn2_ss_stdsq = (
+                            Cn2_ss_eta12_err[i][j]/total_number_of_events
+                            - Cn2_ss_avg*Cn2_ss_avg);
+                    double Cn2_ss_err = 0.0;
+                    if (Cn2_ss_stdsq > 0) {
+                        Cn2_ss_err = sqrt(Cn2_ss_stdsq/total_number_of_events);
+                        vn2_err = Cn2_ss_err/num_pair_ss;
+                    }
                 }
                 output_ss << scientific << setw(18) << setprecision(8)
-                          << Cn2_ss_avg << "  " << Cn2_ss_err << "  ";
+                          << vn2_avg << "  " << vn2_err << "  "
+                          << Cn2_ss_avg << "  "
+                          << Cn2_ss_eta12_err[i][j]/total_number_of_events
+                          << "  ";
+
+                vn2_avg = 0.0;
+                vn2_err = 0.0;
                 double Cn2_os_avg = (
                         Cn2_os_eta12[i][j]/total_number_of_events);
-                double Cn2_os_stdsq = (
-                        Cn2_os_eta12_err[i][j]/total_number_of_events
-                        - Cn2_os_avg*Cn2_os_avg);
-                Cn2_os_avg = Cn2_os_avg/num_pair_os;
-                double Cn2_os_err = 0.0;
-                if (Cn2_os_stdsq > 0) {
-                    Cn2_os_err = sqrt(Cn2_os_stdsq/total_number_of_events);
-                    Cn2_os_err = Cn2_os_err/num_pair_os;
+                if (Cn2_os_avg > 0.) {
+                    vn2_avg = sqrt(Cn2_os_avg/num_pair_os);
+                    double Cn2_os_stdsq = (
+                            Cn2_os_eta12_err[i][j]/total_number_of_events
+                            - Cn2_os_avg*Cn2_os_avg);
+                    double Cn2_os_err = 0.0;
+                    if (Cn2_os_stdsq > 0) {
+                        Cn2_os_err = sqrt(Cn2_os_stdsq/total_number_of_events);
+                        vn2_err = Cn2_os_err/num_pair_os;
+                    }
                 }
                 output_os << scientific << setw(18) << setprecision(8)
-                          << Cn2_os_avg << "  " << Cn2_os_err << "  ";
+                          << vn2_avg << "  " << vn2_err << "  "
+                          << Cn2_os_avg << "  "
+                          << Cn2_os_eta12_err[i][j]/total_number_of_events
+                          << "  ";
             }
             output_ss << endl;
             output_os << endl;

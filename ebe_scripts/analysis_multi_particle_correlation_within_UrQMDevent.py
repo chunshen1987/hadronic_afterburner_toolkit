@@ -57,38 +57,86 @@ nev = len(file_folder_list)
 
 print("processing two particle correlations ...")
 file_name_ch = 'particle_9999_vn2_eta_%s.dat' % rap_region
+file_name_ss = 'particle_9999_Cn2_ss_eta_%s.dat' % rap_region
+file_name_os = 'particle_9999_Cn2_os_eta_%s.dat' % rap_region
 Qn2_array = []
+Qn2_array_ss = []
+Qn2_array_os = []
 for ifolder in range(nev):
     results_folder = path.abspath(file_folder_list[ifolder])
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ch))
     Qn2_array.append(temp_data_vn2)
+    temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ss))
+    Qn2_array_ss.append(temp_data_vn2)
+    temp_data_vn2 = loadtxt(path.join(results_folder, file_name_os))
+    Qn2_array_os.append(temp_data_vn2)
 Qn2_array = array(Qn2_array)
+Qn2_array_ss = array(Qn2_array_ss)
+Qn2_array_os = array(Qn2_array_os)
 output_filename = ("two_particle_correlation_STAR.dat")
+output_filename_ss = ("two_particle_correlation_ss_STAR.dat")
+output_filename_os = ("two_particle_correlation_os_STAR.dat")
 f = open(output_filename, 'w')
+f_ss = open(output_filename_ss, 'w')
+f_os = open(output_filename_os, 'w')
 f.write("# n  vn{2}^2  vn{2}^2_err\n")
+f_ss.write("# n  C_n{2}  C_n{2}_err\n")
+f_os.write("# n  C_n{2}  C_n{2}_err\n")
 Npair = mean(Qn2_array[:, 0, 3])
 Npair_err = sqrt(mean(Qn2_array[:, 0, 4]) - Npair**2.)/sqrt(nev)
 f.write("%s  %.5e  %.5e\n" % (0, Npair, Npair_err))
+Npair_ss = mean(Qn2_array_ss[:, 0, 1])
+Npair_ss_err = sqrt(mean(Qn2_array_ss[:, 0, 2]) - Npair_ss**2.)/sqrt(nev)
+f_ss.write("%s  %.5e  %.5e\n" % (0, Npair_ss, Npair_ss_err))
+Npair_os = mean(Qn2_array_os[:, 0, 1])
+Npair_os_err = sqrt(mean(Qn2_array_os[:, 0, 2]) - Npair_os**2.)/sqrt(nev)
+f_os.write("%s  %.5e  %.5e\n" % (0, Npair_os, Npair_os_err))
 for ii in range(1, 9):
     vn2_ch = mean(Qn2_array[:, ii, 3])
     vn2_ch_err = sqrt(mean(Qn2_array[:, ii, 4]) - vn2_ch**2.)/sqrt(nev)
     vn2_ch = vn2_ch/Npair
     vn2_ch_err = vn2_ch_err/Npair
     f.write("%s  %.5e  %.5e\n" % (ii, vn2_ch, vn2_ch_err))
+    vn2_ss = mean(Qn2_array_ss[:, ii, 1])
+    vn2_ss_err = sqrt(mean(Qn2_array_ss[:, ii, 2]) - vn2_ss**2.)/sqrt(nev)
+    f_ss.write("%s  %.5e  %.5e\n" % (ii, vn2_ss, vn2_ss_err))
+    vn2_os = mean(Qn2_array_os[:, ii, 1])
+    vn2_os_err = sqrt(mean(Qn2_array_os[:, ii, 2]) - vn2_os**2.)/sqrt(nev)
+    f_os.write("%s  %.5e  %.5e\n" % (ii, vn2_os, vn2_os_err))
 f.close()
+f_ss.close()
+f_os.close()
 shutil.move(output_filename, avg_folder)
+shutil.move(output_filename_ss, avg_folder)
+shutil.move(output_filename_os, avg_folder)
 
 print("processing two particle correlations delta eta dependence ...")
 file_name_ch = 'particle_9999_vn2_eta12_pT_0.2_3.dat'
+file_name_ss = 'particle_9999_vn2_eta12_ss_pT_0.2_3.dat'
+file_name_os = 'particle_9999_vn2_eta12_os_pT_0.2_3.dat'
 Qn2_array = []
+Qn2_array_ss = []
+Qn2_array_os = []
 for ifolder in range(nev):
     results_folder = path.abspath(file_folder_list[ifolder])
     temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ch))
     Qn2_array.append(temp_data_vn2)
+    temp_data_vn2 = loadtxt(path.join(results_folder, file_name_ss))
+    Qn2_array_ss.append(temp_data_vn2)
+    temp_data_vn2 = loadtxt(path.join(results_folder, file_name_os))
+    Qn2_array_os.append(temp_data_vn2)
 Qn2_array = array(Qn2_array)
+Qn2_array_ss = array(Qn2_array_ss)
+Qn2_array_os = array(Qn2_array_os)
 output_filename = ("two_particle_correlation_delta_eta12_STAR.dat")
+output_filename_ss = ("two_particle_correlation_delta_eta12_ss_STAR.dat")
+output_filename_os = ("two_particle_correlation_delta_eta12_os_STAR.dat")
 f = open(output_filename, 'w')
 f.write("# rap  vn{2}^2  vn{2}^2_err\n")
+f_ss = open(output_filename_ss, 'w')
+f_ss.write("# rap  vn{2}^2  vn{2}^2_err\n")
+f_os = open(output_filename_os, 'w')
+f_os.write("# rap  vn{2}^2  vn{2}^2_err\n")
 Npair = mean(Qn2_array[:, :, 3], axis=0)
 #Npair_err = sqrt(mean(Qn2_array[:, :, 4], axis=0) - Npair**2.)/sqrt(nev)
 Npair_err = std(Qn2_array[:, :, 3], axis=0)/sqrt(nev)
@@ -96,6 +144,18 @@ output = []
 output.append(Qn2_array[0, :, 0])
 output.append(Npair)
 output.append(Npair_err)
+Npair_ss = mean(Qn2_array_ss[:, :, 3], axis=0)
+Npair_ss_err = std(Qn2_array_ss[:, :, 3], axis=0)/sqrt(nev)
+output_ss = []
+output_ss.append(Qn2_array_ss[0, :, 0])
+output_ss.append(Npair_ss)
+output_ss.append(Npair_ss_err)
+Npair_os = mean(Qn2_array_os[:, :, 3], axis=0)
+Npair_os_err = std(Qn2_array_os[:, :, 3], axis=0)/sqrt(nev)
+output_os = []
+output_os.append(Qn2_array_os[0, :, 0])
+output_os.append(Npair_os)
+output_os.append(Npair_os_err)
 for ii in range(1, 9):
     #vn2_ch = mean(Qn2_array[:, :, 4*ii+3], axis=0)
     #vn2_ch_err = sqrt(mean(Qn2_array[:, :, 4*ii+4], axis=0)
@@ -106,13 +166,33 @@ for ii in range(1, 9):
     vn2_ch_err = sqrt(mean(Qn2_array[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
     output.append(vn2_ch)
     output.append(vn2_ch_err)
+    vn2_ss = mean(Qn2_array_ss[:, :, 4*ii+1]*Qn2_array_ss[:, :, 3], axis=0)/Npair_ss
+    vn2_ss_err = sqrt(mean(Qn2_array_ss[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
+    output.append(vn2_ss)
+    output.append(vn2_ss_err)
+    vn2_os = mean(Qn2_array_os[:, :, 4*ii+1]*Qn2_array_os[:, :, 3], axis=0)/Npair_os
+    vn2_os_err = sqrt(mean(Qn2_array_os[:, :, 4*ii+2]**2., axis=0))/sqrt(nev)
+    output.append(vn2_os)
+    output.append(vn2_os_err)
 output = array(output)
 output = output.transpose()
+output_ss = array(output_ss)
+output_ss = output_ss.transpose()
+output_os = array(output_os)
+output_os = output_os.transpose()
 for irap in range(len(Npair)):
     f.write("%.5e  "*19 % tuple(output[irap, :]))
     f.write("\n")
+    f_ss.write("%.5e  "*19 % tuple(output_ss[irap, :]))
+    f_ss.write("\n")
+    f_os.write("%.5e  "*19 % tuple(output_os[irap, :]))
+    f_os.write("\n")
 f.close()
+f_ss.close()
+f_os.close()
 shutil.move(output_filename, avg_folder)
+shutil.move(output_filename_ss, avg_folder)
+shutil.move(output_filename_os, avg_folder)
 
 print("processing three particle correlations ...")
 # load the file
@@ -289,6 +369,26 @@ for itype in range(len(eta_type_list)):
     shutil.move(output_filename, avg_folder)
 
 print("processing four particle correlations ...")
+file_name_ch = 'particle_9999_Cn4_eta_%s.dat' % rap_region
+Cn4_ch_array = []
+for ifolder in range(nev):
+    results_folder = path.abspath(file_folder_list[ifolder])
+    temp_data_ch = loadtxt(path.join(results_folder, file_name_ch))
+    Cn4_ch_array.append(temp_data_ch)
+Cn4_ch_array = array(Cn4_ch_array)
+nev = len(Cn4_ch_array[:, 0, 1])
+output_filename = ("charged_hadron_Cn4_STAR.dat")
+f = open(output_filename, 'w')
+f.write("# n Cn4_ch  Cn4_ch_err\n")
+for ii in range(1, len(Cn4_ch_array[0, :, 0])):
+    Cn4_ch_avg = (sum(Cn4_ch_array[:, 0, 1]*Cn4_ch_array[:, ii, 1])
+                  /(sum(Cn4_ch_array[:, 0, 1])))
+    Cn4_ch_err = (sum(Cn4_ch_array[:, 0, 1]*Cn4_ch_array[:, ii, 2])
+                  /(sum(Cn4_ch_array[:, 0, 1]))/sqrt(nev))
+    f.write("%s  %.5e  %.5e\n" % (ii, Cn4_ch_avg, Cn4_ch_err))
+f.close()
+shutil.move(output_filename, avg_folder)
+
 # load the file
 file_name_ch = 'particle_9999_SCmn_eta_%s.dat' % rap_region
 SC_mn_ch_array = []
