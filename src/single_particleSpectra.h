@@ -2,6 +2,7 @@
 #define SRC_single_particleSpectra_h_
 
 #include <string>
+#include <vector>
 
 #include "ParameterReader.h"
 #include "particleSamples.h"
@@ -56,6 +57,9 @@ class singleParticleSpectra {
 
     int SC_num_corr;
     double *SC_mn, *SC_mn_err;
+    int num_Cn4;
+    std::vector<double> Cn4;
+    std::vector<double> Cn4_err;
 
     int check_spatial_flag;
     int N_tau;
@@ -154,6 +158,17 @@ class singleParticleSpectra {
     //! This function outputs the rapidity dependent three-particle correlation
     void output_three_particle_correlation_rap();
 
+
+    //! This function computes the 4-particle correlation for C_n{4}
+    //! using Qn vectors within one event
+    //!     C_n{4} = <Q1_n*conj(Q2_n)*Q3_n*conj(Q4_n)>
+    //              - 2.*<Q1_n*conj(Q2_n)>**2.
+    //! for n = 0, 1, 2, 3, 4
+    //! self correlation is subtracted
+    void calculate_four_particle_correlation_Cn4(
+        double *event_Qn_real, double *event_Qn_imag,
+        std::vector<double> &corr, std::vector<double> &corr_err);
+
     //! This function computes the 4-particle correlation for
     //! symmetric cumulants using Qn vectors within one event
     //!     SC_mn = <Q1_m*conj(Q2_m)*Q3_n*conj(Q4_n)>
@@ -166,6 +181,10 @@ class singleParticleSpectra {
             double *event_Q3_real, double *event_Q3_imag,
             double *event_Q4_real, double *event_Q4_imag, int flag,
             double *corr, double *corr_err);
+
+
+    //! This function outputs the event averaged four-particle Cn{4}
+    void output_four_particle_Cn4_correlation();
 
     //! This function outputs the event averaged four-particle correlation
     void output_four_particle_SC_correlation();

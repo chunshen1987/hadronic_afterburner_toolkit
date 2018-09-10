@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
+#include <vector>
 #include <iomanip>
 #include "./parameters.h"
 #include "./single_particleSpectra.h"
@@ -256,6 +257,10 @@ singleParticleSpectra::singleParticleSpectra(
             SC_mn[i] = 0.0;
             SC_mn_err[i] = 0.0;
         }
+
+        num_Cn4 = 5;
+        Cn4 = std::vector<double> (num_Cn4, 0.);
+        Cn4_err = std::vector<double> (num_Cn4, 0.);
     }
 }
 
@@ -523,6 +528,8 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                         event_Qn_real, event_Qn_imag,
                         event_Qn_real, event_Qn_imag,
                         event_Qn_real, event_Qn_imag, 0, SC_mn, SC_mn_err);
+                calculate_four_particle_correlation_Cn4(
+                        event_Qn_real, event_Qn_imag, Cn4, Cn4_err);
                 if (flag_charge_dependence == 1) {
                     calculate_Qn_vector_positive_charge(iev,
                         event_Qn_p_real, event_Qn_p_real_err,
@@ -658,6 +665,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     if (flag_correlation == 1) {
         output_two_particle_correlation();
         output_three_particle_correlation();
+        output_four_particle_Cn4_correlation();
         output_four_particle_SC_correlation();
     }
 
@@ -1411,6 +1419,45 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
     delete[] temp_corr;
 }
 
+
+//! This function computes the 4-particle correlation for C_n{4}
+//! using Qn vectors within one event
+//!     C_n{4} = <Q1_n*conj(Q2_n)*Q3_n*conj(Q4_n)>
+//              - 2.*<Q1_n*conj(Q2_n)>**2.
+//! for n = 0, 1, 2, 3, 4
+//! self correlation is subtracted
+void singleParticleSpectra::calculate_four_particle_correlation_Cn4(
+        double *event_Qn_real, double *event_Qn_imag,
+        std::vector<double> &corr, std::vector<double> &corr_err) {
+    // C_n[0] = N(N-1)(N-2)(N-3) is the number of pairs
+    double dN = event_Qn_real[0];
+    for (int i = 0; i < num_Cn4; i++) {
+        int ii = 2*i;
+        if (ii > order_max) {
+            cout << "Error: the vn needed for C_n{4} is not "
+                 << "computed, order_max = " << order_max
+                 << "2n = " << ii << ". Make sure order_max > 2n!" << endl;
+            exit(1);
+        }
+        double abs_Qn_2 = (  event_Qn_real[i]*event_Qn_real[i]
+                           + event_Qn_imag[i]*event_Qn_imag[i]);
+        double abs_Q2n_2 = (  event_Qn_real[ii]*event_Qn_real[ii]
+                            + event_Qn_imag[ii]*event_Qn_imag[ii]);
+
+        double Re_Q2n_QnQn = (
+              event_Qn_real[i]*(  event_Qn_real[ii]*event_Qn_real[i]
+                                + event_Qn_imag[ii]*event_Qn_imag[i])
+            + event_Qn_imag[i]*(  event_Qn_real[i]*event_Qn_imag[ii]
+                                - event_Qn_real[ii]*event_Qn_imag[i]));
+
+        double corr_local = ( abs_Qn_2*abs_Qn_2 - 2.*Re_Q2n_QnQn
+                             - 4.*(dN - 2.)*abs_Qn_2 + abs_Q2n_2
+                             + 2.*dN*(dN - 3.));
+        corr[i] += corr_local;
+        corr_err[i] += corr_local*corr_local;
+    }
+}
+
 //! This function computes the 4-particle correlation for symmetric cumulants
 //! using Qn vectors within one event
 //!     SC_mn = <Q1_m*conj(Q2_m)*Q3_n*conj(Q4_n)>
@@ -1844,6 +1891,42 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
         output_os1.close();
         output_ss2.close();
         output_os2.close();
+    }
+}
+
+//! This function outputs the event averaged four-particle correlation Cn{4}
+void singleParticleSpectra::output_four_particle_Cn4_correlation() {
+    ostringstream filename;
+    if (rap_type == 0) {
+        filename << path << "/particle_" << particle_monval << "_Cn4"
+                 << "_eta_" << rap_min << "_" << rap_max << ".dat";
+    } else {
+        filename << path << "/particle_" << particle_monval << "_Cn4"
+                 << "_y_" << rap_min << "_" << rap_max << ".dat";
+    }
+    ofstream output(filename.str().c_str());
+    output << "# n  Cn4  Cn4_err" << endl;
+    double num_pair = Cn4[0]/total_number_of_events;
+    double num_pair_stdsq = (
+            Cn4_err[0]/total_number_of_events - num_pair*num_pair);
+    double num_pair_err = 0.0;
+    if (num_pair_stdsq > 0) {
+        num_pair_err = sqrt(num_pair_stdsq/total_number_of_events);
+    }
+    output << scientific << setw(18) << setprecision(8)
+           << 0 << "  " << num_pair << "  " << num_pair_err << endl;
+    for (int i = 1; i < num_Cn4; i++) {
+        double Cn4_avg = Cn4[i]/total_number_of_events;
+        double Cn4_stdsq = (
+                Cn4_err[i]/total_number_of_events - Cn4_avg*Cn4_avg);
+        Cn4_avg = Cn4_avg/num_pair;
+        double Cn4_avg_err = 0.0;
+        if (Cn4_stdsq > 0) {
+            Cn4_avg_err = sqrt(Cn4_stdsq/total_number_of_events);
+            Cn4_avg_err = Cn4_avg_err/num_pair;
+        }
+        output << scientific << setw(18) << setprecision(8)
+               << i << "  " << Cn4_avg << "  " << Cn4_avg_err << endl;
     }
 }
 
