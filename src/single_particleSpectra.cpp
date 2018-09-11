@@ -533,14 +533,14 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                 }
             }
             
-            calculate_Qn_vector(iev,
-                                vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
-                                event_Qn_real, event_Qn_real_err,
-                                event_Qn_imag, event_Qn_imag_err,
-                                event_Qn_diff_real, event_Qn_diff_real_err,
-                                event_Qn_diff_imag, event_Qn_diff_imag_err);
 
             if (flag_correlation == 1) {
+                calculate_Qn_vector(
+                        iev, vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
+                        event_Qn_real, event_Qn_real_err,
+                        event_Qn_imag, event_Qn_imag_err,
+                        event_Qn_diff_real, event_Qn_diff_real_err,
+                        event_Qn_diff_imag, event_Qn_diff_imag_err);
                 calculate_two_particle_correlation(
                         event_Qn_real, event_Qn_imag,
                         event_Qn_diff_real, event_Qn_diff_imag);
