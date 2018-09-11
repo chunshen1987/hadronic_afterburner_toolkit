@@ -836,15 +836,15 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
             double py_local = particle_list->get_particle(event_id, i).py;
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
             double p_phi = atan2(py_local, px_local);
-            for (int iorder = 0; iorder < order_max; iorder++) {
-                double cos_nphi = cos(iorder*p_phi);
-                double sin_nphi = sin(iorder*p_phi);
-                event_Qn_real[iorder] += cos_nphi;
-                event_Qn_imag[iorder] += sin_nphi;
-                event_Qn_real_err[iorder] += cos_nphi*cos_nphi;
-                event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
-            }
             if (p_perp > pT_min && p_perp < pT_max) {
+                for (int iorder = 0; iorder < order_max; iorder++) {
+                    double cos_nphi = cos(iorder*p_phi);
+                    double sin_nphi = sin(iorder*p_phi);
+                    event_Qn_real[iorder] += cos_nphi;
+                    event_Qn_imag[iorder] += sin_nphi;
+                    event_Qn_real_err[iorder] += cos_nphi*cos_nphi;
+                    event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
+                }
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 pT_mean_array[p_idx] += p_perp;
                 pT_mean_array_err[p_idx] += p_perp*p_perp;

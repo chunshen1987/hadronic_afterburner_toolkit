@@ -841,7 +841,7 @@ void HBT_correlation::output_correlation_function_inv() {
                                   /(correl_fun_denorm*npair_ratio));
             }
 
-            if (q_inv_local > 0.) {
+            if (q_out[iqinv] > 0.) {
                 output << scientific << setw(18) << setprecision(8) 
                        << q_inv_local << "    "
                        << npart_num << "    " << correl_fun_num << "    "  
