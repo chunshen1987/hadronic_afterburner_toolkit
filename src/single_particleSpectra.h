@@ -94,6 +94,7 @@ class singleParticleSpectra {
     //! this function computes the pT-integrated and pT-differential Qn vector
     //! within a given rapidity region in one event
     void calculate_Qn_vector(int event_id,
+            double pT_min_selected, double pT_max_selected,
             double *event_Qn_real, double *event_Qn_real_err,
             double *event_Qn_imag, double *event_Qn_imag_err,
             double **event_Qn_diff_real, double **event_Qn_diff_real_err,

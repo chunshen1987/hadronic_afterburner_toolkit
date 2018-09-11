@@ -513,6 +513,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
         for (int iev = 0; iev < nev; iev++) {
             event_id++;
             calculate_Qn_vector(iev,
+                                pT_min, pT_max,
                                 event_Qn_real, event_Qn_real_err,
                                 event_Qn_imag, event_Qn_imag_err,
                                 event_Qn_diff_real, event_Qn_diff_real_err,
@@ -531,6 +532,13 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                                                  event_Qn_diff_imag_err[i][j]);
                 }
             }
+            
+            calculate_Qn_vector(iev,
+                                vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
+                                event_Qn_real, event_Qn_real_err,
+                                event_Qn_imag, event_Qn_imag_err,
+                                event_Qn_diff_real, event_Qn_diff_real_err,
+                                event_Qn_diff_imag, event_Qn_diff_imag_err);
 
             if (flag_correlation == 1) {
                 calculate_two_particle_correlation(
@@ -798,6 +806,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
 //! this function computes the pT-integrated and pT-differential Qn vector
 //! within a given rapidity region in one event
 void singleParticleSpectra::calculate_Qn_vector(int event_id,
+        double pT_min_selected, double pT_max_selected,
         double *event_Qn_real, double *event_Qn_real_err,
         double *event_Qn_imag, double *event_Qn_imag_err,
         double **event_Qn_diff_real, double **event_Qn_diff_real_err,
@@ -836,7 +845,7 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
             double py_local = particle_list->get_particle(event_id, i).py;
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
             double p_phi = atan2(py_local, px_local);
-            if (p_perp > pT_min && p_perp < pT_max) {
+            if (p_perp > pT_min_selected && p_perp < pT_max_selected) {
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
@@ -906,9 +915,10 @@ void singleParticleSpectra::calculate_Qn_vector_positive_charge(int event_id,
             double py_local = (
                     particle_list->get_positive_particle(event_id, i).py);
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
-            if (p_perp > pT_min && p_perp < pT_max) {
+            if (p_perp > vn_rapidity_dis_pT_min
+                    && p_perp < vn_rapidity_dis_pT_max) {
                 double p_phi = atan2(py_local, px_local);
-                int p_idx = (int)((p_perp - pT_min)/dpT);
+                int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
@@ -971,9 +981,10 @@ void singleParticleSpectra::calculate_Qn_vector_negative_charge(int event_id,
             double py_local = (
                     particle_list->get_negative_particle(event_id, i).py);
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
-            if (p_perp > pT_min && p_perp < pT_max) {
+            if (p_perp > vn_rapidity_dis_pT_min
+                    && p_perp < vn_rapidity_dis_pT_max) {
                 double p_phi = atan2(py_local, px_local);
-                int p_idx = (int)((p_perp - pT_min)/dpT);
+                int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
