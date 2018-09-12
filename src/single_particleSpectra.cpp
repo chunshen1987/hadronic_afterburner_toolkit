@@ -855,6 +855,7 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                     event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
                 }
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
+                if (p_idx < 0 || p_idx >= npT) continue;
                 pT_mean_array[p_idx] += p_perp;
                 pT_mean_array_err[p_idx] += p_perp*p_perp;
                 for (int iorder = 0; iorder < order_max; iorder++) {
@@ -919,6 +920,7 @@ void singleParticleSpectra::calculate_Qn_vector_positive_charge(int event_id,
                     && p_perp < vn_rapidity_dis_pT_max) {
                 double p_phi = atan2(py_local, px_local);
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
+                if (p_idx < 0 || p_idx >= npT) continue;
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
@@ -985,6 +987,7 @@ void singleParticleSpectra::calculate_Qn_vector_negative_charge(int event_id,
                     && p_perp < vn_rapidity_dis_pT_max) {
                 double p_phi = atan2(py_local, px_local);
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
+                if (p_idx < 0 || p_idx >= npT) continue;
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
