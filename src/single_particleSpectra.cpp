@@ -1741,7 +1741,6 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
 //! This function computes the 4-particle correlation for C_n{4}
 //! using Qn vectors within one event
 //!     C_n{4} = <Q1_n*conj(Q2_n)*Q3_n*conj(Q4_n)>
-//              - 2.*<Q1_n*conj(Q2_n)>**2.
 //! for n = 0, 1, 2, 3, 4
 //! self correlation is subtracted
 void singleParticleSpectra::calculate_four_particle_correlation_Cn4(
@@ -1779,7 +1778,6 @@ void singleParticleSpectra::calculate_four_particle_correlation_Cn4(
 //! This function computes the 4-particle correlation for symmetric cumulants
 //! using Qn vectors within one event
 //!     SC_mn = <Q1_m*conj(Q2_m)*Q3_n*conj(Q4_n)>
-//              - <Q1_m*conj(Q2_m)><Q3_n*conj(Q4_n)>
 //! for (32), (42), (52), (43), (53)
 //! self correlation is subtracted assuming Qk's sample >= Qn's and Qm's
 void singleParticleSpectra::calculate_four_particle_correlation_SC(
