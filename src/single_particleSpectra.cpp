@@ -1338,7 +1338,7 @@ void singleParticleSpectra::output_two_particle_correlation() {
         output_ss << scientific << setw(18) << setprecision(8)
                   << 0 << "  " << num_pair_ss << "  " << num_pair_ss_err
                   << "  " << num_pair_ss << "  "
-                  << Cn2_os_err[0]/total_number_of_events
+                  << Cn2_ss_err[0]/total_number_of_events
                   << endl;
         double num_pair_os = Cn2_os[0]/total_number_of_events;
         double num_pair_os_stdsq = (
