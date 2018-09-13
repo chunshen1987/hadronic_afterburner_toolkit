@@ -374,22 +374,39 @@ for itype in range(len(eta_type_list)):
 
 print("processing four particle correlations ...")
 file_name_ch = 'particle_9999_Cn4_eta_%s.dat' % rap_region
-Cn4_ch_array = []
+file_name_C2 = 'particle_9999_vn2_eta_%s.dat' % rap_region
+Qn4_ch_array = []
+Qn2_array_ch = []
 for ifolder in range(nev):
     results_folder = path.abspath(file_folder_list[ifolder])
     temp_data_ch = loadtxt(path.join(results_folder, file_name_ch))
-    Cn4_ch_array.append(temp_data_ch)
-Cn4_ch_array = array(Cn4_ch_array)
-nev = len(Cn4_ch_array[:, 0, 1])
+    Qn4_ch_array.append(temp_data_ch)
+    temp_data_vn2 = loadtxt(path.join(results_folder, file_name_C2))
+    Qn2_array_ch.append(temp_data_vn2)
+Qn4_ch_array = array(Qn4_ch_array)
+Qn2_array_ch = array(Qn2_array_ch)
+nev = len(Qn4_ch_array[:, 0, 1])
 output_filename = ("charged_hadron_Cn4_STAR.dat")
 f = open(output_filename, 'w')
 f.write("# n Cn4_ch  Cn4_ch_err\n")
-for ii in range(1, len(Cn4_ch_array[0, :, 0])):
-    Cn4_ch_avg = (sum(Cn4_ch_array[:, 0, 1]*Cn4_ch_array[:, ii, 1])
-                  /(sum(Cn4_ch_array[:, 0, 1])))
-    Cn4_ch_err = (sum(Cn4_ch_array[:, 0, 1]*Cn4_ch_array[:, ii, 2])
-                  /(sum(Cn4_ch_array[:, 0, 1]))/sqrt(nev))
-    f.write("%s  %.5e  %.5e\n" % (ii, Cn4_ch_avg, Cn4_ch_err))
+for ii in range(1, len(Qn4_ch_array[0, :, 0])):
+    vn4_ch_avg = (sum(Qn4_ch_array[:, 0, 1]*Qn4_ch_array[:, ii, 1])
+                  /(sum(Qn4_ch_array[:, 0, 1])))
+    vn4_ch_err = (sum(Qn4_ch_array[:, 0, 1]*Qn4_ch_array[:, ii, 2])
+                  /(sum(Qn4_ch_array[:, 0, 1]))/sqrt(nev))
+    vn2_ch = mean(Qn2_array_ch[:, ii, 3])
+    vn2_ch_err = sqrt(mean(Qn2_array_ch[:, ii, 4]) - vn2_ch**2.)/sqrt(nev)
+    vn2_ch = vn2_ch/mean(Qn2_array_ch[:, 0, 3])
+    vn2_ch_err = vn2_ch_err/mean(Qn2_array_ch[:, 0, 3])
+    Cn4_ch_avg = vn4_ch_avg - 2.*vn2_ch**2.
+    Cn4_ch_err = sqrt(vn4_ch_err**2. + (2.*2.*vn2_ch*vn2_ch_err)**2.)
+    vn4_avg = 0.0
+    vn4_err = 0.0
+    if Cn4_avg < 0.:
+        vn4_avg = (-Cn4_avg)**0.25
+        vn4_err = Cn4_ch_err/(4.*(-Cn4_avg)**0.75)
+    f.write("%s  %.5e  %.5e  %.5e  %.5e\n"
+            % (ii, vn4_avg, vn4_err, Cn4_ch_avg, Cn4_ch_err))
 f.close()
 shutil.move(output_filename, avg_folder)
 
@@ -403,14 +420,28 @@ for ifolder in range(nev):
 SC_mn_ch_array = array(SC_mn_ch_array)
 nev = len(SC_mn_ch_array[:, 0, 1])
 corr_label = ['00', '32', '42', '52', '43', '53']
+mn_idx = [(0, 0), (3, 2), (4, 2), (5, 2), (4, 3), (5, 3)]
 output_filename = ("symmetric_cumulant_STAR.dat")
 f = open(output_filename, 'w')
 f.write("# name SC_mn_ch  SC_mn_ch_err\n")
 for ii in range(1, len(corr_label)):
-    SC_mn_ch_avg = (sum(SC_mn_ch_array[:, 0, 1]*SC_mn_ch_array[:, ii, 1])
+    vmvn_ch_avg = (sum(SC_mn_ch_array[:, 0, 1]*SC_mn_ch_array[:, ii, 1])
             /(sum(SC_mn_ch_array[:, 0, 1])))
-    SC_mn_ch_err = (sum(SC_mn_ch_array[:, 0, 1]*SC_mn_ch_array[:, ii, 2])
+    vmvn_ch_err = (sum(SC_mn_ch_array[:, 0, 1]*SC_mn_ch_array[:, ii, 2])
             /(sum(SC_mn_ch_array[:, 0, 1]))/sqrt(nev))
+    vm2_ch = mean(Qn2_array_ch[:, mn_idx[ii][0], 3])
+    vm2_ch_err = (sqrt(mean(Qn2_array_ch[:, mn_idx[ii][0], 4]) - vn2_ch**2.)
+                  /sqrt(nev))
+    vm2_ch = vm2_ch/mean(Qn2_array_ch[:, 0, 3])
+    vm2_ch_err = vm2_ch_err/mean(Qn2_array_ch[:, 0, 3])
+    vn2_ch = mean(Qn2_array_ch[:, mn_idx[ii][1], 3])
+    vn2_ch_err = (sqrt(mean(Qn2_array_ch[:, mn_idx[ii][1], 4]) - vn2_ch**2.)
+                  /sqrt(nev))
+    vn2_ch = vn2_ch/mean(Qn2_array_ch[:, 0, 3])
+    vn2_ch_err = vn2_ch_err/mean(Qn2_array_ch[:, 0, 3])
+    SC_mn_ch_avg = vmvn_ch_avg - vm2_ch*vn2_ch
+    SC_mn_ch_err = sqrt(vmvn_ch_err**2. + (vm2_ch_err*vn2_ch)**2.
+                        + (vm2_ch*vn2_ch_err)**2.)
     f.write("%s  %.5e  %.5e\n" % (corr_label[ii], SC_mn_ch_avg, SC_mn_ch_err))
 f.close()
 shutil.move(output_filename, avg_folder)
