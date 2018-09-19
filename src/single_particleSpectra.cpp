@@ -28,10 +28,10 @@ singleParticleSpectra::singleParticleSpectra(
     }
 
     order_max = paraRdr->getVal("order_max");
-    Qn_vector_real = new double[order_max];
-    Qn_vector_imag = new double[order_max];
-    Qn_vector_real_err = new double[order_max];
-    Qn_vector_imag_err = new double[order_max];
+    Qn_vector_real     = std::vector<double>(order_max, 0.);
+    Qn_vector_imag     = std::vector<double>(order_max, 0.);
+    Qn_vector_real_err = std::vector<double>(order_max, 0.);
+    Qn_vector_imag_err = std::vector<double>(order_max, 0.);
     Qn_diff_vector_real = new double* [order_max];
     Qn_diff_vector_imag = new double* [order_max];
     Qn_diff_vector_real_err = new double* [order_max];
@@ -50,10 +50,6 @@ singleParticleSpectra::singleParticleSpectra(
         pT_mean_array_err[i] = 0.0;
     }
     for (int i = 0; i < order_max; i++) {
-        Qn_vector_real[i] = 0.0;
-        Qn_vector_imag[i] = 0.0;
-        Qn_vector_real_err[i] = 0.0;
-        Qn_vector_imag_err[i] = 0.0;
         Qn_diff_vector_real[i] = new double[npT];
         Qn_diff_vector_imag[i] = new double[npT];
         Qn_diff_vector_real_err[i] = new double[npT];
@@ -80,12 +76,11 @@ singleParticleSpectra::singleParticleSpectra(
         rapidity_dis_min = paraRdr->getVal("rapidity_dis_min");
         rapidity_dis_max = paraRdr->getVal("rapidity_dis_max");
         drap = (rapidity_dis_max - rapidity_dis_min)/(N_rap - 1.);
-        rapidity_array = new double [N_rap];
-        dNdy_array = new double [N_rap];
-        for (int i = 0; i < N_rap; i++) {
+        rapidity_array = std::vector<double>(N_rap, 0.);
+        dNdy_array     = std::vector<double>(N_rap, 0.);
+        for (int i = 0; i < N_rap; i++)
             rapidity_array[i] = rapidity_dis_min + i*drap;
-            dNdy_array[i] = 0.0;
-        }
+
         vn_rapidity_dis_pT_min = paraRdr->getVal("vn_rapidity_dis_pT_min");
         vn_rapidity_dis_pT_max = paraRdr->getVal("vn_rapidity_dis_pT_max");
         vn_real_rapidity_dis_array = new double* [N_rap];
@@ -167,15 +162,13 @@ singleParticleSpectra::singleParticleSpectra(
 
     flag_correlation = paraRdr->getVal("compute_correlation");
     if (flag_correlation == 1) {
-        Qn2_vector = new double[order_max];
-        Qn2_vector_err = new double[order_max];
+        Qn2_vector     = std::vector<double>(order_max, 0.);
+        Qn2_vector_err = std::vector<double>(order_max, 0.);
         QnSP_diff_vector = new double* [order_max];
         QnSP_diff_vector_err = new double* [order_max];
         QnSP_eta12 = new double* [order_max];
         QnSP_eta12_err = new double* [order_max];
         for (int i = 0; i < order_max; i++) {
-            Qn2_vector[i] = 0.0;
-            Qn2_vector_err[i] = 0.0;
             QnSP_diff_vector[i] = new double[npT];
             QnSP_diff_vector_err[i] = new double[npT];
             for (int j = 0; j < npT; j++) {
@@ -279,10 +272,6 @@ singleParticleSpectra::~singleParticleSpectra() {
     delete [] pT_array;
     delete [] pT_mean_array;
     delete [] pT_mean_array_err;
-    delete [] Qn_vector_real;
-    delete [] Qn_vector_imag;
-    delete [] Qn_vector_real_err;
-    delete [] Qn_vector_imag_err;
     for (int i = 0; i < order_max; i++) {
         delete [] Qn_diff_vector_real[i];
         delete [] Qn_diff_vector_imag[i];
@@ -295,8 +284,6 @@ singleParticleSpectra::~singleParticleSpectra() {
     delete [] Qn_diff_vector_imag_err;
 
     if (rapidity_distribution_flag == 1) {
-        delete [] rapidity_array;
-        delete [] dNdy_array;
         for (int i = 0; i < N_rap; i++) {
             delete [] vn_real_rapidity_dis_array[i];
             delete [] vn_imag_rapidity_dis_array[i];
@@ -337,8 +324,6 @@ singleParticleSpectra::~singleParticleSpectra() {
         delete[] QnSP_diff_vector_err;
         delete[] QnSP_eta12;
         delete[] QnSP_eta12_err;
-        delete[] Qn2_vector;
-        delete[] Qn2_vector_err;
 
         for (int i = 0; i < num_corr; i++) {
             delete[] C_nmk_eta12[i];
@@ -505,9 +490,9 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
                                 event_Qn_diff_real, event_Qn_diff_real_err,
                                 event_Qn_diff_imag, event_Qn_diff_imag_err);
             for (int i = 0; i < order_max; i++) {
-                Qn_vector_real[i] += event_Qn_real[i];
+                Qn_vector_real[i]     += event_Qn_real[i];
                 Qn_vector_real_err[i] += event_Qn_real_err[i];
-                Qn_vector_imag[i] += event_Qn_imag[i];
+                Qn_vector_imag[i]     += event_Qn_imag[i];
                 Qn_vector_imag_err[i] += event_Qn_imag_err[i];
                 for (int j = 0; j < npT; j++) {
                     Qn_diff_vector_real[i][j] += event_Qn_diff_real[i][j];
@@ -1028,8 +1013,8 @@ void singleParticleSpectra::output_Qn_vectors() {
     }
     ofstream output(filename.str().c_str());
 
-    double total_N = Qn_vector_real[0];
-    double dN_ev_avg = Qn_vector_real[0]/total_number_of_events/drapidity;
+    double total_N       = Qn_vector_real[0];
+    double dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
     double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
@@ -1185,7 +1170,7 @@ void singleParticleSpectra::calculate_two_particle_correlation(
         double Q2_local = (event_Qn_real[i]*event_Qn_real[i]
                             + event_Qn_imag[i]*event_Qn_imag[i]
                             - event_Qn_real[0]);
-        Qn2_vector[i] += Q2_local;
+        Qn2_vector[i]     += Q2_local;
         Qn2_vector_err[i] += Q2_local*Q2_local;
         for (int j = 0; j < npT; j++) {
             double QnSP_pT_local = (

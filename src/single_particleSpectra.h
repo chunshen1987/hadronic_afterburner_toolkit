@@ -28,20 +28,25 @@ class singleParticleSpectra {
     int rapidity_distribution_flag;
     int N_rap;
     double rapidity_dis_min, rapidity_dis_max, drap;
-    double *rapidity_array, *dNdy_array;
+    std::vector<double> rapidity_array;
+    std::vector<double> dNdy_array;
+
     double vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max;
     double **vn_real_rapidity_dis_array, **vn_imag_rapidity_dis_array;
     double **vn_real_rapidity_dis_array_err;
     double **vn_imag_rapidity_dis_array_err;
 
     int total_number_of_events;
-    double *Qn_vector_real, *Qn_vector_imag;
+    std::vector<double> Qn_vector_real;
+    std::vector<double> Qn_vector_imag;
+    std::vector<double> Qn_vector_real_err;
+    std::vector<double> Qn_vector_imag_err;
     double **Qn_diff_vector_real, **Qn_diff_vector_imag;
-    double *Qn_vector_real_err, *Qn_vector_imag_err;
     double **Qn_diff_vector_real_err, **Qn_diff_vector_imag_err;
 
     int flag_correlation;
-    double *Qn2_vector, *Qn2_vector_err;
+    std::vector<double> Qn2_vector;
+    std::vector<double> Qn2_vector_err;
     double **QnSP_diff_vector, **QnSP_diff_vector_err;
     double **QnSP_eta12, **QnSP_eta12_err;
 
