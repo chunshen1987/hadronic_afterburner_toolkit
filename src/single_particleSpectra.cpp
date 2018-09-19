@@ -358,19 +358,16 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     int event_id = 0;
     int buffer_size = particle_list->get_event_buffer_size();
     // initialize some temp arrays
-    double *event_Qn_real = new double[order_max];
-    double *event_Qn_real_err = new double[order_max];
-    double *event_Qn_imag = new double[order_max];
-    double *event_Qn_imag_err = new double[order_max];
+    std::vector<double> event_Qn_real(order_max, 0.);
+    std::vector<double> event_Qn_real_err(order_max, 0.);
+    std::vector<double> event_Qn_imag(order_max, 0.);
+    std::vector<double> event_Qn_imag_err(order_max, 0.);
+
     double **event_Qn_diff_real = new double* [order_max];
     double **event_Qn_diff_real_err = new double* [order_max];
     double **event_Qn_diff_imag = new double* [order_max];
     double **event_Qn_diff_imag_err = new double* [order_max];
     for (int i = 0; i < order_max; i++) {
-        event_Qn_real[i] = 0.0;
-        event_Qn_real_err[i] = 0.0;
-        event_Qn_imag[i] = 0.0;
-        event_Qn_imag_err[i] = 0.0;
         event_Qn_diff_real[i] = new double[npT];
         event_Qn_diff_real_err[i] = new double[npT];
         event_Qn_diff_imag[i] = new double[npT];
@@ -382,23 +379,20 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             event_Qn_diff_imag_err[i][j] = 0.0;
         }
     }
-    double *event_Qn_p_real, *event_Qn_p_real_err;
-    double *event_Qn_p_imag, *event_Qn_p_imag_err;
-    double *event_Qn_m_real, *event_Qn_m_real_err;
-    double *event_Qn_m_imag, *event_Qn_m_imag_err;
+
+    std::vector<double> event_Qn_p_real(order_max, 0.);
+    std::vector<double> event_Qn_p_real_err(order_max, 0.);
+    std::vector<double> event_Qn_p_imag(order_max, 0.);
+    std::vector<double> event_Qn_p_imag_err(order_max, 0.);
+    std::vector<double> event_Qn_m_real(order_max, 0.);
+    std::vector<double> event_Qn_m_real_err(order_max, 0.);
+    std::vector<double> event_Qn_m_imag(order_max, 0.);
+    std::vector<double> event_Qn_m_imag_err(order_max, 0.);
     double **event_Qn_p_diff_real, **event_Qn_p_diff_real_err;
     double **event_Qn_p_diff_imag, **event_Qn_p_diff_imag_err;
     double **event_Qn_m_diff_real, **event_Qn_m_diff_real_err;
     double **event_Qn_m_diff_imag, **event_Qn_m_diff_imag_err;
     if (flag_charge_dependence == 1) {
-        event_Qn_p_real = new double[order_max];
-        event_Qn_p_real_err = new double[order_max];
-        event_Qn_p_imag = new double[order_max];
-        event_Qn_p_imag_err = new double[order_max];
-        event_Qn_m_real = new double[order_max];
-        event_Qn_m_real_err = new double[order_max];
-        event_Qn_m_imag = new double[order_max];
-        event_Qn_m_imag_err = new double[order_max];
         event_Qn_p_diff_real = new double* [order_max];
         event_Qn_p_diff_real_err = new double* [order_max];
         event_Qn_p_diff_imag = new double* [order_max];
@@ -718,10 +712,6 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     }
 
     // clean up
-    delete[] event_Qn_real;
-    delete[] event_Qn_real_err;
-    delete[] event_Qn_imag;
-    delete[] event_Qn_imag_err;
     for (int i = 0; i < order_max; i++) {
         delete[] event_Qn_diff_real[i];
         delete[] event_Qn_diff_real_err[i];
@@ -743,14 +733,6 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     delete[] event_Qn_rap_imag;
     delete[] event_Qn_rap_imag_err;
     if (flag_charge_dependence == 1) {
-        delete[] event_Qn_p_real;
-        delete[] event_Qn_p_real_err;
-        delete[] event_Qn_p_imag;
-        delete[] event_Qn_p_imag_err;
-        delete[] event_Qn_m_real;
-        delete[] event_Qn_m_real_err;
-        delete[] event_Qn_m_imag;
-        delete[] event_Qn_m_imag_err;
         for (int i = 0; i < order_max; i++) {
             delete[] event_Qn_p_diff_real[i];
             delete[] event_Qn_p_diff_real_err[i];
@@ -794,8 +776,8 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
 //! within a given rapidity region in one event
 void singleParticleSpectra::calculate_Qn_vector(int event_id,
         double pT_min_selected, double pT_max_selected,
-        double *event_Qn_real, double *event_Qn_real_err,
-        double *event_Qn_imag, double *event_Qn_imag_err,
+        std::vector<double> &event_Qn_real, std::vector<double> &event_Qn_real_err,
+        std::vector<double> &event_Qn_imag, std::vector<double> &event_Qn_imag_err,
         double **event_Qn_diff_real, double **event_Qn_diff_real_err,
         double **event_Qn_diff_imag, double **event_Qn_diff_imag_err) {
     
@@ -862,8 +844,10 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
 //! this function computes the pT-integrated and pT-differential Qn vector
 //! of postive charged hadrons within a given rapidity region in one event
 void singleParticleSpectra::calculate_Qn_vector_positive_charge(int event_id,
-        double *event_Qn_real, double *event_Qn_real_err,
-        double *event_Qn_imag, double *event_Qn_imag_err,
+        std::vector<double> &event_Qn_real,
+        std::vector<double> &event_Qn_real_err,
+        std::vector<double> &event_Qn_imag,
+        std::vector<double> &event_Qn_imag_err,
         double **event_Qn_diff_real, double **event_Qn_diff_real_err,
         double **event_Qn_diff_imag, double **event_Qn_diff_imag_err) {
     
@@ -929,8 +913,10 @@ void singleParticleSpectra::calculate_Qn_vector_positive_charge(int event_id,
 //! this function computes the pT-integrated and pT-differential Qn vector
 //! of negative charged hadrons within a given rapidity region in one event
 void singleParticleSpectra::calculate_Qn_vector_negative_charge(int event_id,
-        double *event_Qn_real, double *event_Qn_real_err,
-        double *event_Qn_imag, double *event_Qn_imag_err,
+        std::vector<double> &event_Qn_real,
+        std::vector<double> &event_Qn_real_err,
+        std::vector<double> &event_Qn_imag,
+        std::vector<double> &event_Qn_imag_err,
         double **event_Qn_diff_real, double **event_Qn_diff_real_err,
         double **event_Qn_diff_imag, double **event_Qn_diff_imag_err) {
     
@@ -1138,8 +1124,10 @@ void singleParticleSpectra::output_Qn_vectors() {
 //!     Real(Qn(pT)*conj(Qn)) for n = 0, 1, ... , order_max
 //! self correlation is subtracted when flag == 0 (full overlap)
 void singleParticleSpectra::calculate_two_particle_correlation_charge_dep(
-        double *event_Q1_real, double *event_Q1_imag,
-        double *event_Q2_real, double *event_Q2_imag, int flag,
+        std::vector<double> &event_Q1_real,
+        std::vector<double> &event_Q1_imag,
+        std::vector<double> &event_Q2_real,
+        std::vector<double> &event_Q2_imag, int flag,
         std::vector<double> &corr, std::vector<double> &corr_err) {
     for (int i = 0; i < order_max; i++) {
         double Q2_local = (event_Q1_real[i]*event_Q2_real[i]
@@ -1159,7 +1147,7 @@ void singleParticleSpectra::calculate_two_particle_correlation_charge_dep(
 //!     Real(Qn(pT)*conj(Qn)) for n = 0, 1, ... , order_max
 //! self correlation is subtracted assuming full overlap
 void singleParticleSpectra::calculate_two_particle_correlation(
-        double *event_Qn_real, double *event_Qn_imag,
+        std::vector<double> &event_Qn_real, std::vector<double> &event_Qn_imag,
         double **event_Qn_diff_real, double **event_Qn_diff_imag) {
     for (int i = 0; i < order_max; i++) {
         double Q2_local = (event_Qn_real[i]*event_Qn_real[i]
@@ -1548,10 +1536,10 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
 //! flag = 2: no overlap
 //! flag = 3: Qn = Qk <= Qm, flag = 4: Qn != Qk, Qn \in Qm, Qk \in Qn
 void singleParticleSpectra::calculate_three_particle_correlation(
-        double *event_Q1_real, double *event_Q1_imag,
-        double *event_Q2_real, double *event_Q2_imag,
-        double *event_Q3_real, double *event_Q3_imag, int flag,
-        std::vector<double> &corr, std::vector<double> &corr_err) {
+        std::vector<double> &event_Q1_real, std::vector<double> &event_Q1_imag,
+        std::vector<double> &event_Q2_real, std::vector<double> &event_Q2_imag,
+        std::vector<double> &event_Q3_real, std::vector<double> &event_Q3_imag,
+        int flag, std::vector<double> &corr, std::vector<double> &corr_err) {
     // C_nmk[0] = C_000 = N(N-1)(N-2) is the number of pairs
     // C_nmk[1] = C_112, C_nmk[2] = C_123, C_nmk[3] = C_224, C_nmk[4] = C_235
     // C_nmk[5] = C_134, C_nmk[6] = C_246, C_nmk[7] = C_336, C_nmk[8] = C_347
@@ -1750,7 +1738,7 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
 //! for n = 0, 1, 2, 3, 4
 //! self correlation is subtracted
 void singleParticleSpectra::calculate_four_particle_correlation_Cn4(
-        double *event_Qn_real, double *event_Qn_imag,
+        std::vector<double> &event_Qn_real, std::vector<double> &event_Qn_imag,
         std::vector<double> &corr, std::vector<double> &corr_err) {
     // C_n[0] = N(N-1)(N-2)(N-3) is the number of pairs
     double dN = event_Qn_real[0];
@@ -1787,11 +1775,11 @@ void singleParticleSpectra::calculate_four_particle_correlation_Cn4(
 //! for (32), (42), (52), (43), (53)
 //! self correlation is subtracted assuming Qk's sample >= Qn's and Qm's
 void singleParticleSpectra::calculate_four_particle_correlation_SC(
-        double *event_Q1_real, double *event_Q1_imag,
-        double *event_Q2_real, double *event_Q2_imag,
-        double *event_Q3_real, double *event_Q3_imag,
-        double *event_Q4_real, double *event_Q4_imag, int flag,
-        std::vector<double> &corr, std::vector<double> &corr_err) {
+    std::vector<double> &event_Q1_real, std::vector<double> &event_Q1_imag,
+    std::vector<double> &event_Q2_real, std::vector<double> &event_Q2_imag,
+    std::vector<double> &event_Q3_real, std::vector<double> &event_Q3_imag,
+    std::vector<double> &event_Q4_real, std::vector<double> &event_Q4_imag,
+    int flag, std::vector<double> &corr, std::vector<double> &corr_err) {
     // SC_mn[0] = SC_00 = N(N-1)(N-2)(N-3) is the number of pairs
     // SC_mn[1] = SC_32, SC_mn[2] = SC_42
     // SC_mn[3] = SC_52, SC_mn[4] = SC_43, SC_mn[5] = SC_53
