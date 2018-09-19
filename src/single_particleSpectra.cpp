@@ -41,14 +41,12 @@ singleParticleSpectra::singleParticleSpectra(
     pT_min = paraRdr->getVal("pT_min");
     pT_max = paraRdr->getVal("pT_max");
     dpT = (pT_max - pT_min)/(npT - 1 + 1e-15);
-    pT_array = new double [npT];
-    pT_mean_array = new double [npT];
-    pT_mean_array_err = new double [npT];
-    for (int i = 0; i < npT; i++) {
+    pT_array          = std::vector<double>(npT, 0.);
+    pT_mean_array     = std::vector<double>(npT, 0.);
+    pT_mean_array_err = std::vector<double>(npT, 0.);
+    for (int i = 0; i < npT; i++)
         pT_array[i] = pT_min + dpT*i;
-        pT_mean_array[i] = 0.0;
-        pT_mean_array_err[i] = 0.0;
-    }
+
     for (int i = 0; i < order_max; i++) {
         Qn_diff_vector_real[i] = new double[npT];
         Qn_diff_vector_imag[i] = new double[npT];
@@ -269,9 +267,6 @@ singleParticleSpectra::singleParticleSpectra(
 }
 
 singleParticleSpectra::~singleParticleSpectra() {
-    delete [] pT_array;
-    delete [] pT_mean_array;
-    delete [] pT_mean_array_err;
     for (int i = 0; i < order_max; i++) {
         delete [] Qn_diff_vector_real[i];
         delete [] Qn_diff_vector_imag[i];
@@ -848,7 +843,7 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                 }
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 if (p_idx < 0 || p_idx >= npT) continue;
-                pT_mean_array[p_idx] += p_perp;
+                pT_mean_array[p_idx]     += p_perp;
                 pT_mean_array_err[p_idx] += p_perp*p_perp;
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
@@ -1088,7 +1083,7 @@ void singleParticleSpectra::output_Qn_vectors() {
                            - mean_pT*mean_pT)
                           /sqrt(Qn_diff_vector_real[0][ipT]));
         } else {
-            mean_pT = pT_array[ipT];
+            mean_pT     = pT_array[ipT];
             mean_pT_err = 0.0;
         }
         output_diff << scientific << setw(18) << setprecision(8) 

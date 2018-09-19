@@ -21,7 +21,9 @@ class singleParticleSpectra {
 
     int npT;
     double pT_min, pT_max, dpT;
-    double *pT_array, *pT_mean_array, *pT_mean_array_err;
+    std::vector<double> pT_array;
+    std::vector<double> pT_mean_array;
+    std::vector<double> pT_mean_array_err;
 
     int rap_type;
     double rap_min, rap_max;
@@ -63,21 +65,21 @@ class singleParticleSpectra {
 
     // 3-particle correlations
     int num_corr;
-    std::vector<double>C_nmk;
-    std::vector<double>C_nmk_err;
+    std::vector<double> C_nmk;
+    std::vector<double> C_nmk_err;
     double **C_nmk_eta12, **C_nmk_eta12_err;
     double **C_nmk_eta13, **C_nmk_eta13_err;
     int flag_charge_dependence;
-    std::vector<double>C_nmk_ss;
-    std::vector<double>C_nmk_ss_err;
-    std::vector<double>C_nmk_os;
-    std::vector<double>C_nmk_os_err;
+    std::vector<double> C_nmk_ss;
+    std::vector<double> C_nmk_ss_err;
+    std::vector<double> C_nmk_os;
+    std::vector<double> C_nmk_os_err;
 
     // 3-particle correlation with charge dep on 1 and 3 particles
-    std::vector<double>C_nmk_ss_13;
-    std::vector<double>C_nmk_ss_13_err;
-    std::vector<double>C_nmk_os_13;
-    std::vector<double>C_nmk_os_13_err;
+    std::vector<double> C_nmk_ss_13;
+    std::vector<double> C_nmk_ss_13_err;
+    std::vector<double> C_nmk_os_13;
+    std::vector<double> C_nmk_os_13_err;
 
     // \Delta \eta dependent 3-particle correlators
     double **C_nmk_eta12_ss, **C_nmk_eta12_ss_err;
