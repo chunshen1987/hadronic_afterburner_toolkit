@@ -44,15 +44,19 @@ class singleParticleSpectra {
     double *Qn2_vector, *Qn2_vector_err;
     double **QnSP_diff_vector, **QnSP_diff_vector_err;
     double **QnSP_eta12, **QnSP_eta12_err;
+
+    // charge dependent two-particle correlation
     std::vector<double> Cn2_ss;
     std::vector<double> Cn2_ss_err;
     std::vector<double> Cn2_os;
     std::vector<double> Cn2_os_err;
+    // \Delta eta dependent two-particle correlation
     std::vector<std::vector<double>> Cn2_ss_eta12;
     std::vector<std::vector<double>> Cn2_ss_eta12_err;
     std::vector<std::vector<double>> Cn2_os_eta12;
     std::vector<std::vector<double>> Cn2_os_eta12_err;
 
+    // 3-particle correlations
     int num_corr;
     std::vector<double>C_nmk;
     std::vector<double>C_nmk_err;
@@ -63,14 +67,25 @@ class singleParticleSpectra {
     std::vector<double>C_nmk_ss_err;
     std::vector<double>C_nmk_os;
     std::vector<double>C_nmk_os_err;
+
+    // 3-particle correlation with charge dep on 1 and 3 particles
+    std::vector<double>C_nmk_ss_13;
+    std::vector<double>C_nmk_ss_13_err;
+    std::vector<double>C_nmk_os_13;
+    std::vector<double>C_nmk_os_13_err;
+
+    // \Delta \eta dependent 3-particle correlators
     double **C_nmk_eta12_ss, **C_nmk_eta12_ss_err;
     double **C_nmk_eta12_os, **C_nmk_eta12_os_err;
     double **C_nmk_eta13_ss, **C_nmk_eta13_ss_err;
     double **C_nmk_eta13_os, **C_nmk_eta13_os_err;
 
+    // 4-particle symmetric cumulants
     int SC_num_corr;
     std::vector<double> SC_mn;
     std::vector<double> SC_mn_err;
+
+    // 4-particle cumulant C_n{4}
     int num_Cn4;
     std::vector<double> Cn4;
     std::vector<double> Cn4_err;
