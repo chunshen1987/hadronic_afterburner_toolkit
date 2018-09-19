@@ -124,22 +124,30 @@ class singleParticleSpectra {
         double pT_min_selected, double pT_max_selected,
         std::vector<double> &event_Qn_real, std::vector<double> &event_Qn_real_err,
         std::vector<double> &event_Qn_imag, std::vector<double> &event_Qn_imag_err,
-        double **event_Qn_diff_real, double **event_Qn_diff_real_err,
-        double **event_Qn_diff_imag, double **event_Qn_diff_imag_err);
+        std::vector<std::vector<double>> &event_Qn_diff_real,
+        std::vector<std::vector<double>> &event_Qn_diff_real_err,
+        std::vector<std::vector<double>> &event_Qn_diff_imag,
+        std::vector<std::vector<double>> &event_Qn_diff_imag_err);
+
     void calculate_Qn_vector_positive_charge(int event_id,
         std::vector<double> &event_Qn_real,
         std::vector<double> &event_Qn_real_err,
         std::vector<double> &event_Qn_imag,
         std::vector<double> &event_Qn_imag_err,
-        double **event_Qn_diff_real, double **event_Qn_diff_real_err,
-        double **event_Qn_diff_imag, double **event_Qn_diff_imag_err);
+        std::vector<std::vector<double>> &event_Qn_diff_real,
+        std::vector<std::vector<double>> &event_Qn_diff_real_err,
+        std::vector<std::vector<double>> &event_Qn_diff_imag,
+        std::vector<std::vector<double>> &event_Qn_diff_imag_err);
+
     void calculate_Qn_vector_negative_charge(int event_id,
         std::vector<double> &event_Qn_real,
         std::vector<double> &event_Qn_real_err,
         std::vector<double> &event_Qn_imag,
         std::vector<double> &event_Qn_imag_err,
-        double **event_Qn_diff_real, double **event_Qn_diff_real_err,
-        double **event_Qn_diff_imag, double **event_Qn_diff_imag_err);
+        std::vector<std::vector<double>> &event_Qn_diff_real,
+        std::vector<std::vector<double>> &event_Qn_diff_real_err,
+        std::vector<std::vector<double>> &event_Qn_diff_imag,
+        std::vector<std::vector<double>> &event_Qn_diff_imag_err);
 
     //! This function outputs the event averaged particle pT-spectra
     //! and flow coefficients
@@ -165,22 +173,26 @@ class singleParticleSpectra {
     //! self correlation is subtracted assuming full overlap
     void calculate_two_particle_correlation(
         std::vector<double> &event_Qn_real, std::vector<double> &event_Qn_imag,
-        double **event_Qn_diff_real, double **event_Qn_diff_imag);
+        std::vector<std::vector<double>> &event_Qn_diff_real,
+        std::vector<std::vector<double>> &event_Qn_diff_imag);
 
     //! This function computes the 2-particle correlation for Qn vectors
     //! as a function of \delta \eta within one event
     //!     Real(Qn(eta_1)*conj(Qn(eta_2))) for n = 0, 1, ... , order_max
     //! self correlation is subtracted when eta_1 = eta_2
     void calculate_two_particle_correlation_deltaeta(
-            double **event_Qn_diff_real, double **event_Qn_diff_imag);
+        std::vector<std::vector<double>> &event_Qn_diff_real,
+        std::vector<std::vector<double>> &event_Qn_diff_imag);
 
     //! This function computes the 2-particle correlation for Qn vectors
     //! as a function of \delta \eta within one event with charge depenedence
     //!     Real(Qn(eta_1)*conj(Qn(eta_2))) for n = 0, 1, ... , order_max
     //! self correlation is subtracted when eta_1 = eta_2 and flag == 0
     void calculate_two_particle_correlation_deltaeta_chdep(
-        double **event_Q1_diff_real, double **event_Q1_diff_imag,
-        double **event_Q2_diff_real, double **event_Q2_diff_imag, int flag,
+        std::vector<std::vector<double>> &event_Q1_diff_real,
+        std::vector<std::vector<double>> &event_Q1_diff_imag,
+        std::vector<std::vector<double>> &event_Q2_diff_real,
+        std::vector<std::vector<double>> &event_Q2_diff_imag, int flag,
         std::vector<std::vector<double>> &corr,
         std::vector<std::vector<double>> &corr_err);
 
@@ -211,10 +223,13 @@ class singleParticleSpectra {
     //! flag == 1 : eta_12, flag == 2: eta_13
     //! flag_ch == 1: same charge, flag_ch == 2: opposite charge
     void calculate_three_particle_correlation_deltaeta(
-        double **event_Q1_real, double **event_Q1_imag,
-        double **event_Q2_real, double **event_Q2_imag,
-        double **event_Q3_real, double **event_Q3_imag, int flag, int flag_ch,
-        double **corr, double **corr_err);
+        std::vector<std::vector<double>> &event_Q1_real,
+        std::vector<std::vector<double>> &event_Q1_imag,
+        std::vector<std::vector<double>> &event_Q2_real,
+        std::vector<std::vector<double>> &event_Q2_imag,
+        std::vector<std::vector<double>> &event_Q3_real,
+        std::vector<std::vector<double>> &event_Q3_imag, int flag, int flag_ch,
+        double **corr_rap, double **corr_rap_err);
 
     //! This function outputs the event averaged three-particle correlation
     void output_three_particle_correlation();
@@ -254,8 +269,10 @@ class singleParticleSpectra {
     //! this function computes the pT-integrated Qn vector as a function of
     //! rapidity in one event
     void calculate_rapidity_distribution(int event_id,
-               double **event_Qn_real, double **event_Qn_real_err,
-               double **event_Qn_imag, double **event_Qn_imag_err, int flag);
+        std::vector<std::vector<double>> &event_Qn_real,
+        std::vector<std::vector<double>> &event_Qn_real_err,
+        std::vector<std::vector<double>> &event_Qn_imag,
+        std::vector<std::vector<double>> &event_Qn_imag_err, int flag);
 
     void output_rapidity_distribution();
     
