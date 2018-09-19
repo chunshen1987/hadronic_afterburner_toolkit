@@ -9,10 +9,16 @@
 #include "./parameters.h"
 #include "./single_particleSpectra.h"
 
-using namespace std;
+using std::cout;
+using std::endl;
+using std::ofstream;
+using std::ostringstream;
+using std::setw;
+using std::scientific;
+using std::setprecision;
 
 singleParticleSpectra::singleParticleSpectra(
-        ParameterReader *paraRdr_in, string path_in, 
+        ParameterReader *paraRdr_in, std::string path_in, 
         particleSamples *particle_list_in) {
     paraRdr = paraRdr_in;
     path = path_in;
@@ -358,9 +364,9 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     int event_id = 0;
     int buffer_size = particle_list->get_event_buffer_size();
     // initialize some temp arrays
-    std::vector<double> event_Qn_real(order_max, 0.);
+    std::vector<double> event_Qn_real    (order_max, 0.);
     std::vector<double> event_Qn_real_err(order_max, 0.);
-    std::vector<double> event_Qn_imag(order_max, 0.);
+    std::vector<double> event_Qn_imag    (order_max, 0.);
     std::vector<double> event_Qn_imag_err(order_max, 0.);
 
     double **event_Qn_diff_real = new double* [order_max];
@@ -466,9 +472,9 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     // start the loop
     while (!particle_list->end_of_file()) {
         cout << "Reading event: " << event_id + 1 
-             << "-" << event_id + buffer_size << " ... " << flush;
+             << "-" << event_id + buffer_size << " ... " << std::flush;
         particle_list->read_in_particle_samples();
-        cout << " processing ..." << flush;
+        cout << " processing ..." << std::flush;
         int nev = particle_list->get_number_of_events();
         for (int iev = 0; iev < nev; iev++) {
             event_id++;
