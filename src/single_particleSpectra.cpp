@@ -9,7 +9,6 @@
 #include "./parameters.h"
 #include "./single_particleSpectra.h"
 
-using std::cout;
 using std::endl;
 using std::ofstream;
 using std::ostringstream;
@@ -471,10 +470,10 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
 
     // start the loop
     while (!particle_list->end_of_file()) {
-        cout << "Reading event: " << event_id + 1 
-             << "-" << event_id + buffer_size << " ... " << std::flush;
+        std::cout << "Reading event: " << event_id + 1 
+                  << "-" << event_id + buffer_size << " ... " << std::flush;
         particle_list->read_in_particle_samples();
-        cout << " processing ..." << std::flush;
+        std::cout << " processing ..." << std::flush;
         int nev = particle_list->get_number_of_events();
         for (int iev = 0; iev < nev; iev++) {
             event_id++;
@@ -697,7 +696,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             if (check_spatial_flag == 1)
                 check_dNdSV(iev);
         }
-        cout << " done!" << endl;
+        std::cout << " done!" << endl;
     }
     total_number_of_events = event_id;
     output_Qn_vectors();
@@ -1554,9 +1553,10 @@ void singleParticleSpectra::calculate_three_particle_correlation(
     for (int i = 0; i < num_corr; i++) {
         int k = n[i] + m[i];
         if (k > order_max) {
-            cout << "Error: the vn needed for three-particle correlation "
-                 << "is not computed, order_max = " << order_max
-                 << "n+m = " << k << ". Make sure order_max > n+m!" << endl;
+            std::cout << "Error: the vn needed for three-particle correlation "
+                      << "is not computed, order_max = " << order_max
+                      << "n+m = " << k << ". Make sure order_max > n+m!"
+                      << endl;
             exit(1);
         }
         double Qn_Qm_Qkstar = (
@@ -1626,9 +1626,10 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
     for (int i = 0; i < num_corr; i++) {
         int k = n[i] + m[i];
         if (k > order_max) {
-            cout << "Error: the vn needed for three-particle correlation "
-                 << "is not computed, order_max = " << order_max
-                 << "n+m = " << k << ". Make sure order_max > n+m!" << endl;
+            std::cout << "Error: the vn needed for three-particle correlation "
+                      << "is not computed, order_max = " << order_max
+                      << "n+m = " << k << ". Make sure order_max > n+m!"
+                      << endl;
             exit(1);
         }
 
@@ -1751,9 +1752,10 @@ void singleParticleSpectra::calculate_four_particle_correlation_Cn4(
     for (int i = 0; i < num_Cn4; i++) {
         int ii = 2*i;
         if (ii > order_max) {
-            cout << "Error: the vn needed for C_n{4} is not "
-                 << "computed, order_max = " << order_max
-                 << "2n = " << ii << ". Make sure order_max > 2n!" << endl;
+            std::cout << "Error: the vn needed for C_n{4} is not "
+                      << "computed, order_max = " << order_max
+                      << "2n = " << ii << ". Make sure order_max > 2n!"
+                      << endl;
             exit(1);
         }
         double abs_Qn_2 = (  event_Qn_real[i]*event_Qn_real[i]
@@ -1794,9 +1796,10 @@ void singleParticleSpectra::calculate_four_particle_correlation_SC(
     for (int i = 0; i < SC_num_corr; i++) {
         int k = m[i] + n[i];
         if (k > order_max) {
-            cout << "Error: the vn needed for symmetric cumulants is not "
-                 << "computed, order_max = " << order_max
-                 << "m+n = " << k << ". Make sure order_max > m+n!" << endl;
+            std::cout << "Error: the vn needed for symmetric cumulants is not "
+                      << "computed, order_max = " << order_max
+                      << "m+n = " << k << ". Make sure order_max > m+n!"
+                      << endl;
             exit(1);
         }
         int l = m[i] - n[i];
@@ -2351,8 +2354,8 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         number_of_particles = (
                 particle_list->get_number_of_negative_particles(event_id));
     } else {
-        cout << "[Error]:calculate_rapidity_distribution: "
-             << "unrecogonized flag = " << flag << endl;
+        std::cout << "[Error]:calculate_rapidity_distribution: "
+                  << "unrecogonized flag = " << flag << endl;
         exit(1);
     }
     for (int i = 0; i < number_of_particles; i++) {
