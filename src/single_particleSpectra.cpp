@@ -191,15 +191,13 @@ singleParticleSpectra::singleParticleSpectra(
         }
 
         num_corr = 9;
-        C_nmk = new double[num_corr];
-        C_nmk_err = new double[num_corr];
+        C_nmk = std::vector<double>(num_corr, 0.);
+        C_nmk_err = std::vector<double>(num_corr, 0.);
         C_nmk_eta12 = new double* [num_corr];
         C_nmk_eta12_err = new double* [num_corr];
         C_nmk_eta13 = new double* [num_corr];
         C_nmk_eta13_err = new double* [num_corr];
         for (int i = 0; i < num_corr; i++) {
-            C_nmk[i] = 0.0;
-            C_nmk_err[i] = 0.0;
             C_nmk_eta12[i] = new double[N_rap];
             C_nmk_eta12_err[i] = new double[N_rap];
             C_nmk_eta13[i] = new double[N_rap];
@@ -230,10 +228,10 @@ singleParticleSpectra::singleParticleSpectra(
                 Cn2_os_eta12_err[i].resize(N_rap, 0.);
             }
 
-            C_nmk_ss = new double[num_corr];
-            C_nmk_ss_err = new double[num_corr];
-            C_nmk_os = new double[num_corr];
-            C_nmk_os_err = new double[num_corr];
+            C_nmk_ss = std::vector<double>(num_corr, 0.);
+            C_nmk_ss_err = std::vector<double>(num_corr, 0.);
+            C_nmk_os = std::vector<double>(num_corr, 0.);
+            C_nmk_os_err = std::vector<double>(num_corr, 0.);
             C_nmk_eta12_ss = new double* [num_corr];
             C_nmk_eta12_ss_err = new double* [num_corr];
             C_nmk_eta12_os = new double* [num_corr];
@@ -243,10 +241,6 @@ singleParticleSpectra::singleParticleSpectra(
             C_nmk_eta13_os = new double* [num_corr];
             C_nmk_eta13_os_err = new double* [num_corr];
             for (int i = 0; i < num_corr; i++) {
-                C_nmk_ss[i] = 0.0;
-                C_nmk_ss_err[i] = 0.0;
-                C_nmk_os[i] = 0.0;
-                C_nmk_os_err[i] = 0.0;
                 C_nmk_eta12_ss[i] = new double[N_rap];
                 C_nmk_eta12_ss_err[i] = new double[N_rap];
                 C_nmk_eta12_os[i] = new double[N_rap];
@@ -346,8 +340,6 @@ singleParticleSpectra::~singleParticleSpectra() {
         delete[] Qn2_vector;
         delete[] Qn2_vector_err;
 
-        delete[] C_nmk;
-        delete[] C_nmk_err;
         for (int i = 0; i < num_corr; i++) {
             delete[] C_nmk_eta12[i];
             delete[] C_nmk_eta12_err[i];
@@ -359,10 +351,6 @@ singleParticleSpectra::~singleParticleSpectra() {
         delete[] C_nmk_eta13;
         delete[] C_nmk_eta13_err;
         if (flag_charge_dependence == 1) {
-            delete[] C_nmk_ss;
-            delete[] C_nmk_ss_err;
-            delete[] C_nmk_os;
-            delete[] C_nmk_os_err;
             for (int i = 0; i < num_corr; i++) {
                 delete[] C_nmk_eta12_ss[i];
                 delete[] C_nmk_eta12_ss_err[i];
@@ -1563,7 +1551,7 @@ void singleParticleSpectra::calculate_three_particle_correlation(
         double *event_Q1_real, double *event_Q1_imag,
         double *event_Q2_real, double *event_Q2_imag,
         double *event_Q3_real, double *event_Q3_imag, int flag,
-        double *corr, double *corr_err) {
+        std::vector<double> &corr, std::vector<double> &corr_err) {
     // C_nmk[0] = C_000 = N(N-1)(N-2) is the number of pairs
     // C_nmk[1] = C_112, C_nmk[2] = C_123, C_nmk[3] = C_224, C_nmk[4] = C_235
     // C_nmk[5] = C_134, C_nmk[6] = C_246, C_nmk[7] = C_336, C_nmk[8] = C_347

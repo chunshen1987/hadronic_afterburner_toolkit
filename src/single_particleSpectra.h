@@ -54,11 +54,15 @@ class singleParticleSpectra {
     std::vector<std::vector<double>> Cn2_os_eta12_err;
 
     int num_corr;
-    double *C_nmk, *C_nmk_err;
+    std::vector<double>C_nmk;
+    std::vector<double>C_nmk_err;
     double **C_nmk_eta12, **C_nmk_eta12_err;
     double **C_nmk_eta13, **C_nmk_eta13_err;
     int flag_charge_dependence;
-    double *C_nmk_ss, *C_nmk_ss_err, *C_nmk_os, *C_nmk_os_err;
+    std::vector<double>C_nmk_ss;
+    std::vector<double>C_nmk_ss_err;
+    std::vector<double>C_nmk_os;
+    std::vector<double>C_nmk_os_err;
     double **C_nmk_eta12_ss, **C_nmk_eta12_ss_err;
     double **C_nmk_eta12_os, **C_nmk_eta12_os_err;
     double **C_nmk_eta13_ss, **C_nmk_eta13_ss_err;
@@ -168,7 +172,7 @@ class singleParticleSpectra {
             double *event_Q1_real, double *event_Q1_imag,
             double *event_Q2_real, double *event_Q2_imag,
             double *event_Q3_real, double *event_Q3_imag, int flag,
-            double *corr, double *corr_err);
+            std::vector<double> &corr, std::vector<double> &corr_err);
 
     //! This function computes the 3-particle correlation as a function of 
     //! relative rapidity between particle 1 and particle 2 within one event
