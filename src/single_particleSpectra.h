@@ -69,7 +69,8 @@ class singleParticleSpectra {
     double **C_nmk_eta13_os, **C_nmk_eta13_os_err;
 
     int SC_num_corr;
-    double *SC_mn, *SC_mn_err;
+    std::vector<double> SC_mn;
+    std::vector<double> SC_mn_err;
     int num_Cn4;
     std::vector<double> Cn4;
     std::vector<double> Cn4_err;
@@ -213,7 +214,7 @@ class singleParticleSpectra {
             double *event_Q2_real, double *event_Q2_imag,
             double *event_Q3_real, double *event_Q3_imag,
             double *event_Q4_real, double *event_Q4_imag, int flag,
-            double *corr, double *corr_err);
+            std::vector<double> &corr, std::vector<double> &corr_err);
 
 
     //! This function outputs the event averaged four-particle Cn{4}

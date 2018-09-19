@@ -191,7 +191,7 @@ singleParticleSpectra::singleParticleSpectra(
         }
 
         num_corr = 9;
-        C_nmk = std::vector<double>(num_corr, 0.);
+        C_nmk     = std::vector<double>(num_corr, 0.);
         C_nmk_err = std::vector<double>(num_corr, 0.);
         C_nmk_eta12 = new double* [num_corr];
         C_nmk_eta12_err = new double* [num_corr];
@@ -228,9 +228,9 @@ singleParticleSpectra::singleParticleSpectra(
                 Cn2_os_eta12_err[i].resize(N_rap, 0.);
             }
 
-            C_nmk_ss = std::vector<double>(num_corr, 0.);
+            C_nmk_ss     = std::vector<double>(num_corr, 0.);
             C_nmk_ss_err = std::vector<double>(num_corr, 0.);
-            C_nmk_os = std::vector<double>(num_corr, 0.);
+            C_nmk_os     = std::vector<double>(num_corr, 0.);
             C_nmk_os_err = std::vector<double>(num_corr, 0.);
             C_nmk_eta12_ss = new double* [num_corr];
             C_nmk_eta12_ss_err = new double* [num_corr];
@@ -262,15 +262,11 @@ singleParticleSpectra::singleParticleSpectra(
             }
         }
         SC_num_corr = 6;
-        SC_mn = new double[SC_num_corr];
-        SC_mn_err = new double[SC_num_corr];
-        for (int i = 0; i < SC_num_corr; i++) {
-            SC_mn[i] = 0.0;
-            SC_mn_err[i] = 0.0;
-        }
+        SC_mn     = std::vector<double>(SC_num_corr, 0.);
+        SC_mn_err = std::vector<double>(SC_num_corr, 0.);
 
         num_Cn4 = 5;
-        Cn4 = std::vector<double> (num_Cn4, 0.);
+        Cn4     = std::vector<double> (num_Cn4, 0.);
         Cn4_err = std::vector<double> (num_Cn4, 0.);
     }
 }
@@ -370,8 +366,6 @@ singleParticleSpectra::~singleParticleSpectra() {
             delete[] C_nmk_eta13_os;
             delete[] C_nmk_eta13_os_err;
         }
-        delete[] SC_mn;
-        delete[] SC_mn_err;
     }
 }
 
@@ -1773,7 +1767,7 @@ void singleParticleSpectra::calculate_four_particle_correlation_SC(
         double *event_Q2_real, double *event_Q2_imag,
         double *event_Q3_real, double *event_Q3_imag,
         double *event_Q4_real, double *event_Q4_imag, int flag,
-        double *corr, double *corr_err) {
+        std::vector<double> &corr, std::vector<double> &corr_err) {
     // SC_mn[0] = SC_00 = N(N-1)(N-2)(N-3) is the number of pairs
     // SC_mn[1] = SC_32, SC_mn[2] = SC_42
     // SC_mn[3] = SC_52, SC_mn[4] = SC_43, SC_mn[5] = SC_53
