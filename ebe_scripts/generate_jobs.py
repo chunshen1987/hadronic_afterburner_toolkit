@@ -49,12 +49,12 @@ def write_script_header(cluster, script, event_id, walltime, working_folder):
 
 
 def write_analysis_spectra_and_vn_commands(script, after_burner_type):
-    #pid_particle_list = ['211', '-211', '321', '-321', '2212', '-2212',
-    #                     '3122', '-3122', '3312', '-3312', '3334', '-3334',
-    #                     '333']
-    #charged_particle_list = ['9999', '9998', '-9998']
-    pid_particle_list = []
-    charged_particle_list = ['9999']
+    pid_particle_list = ['211', '-211', '321', '-321', '2212', '-2212',
+                         '3122', '-3122', '3312', '-3312', '3334', '-3334',
+                         '333']
+    charged_particle_list = ['9999', '9998', '-9998']
+    #pid_particle_list = []
+    #charged_particle_list = ['9999']
 
     read_in_mode = 2
     if after_burner_type == "JAM":
@@ -317,6 +317,39 @@ done
 """)
     script.close()
 
+
+def generate_script_balance_function(cluster_name, folder_name):
+    working_folder = path.join(path.abspath('./'), folder_name)
+    event_id = working_folder.split('/')[-1]
+    walltime = '01:00:00'
+
+    particle_a_list = ['9998']
+    particle_b_list = ['-9998']
+
+    script = open(path.join(working_folder, "submit_job.pbs"), "w")
+    write_script_header(cluster_name, script, event_id, walltime,
+                        working_folder)
+    for ipart in range(len(particle_a_list)):
+    script.write(
+"""
+mkdir BalanceFunction_results
+for iev in `ls UrQMD_events | grep "particle_list"`
+do
+    eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    cd hadronic_afterburner_toolkit
+    rm -fr results
+    mkdir results
+    mv ../UrQMD_events/$iev results/particle_list.dat
+    mv ../UrQMD_events/mixed_event_$eventid.dat results/particle_list_mixed_event.dat
+    ./hadronic_afterburner_tools.e read_in_mode=2 run_mode=3 resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 particle_alpha={0} particle_beta={1} BpT_min=0.2 BpT_max=3.0 > output.log
+    mv results/particle_list.dat ../UrQMD_events/$iev
+    mv results/particle_list_mixed_event.dat ../UrQMD_events/mixed_event_$eventid.dat
+    mv results ../BalanceFunction_results/event_$eventid
+    cd ..
+done
+""".format(particle_a_list[ipart], particle_b_list[ipart]))
+    script.close()
+
 def generate_script_spectra_and_vn(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
     event_id = working_folder.split('/')[-1]
@@ -548,6 +581,10 @@ def generate_event_folder_UrQMD(cluster_name, working_folder, event_id, mode):
         mkdir(path.join(event_folder, 'OSCAR_events'))
         generate_script_particle_yield_distribution_with_OSCAR(cluster_name,
                                                                event_folder)
+    elif mode == 10:
+        # calculate balance function correlation with UrQMD outputs
+        mkdir(path.join(event_folder, 'UrQMD_events'))
+        generate_script_balance_function(cluster_name, event_folder)
 
     shutil.copytree('codes/hadronic_afterburner_toolkit', 
                     path.join(path.abspath(event_folder), 
@@ -736,5 +773,10 @@ if __name__ == "__main__":
         for icore in range(ncore):
             generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_OSCAR_events(ncore, from_folder, folder_name)
+    elif mode == 10:   # calculate balance function correlation with UrQMD events
+        for icore in range(ncore):
+            generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
+        copy_UrQMD_events(ncore, from_folder, folder_name)
+        copy_job_scripts(folder_name)
 
 
