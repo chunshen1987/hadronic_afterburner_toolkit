@@ -329,7 +329,6 @@ def generate_script_balance_function(cluster_name, folder_name):
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     write_script_header(cluster_name, script, event_id, walltime,
                         working_folder)
-    for ipart in range(len(particle_a_list)):
     script.write(
 """
 mkdir BalanceFunction_results
@@ -341,13 +340,20 @@ do
     mkdir results
     mv ../UrQMD_events/$iev results/particle_list.dat
     mv ../UrQMD_events/mixed_event_$eventid.dat results/particle_list_mixed_event.dat
+""")
+    for ipart in range(len(particle_a_list)):
+        script.write(
+"""
     ./hadronic_afterburner_tools.e read_in_mode=2 run_mode=3 resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 particle_alpha={0} particle_beta={1} BpT_min=0.2 BpT_max=3.0 > output.log
+""".format(particle_a_list[ipart], particle_b_list[ipart]))
+    script.write(
+"""
     mv results/particle_list.dat ../UrQMD_events/$iev
     mv results/particle_list_mixed_event.dat ../UrQMD_events/mixed_event_$eventid.dat
     mv results ../BalanceFunction_results/event_$eventid
     cd ..
 done
-""".format(particle_a_list[ipart], particle_b_list[ipart]))
+""")
     script.close()
 
 def generate_script_spectra_and_vn(cluster_name, folder_name):
