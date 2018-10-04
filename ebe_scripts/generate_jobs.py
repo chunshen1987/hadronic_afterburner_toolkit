@@ -49,45 +49,38 @@ def write_script_header(cluster, script, event_id, walltime, working_folder):
 
 
 def write_analysis_spectra_and_vn_commands(script, after_burner_type):
-    pid_particle_list = ['211', '-211', '321', '-321', '2212', '-2212',
-                         '3122', '-3122', '3312', '-3312', '3334', '-3334',
-                         '333']
-    #charged_particle_list = ['9998', '-9998', '9999']
-    charged_particle_list2 = ['9998', '-9998']
+    #pid_particle_list = ['211', '-211', '321', '-321', '2212', '-2212',
+    #                     '3122', '-3122', '3312', '-3312', '3334', '-3334',
+    #                     '333']
+    #charged_particle_list = ['9999', '9998', '-9998']
+    pid_particle_list = []
     charged_particle_list = ['9999']
+
     read_in_mode = 2
     if after_burner_type == "JAM":
         read_in_mode = 5
     if after_burner_type == "OSCAR":
         read_in_mode = 0
 
-    for ipart in pid_particle_list:
-        script.write(
-"""
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=1 rap_type=0 rapidity_dis_min=-4.0 rapidity_dis_max=4.0 n_rap=81 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=1 rap_type=1 rapidity_dis_min=-4.0 rapidity_dis_max=4.0 n_rap=81 >> output.log
-""".format(read_in_mode, ipart))
-    for ipart in charged_particle_list2:
-        script.write(
-"""
-    # charged hadrons
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-0.5 rap_max=0.5 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.5 rap_max=1.5 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-2.0 rap_max=2.0 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.5 rap_max=-0.5 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=0.5 rap_max=1.5 >> output.log
-""".format(read_in_mode, ipart))
     for ipart in charged_particle_list:
         script.write(
 """
     # charged hadrons
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-0.5 rap_max=0.5 compute_correlation=1 flag_charge_dependence=1 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 compute_correlation=1 flag_charge_dependence=1 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.5 rap_max=1.5 compute_correlation=1 flag_charge_dependence=1 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-2.0 rap_max=2.0 compute_correlation=1 flag_charge_dependence=1 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.5 rap_max=-0.5 compute_correlation=1 flag_charge_dependence=1 >> output.log
-    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=0.5 rap_max=1.5 compute_correlation=1 flag_charge_dependence=1 >> output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=-0.1 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=0.1 rap_max=1.0 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=0.5 rap_max=2.0 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-2.0 rap_max=-0.5 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 compute_correlation=1 flag_charge_dependence=1 pT_min=0.2 pT_max=2.0 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-2.0 rap_max=2.0 compute_correlation=1 flag_charge_dependence=1 pT_min=0.2 pT_max=2.0 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-1.0 rap_max=1.0 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=0 rap_type=0 rap_min=-2.0 rap_max=2.0 >> ../output.log
+""".format(read_in_mode, ipart))
+    for ipart in pid_particle_list:
+        script.write(
+"""
+    #./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=1 rap_type=0 >> ../output.log
+    ./hadronic_afterburner_tools.e run_mode=0 read_in_mode={0} particle_monval={1} resonance_feed_down_flag=0 distinguish_isospin=1 rap_type=1 >> ../output.log
 """.format(read_in_mode, ipart))
 
 
@@ -157,50 +150,24 @@ done
 def generate_script_JAM(cluster_name, folder_name):
     working_folder = path.join(path.abspath('./'), folder_name)
     event_id = working_folder.split('/')[-1]
-    walltime = '35:00:00'
+    walltime = '10:00:00'
 
     script = open(path.join(working_folder, "submit_job.pbs"), "w")
     write_script_header(cluster_name, script, event_id, walltime,
                         working_folder)
     script.write(
 """
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/gs/project/cqn-654-ad/cshen/UrQMD_afterburner/JAM_libs/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/scratch/irulan/chun/JAM/JAM_lib/lib
 mkdir JAM_results
-mkdir spvn_results
-for iev in `ls hydro_events --color=none | grep "surface"`
+for iev in `ls OSCAR_events`
 do
-    event_id=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
-    cd iSS
-    if [ -d "results" ]; then
-        rm -fr results
-    fi
-    mkdir results
-    mv ../hydro_events/$iev results/surface.dat
-    cp ../hydro_events/music_input_event_$event_id results/music_input
-    ./iSS.e >> ../output.log
-    python correct_momentum_conservation.py OSCAR.DAT >> ../output.log
-    mv results/surface.dat ../hydro_events/$iev
-    cd ../JAM
-    #ln -s ../iSS/OSCAR.DAT ./OSCAR.DAT
-    ln -s ../iSS/OSCAR_w_GMC.DAT ./OSCAR.DAT
+    eventid=`echo $iev | cut -f 2 -d "_" | cut -f 1 -d "."`
+    cd JAM
+    mv ../OSCAR_events/$iev ./OSCAR.DAT
     rm -fr phase.dat
     ./jamgo
-    mv phase.dat ../JAM_results/particle_list_$event_id.dat
-    rm -fr OSCAR.DAT
-    rm -fr ../iSS/OSCAR.DAT
-    rm -fr ../iSS/OSCAR_w_GMC.DAT
-    cd ..
-    
-    cd hadronic_afterburner_toolkit
-    rm -fr results
-    mkdir results
-    mv ../JAM_results/particle_list_$event_id.dat results/particle_list.dat
-""")
-    write_analysis_spectra_and_vn_commands(script, "JAM")
-    script.write(
-"""
-    mv results/particle_list.dat ../JAM_results/particle_list_$event_id.dat
-    mv results ../spvn_results/event_$event_id
+    mv phase.dat ../JAM_results/particle_list_$eventid.dat
+    mv OSCAR.DAT ../OSCAR_events/OSCAR_$eventid.dat
     cd ..
 done
 """)
@@ -230,18 +197,19 @@ do
     mv ../hydro_events/$iev results/surface.dat
     cp ../hydro_events/music_input_event_$event_id results/music_input
     ./iSS.e >> ../output.log
-    python correct_momentum_conservation.py OSCAR.DAT >> ../output.log
     mv results/surface.dat ../hydro_events/$iev
+    #rm -fr results/sample*
+    # turn on global momentum conservation
+    ./correct_momentum_conservation.py OSCAR.DAT
+    mv OSCAR_w_GMC.DAT OSCAR.DAT
     cd ../osc2u
     ./osc2u.e < ../iSS/OSCAR.DAT >> ../output.log
-    #./osc2u.e < ../iSS/OSCAR_w_GMC.DAT >> ../output.log
     mv fort.14 ../urqmd/OSCAR.input
     cd ../urqmd
     ./runqmd.sh >> ../output.log
     mv particle_list.dat ../UrQMD_results/particle_list_$event_id.dat
     #mv ../iSS/OSCAR.DAT ../UrQMD_results/OSCAR_$event_id.dat
     rm -fr ../iSS/OSCAR.DAT
-    rm -fr ../iSS/OSCAR_w_GMC.DAT
     rm -fr OSCAR.input
     cd ..
     ./hadronic_afterburner_toolkit/convert_to_binary.e UrQMD_results/particle_list_$event_id.dat
@@ -589,18 +557,13 @@ def generate_event_folder_UrQMD(cluster_name, working_folder, event_id, mode):
 def generate_event_folder_JAM(cluster_name, working_folder, event_id, mode):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
     mkdir(event_folder)
-    mkdir(path.join(event_folder, 'hydro_events'))
 
     if mode == 5:
-        # run JAM with hydro surface files and collect particle spectra and vn
+        # run JAM with OSCAR files
+        mkdir(path.join(event_folder, 'OSCAR_events'))
         generate_script_JAM(cluster_name, event_folder)
-        shutil.copytree('codes/iSS', 
-                        path.join(path.abspath(event_folder), 'iSS'))
         shutil.copytree('codes/JAM', 
                         path.join(path.abspath(event_folder), 'JAM'))
-        shutil.copytree('codes/hadronic_afterburner_toolkit', 
-                        path.join(path.abspath(event_folder), 
-                        'hadronic_afterburner_toolkit'))
     elif mode == 6:
         # collect particle spectra and vn with JAM outputs
         mkdir(path.join(event_folder, 'JAM_events'))
@@ -692,6 +655,11 @@ def copy_hydro_events(number_of_cores, input_folder, working_folder):
                               'music_input_event_%s' % event_id), 
                     working_path)
 
+def copy_job_scripts(working_folder):
+    shutil.copy("job_MPI_wrapper.py", working_folder)
+    shutil.copy("submit_MPI_job_for_all.pbs", working_folder)
+    shutil.copy("run_job.sh", working_folder)
+
 def print_mode_cheat_sheet():
     print("Here is a cheat sheet for mode option:")
     print("mode -1: run iS + resonance decay")
@@ -725,6 +693,7 @@ if __name__ == "__main__":
         for icore in range(ncore):
             generate_event_folder_iSS(cluster_name, folder_name, icore)
         copy_hydro_events(ncore, from_folder, folder_name)
+        copy_job_scripts(folder_name)
     elif mode == -1:   # run iS + resonance decay
         for icore in range(ncore):
             generate_event_folder_iS(cluster_name, folder_name, icore)
@@ -741,14 +710,16 @@ if __name__ == "__main__":
         for icore in range(ncore):
             generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_UrQMD_events(ncore, from_folder, folder_name)
+        copy_job_scripts(folder_name)
     elif mode == 4:   # collect spectra and flow observables from UrQMD events
         for icore in range(ncore):
             generate_event_folder_UrQMD(cluster_name, folder_name, icore, mode)
         copy_UrQMD_events(ncore, from_folder, folder_name)
+        copy_job_scripts(folder_name)
     elif mode == 5:   # run JAM with OSCAR events
         for icore in range(ncore):
             generate_event_folder_JAM(cluster_name, folder_name, icore, mode)
-        copy_hydro_events(ncore, from_folder, folder_name)
+        copy_OSCAR_events(ncore, from_folder, folder_name)
     elif mode == 6:   # collect spectra and vn with JAM events
         for icore in range(ncore):
             generate_event_folder_JAM(cluster_name, folder_name, icore, mode)
