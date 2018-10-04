@@ -952,7 +952,7 @@ void particleSamples::filter_particles_into_lists(
             if (run_mode == 3) {
                 if (decide_to_pick_OSCAR(particle_monval_a, part_i.monval))
                     (*balance_function_particle_a)[iev]->push_back(part_i);
-                if (decide_to_pick_OSCAR(particle_monval_abar,part_i.monval))
+                if (decide_to_pick_OSCAR(particle_monval_abar, part_i.monval))
                     (*balance_function_particle_abar)[iev]->push_back(part_i);
                 if (decide_to_pick_OSCAR(particle_monval_b, part_i.monval))
                     (*balance_function_particle_b)[iev]->push_back(part_i);

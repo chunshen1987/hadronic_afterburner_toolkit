@@ -8,13 +8,17 @@ if ( ZIB_FOUND )
     include_directories( ${ZLIB_INCLUDE_DIRS} )
 endif ( ZIB_FOUND)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 message("source directory:" ${CMAKE_SOURCE_DIR})
 message("binary directory:" ${CMAKE_BINARY_DIR})
 
 if (APPLE)
-    set (CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
+    set (CMAKE_CXX_FLAGS "-g -Wall -Wextra")
 else ()
-    set (CMAKE_CXX_FLAGS "-g -Wall -pthread -std=c++11")
+    set (CMAKE_CXX_FLAGS "-g -Wall -pthread -Wextra")
 endif ()
 
 add_subdirectory (src)

@@ -28,8 +28,8 @@ BalanceFunction::BalanceFunction(
     BpT_min  = paraRdr->getVal("BpT_min");
     BpT_max  = paraRdr->getVal("BpT_max");
     Bnpts    = paraRdr->getVal("Bnpts");
-    Brap_min = 0.0;
     Brap_max = paraRdr->getVal("Brap_max");
+    Brap_min = -Brap_max;
     drap     = (Brap_max - Brap_min)/(Bnpts - 1);
     Bnphi    = 20;
     dphi     = 2*M_PI/Bnphi;
@@ -44,6 +44,9 @@ BalanceFunction::BalanceFunction(
         C_abarb[i].assign(Bnphi, 0.);
         C_abbar[i].assign(Bnphi, 0.);
     }
+
+    N_b    = 0;
+    N_bbar = 0;
 }
 
 
@@ -90,8 +93,9 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                 if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
                 auto delta_phi_local = part_a.phi_p - part_b.phi_p;
                 int phi_idx = (static_cast<int>(delta_phi_local/dphi))%Bnphi;
-                auto delta_y_local = std::abs(part_a.rap_y - part_b.rap_y);
-                if (delta_y_local < 1e-15) continue;
+                if (phi_idx < 0) phi_idx += Bnphi;
+                auto delta_y_local = part_a.rap_y - part_b.rap_y;
+                if (std::abs(delta_y_local) < 1e-15) continue;
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
@@ -105,10 +109,10 @@ void BalanceFunction::combine_and_bin_particle_pairs(
 
 int BalanceFunction::get_number_of_particles(
                 const std::vector< std::vector<particle_info>* >* plist_b) {
-    int N_b = 0;
+    int particle_number = 0;
     for (auto const& ev_i: (*plist_b))
-        N_b += ev_i->size();
-    return(N_b);
+        particle_number += ev_i->size();
+    return(particle_number);
 }
 
 void BalanceFunction::output_balance_function() {
@@ -156,7 +160,7 @@ void BalanceFunction::output_balance_function() {
     // output correlation functions as a function of \Delta Y and \Delta phi
     std::ostringstream filename3;
     filename3 << path << "/Balance_function_" << particle_monval_a << "_"
-              << particle_monval_b << "_ss_2D.dat";
+              << particle_monval_b << "_os_2D.dat";
     std::ofstream output3(filename3.str().c_str(), std::ios::out);
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
@@ -169,7 +173,7 @@ void BalanceFunction::output_balance_function() {
     output3.close();
     std::ostringstream filename4;
     filename4 << path << "/Balance_function_" << particle_monval_a << "_"
-              << particle_monval_b << "_os_2D.dat";
+              << particle_monval_b << "_ss_2D.dat";
     std::ofstream output4(filename4.str().c_str(), std::ios::out);
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
