@@ -63,13 +63,13 @@ void BalanceFunction::calculate_balance_function() {
         
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
-        cout << "calculating N_ab ... " << endl;
+        cout << "calculating C_ab ... " << endl;
         combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
-        cout << "calculating N_abarbbar ... " << endl;
+        cout << "calculating C_abarbbar ... " << endl;
         combine_and_bin_particle_pairs(C_abarbbar, plist_abar, plist_bbar);
-        cout << "calculating N_abbar ... " << endl;
+        cout << "calculating C_abbar ... " << endl;
         combine_and_bin_particle_pairs(C_abbar, plist_a, plist_bbar);
-        cout << "calculating N_abarb ... " << endl;
+        cout << "calculating C_abarb ... " << endl;
         combine_and_bin_particle_pairs(C_abarb, plist_abar, plist_b);
         event_id += buffer_size;
     }
