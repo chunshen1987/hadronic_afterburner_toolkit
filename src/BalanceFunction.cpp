@@ -146,10 +146,38 @@ void BalanceFunction::output_balance_function() {
     std::ostringstream filename2;
     filename2 << path << "/Balance_function_" << particle_monval_a << "_"
               << particle_monval_b << "_delta_phi.dat";
-    std::ofstream output2(filename.str().c_str(), std::ios::out);
+    std::ofstream output2(filename2.str().c_str(), std::ios::out);
     for (int j = 0; j < Bnphi; j++) {
         output2 << std::scientific << std::setw(18) << std::setprecision(8)
                 << j*dphi << "   " << B_delta_phi[j] << endl;
     }
     output2.close();
+
+    // output correlation functions as a function of \Delta Y and \Delta phi
+    std::ostringstream filename3;
+    filename3 << path << "/Balance_function_" << particle_monval_a << "_"
+              << particle_monval_b << "_ss_2D.dat";
+    std::ofstream output3(filename3.str().c_str(), std::ios::out);
+    for (int i = 0; i < Bnpts; i++) {
+        for (int j = 0; j < Bnphi; j++) {
+            output3 << std::scientific << std::setw(18) << std::setprecision(8)
+                    << ((C_ab[i][j] + C_abarbbar[i][j])
+                        /static_cast<double>(N_b + N_bbar)) << "  ";
+        }
+        output3 << endl;
+    }
+    output3.close();
+    std::ostringstream filename4;
+    filename4 << path << "/Balance_function_" << particle_monval_a << "_"
+              << particle_monval_b << "_os_2D.dat";
+    std::ofstream output4(filename4.str().c_str(), std::ios::out);
+    for (int i = 0; i < Bnpts; i++) {
+        for (int j = 0; j < Bnphi; j++) {
+            output4 << std::scientific << std::setw(18) << std::setprecision(8)
+                    << ((C_abbar[i][j] + C_abarb[i][j])
+                        /static_cast<double>(N_b + N_bbar)) << "  ";
+        }
+        output4 << endl;
+    }
+    output4.close();
 }
