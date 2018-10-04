@@ -126,7 +126,7 @@ void BalanceFunction::output_balance_function() {
     }
     std::ostringstream filename;
     filename << path << "/Balance_function_" << particle_monval_a << "_"
-             << particle_monval_b << "_delta_y.dat";
+             << particle_monval_b << "_Delta_y.dat";
     std::ofstream output(filename.str().c_str(), std::ios::out);
     for (int i = 0; i < Bnpts; i++) {
         output << std::scientific << std::setw(18) << std::setprecision(8)
@@ -145,7 +145,7 @@ void BalanceFunction::output_balance_function() {
     }
     std::ostringstream filename2;
     filename2 << path << "/Balance_function_" << particle_monval_a << "_"
-              << particle_monval_b << "_delta_phi.dat";
+              << particle_monval_b << "_Delta_phi.dat";
     std::ofstream output2(filename2.str().c_str(), std::ios::out);
     for (int j = 0; j < Bnphi; j++) {
         output2 << std::scientific << std::setw(18) << std::setprecision(8)

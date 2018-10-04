@@ -456,46 +456,46 @@ int particleSamples::decide_to_pick_reconst(int monval) {
 }
 
 
-int particleSamples::decide_to_pick_OSCAR(int monval) {
-    int pick_flag = 0;
-    if (particle_monval == 9999) {
+bool particleSamples::decide_to_pick_OSCAR(int POI, int monval) {
+    bool pick_flag = false;
+    if (POI == 9999) {
         int charge = decayer_ptr->get_particle_charge(monval);
         if (charge != 0) {
-            pick_flag = 1;
+            pick_flag = true;
         }
-    } else if (particle_monval == 9998) {
+    } else if (POI == 9998) {
         int charge = decayer_ptr->get_particle_charge(monval);
         if (charge > 0) {
-            pick_flag = 1;
+            pick_flag = true;
         }
-    } else if (particle_monval == -9998) {
+    } else if (POI == -9998) {
         int charge = decayer_ptr->get_particle_charge(monval);
         if (charge < 0) {
-            pick_flag = 1;
+            pick_flag = true;
         }
-    } else if (particle_monval == 9997) {
+    } else if (POI == 9997) {
         int baryon = decayer_ptr->get_particle_baryon_number(monval);
         if (baryon > 0) {
-            pick_flag = 1;
+            pick_flag = true;
         }
-    } else if (particle_monval == -9997) {
+    } else if (POI == -9997) {
         int baryon = decayer_ptr->get_particle_baryon_number(monval);
         if (baryon < 0) {
-            pick_flag = 1;
+            pick_flag = true;
         }
-    } else if (particle_monval == 9996) {
+    } else if (POI == 9996) {
         int strange = decayer_ptr->get_particle_strange_number(monval);
         if (strange > 0) {
-            pick_flag = 1;
+            pick_flag = true;
         }
-    } else if (particle_monval == -9996) {
+    } else if (POI == -9996) {
         int strange = decayer_ptr->get_particle_strange_number(monval);
         if (strange < 0) {
-            pick_flag = 1;
+            pick_flag = true;
         }
     } else {
-        if (monval == particle_monval) {
-            pick_flag = 1;
+        if (monval == POI) {
+            pick_flag = true;
         }
     }
     return(pick_flag);
@@ -836,8 +836,9 @@ void particleSamples::filter_particles(
     for (auto &ev_i: (*full_list)) {
         filted_list->push_back(new vector<particle_info> );
         for (auto &part_i: (*ev_i)) {
-            int pick_flag = decide_to_pick_OSCAR(part_i.monval);
-            if (pick_flag != 0)
+            bool pick_flag = decide_to_pick_OSCAR(particle_monval,
+                                                  part_i.monval);
+            if (pick_flag)
                 (*filted_list)[i]->push_back(part_i);
         }
         i++;
@@ -914,8 +915,9 @@ void particleSamples::filter_particles_into_lists(
         }
 
         for (auto &part_i: (*ev_i)) {
-            int pick_flag = decide_to_pick_OSCAR(part_i.monval);
-            if (pick_flag == 1)
+            bool pick_flag = decide_to_pick_OSCAR(particle_monval,
+                                                  part_i.monval);
+            if (pick_flag)
                 (*particle_list)[iev]->push_back(part_i);
 
             if (resonance_weak_feed_down_flag == 1) {
@@ -948,13 +950,13 @@ void particleSamples::filter_particles_into_lists(
             }
 
             if (run_mode == 3) {
-                if (particle_monval_a == part_i.monval)
+                if (decide_to_pick_OSCAR(particle_monval_a, part_i.monval))
                     (*balance_function_particle_a)[iev]->push_back(part_i);
-                if (particle_monval_abar == part_i.monval)
+                if (decide_to_pick_OSCAR(particle_monval_abar,part_i.monval))
                     (*balance_function_particle_abar)[iev]->push_back(part_i);
-                if (particle_monval_b == part_i.monval)
+                if (decide_to_pick_OSCAR(particle_monval_b, part_i.monval))
                     (*balance_function_particle_b)[iev]->push_back(part_i);
-                if (particle_monval_bbar == part_i.monval)
+                if (decide_to_pick_OSCAR(particle_monval_bbar, part_i.monval))
                     (*balance_function_particle_bbar)[iev]->push_back(part_i);
             }
         }

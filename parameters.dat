@@ -8,7 +8,7 @@ read_in_mode = 2              # mode for reading in particle information
                               # 4: reads outputs from UrQMD 3.3p2 outputs
                               # 10: reads outputf from gzip outputs
 
-run_mode = 0                  # running mode for the program
+run_mode = 3                  # running mode for the program
                               # 0: collect single particle spectra and vn
                               # 1: compute HBT correlation function
                               # 2: collect event-by-event particle yield
@@ -109,11 +109,11 @@ q_min = -0.15                        # minimum value for momentum q (GeV)
 q_max = 0.15                         # maximum value for momentum q (GeV)
 
 # options for calculting Balance function
-particle_alpha = 211                 # monte carlo number for particle alpha
-particle_beta = -211                 # monte carlo number for particle beta
+particle_alpha = 9998                 # monte carlo number for particle alpha
+particle_beta = -9998                 # monte carlo number for particle beta
 
-Bnpts = 31                           # number of bins for the balance function
-Brap_max = 3.0                       # the maximum \Delta y rapidity for balance function
-BpT_min = 0.0                        # the minimum pT cut for particles used in balance function
+Bnpts = 21                           # number of bins for the balance function
+Brap_max = 2.0                       # the maximum \Delta y rapidity for balance function
+BpT_min = 0.2                        # the minimum pT cut for particles used in balance function
 BpT_max = 3.0                        # the maximum pT cut for particles used in balance function
 

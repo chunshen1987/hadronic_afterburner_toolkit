@@ -112,7 +112,7 @@ class particleSamples {
     int decide_to_pick_reconst(int monval);
     int decide_to_pick_anti_particles(int monval);
     int decide_to_pick_charge(int monval);
-    int decide_to_pick_OSCAR(int monval);
+    bool decide_to_pick_OSCAR(int POI, int monval);
 
     void initialize_selected_resonance_list();
     void perform_resonance_feed_down(
