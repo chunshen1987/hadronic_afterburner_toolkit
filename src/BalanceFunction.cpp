@@ -111,7 +111,7 @@ int BalanceFunction::get_number_of_particles(
                 const std::vector< std::vector<particle_info>* >* plist_b) {
     int particle_number = 0;
     for (auto const& ev_i: (*plist_b)) {
-        for (auto const& part_b: ev_i) {
+        for (auto const& part_b: (*ev_i)) {
             if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
             particle_number += 1;
         }
