@@ -25,6 +25,7 @@ class BalanceFunction {
     int Bnpts;
     int Bnphi; 
     double dphi;
+    double Bphi_min;
     double Brap_min;
     double Brap_max;
     double drap;

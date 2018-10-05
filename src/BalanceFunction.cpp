@@ -32,7 +32,8 @@ BalanceFunction::BalanceFunction(
     Brap_min = -Brap_max;
     drap     = (Brap_max - Brap_min)/(Bnpts - 1);
     Bnphi    = 20;
-    dphi     = 2*M_PI/Bnphi;
+    dphi     = 2.*M_PI/Bnphi;
+    Bphi_min = -M_PI/2.;
 
     C_ab.resize(Bnpts);
     C_abarbbar.resize(Bnpts);
@@ -103,26 +104,25 @@ void BalanceFunction::combine_and_bin_particle_pairs(
             if (part_a.pT < BpT_min || part_a.pT > BpT_max) continue;
             for (auto const& part_b: (*(*plist_b)[iev])) {
                 if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
-                auto delta_phi_local = part_a.phi_p - part_b.phi_p;
 
+                auto delta_phi_local = part_a.phi_p - part_b.phi_p;
                 // randomized the angle to compute the combinatorial background
                 auto delta_phi_mixed = delta_phi_local + drand48()*2.*M_PI;
-
-                int phi_idx = (
-                        (static_cast<int>(floor(delta_phi_local/dphi)))%Bnphi);
+                int phi_idx = ((static_cast<int>(
+                            floor((delta_phi_local - Bphi_min)/dphi)))%Bnphi);
                 if (phi_idx < 0) phi_idx += Bnphi;
-                int phi_mixed_idx = (
-                        (static_cast<int>(floor(delta_phi_mixed/dphi)))%Bnphi);
+                int phi_mixed_idx = ((static_cast<int>(
+                            floor((delta_phi_mixed - Bphi_min)/dphi)))%Bnphi);
+                if (phi_mixed_idx < 0) phi_mixed_idx += Bnphi;
 
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
-
                 if (delta_y_local < Brap_min) continue;
                 if (std::abs(delta_y_local) < 1e-15) continue;
 
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
-                    hist[y_bin_idx][phi_idx] += 1.;
+                    hist[y_bin_idx][phi_idx]             += 1.;
                     hist_mixed[y_bin_idx][phi_mixed_idx] += 1.;
                 }
             }
