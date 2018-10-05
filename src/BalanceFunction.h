@@ -33,6 +33,11 @@ class BalanceFunction {
     std::vector<std::vector<double>> C_abarbbar;
     std::vector<std::vector<double>> C_abbar;
     std::vector<std::vector<double>> C_abarb;
+    
+    std::vector<std::vector<double>> C_mixed_ab;
+    std::vector<std::vector<double>> C_mixed_abarbbar;
+    std::vector<std::vector<double>> C_mixed_abbar;
+    std::vector<std::vector<double>> C_mixed_abarb;
 
  public:
     BalanceFunction(const ParameterReader *paraRdr_in,
@@ -42,7 +47,7 @@ class BalanceFunction {
 
     void calculate_balance_function();
     void combine_and_bin_particle_pairs(
-                std::vector<std::vector<double>> &hist,
+                int flag_random, std::vector<std::vector<double>> &hist,
                 const std::vector< std::vector<particle_info>* >* plist_a,
                 const std::vector< std::vector<particle_info>* >* plist_b);
     int get_number_of_particles(

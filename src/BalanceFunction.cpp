@@ -38,11 +38,19 @@ BalanceFunction::BalanceFunction(
     C_abarbbar.resize(Bnpts);
     C_abarb.resize(Bnpts);
     C_abbar.resize(Bnpts);
+    C_mixed_ab.resize(Bnpts);
+    C_mixed_abarbbar.resize(Bnpts);
+    C_mixed_abarb.resize(Bnpts);
+    C_mixed_abbar.resize(Bnpts);
     for (int i = 0; i < Bnpts; i++) {
         C_ab[i].assign(Bnphi, 0.);
         C_abarbbar[i].assign(Bnphi, 0.);
         C_abarb[i].assign(Bnphi, 0.);
         C_abbar[i].assign(Bnphi, 0.);
+        C_mixed_ab[i].assign(Bnphi, 0.);
+        C_mixed_abarbbar[i].assign(Bnphi, 0.);
+        C_mixed_abarb[i].assign(Bnphi, 0.);
+        C_mixed_abbar[i].assign(Bnphi, 0.);
     }
 
     N_b    = 0;
@@ -67,13 +75,17 @@ void BalanceFunction::calculate_balance_function() {
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
         cout << "calculating C_ab ... " << endl;
-        combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
+        combine_and_bin_particle_pairs(0, C_ab, plist_a, plist_b);
+        combine_and_bin_particle_pairs(1, C_mixed_ab, plist_a, plist_b);
         cout << "calculating C_abarbbar ... " << endl;
-        combine_and_bin_particle_pairs(C_abarbbar, plist_abar, plist_bbar);
+        combine_and_bin_particle_pairs(0, C_abarbbar, plist_abar, plist_bbar);
+        combine_and_bin_particle_pairs(1, C_mixed_abarbbar, plist_abar, plist_bbar);
         cout << "calculating C_abbar ... " << endl;
-        combine_and_bin_particle_pairs(C_abbar, plist_a, plist_bbar);
+        combine_and_bin_particle_pairs(0, C_abbar, plist_a, plist_bbar);
+        combine_and_bin_particle_pairs(1, C_mixed_abbar, plist_a, plist_bbar);
         cout << "calculating C_abarb ... " << endl;
-        combine_and_bin_particle_pairs(C_abarb, plist_abar, plist_b);
+        combine_and_bin_particle_pairs(0, C_abarb, plist_abar, plist_b);
+        combine_and_bin_particle_pairs(0, C_mixed_abarb, plist_abar, plist_b);
         event_id += buffer_size;
     }
     
@@ -82,7 +94,7 @@ void BalanceFunction::calculate_balance_function() {
 
 
 void BalanceFunction::combine_and_bin_particle_pairs(
-                std::vector<std::vector<double>> &hist,
+                int flag_random, std::vector<std::vector<double>> &hist,
                 const std::vector< std::vector<particle_info>* >* plist_a,
                 const std::vector< std::vector<particle_info>* >* plist_b) {
     int nev = plist_a->size();
@@ -92,11 +104,20 @@ void BalanceFunction::combine_and_bin_particle_pairs(
             for (auto const& part_b: (*(*plist_b)[iev])) {
                 if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
                 auto delta_phi_local = part_a.phi_p - part_b.phi_p;
-                int phi_idx = (static_cast<int>(delta_phi_local/dphi))%Bnphi;
+
+                // randomized the angle to compute the combinatorial background
+                if (flag_random == 1)
+                    delta_phi_local += drand48()*2.*M_PI;
+
+                int phi_idx = (
+                        (static_cast<int>(floor(delta_phi_local/dphi)))%Bnphi);
                 if (phi_idx < 0) phi_idx += Bnphi;
+
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
-                if (std::abs(delta_y_local) < 1e-15) continue;
+
                 if (delta_y_local < Brap_min) continue;
+                if (std::abs(delta_y_local) < 1e-15) continue;
+
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
@@ -189,4 +210,33 @@ void BalanceFunction::output_balance_function() {
         output4 << endl;
     }
     output4.close();
+    
+    // output correlation functions as a function of \Delta Y and \Delta phi
+    std::ostringstream filename5;
+    filename5 << path << "/Correlation_function_" << particle_monval_a << "_"
+              << particle_monval_b << "_os_2D.dat";
+    std::ofstream output5(filename5.str().c_str(), std::ios::out);
+    for (int i = 0; i < Bnpts; i++) {
+        for (int j = 0; j < Bnphi; j++) {
+            output5 << std::scientific << std::setw(18) << std::setprecision(8)
+                    << ((C_ab[i][j] + C_abarbbar[i][j])
+                        /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j])) << "  ";
+        }
+        output5 << endl;
+    }
+    output5.close();
+
+    std::ostringstream filename6;
+    filename6 << path << "/Correlation_function_" << particle_monval_a << "_"
+              << particle_monval_b << "_ss_2D.dat";
+    std::ofstream output6(filename6.str().c_str(), std::ios::out);
+    for (int i = 0; i < Bnpts; i++) {
+        for (int j = 0; j < Bnphi; j++) {
+            output6 << std::scientific << std::setw(18) << std::setprecision(8)
+                    << ((C_abbar[i][j] + C_abarb[i][j])
+                        /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j])) << "  ";
+        }
+        output6 << endl;
+    }
+    output6.close();
 }
