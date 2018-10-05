@@ -181,7 +181,7 @@ void BalanceFunction::output_balance_function() {
     std::ofstream output2(filename2.str().c_str(), std::ios::out);
     for (int j = 0; j < Bnphi; j++) {
         output2 << std::scientific << std::setw(18) << std::setprecision(8)
-                << j*dphi << "   " << B_delta_phi[j] << endl;
+                << Bphi_min + j*dphi << "   " << B_delta_phi[j] << endl;
     }
     output2.close();
 
