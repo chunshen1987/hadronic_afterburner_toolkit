@@ -96,6 +96,7 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                 if (phi_idx < 0) phi_idx += Bnphi;
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
                 if (std::abs(delta_y_local) < 1e-15) continue;
+                if (delta_y_local < Brap_min) continue;
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
