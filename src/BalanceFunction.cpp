@@ -75,17 +75,16 @@ void BalanceFunction::calculate_balance_function() {
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
         cout << "calculating C_ab ... " << endl;
-        combine_and_bin_particle_pairs(0, C_ab, plist_a, plist_b);
-        combine_and_bin_particle_pairs(1, C_mixed_ab, plist_a, plist_b);
+        combine_and_bin_particle_pairs(C_ab, C_mixed_ab, plist_a, plist_b);
         cout << "calculating C_abarbbar ... " << endl;
-        combine_and_bin_particle_pairs(0, C_abarbbar, plist_abar, plist_bbar);
-        combine_and_bin_particle_pairs(1, C_mixed_abarbbar, plist_abar, plist_bbar);
+        combine_and_bin_particle_pairs(C_abarbbar, C_mixed_abarbbar,
+                                       plist_abar, plist_bbar);
         cout << "calculating C_abbar ... " << endl;
-        combine_and_bin_particle_pairs(0, C_abbar, plist_a, plist_bbar);
-        combine_and_bin_particle_pairs(1, C_mixed_abbar, plist_a, plist_bbar);
+        combine_and_bin_particle_pairs(C_abbar, C_mixed_abbar,
+                                       plist_a, plist_bbar);
         cout << "calculating C_abarb ... " << endl;
-        combine_and_bin_particle_pairs(0, C_abarb, plist_abar, plist_b);
-        combine_and_bin_particle_pairs(0, C_mixed_abarb, plist_abar, plist_b);
+        combine_and_bin_particle_pairs(C_abarb, C_mixed_abarb,
+                                       plist_abar, plist_b);
         event_id += buffer_size;
     }
     
@@ -94,7 +93,8 @@ void BalanceFunction::calculate_balance_function() {
 
 
 void BalanceFunction::combine_and_bin_particle_pairs(
-                int flag_random, std::vector<std::vector<double>> &hist,
+                std::vector<std::vector<double>> &hist,
+                std::vector<std::vector<double>> &hist_mixed,
                 const std::vector< std::vector<particle_info>* >* plist_a,
                 const std::vector< std::vector<particle_info>* >* plist_b) {
     int nev = plist_a->size();
@@ -106,12 +106,13 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                 auto delta_phi_local = part_a.phi_p - part_b.phi_p;
 
                 // randomized the angle to compute the combinatorial background
-                if (flag_random == 1)
-                    delta_phi_local += drand48()*2.*M_PI;
+                auto delta_phi_mixed = delta_phi_local + drand48()*2.*M_PI;
 
                 int phi_idx = (
                         (static_cast<int>(floor(delta_phi_local/dphi)))%Bnphi);
                 if (phi_idx < 0) phi_idx += Bnphi;
+                int phi_mixed_idx = (
+                        (static_cast<int>(floor(delta_phi_mixed/dphi)))%Bnphi);
 
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
 
@@ -122,6 +123,7 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
                     hist[y_bin_idx][phi_idx] += 1.;
+                    hist_mixed[y_bin_idx][phi_mixed_idx] += 1.;
                 }
             }
         }
