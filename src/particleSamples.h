@@ -29,6 +29,8 @@ class particleSamples {
     int read_in_mode;
     int run_mode;
 
+    int rap_type;
+
     //! the monte-carlo number of the particle of interest
     int particle_monval;
 

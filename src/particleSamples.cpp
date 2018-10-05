@@ -21,6 +21,8 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
     run_mode = paraRdr->getVal("run_mode");
+    
+    rap_type = paraRdr->getVal("rap_type");
 
     if (run_mode == 2) {
         net_particle_flag = paraRdr->getVal("net_particle_flag");
@@ -319,8 +321,14 @@ int particleSamples::read_in_particle_samples() {
         for (auto &part_i: (*ev_i)) {
             part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
             part_i.phi_p = atan2(part_i.py, part_i.px);
-            part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
-                                   /(part_i.E - part_i.pz));
+            if (rap_type == 1) {
+                part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
+                                       /(part_i.E - part_i.pz));
+            } else {
+                double p_mag = sqrt(part_i.pT*part_i.pT + part_i.pz*part_i.pz);
+                part_i.rap_y = 0.5*log((p_mag + part_i.pz)
+                                       /(p_mag - part_i.pz));
+            }
         }
     }
 
@@ -362,9 +370,16 @@ int particleSamples::read_in_particle_samples_mixed_event() {
 
     for (auto &ev_i: (*full_particle_list_mixed_event)) {
         for (auto &part_i: (*ev_i)) {
+            part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
             part_i.phi_p = atan2(part_i.py, part_i.px);
-            part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
-                                   /(part_i.E - part_i.pz));
+            if (rap_type == 1) {
+                part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
+                                       /(part_i.E - part_i.pz));
+            } else {
+                double p_mag = sqrt(part_i.pT*part_i.pT + part_i.pz*part_i.pz);
+                part_i.rap_y = 0.5*log((p_mag + part_i.pz)
+                                       /(p_mag - part_i.pz));
+            }
         }
     }
 
