@@ -155,8 +155,8 @@ void BalanceFunction::output_balance_function() {
         for (int j = 0; j < Bnphi; j++) {
             B_OS_delta_y[i] += C_ab[i][j]    + C_abarbbar[i][j];
             B_SS_delta_y[i] += C_abbar[i][j] + C_abarb[i][j];
-            B_delta_y[i]    += B_OS_delta_y[i] - B_SS_delta_y[i];
         }
+        B_delta_y[i] = B_OS_delta_y[i] - B_SS_delta_y[i];
         B_OS_delta_y[i] /= static_cast<double>(N_b + N_bbar);
         B_SS_delta_y[i] /= static_cast<double>(N_b + N_bbar);
         B_delta_y[i]    /= static_cast<double>(N_b + N_bbar);
