@@ -149,20 +149,27 @@ void BalanceFunction::output_balance_function() {
     for (int i = 0; i < Bnpts; i++)
         Delta_y[i] = Brap_min + (i + 0.5)*drap;
     std::vector<double> B_delta_y(Bnpts, 0.);
+    std::vector<double> B_OS_delta_y(Bnpts, 0.);
+    std::vector<double> B_SS_delta_y(Bnpts, 0.);
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
-            B_delta_y[i] += (  C_ab[i][j]    + C_abarbbar[i][j]
-                             - C_abbar[i][j] - C_abarb[i][j]   );
+            B_OS_delta_y[i] += C_ab[i][j]    + C_abarbbar[i][j];
+            B_SS_delta_y[i] += C_abbar[i][j] + C_abarb[i][j];
+            B_delta_y[i]    += B_OS_delta_y[i] - B_SS_delta_y[i];
         }
-        B_delta_y[i] /= static_cast<double>(N_b + N_bbar);
+        B_OS_delta_y[i] /= static_cast<double>(N_b + N_bbar);
+        B_SS_delta_y[i] /= static_cast<double>(N_b + N_bbar);
+        B_delta_y[i]    /= static_cast<double>(N_b + N_bbar);
     }
     std::ostringstream filename;
     filename << path << "/Balance_function_" << particle_monval_a << "_"
              << particle_monval_b << "_Delta_y.dat";
     std::ofstream output(filename.str().c_str(), std::ios::out);
+    output << "# Delta y  B(Delta y)  C_OS(Delta y)  C_SS(Delta y)" << endl;
     for (int i = 0; i < Bnpts; i++) {
         output << std::scientific << std::setw(18) << std::setprecision(8)
-               << Delta_y[i] << "   " << B_delta_y[i] << endl;
+               << Delta_y[i] << "   " << B_delta_y[i] << "  "
+               << B_OS_delta_y[i] << "  " << B_SS_delta_y[i] << endl;
     }
     output.close();
     

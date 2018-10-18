@@ -1,5 +1,5 @@
 echo_level = 9                # control the mount of print messages
-read_in_mode = 2              # mode for reading in particle information
+read_in_mode = 10              # mode for reading in particle information
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from zipped UrQMD outputs
@@ -18,7 +18,7 @@ run_mode = 3                  # running mode for the program
                               # 3: compute balance function
 
 particle_monval = 9999         # particle Monte-Carlo number
-distinguish_isospin = 1       # flag whether to distinguish the isospin of 
+distinguish_isospin = 0       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
                                      # turn on only for Lambda (monval=3122)
