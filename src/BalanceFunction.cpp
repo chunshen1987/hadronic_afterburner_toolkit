@@ -72,21 +72,36 @@ void BalanceFunction::calculate_balance_function() {
         auto plist_b    = particle_list->get_balance_function_particle_list_b();
         auto plist_abar = particle_list->get_balance_function_particle_list_abar();
         auto plist_bbar = particle_list->get_balance_function_particle_list_bbar();
-        
+
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
 
         cout << "calculating C_ab ... " << endl;
-        combine_and_bin_particle_pairs(C_ab, C_mixed_ab, plist_a, plist_b);
+        combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
         cout << "calculating C_abarbbar ... " << endl;
-        combine_and_bin_particle_pairs(C_abarbbar, C_mixed_abarbbar,
-                                       plist_abar, plist_bbar);
+        combine_and_bin_particle_pairs(C_abarbbar, plist_abar, plist_bbar);
         cout << "calculating C_abbar ... " << endl;
-        combine_and_bin_particle_pairs(C_abbar, C_mixed_abbar,
-                                       plist_a, plist_bbar);
+        combine_and_bin_particle_pairs(C_abbar, plist_a, plist_bbar);
         cout << "calculating C_abarb ... " << endl;
-        combine_and_bin_particle_pairs(C_abarb, C_mixed_abarb,
-                                       plist_abar, plist_b);
+        combine_and_bin_particle_pairs(C_abarb, plist_abar, plist_b);
+
+        cout << "calculating correlatoin function using mixed events ... "
+             << endl;
+        
+        auto plist_a_mixed_event    = particle_list->get_balance_function_particle_list_a_mixed_event();
+        auto plist_b_mixed_event    = particle_list->get_balance_function_particle_list_b_mixed_event();
+        auto plist_abar_mixed_event = particle_list->get_balance_function_particle_list_abar_mixed_event();
+        auto plist_bbar_mixed_event = particle_list->get_balance_function_particle_list_bbar_mixed_event();
+        
+        combine_and_bin_mixed_particle_pairs(
+                        C_mixed_ab, plist_a, plist_b_mixed_event);
+        combine_and_bin_mixed_particle_pairs(
+                        C_mixed_abarbbar, plist_abar, plist_bbar_mixed_event);
+        combine_and_bin_mixed_particle_pairs(
+                        C_mixed_abbar, plist_a, plist_bbar_mixed_event);
+        combine_and_bin_mixed_particle_pairs(
+                        C_mixed_abbar, plist_abar, plist_b_mixed_event);
+
         event_id += buffer_size;
     }
     
@@ -119,7 +134,6 @@ bool BalanceFunction::check_same_particle(const particle_info &lhs,
 
 void BalanceFunction::combine_and_bin_particle_pairs(
                 std::vector<std::vector<double>> &hist,
-                std::vector<std::vector<double>> &hist_mixed,
                 const std::vector< std::vector<particle_info>* >* plist_a,
                 const std::vector< std::vector<particle_info>* >* plist_b) {
     int nev = plist_a->size();
@@ -135,14 +149,9 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                 }
 
                 auto delta_phi_local = part_a.phi_p - part_b.phi_p;
-                // randomized the angle to compute the combinatorial background
-                auto delta_phi_mixed = delta_phi_local + drand48()*2.*M_PI;
                 int phi_idx = ((static_cast<int>(
                             floor((delta_phi_local - Bphi_min)/dphi)))%Bnphi);
                 if (phi_idx < 0) phi_idx += Bnphi;
-                int phi_mixed_idx = ((static_cast<int>(
-                            floor((delta_phi_mixed - Bphi_min)/dphi)))%Bnphi);
-                if (phi_mixed_idx < 0) phi_mixed_idx += Bnphi;
 
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
                 if (delta_y_local < Brap_min) continue;
@@ -150,8 +159,39 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
                 if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
-                    hist[y_bin_idx][phi_idx]             += 1.;
-                    hist_mixed[y_bin_idx][phi_mixed_idx] += 1.;
+                    hist[y_bin_idx][phi_idx] += 1.;
+                }
+            }
+        }
+    }
+}
+
+
+void BalanceFunction::combine_and_bin_mixed_particle_pairs(
+                std::vector<std::vector<double>> &hist,
+                const std::vector< std::vector<particle_info>* >* plist_a,
+                const std::vector< std::vector<particle_info>* >* plist_b) {
+    const int nev       = plist_a->size();
+    const int nev_mixed = plist_b->size();
+    for (int iev = 0; iev < nev; iev++) {
+        int iev_mixed = rand() % nev_mixed;
+        for (auto const& part_a: (*(*plist_a)[iev])) {
+            if (part_a.pT < BpT_min || part_a.pT > BpT_max) continue;
+            for (auto const& part_b: (*(*plist_b)[iev_mixed])) {
+                if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
+
+                auto delta_phi_local = part_a.phi_p - part_b.phi_p + drand48()*2*M_PI;;
+                int phi_idx = ((static_cast<int>(
+                            floor((delta_phi_local - Bphi_min)/dphi)))%Bnphi);
+                if (phi_idx < 0) phi_idx += Bnphi;
+
+                auto delta_y_local = part_a.rap_y - part_b.rap_y;
+                if (delta_y_local < Brap_min) continue;
+
+                int y_bin_idx = static_cast<int>(
+                                            (delta_y_local - Brap_min)/drap);
+                if (y_bin_idx >= 0 && y_bin_idx < Bnpts) {
+                    hist[y_bin_idx][phi_idx] += 1.;
                 }
             }
         }

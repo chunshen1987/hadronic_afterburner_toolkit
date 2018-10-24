@@ -101,6 +101,11 @@ class particleSamples {
     std::vector< std::vector<particle_info>* >* balance_function_particle_abar;
     std::vector< std::vector<particle_info>* >* balance_function_particle_bbar;
 
+    std::vector< std::vector<particle_info>* >* balance_function_particle_a_mixed_event;
+    std::vector< std::vector<particle_info>* >* balance_function_particle_b_mixed_event;
+    std::vector< std::vector<particle_info>* >* balance_function_particle_abar_mixed_event;
+    std::vector< std::vector<particle_info>* >* balance_function_particle_bbar_mixed_event;
+
     //! particle decay
     particle_decay *decayer_ptr;
  public:
@@ -219,6 +224,22 @@ class particleSamples {
     
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_bbar() const {
         return(balance_function_particle_bbar);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_a_mixed_event() const {
+        return(balance_function_particle_a_mixed_event);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_abar_mixed_event() const {
+        return(balance_function_particle_abar_mixed_event);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_b_mixed_event() const {
+        return(balance_function_particle_b_mixed_event);
+    }
+    
+    std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_bbar_mixed_event() const {
+        return(balance_function_particle_bbar_mixed_event);
     }
 };
 

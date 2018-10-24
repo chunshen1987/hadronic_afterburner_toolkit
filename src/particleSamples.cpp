@@ -46,6 +46,10 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         balance_function_particle_abar = new vector< vector<particle_info>* >;
         balance_function_particle_b    = new vector< vector<particle_info>* >;
         balance_function_particle_bbar = new vector< vector<particle_info>* >;
+        balance_function_particle_a_mixed_event    = new vector< vector<particle_info>* >;
+        balance_function_particle_abar_mixed_event = new vector< vector<particle_info>* >;
+        balance_function_particle_b_mixed_event    = new vector< vector<particle_info>* >;
+        balance_function_particle_bbar_mixed_event = new vector< vector<particle_info>* >;
     }
 
     decayer_ptr = new particle_decay;
@@ -223,6 +227,10 @@ particleSamples::~particleSamples() {
         clear_out_previous_record(balance_function_particle_abar);
         clear_out_previous_record(balance_function_particle_b);
         clear_out_previous_record(balance_function_particle_bbar);
+        clear_out_previous_record(balance_function_particle_a_mixed_event);
+        clear_out_previous_record(balance_function_particle_abar_mixed_event);
+        clear_out_previous_record(balance_function_particle_b_mixed_event);
+        clear_out_previous_record(balance_function_particle_bbar_mixed_event);
     }
 }
 
@@ -389,6 +397,16 @@ int particleSamples::read_in_particle_samples_mixed_event() {
 
     filter_particles(particle_monval, full_particle_list_mixed_event,
                      particle_list_mixed_event);
+    if (run_mode == 3) {
+        filter_particles(particle_monval_a, full_particle_list_mixed_event,
+                         balance_function_particle_a_mixed_event);
+        filter_particles(particle_monval_abar, full_particle_list_mixed_event,
+                         balance_function_particle_abar_mixed_event);
+        filter_particles(particle_monval_b, full_particle_list_mixed_event,
+                         balance_function_particle_b_mixed_event);
+        filter_particles(particle_monval_bbar, full_particle_list_mixed_event,
+                         balance_function_particle_bbar_mixed_event);
+    }
 
     return(0);
 }

@@ -51,7 +51,10 @@ class BalanceFunction {
     void calculate_balance_function();
     void combine_and_bin_particle_pairs(
                 std::vector<std::vector<double>> &hist,
-                std::vector<std::vector<double>> &hist_mixed,
+                const std::vector< std::vector<particle_info>* >* plist_a,
+                const std::vector< std::vector<particle_info>* >* plist_b);
+    void combine_and_bin_mixed_particle_pairs(
+                std::vector<std::vector<double>> &hist,
                 const std::vector< std::vector<particle_info>* >* plist_a,
                 const std::vector< std::vector<particle_info>* >* plist_b);
     int get_number_of_particles(
