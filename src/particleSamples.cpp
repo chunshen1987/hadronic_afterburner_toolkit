@@ -398,8 +398,6 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         }
     }
         
-    cout << " check ..." << endl;
-
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list_mixed_event);
 
