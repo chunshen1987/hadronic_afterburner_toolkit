@@ -81,8 +81,6 @@ void BalanceFunction::calculate_balance_function() {
 
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
-
-        cout << N_b << "  " << N_bbar << endl;
         cout << "calculating C_ab ... " << endl;
         combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
         cout << "calculating C_abarbbar ... " << endl;
