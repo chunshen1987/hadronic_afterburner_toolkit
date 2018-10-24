@@ -29,6 +29,7 @@ class particleSamples {
     int echo_level;
     int read_in_mode;
     int run_mode;
+    bool read_mixed_events;
 
     int rap_type;
 

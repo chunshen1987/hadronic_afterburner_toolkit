@@ -17,6 +17,7 @@ run_mode = 3                  # running mode for the program
                               #    and rap_max)
                               # 3: compute balance function
 
+randomSeed = -1
 particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles

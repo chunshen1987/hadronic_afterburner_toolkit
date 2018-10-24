@@ -69,8 +69,10 @@ void BalanceFunction::calculate_balance_function() {
     while (!particle_list->end_of_file()) {
         cout << "Reading event: " << event_id + 1 << "-" 
              << event_id + buffer_size << " ... " << std::flush;
+
         particle_list->read_in_particle_samples();
         particle_list->read_in_particle_samples_mixed_event();
+
         cout << " processing ..." << endl;
         auto plist_a    = particle_list->get_balance_function_particle_list_a();
         auto plist_b    = particle_list->get_balance_function_particle_list_b();

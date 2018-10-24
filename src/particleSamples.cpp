@@ -22,6 +22,11 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     event_buffer_size = paraRdr->getVal("event_buffer_size");
     read_in_mode = paraRdr->getVal("read_in_mode");
     run_mode = paraRdr->getVal("run_mode");
+
+    read_mixed_events = false;
+    if (run_mode == 1 || run_mode == 3) {
+        read_mixed_events = true;
+    }
     
     rap_type = paraRdr->getVal("rap_type");
 
@@ -117,7 +122,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
                  << " can not open!" << endl;
             exit(1);
         }
-        if (run_mode == 1 || run_mode == 3) {
+        if (read_mixed_events) {
             inputfile_mixed_event.open(filename_mixed_event.str().c_str());
             if (!inputfile_mixed_event.is_open()) {
                 cout << "particleSamples:: Error: input file: " 
@@ -132,7 +137,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
                  << " can not open!" << endl;
             exit(1);
         }
-        if (run_mode == 1) {
+        if (read_mixed_events) {
             inputfile_mixed_event_gz =
                             gzopen(filename_mixed_event.str().c_str(), "rb");
             if (!inputfile_mixed_event_gz) {
@@ -149,7 +154,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
         getline(inputfile, temp);
         getline(inputfile, temp);
         getline(inputfile, temp);
-        if (run_mode == 1 || run_mode == 3) {
+        if (read_mixed_events) {
             getline(inputfile_mixed_event, temp);
             getline(inputfile_mixed_event, temp);
             getline(inputfile_mixed_event, temp);
@@ -159,7 +164,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     // skip the header in JAM
     if (read_in_mode == 5) {
         getline(inputfile, temp);
-        if (run_mode == 1 || run_mode == 3) {
+        if (read_mixed_events) {
             getline(inputfile_mixed_event, temp);
         }
     }
@@ -173,7 +178,7 @@ particleSamples::~particleSamples() {
     } else {
         gzclose(inputfile_gz);
     }
-    if (run_mode == 1) {
+    if (read_mixed_events) {
         if (read_in_mode != 2 && read_in_mode != 10) {
             inputfile_mixed_event.close();
         } else {
@@ -392,6 +397,8 @@ int particleSamples::read_in_particle_samples_mixed_event() {
             }
         }
     }
+        
+    cout << " check ..." << endl;
 
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list_mixed_event);
