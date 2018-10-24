@@ -6,15 +6,19 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <memory>
 
 #include "ParameterReader.h"
 #include "particleSamples.h"
+#include "Random.h"
 
 class BalanceFunction {
  private:
     const ParameterReader *paraRdr;
     const std::string path;
     particleSamples *particle_list;
+
+    std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
     int particle_monval_a;
     int particle_monval_b;
@@ -43,6 +47,7 @@ class BalanceFunction {
  public:
     BalanceFunction(const ParameterReader *paraRdr_in,
                     const std::string path_in,
+                    std::shared_ptr<RandomUtil::Random> ran_gen,
                     particleSamples *particle_list_in);
     ~BalanceFunction() {};
 

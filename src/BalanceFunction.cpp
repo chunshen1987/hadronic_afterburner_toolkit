@@ -13,8 +13,11 @@ using std::endl;
 
 BalanceFunction::BalanceFunction(
     const ParameterReader *paraRdr_in, const std::string path_in,
+    std::shared_ptr<RandomUtil::Random> ran_gen,
     particleSamples *particle_list_in) :
     paraRdr(paraRdr_in), path(path_in) {
+
+    ran_gen_ptr = ran_gen;
 
     particle_list = particle_list_in;
         
@@ -180,7 +183,9 @@ void BalanceFunction::combine_and_bin_mixed_particle_pairs(
             for (auto const& part_b: (*(*plist_b)[iev_mixed])) {
                 if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
 
-                auto delta_phi_local = part_a.phi_p - part_b.phi_p + drand48()*2*M_PI;;
+                auto delta_phi_local = (
+                        part_a.phi_p - part_b.phi_p
+                        + ran_gen_ptr.lock()->rand_uniform()*2.*M_PI);
                 int phi_idx = ((static_cast<int>(
                             floor((delta_phi_local - Bphi_min)/dphi)))%Bnphi);
                 if (phi_idx < 0) phi_idx += Bnphi;

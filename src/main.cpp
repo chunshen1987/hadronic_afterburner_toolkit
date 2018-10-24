@@ -15,7 +15,7 @@
 #include<fstream>
 #include<string>
 #include<sstream>
-#include<math.h>
+#include<cmath>
 #include<sys/time.h>
 
 #include "Stopwatch.h"
@@ -28,6 +28,7 @@
 #include "single_particleSpectra.h"
 #include "particle_yield_distribution.h"
 #include "particle_decay.h"
+#include "Random.h"
 
 using namespace std;
 
@@ -55,6 +56,10 @@ int main(int argc, char *argv[]) {
     Stopwatch sw_total;
     sw_total.tic();
     sw.tic();
+
+    int randomSeed = paraRdr->getVal("randomSeed");
+    std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
+                                    new RandomUtil::Random(randomSeed));
     
     particleSamples particle_list(paraRdr, path);
     if (run_mode == 0) {
@@ -71,7 +76,7 @@ int main(int argc, char *argv[]) {
         test_dis.collect_particle_yield_distribution();
     } else if (run_mode == 3) {
         // compute balance function
-        BalanceFunction test(paraRdr, path, &particle_list);
+        BalanceFunction test(paraRdr, path, ran_gen_ptr, &particle_list);
         test.calculate_balance_function();
     } else {
         cout << "Error: unrecognized run_mode: " << run_mode << endl;
