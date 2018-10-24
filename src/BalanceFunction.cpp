@@ -298,31 +298,47 @@ void BalanceFunction::output_balance_function() {
     output4.close();
     
     // output correlation functions as a function of \Delta Y and \Delta phi
+    double N_ab       = 0.;
+    double N_ab_mixed = 0.;
+    for (int i = 0; i < Bnpts; i++) {
+        for (int j = 0; j < Bnphi; j++) {
+            N_ab       += C_ab[i][j] + C_abarbbar[i][j];
+            N_ab_mixed += C_mixed_ab[i][j] + C_mixed_abarbbar[i][j];
+        }
+    }
     std::ostringstream filename5;
     filename5 << path << "/Correlation_function_" << particle_monval_a << "_"
               << particle_monval_b << "_os_2D.dat";
     std::ofstream output5(filename5.str().c_str(), std::ios::out);
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
+            double R2 = ((C_ab[i][j] + C_abarbbar[i][j])
+                         /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] + 1e-15));
             output5 << std::scientific << std::setw(18) << std::setprecision(8)
-                    << ((C_ab[i][j] + C_abarbbar[i][j])
-                        /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] + 1e-15))
-                    << "  ";
+                    << R2*N_ab_mixed/N_ab << "  ";
         }
         output5 << endl;
     }
     output5.close();
 
+    N_ab       = 0.;
+    N_ab_mixed = 0.;
+    for (int i = 0; i < Bnpts; i++) {
+        for (int j = 0; j < Bnphi; j++) {
+            N_ab       += C_abbar[i][j] + C_abarb[i][j];
+            N_ab_mixed += C_mixed_abbar[i][j] + C_mixed_abarb[i][j];
+        }
+    }
     std::ostringstream filename6;
     filename6 << path << "/Correlation_function_" << particle_monval_a << "_"
               << particle_monval_b << "_ss_2D.dat";
     std::ofstream output6(filename6.str().c_str(), std::ios::out);
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
+            double R2 = ((C_abbar[i][j] + C_abarb[i][j])
+                         /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j] + 1e-15));
             output6 << std::scientific << std::setw(18) << std::setprecision(8)
-                    << ((C_abbar[i][j] + C_abarb[i][j])
-                        /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j] + 1e-15))
-                    << "  ";
+                    << R2*N_ab_mixed/N_ab << "  ";
         }
         output6 << endl;
     }

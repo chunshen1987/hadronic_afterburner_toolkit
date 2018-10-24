@@ -115,6 +115,6 @@ particle_beta = -211                 # monte carlo number for particle beta
 
 Bnpts = 21                           # number of bins for the balance function
 Brap_max = 2.0                       # the maximum \Delta y rapidity for balance function
-BpT_min = 0.1                        # the minimum pT cut for particles used in balance function
+BpT_min = 0.0                        # the minimum pT cut for particles used in balance function
 BpT_max = 3.0                        # the maximum pT cut for particles used in balance function
 
