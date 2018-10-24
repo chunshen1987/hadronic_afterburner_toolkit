@@ -340,7 +340,7 @@ void HBT_correlation::calculate_HBT_correlation_function() {
             int *mixed_event_list = new int [number_of_mixed_events];
             int count = 0;
             while (count < number_of_mixed_events) {
-                int mixed_event_id = rand() % mixed_nev;
+                int mixed_event_id = ran_gen_ptr.lock()->rand_int_uniform() % mixed_nev;
                 mixed_event_list[count] = mixed_event_id;
                 count++;
             }
