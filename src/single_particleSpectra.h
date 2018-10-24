@@ -6,12 +6,15 @@
 
 #include "ParameterReader.h"
 #include "particleSamples.h"
+#include "Random.h"
 
 class singleParticleSpectra {
  private:
     ParameterReader *paraRdr;
     std::string path;
     particleSamples *particle_list;
+    
+    std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
     int particle_monval;
 
@@ -112,6 +115,7 @@ class singleParticleSpectra {
 
  public:
     singleParticleSpectra(ParameterReader *paraRdr_in, std::string path_in, 
+                          std::shared_ptr<RandomUtil::Random> ran_gen,
                           particleSamples *particle_list_in);
     ~singleParticleSpectra();
 

@@ -4,7 +4,10 @@
 
 #include <vector>
 #include <string>
+#include <memory>
+
 #include "particle_info.h"
+#include "Random.h"
 
 typedef struct {
     int decay_Npart;
@@ -32,10 +35,11 @@ typedef struct {
 
 class particle_decay {
  private:
-     std::vector<particle_decay_info*> resonance_table;
+    std::vector<particle_decay_info*> resonance_table;
+    std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
  public:
-    particle_decay();
+    particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen);
     ~particle_decay();
 
     //! This function reads in resonance decay table

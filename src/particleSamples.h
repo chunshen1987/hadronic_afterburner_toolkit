@@ -13,6 +13,7 @@
 #include "ParameterReader.h"
 #include "particle_info.h"
 #include "particle_decay.h"
+#include "Random.h"
 
 class particleSamples {
  private:
@@ -109,7 +110,8 @@ class particleSamples {
     //! particle decay
     particle_decay *decayer_ptr;
  public:
-    particleSamples(ParameterReader* paraRdr_in, std::string path_in);
+    particleSamples(ParameterReader* paraRdr_in, std::string path_in,
+                    std::shared_ptr<RandomUtil::Random> ran_gen);
     ~particleSamples();
 
     int get_pdg_id(int urqmd_id, int urqmd_isospin);

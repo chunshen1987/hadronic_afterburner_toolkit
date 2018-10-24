@@ -19,10 +19,13 @@ using std::setprecision;
 
 singleParticleSpectra::singleParticleSpectra(
         ParameterReader *paraRdr_in, std::string path_in, 
+        std::shared_ptr<RandomUtil::Random> ran_gen,
         particleSamples *particle_list_in) {
     paraRdr = paraRdr_in;
     path = path_in;
     particle_list = particle_list_in;
+    
+    ran_gen_ptr = ran_gen;
 
     particle_monval = paraRdr->getVal("particle_monval");
 
@@ -2441,7 +2444,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             double z_local = particle_list->get_particle(event_id, i).z;
             double tau_local = sqrt(t_local*t_local - z_local*z_local);
             if (tau_local > tau_min && tau_local < tau_max) {
-                double random = drand48()*intrinsic_dtau;
+                double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dtau;
                 int idx = (int)((tau_local + random - tau_min)/dtau);
                 tau_array[idx] += tau_local;
                 dNdtau_array[idx]++;
@@ -2452,7 +2455,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             double y_local = particle_list->get_particle(event_id, i).y;
             if (fabs(y_local) < 0.5) {
                 if (x_local > spatial_x_min && x_local < spatial_x_max) {
-                    double random = drand48()*intrinsic_dx;
+                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
                     int idx = (int)((x_local + random - spatial_x_min)
                                     /dspatial_x);
                     xpt_array[idx] += x_local;
@@ -2461,7 +2464,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             }
             if (fabs(x_local) < 0.5) {
                 if (y_local > spatial_x_min && y_local < spatial_x_max) {
-                    double random = drand48()*intrinsic_dx;
+                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
                     int idx = (int)((y_local + random - spatial_x_min)
                                     /dspatial_x);
                     ypt_array[idx] += y_local;
@@ -2472,10 +2475,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             // dN/(dtau dx)
             if (fabs(y_local) < 0.5) {
                 if (tau_local > tau_min && tau_local < tau_max) {
-                    double random = drand48()*intrinsic_dtau;
+                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dtau;
                     int idx_tau = (int)((tau_local + random - tau_min)/dtau);
                     if (x_local > spatial_x_min && x_local < spatial_x_max) {
-                        double random = drand48()*intrinsic_dx;
+                        double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
                         int idx_x = (int)((x_local + random - spatial_x_min)
                                           /dspatial_x);
                         dNdtaudx1_array[idx_tau][idx_x]++;
@@ -2484,10 +2487,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             }
             if (fabs(x_local) < 0.5) {
                 if (tau_local > tau_min && tau_local < tau_max) {
-                    double random = drand48()*intrinsic_dtau;
+                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dtau;
                     int idx_tau = (int)((tau_local + random - tau_min)/dtau);
                     if (y_local > spatial_x_min && y_local < spatial_x_max) {
-                        double random = drand48()*intrinsic_dx;
+                        double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
                         int idx_x = (int)((y_local + random - spatial_x_min)
                                           /dspatial_x);
                         dNdtaudx2_array[idx_tau][idx_x]++;
@@ -2500,7 +2503,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                                          /(t_local - z_local)));
             double y_minus_etas = rap_local - etas_local;
             if (y_minus_etas > eta_s_min && y_minus_etas < eta_s_max) {
-                double random = drand48()*intrinsic_detas;
+                double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_detas;
                 int idx = (int)((y_minus_etas + random - eta_s_min)/deta_s);
                 eta_s_array[idx] += y_minus_etas;
                 dNdetas_array[idx]++;

@@ -61,14 +61,15 @@ int main(int argc, char *argv[]) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     
-    particleSamples particle_list(paraRdr, path);
+    particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     if (run_mode == 0) {
         // collect single particle spectra and vn
-        singleParticleSpectra testSP(paraRdr, path, &particle_list);
+        singleParticleSpectra testSP(paraRdr, path, ran_gen_ptr,
+                                     &particle_list);
         testSP.calculate_Qn_vector_shell();
     } else if (run_mode == 1) {
         // compute HBT correlation function and HBT radii
-        HBT_correlation test(paraRdr, path, &particle_list);
+        HBT_correlation test(paraRdr, path, ran_gen_ptr, &particle_list);
         test.calculate_HBT_correlation_function();
     } else if (run_mode == 2) {
         // collect event-by-event particle yield distribution

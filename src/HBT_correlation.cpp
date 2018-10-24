@@ -9,10 +9,13 @@
 using namespace std;
 
 HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, 
+                                 std::shared_ptr<RandomUtil::Random> ran_gen,
                                  particleSamples *particle_list_in) {
     paraRdr = paraRdr_in;
     path = path_in;
     particle_list = particle_list_in;
+    
+    ran_gen_ptr = ran_gen;
 
     qnpts = paraRdr->getVal("qnpts");
     q_min = paraRdr->getVal("q_min");
@@ -619,7 +622,7 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
     vector<particle_info> temp_particle_list_2;
     for (int iev = 0; iev < number_of_mixed_events; iev++) {
         // introduce a random rotation for the mixed event
-        double random_rotation = drand48()*2*M_PI;
+        double random_rotation = ran_gen_ptr.lock()->rand_uniform()*2*M_PI;
         double cos_phi = cos(random_rotation);
         double sin_phi = sin(random_rotation);
         int mixed_event_id = mixed_event_list[iev];

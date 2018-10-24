@@ -177,7 +177,7 @@ void BalanceFunction::combine_and_bin_mixed_particle_pairs(
     const int nev       = plist_a->size();
     const int nev_mixed = plist_b->size();
     for (int iev = 0; iev < nev; iev++) {
-        int iev_mixed = rand() % nev_mixed;
+        int iev_mixed = ran_gen_ptr.lock()->rand_int_uniform() % nev_mixed;
         for (auto const& part_a: (*(*plist_a)[iev])) {
             if (part_a.pT < BpT_min || part_a.pT > BpT_max) continue;
             for (auto const& part_b: (*(*plist_b)[iev_mixed])) {

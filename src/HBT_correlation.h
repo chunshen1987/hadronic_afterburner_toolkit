@@ -2,15 +2,19 @@
 #define HBT_correlation_h
 
 #include <string>
+#include <memory>
 
 #include "ParameterReader.h"
 #include "particleSamples.h"
+#include "Random.h"
 
 class HBT_correlation {
  private:
     ParameterReader *paraRdr;
     std::string path;
     particleSamples *particle_list;
+    
+    std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
     int qnpts;
     double q_min, q_max, delta_q;
@@ -50,6 +54,7 @@ class HBT_correlation {
 
  public:
     HBT_correlation(ParameterReader* paraRdr_in, std::string path_in, 
+                    std::shared_ptr<RandomUtil::Random> ran_gen,
                     particleSamples *particle_list_in);
     ~HBT_correlation();
 

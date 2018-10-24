@@ -9,11 +9,12 @@
 #include <vector>
 
 #include "zlib.h"
-#include "./particleSamples.h"
+#include "particleSamples.h"
 
 using namespace std;
 
-particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
+particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
+                                 std::shared_ptr<RandomUtil::Random> ran_gen) {
     paraRdr = paraRdr_in;
     path = path_in;
 
@@ -52,7 +53,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in) {
         balance_function_particle_bbar_mixed_event = new vector< vector<particle_info>* >;
     }
 
-    decayer_ptr = new particle_decay;
+    decayer_ptr = new particle_decay(ran_gen);
     resonance_feed_down_flag = paraRdr->getVal("resonance_feed_down_flag");
     select_resonances_flag = 0;
     if (resonance_feed_down_flag == 1) {
