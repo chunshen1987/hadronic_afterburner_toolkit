@@ -337,10 +337,11 @@ int particleSamples::read_in_particle_samples() {
 
     filter_particles_into_lists(full_particle_list);
 
-
-    // perform Sigma^0 -> Lambda
-    if (resonance_weak_feed_down_flag == 1)
+    if (resonance_weak_feed_down_flag == 1) {
+        // perform Sigma^0 -> Lambda, Anti-Sigma^0 -> Anti-Lambda
         perform_weak_resonance_feed_down();
+    }
+    
 
     // reconst phi(1020) from K^+ and K^- pair
     if (reconst_flag == 1)
@@ -386,7 +387,8 @@ int particleSamples::read_in_particle_samples_mixed_event() {
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list_mixed_event);
 
-    filter_particles(full_particle_list_mixed_event, particle_list_mixed_event);
+    filter_particles(particle_monval, full_particle_list_mixed_event,
+                     particle_list_mixed_event);
 
     return(0);
 }
@@ -842,8 +844,9 @@ int particleSamples::read_in_particle_samples_gzipped() {
 }
 
 void particleSamples::filter_particles(
-                    vector< vector<particle_info>* >* full_list,
-                    vector< vector<particle_info>* >* filted_list) {
+                    int PoI_monval,
+                    std::vector< vector<particle_info>* >* full_list,
+                    std::vector< vector<particle_info>* >* filted_list) {
     // clean out the previous record
     clear_out_previous_record(filted_list);
 
@@ -851,7 +854,7 @@ void particleSamples::filter_particles(
     for (auto &ev_i: (*full_list)) {
         filted_list->push_back(new vector<particle_info> );
         for (auto &part_i: (*ev_i)) {
-            bool pick_flag = decide_to_pick_OSCAR(particle_monval,
+            bool pick_flag = decide_to_pick_OSCAR(PoI_monval,
                                                   part_i.monval);
             if (pick_flag)
                 (*filted_list)[i]->push_back(part_i);
@@ -1449,8 +1452,8 @@ void particleSamples::perform_particle_reconstruction() {
                     double py = py_1 + py_2;
                     double pz = pz_1 + pz_2;
                     double invariant_mass = sqrt(E*E - px*px - py*py - pz*pz);
-                    if (fabs(invariant_mass - particle_mass)
-                        < particle_width) {
+                    if (std::abs(invariant_mass - particle_mass)
+                                                    < particle_width) {
                         // phi(1020) resonance found
                         double spatial_distance = sqrt(
                             (t_1 - t_2)*(t_1 - t_2)

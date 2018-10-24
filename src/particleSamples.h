@@ -141,6 +141,7 @@ class particleSamples {
     void clear_out_previous_record(
                     std::vector< std::vector<particle_info>* >* plist);
     void filter_particles(
+                    int PoI_monval,
                     std::vector< std::vector<particle_info>* >* full_list,
                     std::vector< std::vector<particle_info>* >* filted_list);
     void filter_particles_into_lists(
