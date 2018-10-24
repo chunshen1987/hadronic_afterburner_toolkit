@@ -46,6 +46,8 @@ class BalanceFunction {
                     particleSamples *particle_list_in);
     ~BalanceFunction() {};
 
+    bool check_same_particle(const particle_info &lhs,
+                             const particle_info &rhs);
     void calculate_balance_function();
     void combine_and_bin_particle_pairs(
                 std::vector<std::vector<double>> &hist,

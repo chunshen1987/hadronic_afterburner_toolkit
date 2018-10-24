@@ -17,8 +17,8 @@ run_mode = 3                  # running mode for the program
                               #    and rap_max)
                               # 3: compute balance function
 
-particle_monval = 9999         # particle Monte-Carlo number
-distinguish_isospin = 0       # flag whether to distinguish the isospin of 
+particle_monval = 211         # particle Monte-Carlo number
+distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
                                      # turn on only for Lambda (monval=3122)
@@ -60,8 +60,8 @@ intrinsic_detas = 0.1         # deta_s in the output samples
 intrinsic_dtau = 0.01         # dtau in the output samples
 intrinsic_dx = 0.1            # dx in the output samples
 
-compute_correlation = 1       # flag to compute correlation function
-flag_charge_dependence = 1    # flag to compute charge dependence correlation
+compute_correlation = 0       # flag to compute correlation function
+flag_charge_dependence = 0    # flag to compute charge dependence correlation
 
 # Parameters for HBT correlation functions
 reject_decay_flag = 0         # reject particles from resonance decays
@@ -109,8 +109,8 @@ q_min = -0.15                        # minimum value for momentum q (GeV)
 q_max = 0.15                         # maximum value for momentum q (GeV)
 
 # options for calculting Balance function
-particle_alpha = 9998                 # monte carlo number for particle alpha
-particle_beta = -9998                 # monte carlo number for particle beta
+particle_alpha = 211                 # monte carlo number for particle alpha
+particle_beta = -211                 # monte carlo number for particle beta
 
 Bnpts = 21                           # number of bins for the balance function
 Brap_max = 2.0                       # the maximum \Delta y rapidity for balance function

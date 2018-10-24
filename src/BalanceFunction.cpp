@@ -75,6 +75,7 @@ void BalanceFunction::calculate_balance_function() {
         
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
+
         cout << "calculating C_ab ... " << endl;
         combine_and_bin_particle_pairs(C_ab, C_mixed_ab, plist_a, plist_b);
         cout << "calculating C_abarbbar ... " << endl;
@@ -93,6 +94,29 @@ void BalanceFunction::calculate_balance_function() {
 }
 
 
+bool BalanceFunction::check_same_particle(const particle_info &lhs,
+                                          const particle_info &rhs) {
+    bool flag = false;
+    const double tol = 1e-15;
+    if (lhs.monval == rhs.monval) {
+        if (std::abs(lhs.E - rhs.E) < tol) {
+            if (std::abs(lhs.px - rhs.px) < tol) {
+                if (std::abs(lhs.py - rhs.py) < tol) {
+                    if (std::abs(lhs.t - rhs.t) < tol) {
+                        if (std::abs(lhs.x - rhs.x) < tol) {
+                            if (std::abs(lhs.y - rhs.y) < tol) {
+                                flag = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return(flag);
+}
+
+
 void BalanceFunction::combine_and_bin_particle_pairs(
                 std::vector<std::vector<double>> &hist,
                 std::vector<std::vector<double>> &hist_mixed,
@@ -104,6 +128,11 @@ void BalanceFunction::combine_and_bin_particle_pairs(
             if (part_a.pT < BpT_min || part_a.pT > BpT_max) continue;
             for (auto const& part_b: (*(*plist_b)[iev])) {
                 if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
+
+                if (same_species) {
+                    bool flag = check_same_particle(part_a, part_b);
+                    if (flag) continue;
+                }
 
                 auto delta_phi_local = part_a.phi_p - part_b.phi_p;
                 // randomized the angle to compute the combinatorial background
@@ -117,7 +146,6 @@ void BalanceFunction::combine_and_bin_particle_pairs(
 
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
                 if (delta_y_local < Brap_min) continue;
-                if (std::abs(delta_y_local) < 1e-15) continue;
 
                 int y_bin_idx = static_cast<int>(
                                             (delta_y_local - Brap_min)/drap);
