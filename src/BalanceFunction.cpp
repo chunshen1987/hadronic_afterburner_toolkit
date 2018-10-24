@@ -82,6 +82,7 @@ void BalanceFunction::calculate_balance_function() {
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
 
+        cout << N_b << "  " << N_bbar << endl;
         cout << "calculating C_ab ... " << endl;
         combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
         cout << "calculating C_abarbbar ... " << endl;
@@ -233,9 +234,9 @@ void BalanceFunction::output_balance_function() {
             B_SS_delta_y[i] += C_abbar[i][j] + C_abarb[i][j];
         }
         B_delta_y[i] = B_OS_delta_y[i] - B_SS_delta_y[i];
-        B_OS_delta_y[i] /= static_cast<double>(N_b + N_bbar);
-        B_SS_delta_y[i] /= static_cast<double>(N_b + N_bbar);
-        B_delta_y[i]    /= static_cast<double>(N_b + N_bbar);
+        B_OS_delta_y[i] /= (static_cast<double>(N_b + N_bbar) + 1e-15);
+        B_SS_delta_y[i] /= (static_cast<double>(N_b + N_bbar) + 1e-15);
+        B_delta_y[i]    /= (static_cast<double>(N_b + N_bbar) + 1e-15);
     }
     std::ostringstream filename;
     filename << path << "/Balance_function_" << particle_monval_a << "_"
@@ -277,7 +278,7 @@ void BalanceFunction::output_balance_function() {
         for (int j = 0; j < Bnphi; j++) {
             output3 << std::scientific << std::setw(18) << std::setprecision(8)
                     << ((C_ab[i][j] + C_abarbbar[i][j])
-                        /static_cast<double>(N_b + N_bbar)) << "  ";
+                        /(static_cast<double>(N_b + N_bbar) + 1e-15)) << "  ";
         }
         output3 << endl;
     }
@@ -290,7 +291,7 @@ void BalanceFunction::output_balance_function() {
         for (int j = 0; j < Bnphi; j++) {
             output4 << std::scientific << std::setw(18) << std::setprecision(8)
                     << ((C_abbar[i][j] + C_abarb[i][j])
-                        /static_cast<double>(N_b + N_bbar)) << "  ";
+                        /(static_cast<double>(N_b + N_bbar) + 1e-15)) << "  ";
         }
         output4 << endl;
     }
@@ -305,7 +306,8 @@ void BalanceFunction::output_balance_function() {
         for (int j = 0; j < Bnphi; j++) {
             output5 << std::scientific << std::setw(18) << std::setprecision(8)
                     << ((C_ab[i][j] + C_abarbbar[i][j])
-                        /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j])) << "  ";
+                        /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] + 1e-15))
+                    << "  ";
         }
         output5 << endl;
     }
@@ -319,7 +321,8 @@ void BalanceFunction::output_balance_function() {
         for (int j = 0; j < Bnphi; j++) {
             output6 << std::scientific << std::setw(18) << std::setprecision(8)
                     << ((C_abbar[i][j] + C_abarb[i][j])
-                        /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j])) << "  ";
+                        /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j] + 1e-15))
+                    << "  ";
         }
         output6 << endl;
     }
