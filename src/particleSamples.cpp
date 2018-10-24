@@ -117,7 +117,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
                  << " can not open!" << endl;
             exit(1);
         }
-        if (run_mode == 1) {
+        if (run_mode == 1 || run_mode == 3) {
             inputfile_mixed_event.open(filename_mixed_event.str().c_str());
             if (!inputfile_mixed_event.is_open()) {
                 cout << "particleSamples:: Error: input file: " 
@@ -149,7 +149,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
         getline(inputfile, temp);
         getline(inputfile, temp);
         getline(inputfile, temp);
-        if (run_mode == 1) {
+        if (run_mode == 1 || run_mode == 3) {
             getline(inputfile_mixed_event, temp);
             getline(inputfile_mixed_event, temp);
             getline(inputfile_mixed_event, temp);
@@ -159,7 +159,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     // skip the header in JAM
     if (read_in_mode == 5) {
         getline(inputfile, temp);
-        if (run_mode == 1) {
+        if (run_mode == 1 || run_mode == 3) {
             getline(inputfile_mixed_event, temp);
         }
     }
