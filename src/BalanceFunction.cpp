@@ -179,15 +179,17 @@ void BalanceFunction::combine_and_bin_mixed_particle_pairs(
     const int nev       = plist_a->size();
     const int nev_mixed = plist_b->size();
     for (int iev = 0; iev < nev; iev++) {
-        int iev_mixed = ran_gen_ptr.lock()->rand_int_uniform() % nev_mixed;
+        const int iev_mixed = (
+                        ran_gen_ptr.lock()->rand_int_uniform() % nev_mixed);
+        const double global_random_rotation = (
+                        ran_gen_ptr.lock()->rand_uniform()*2.*M_PI);
         for (auto const& part_a: (*(*plist_a)[iev])) {
             if (part_a.pT < BpT_min || part_a.pT > BpT_max) continue;
             for (auto const& part_b: (*(*plist_b)[iev_mixed])) {
                 if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
 
-                auto delta_phi_local = (
-                        part_a.phi_p - part_b.phi_p
-                        + ran_gen_ptr.lock()->rand_uniform()*2.*M_PI);
+                auto delta_phi_local = (part_a.phi_p - part_b.phi_p
+                                        + global_random_rotation);
                 int phi_idx = ((static_cast<int>(
                             floor((delta_phi_local - Bphi_min)/dphi)))%Bnphi);
                 if (phi_idx < 0) phi_idx += Bnphi;
