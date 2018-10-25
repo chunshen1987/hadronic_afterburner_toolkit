@@ -76,13 +76,15 @@ for ipart in pair_list:
     event_avg_data[:, 14] = sqrt(event_avg_data[:, 14]
                                 - event_avg_data[:, 13]**2.)/sqrt(nev)
     # C_2(OS)
-    event_avg_data[:, 3] = event_avg_data[:, 5]/event_avg_data[:, 7]
-    event_avg_data[:, 4] = sqrt(
+    norm = sum(event_avg_data[:, 7])/sum(event_avg_data[:, 5])
+    event_avg_data[:, 3] = norm*event_avg_data[:, 5]/event_avg_data[:, 7]
+    event_avg_data[:, 4] = norm*sqrt(
           (event_avg_data[:, 6]/event_avg_data[:, 7])**2.
         + (event_avg_data[:, 5]*event_avg_data[:, 8]/event_avg_data[:, 7]**2.)**2.)
     # C_2(SS)
-    event_avg_data[:, 9] = event_avg_data[:, 11]/event_avg_data[:, 13]
-    event_avg_data[:, 10] = sqrt(
+    norm = sum(event_avg_data[:, 13])/sum(event_avg_data[:, 11])
+    event_avg_data[:, 9] = norm*event_avg_data[:, 11]/event_avg_data[:, 13]
+    event_avg_data[:, 10] = norm*sqrt(
           (event_avg_data[:, 12]/event_avg_data[:, 13])**2.
         + (event_avg_data[:, 11]*event_avg_data[:, 14]/event_avg_data[:, 13]**2.)**2.)
     # Delta C_2
@@ -131,13 +133,15 @@ for ipart in pair_list:
     event_avg_data[:, 14] = sqrt(event_avg_data[:, 14]
                                 - event_avg_data[:, 13]**2.)/sqrt(nev)
     # C_2(OS)
-    event_avg_data[:, 3] = event_avg_data[:, 5]/event_avg_data[:, 7]
-    event_avg_data[:, 4] = sqrt(
+    norm = sum(event_avg_data[:, 7])/sum(event_avg_data[:, 5])
+    event_avg_data[:, 3] = norm*event_avg_data[:, 5]/event_avg_data[:, 7]
+    event_avg_data[:, 4] = norm*sqrt(
           (event_avg_data[:, 6]/event_avg_data[:, 7])**2.
         + (event_avg_data[:, 5]*event_avg_data[:, 8]/event_avg_data[:, 7]**2.)**2.)
     # C_2(SS)
-    event_avg_data[:, 9] = event_avg_data[:, 11]/event_avg_data[:, 13]
-    event_avg_data[:, 10] = sqrt(
+    norm = sum(event_avg_data[:, 13])/sum(event_avg_data[:, 11])
+    event_avg_data[:, 9] = norm*event_avg_data[:, 11]/event_avg_data[:, 13]
+    event_avg_data[:, 10] = norm*sqrt(
           (event_avg_data[:, 12]/event_avg_data[:, 13])**2.
         + (event_avg_data[:, 11]*event_avg_data[:, 14]/event_avg_data[:, 13]**2.)**2.)
     # Delta C_2
@@ -168,10 +172,10 @@ for ipart in pair_list:
         event_avg_data[:, 7] += temp_data[:, 3]**2.
         event_avg_data[:, 8] += temp_data[:, 4]       # rho_1^2(OS)
         event_avg_data[:, 9] += temp_data[:, 4]**2.
-        event_avg_data[:, 12] += temp_data[:, 5]       # rho_2(SS)
-        event_avg_data[:, 13] += temp_data[:, 5]**2.
-        event_avg_data[:, 14] += temp_data[:, 6]       # rho_1^2(SS)
-        event_avg_data[:, 15] += temp_data[:, 6]**2.
+        event_avg_data[:, 12] += temp_data[:, 6]       # rho_2(SS)
+        event_avg_data[:, 13] += temp_data[:, 6]**2.
+        event_avg_data[:, 14] += temp_data[:, 7]       # rho_1^2(SS)
+        event_avg_data[:, 15] += temp_data[:, 7]**2.
 
     event_avg_data = event_avg_data/nev
     # rho_2(OS)_err
@@ -187,13 +191,15 @@ for ipart in pair_list:
     event_avg_data[:, 15] = sqrt(event_avg_data[:, 15]
                                  - event_avg_data[:, 14]**2.)/sqrt(nev)
     # C_2(OS)
-    event_avg_data[:, 4] = event_avg_data[:, 6]/event_avg_data[:, 8]
-    event_avg_data[:, 5] = sqrt(
+    norm = sum(event_avg_data[:, 8])/sum(event_avg_data[:, 6])
+    event_avg_data[:, 4] = norm*event_avg_data[:, 6]/event_avg_data[:, 8]
+    event_avg_data[:, 5] = norm*sqrt(
           (event_avg_data[:, 7]/event_avg_data[:, 8])**2.
         + (event_avg_data[:, 6]*event_avg_data[:, 9]/event_avg_data[:, 8]**2.)**2.)
     # C_2(SS)
-    event_avg_data[:, 10] = event_avg_data[:, 12]/event_avg_data[:, 14]
-    event_avg_data[:, 11] = sqrt(
+    norm = sum(event_avg_data[:, 14])/sum(event_avg_data[:, 12])
+    event_avg_data[:, 10] = norm*event_avg_data[:, 12]/event_avg_data[:, 14]
+    event_avg_data[:, 11] = norm*sqrt(
           (event_avg_data[:, 13]/event_avg_data[:, 14])**2.
         + (event_avg_data[:, 12]*event_avg_data[:, 15]/event_avg_data[:, 14]**2.)**2.)
     # Delta C_2
