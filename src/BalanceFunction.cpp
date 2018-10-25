@@ -302,67 +302,27 @@ void BalanceFunction::output_balance_function() {
     output2.close();
 
     // output correlation functions as a function of \Delta Y and \Delta phi
-    std::ostringstream filename3;
-    filename3 << path << "/Balance_function_" << particle_monval_a << "_"
-              << particle_monval_b << "_os_2D.dat";
-    std::ofstream output3(filename3.str().c_str(), std::ios::out);
-    for (int i = 0; i < Bnpts; i++) {
-        for (int j = 0; j < Bnphi; j++) {
-            output3 << std::scientific << std::setw(18) << std::setprecision(8)
-                    << ((C_ab[i][j] + C_abarbbar[i][j])
-                        /(static_cast<double>(N_b + N_bbar) + 1e-15)) << "  ";
-        }
-        output3 << endl;
-    }
-    output3.close();
-    std::ostringstream filename4;
-    filename4 << path << "/Balance_function_" << particle_monval_a << "_"
-              << particle_monval_b << "_ss_2D.dat";
-    std::ofstream output4(filename4.str().c_str(), std::ios::out);
-    for (int i = 0; i < Bnpts; i++) {
-        for (int j = 0; j < Bnphi; j++) {
-            output4 << std::scientific << std::setw(18) << std::setprecision(8)
-                    << ((C_abbar[i][j] + C_abarb[i][j])
-                        /(static_cast<double>(N_b + N_bbar) + 1e-15)) << "  ";
-        }
-        output4 << endl;
-    }
-    output4.close();
-    
-    // output correlation functions as a function of \Delta Y and \Delta phi
     std::ostringstream filename5;
     filename5 << path << "/Correlation_function_" << particle_monval_a << "_"
-              << particle_monval_b << "_os_2D.dat";
-    std::ofstream output5(filename5.str().c_str(), std::ios::out);
-    output5 << "# DY  Dphi  C2  rho2  rho1^2" << endl;
+              << particle_monval_b << "_2D.dat";
+    std::ofstream output3(filename5.str().c_str(), std::ios::out);
+    output3 << "# DY  Dphi  C2(OS)  rho2(OS)  rho1^2(OS)  "
+            << "C2(SS)  rho2(SS)  rho1^2(SS)" << endl;
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
-            double R2 = ((C_ab[i][j] + C_abarbbar[i][j])
-                         /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] + 1e-15));
-            output5 << std::scientific << std::setw(18) << std::setprecision(8)
+            double C2_OS = ( (C_ab[i][j] + C_abarbbar[i][j])
+                            /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] + 1e-15));
+            double C2_SS = ( (C_abbar[i][j] + C_abarb[i][j])
+                            /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j] + 1e-15));
+            output3 << std::scientific << std::setw(18) << std::setprecision(8)
                     << Delta_y[i] << "  " << Delta_phi[j] << "  "
-                    << R2*N_OS_mixed/N_OS << "  "
+                    << C2_OS*N_OS_mixed/N_OS << "  "
+                    << C_ab[i][j] + C_abarbbar[i][j] << "  "
+                    << C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] << "  "
+                    << C2_SS*N_SS_mixed/N_SS << "  "
                     << C_ab[i][j] + C_abarbbar[i][j] << "  "
                     << C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] << endl;
         }
     }
-    output5.close();
-
-    std::ostringstream filename6;
-    filename6 << path << "/Correlation_function_" << particle_monval_a << "_"
-              << particle_monval_b << "_ss_2D.dat";
-    std::ofstream output6(filename6.str().c_str(), std::ios::out);
-    output6 << "# DY  Dphi  C2  rho2  rho1^2" << endl;
-    for (int i = 0; i < Bnpts; i++) {
-        for (int j = 0; j < Bnphi; j++) {
-            double R2 = ((C_abbar[i][j] + C_abarb[i][j])
-                         /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j] + 1e-15));
-            output6 << std::scientific << std::setw(18) << std::setprecision(8)
-                    << Delta_y[i] << "  " << Delta_phi[j] << "  "
-                    << R2*N_SS_mixed/N_SS << "  "
-                    << C_abbar[i][j] + C_abarb[i][j] << "  "
-                    << C_mixed_abbar[i][j] + C_mixed_abarb[i][j] << endl;
-        }
-    }
-    output6.close();
+    output3.close();
 }
