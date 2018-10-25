@@ -320,8 +320,8 @@ void BalanceFunction::output_balance_function() {
                     << C_ab[i][j] + C_abarbbar[i][j] << "  "
                     << C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] << "  "
                     << C2_SS*N_SS_mixed/N_SS << "  "
-                    << C_ab[i][j] + C_abarbbar[i][j] << "  "
-                    << C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] << endl;
+                    << C_abbar[i][j] + C_abarb[i][j] << "  "
+                    << C_mixed_abbar[i][j] + C_mixed_abarb[i][j] << endl;
         }
     }
     output3.close();
