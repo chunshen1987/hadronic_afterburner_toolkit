@@ -7,7 +7,8 @@
 
 #include "particle_decay.h"
 
-using namespace std;
+using std::cout;
+using std::endl;
 
 particle_decay::particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen) {
     ran_gen_ptr = ran_gen;
@@ -30,7 +31,7 @@ particle_decay::~particle_decay() {
 int particle_decay::read_resonances_list() {
     double eps = 1e-15;
     cout << " -- Read in particle resonance decay table..." << endl;
-    ifstream resofile("EOS/pdg.dat");
+    std::ifstream resofile("EOS/pdg.dat");
     if (!resofile) {
         cout << "can not find the file EOS/pdg.dat!" << endl;
         exit(1);
@@ -79,7 +80,7 @@ int particle_decay::read_resonances_list() {
             // add anti-particle entry for baryon
             particle_decay_info *temp_anti_resonance = new particle_decay_info;
             temp_anti_resonance->monval = -temp_resonance->monval;
-            ostringstream antiname;
+            std::ostringstream antiname;
             antiname << "Anti-" << temp_resonance->name;
             temp_anti_resonance->name = antiname.str();
             temp_anti_resonance->mass = temp_resonance->mass;
@@ -251,7 +252,7 @@ int particle_decay::get_particle_strange_number(int monval) {
 
 //! This is a shell function to perform resonance decays
 void particle_decay::perform_decays(
-            particle_info *mother, vector<particle_info>* daughter_list) {
+            particle_info *mother, std::vector<particle_info>* daughter_list) {
     particle_decay_info* mother_decay_info = NULL;
     for (unsigned int i = 0; i < resonance_table.size(); i++) {
         if (mother->monval == resonance_table[i]->monval) {
