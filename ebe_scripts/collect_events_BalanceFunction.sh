@@ -21,7 +21,8 @@ echo "collecting events from " $fromFolder " to " $toFolder
 folderName=`echo $fromFolder | sed 's/arena_//'`
 mkdir $toFolder/$folderName
 
-eventNum=0
+total_eventNum=0
+collected_eventNum=0
 for ijob in `ls --color=none $fromFolder`;
 do 
     eventsPath=$fromFolder/$ijob/BalanceFunction_results
@@ -30,9 +31,14 @@ do
         if [ -a $eventsPath/$iev/Balance_function_9998_-9998_Delta_y.dat ]
         then
             mv $eventsPath/$iev $toFolder/$folderName
+            ((collected_eventNum++))
         fi
-        ((eventNum++))
+        ((total_eventNum++))
     done
 done
 
-echo "Collected events number: " $eventNum
+echo "Collected events number: " $collected_eventNum " out of " $total_eventNum
+
+./combine_results_into_hdf5.py $toFolder/$folderName
+mv $folderName.h5 $toFolder/
+rm -fr $toFolder/$folderName

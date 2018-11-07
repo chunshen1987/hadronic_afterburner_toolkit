@@ -53,7 +53,7 @@ for ipart in pair_list:
     event_avg_data = zeros([len(event_avg_data[:, 0]), 15])
     for ifolder, event_name in enumerate(event_list):
         event_group = hf.get(event_name)
-        print("processing %s/%s ..." % (event_name, file_name))
+        print("processing {0}/{1} ...".format(event_name, file_name))
         temp_data = event_group.get(file_name)
         event_avg_data[:, 0] += temp_data[:, 0]
         event_avg_data[:, 5] += temp_data[:, 3]       # rho_2(OS)
@@ -109,7 +109,7 @@ for ipart in pair_list:
     event_avg_data = zeros([len(event_avg_data[:, 0]), 15])
     for ifolder, event_name in enumerate(event_list):
         event_group = hf.get(event_name)
-        print("processing %s/%s ..." % (event_name, file_name))
+        print("processing {0}/{1} ...".format(event_name, file_name))
         temp_data = event_group.get(file_name)
         event_avg_data[:, 0] += temp_data[:, 0]
         event_avg_data[:, 5] += temp_data[:, 3]       # rho_2(OS)
@@ -165,7 +165,7 @@ for ipart in pair_list:
     event_avg_data = zeros([len(event_avg_data[:, 0]), 16])
     for ifolder, event_name in enumerate(event_list):
         event_group = hf.get(event_name)
-        print("processing %s/%s ..." % (event_name, file_name))
+        print("processing {0}/{1} ...".format(event_name, file_name))
         temp_data = event_group.get(file_name)
         event_avg_data[:, 0] += temp_data[:, 0]
         event_avg_data[:, 1] += temp_data[:, 1]
