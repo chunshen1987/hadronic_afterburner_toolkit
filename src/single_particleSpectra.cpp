@@ -129,16 +129,23 @@ singleParticleSpectra::singleParticleSpectra(
         N_xpt = 50;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
+        spatial_r_min = 0.0;
+        spatial_r_max = 10.0;
         dspatial_x = (spatial_x_max - spatial_x_min)/(N_xpt - 1);
+        dspatial_r = (spatial_r_max - spatial_r_min)/(N_xpt - 1);
         xpt_array = new double [N_xpt];
         ypt_array = new double [N_xpt];
+        rpt_array = new double [N_xpt];
         dNdx1_array = new double [N_xpt];
         dNdx2_array = new double [N_xpt];
+        dNdr_array  = new double [N_xpt];
         for (int i = 0; i < N_xpt; i++) {
             xpt_array[i] = spatial_x_min + i*dspatial_x;
             ypt_array[i] = spatial_x_min + i*dspatial_x;
+            rpt_array[i] = spatial_r_min + i*dspatial_r;
             dNdx1_array[i] = 0.0;
             dNdx2_array[i] = 0.0;
+            dNdr_array[i]  = 0.0;
         }
 
         // dN/(dtau dx)
@@ -289,8 +296,10 @@ singleParticleSpectra::~singleParticleSpectra() {
         delete [] dNdtau_array;
         delete [] xpt_array;
         delete [] ypt_array;
+        delete [] rpt_array;
         delete [] dNdx1_array;
         delete [] dNdx2_array;
+        delete [] dNdr_array;
         delete [] eta_s_array;
         delete [] dNdetas_array;
         for (int i = 0; i < N_tau; i++) {
@@ -2586,6 +2595,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             // second dN/dx
             double x_local = particle_list->get_particle(event_id, i).x;
             double y_local = particle_list->get_particle(event_id, i).y;
+            double r_local = sqrt(x_local*x_local + y_local*y_local);
             if (fabs(y_local) < 0.5) {
                 if (x_local > spatial_x_min && x_local < spatial_x_max) {
                     double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
@@ -2602,6 +2612,15 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                                     /dspatial_x);
                     ypt_array[idx] += y_local;
                     dNdx2_array[idx]++;
+                }
+            }
+            if (r_local > spatial_r_min && r_local < spatial_r_max) {
+                double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
+                int idx = static_cast<int>((r_local + random - spatial_r_min)
+                                           /dspatial_r);
+                if (idx >= 0 && idx < N_xpt) {
+                    rpt_array[idx] += r_local;
+                    dNdr_array[idx]++;
                 }
             }
 
@@ -2668,24 +2687,32 @@ void singleParticleSpectra::output_dNdSV() {
     ostringstream filename2;
     filename2 << path << "/check_" << particle_monval << "_dNdx.dat";
     ofstream output2(filename2.str().c_str());
+    output2 << "# x  dN/dx  y  dN/dy  r  dN/dr" << endl;
     for (int i = 0; i < N_xpt; i++) {
         xpt_array[i] = xpt_array[i]/(dNdx1_array[i] + 1.);
         ypt_array[i] = ypt_array[i]/(dNdx2_array[i] + 1.);
+        rpt_array[i] = rpt_array[i]/(dNdr_array[i] + 1.);
         dNdx1_array[i] = dNdx1_array[i]/total_number_of_events;
         dNdx2_array[i] = dNdx2_array[i]/total_number_of_events;
+        dNdr_array[i] = dNdr_array[i]/total_number_of_events;
         double dNdx1_err = sqrt(dNdx1_array[i]/total_number_of_events);
         double dNdx2_err = sqrt(dNdx2_array[i]/total_number_of_events);
+        double dNdr_err = sqrt(dNdr_array[i]/total_number_of_events);
         if (particle_monval == 333) {
             dNdx1_array[i] = dNdx1_array[i]/reconst_branching_ratio;
             dNdx2_array[i] = dNdx2_array[i]/reconst_branching_ratio;
+            dNdr_array[i] = dNdr_array[i]/reconst_branching_ratio;
             dNdx1_err = dNdx1_err/reconst_branching_ratio;
             dNdx2_err = dNdx2_err/reconst_branching_ratio;
+            dNdr_err = dNdr_err/reconst_branching_ratio;
         }
         output2 << scientific << setw(18) << setprecision(8)
                 << xpt_array[i] << "   " << dNdx1_array[i]/dspatial_x << "   " 
                 << dNdx1_err/dspatial_x << "   " 
                 << ypt_array[i] << "   " << dNdx2_array[i]/dspatial_x << "   " 
-                << dNdx2_err/dspatial_x << endl;
+                << dNdx2_err/dspatial_x << "   "
+                << rpt_array[i] << "   " << dNdr_array[i]/dspatial_r << "   " 
+                << dNdr_err/dspatial_r << endl;
     }
     output2.close();
     
