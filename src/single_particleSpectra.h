@@ -157,13 +157,21 @@ class singleParticleSpectra {
     //! and flow coefficients
     void output_Qn_vectors();
 
+    //! This function computes the 2-particle correlation for Qn vectors
+    //! within one event with same-sign and opposite-sign pairs
+    void calculate_two_particle_correlation_charge_dep(
+            std::vector<double> &event_Qn_p_real,
+            std::vector<double> &event_Qn_p_imag,
+            std::vector<double> &event_Qn_m_real,
+            std::vector<double> &event_Qn_m_imag,
+            std::vector<double> &corr_ss, std::vector<double> &corr_ss_err,
+            std::vector<double> &corr_os, std::vector<double> &corr_os_err);
 
     //! This function computes the 2-particle correlation for Qn vectors
-    //! within one event with charge dependence
+    //! within one event with particle dependence
     //!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
-    //!     Real(Qn(pT)*conj(Qn)) for n = 0, 1, ... , order_max
     //! self correlation is subtracted when flag == 0 (full overlap)
-    void calculate_two_particle_correlation_charge_dep(
+    void calculate_two_particle_correlation_charge_base(
         std::vector<double> &event_Q1_real,
         std::vector<double> &event_Q1_imag,
         std::vector<double> &event_Q2_real,
@@ -206,6 +214,20 @@ class singleParticleSpectra {
     //! This function outputs the two-particle flow correlation as a function
     //! of delta eta between the two particles
     void output_two_particle_correlation_rap();
+
+    //! This function computes the 3-particle correlation for Qn vectors
+    //! within one event with same-sign and opposite-sign pairs
+    void calculate_three_particle_correlation_charge_dep(
+        std::vector<double> &event_Qn_p_real,
+        std::vector<double> &event_Qn_p_imag,
+        std::vector<double> &event_Qn_m_real,
+        std::vector<double> &event_Qn_m_imag,
+        std::vector<double> &event_Qn_real,
+        std::vector<double> &event_Qn_imag,
+        std::vector<double> &corr_ss,    std::vector<double> &corr_ss_err,
+        std::vector<double> &corr_os,    std::vector<double> &corr_os_err,
+        std::vector<double> &corr_ss_13, std::vector<double> &corr_ss_13_err,
+        std::vector<double> &corr_os_13, std::vector<double> &corr_os_13_err);
 
     //! This function computes the 3-particle correlation for Qn vectors
     //! within one event

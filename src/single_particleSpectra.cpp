@@ -511,61 +511,16 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
 
                     calculate_two_particle_correlation_charge_dep(
                             event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_p_real, event_Qn_p_imag, 0,
-                            Cn2_ss, Cn2_ss_err);
-                    calculate_two_particle_correlation_charge_dep(
                             event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_m_real, event_Qn_m_imag, 0,
-                            Cn2_ss, Cn2_ss_err);
-                    calculate_two_particle_correlation_charge_dep(
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_m_real, event_Qn_m_imag, 1,
-                            Cn2_os, Cn2_os_err);
-                    calculate_two_particle_correlation_charge_dep(
-                            event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_p_real, event_Qn_p_imag, 1,
-                            Cn2_os, Cn2_os_err);
+                            Cn2_ss, Cn2_ss_err, Cn2_os, Cn2_os_err);
 
-                    calculate_three_particle_correlation(
+                    calculate_three_particle_correlation_charge_dep(
                             event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_real, event_Qn_imag, 0,
-                            C_nmk_ss, C_nmk_ss_err);
-                    calculate_three_particle_correlation(
-                            event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_real, event_Qn_imag, 0,
-                            C_nmk_ss, C_nmk_ss_err);
-                    calculate_three_particle_correlation(
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_real, event_Qn_imag, 1,
-                            C_nmk_os, C_nmk_os_err);
-                    calculate_three_particle_correlation(
-                            event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_real, event_Qn_imag, 1,
-                            C_nmk_os, C_nmk_os_err);
-
-                    calculate_three_particle_correlation(
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_real, event_Qn_imag,
-                            event_Qn_p_real, event_Qn_p_imag, 3,
-                            C_nmk_ss_13, C_nmk_ss_13_err);
-                    calculate_three_particle_correlation(
                             event_Qn_m_real, event_Qn_m_imag,
                             event_Qn_real, event_Qn_imag,
-                            event_Qn_m_real, event_Qn_m_imag, 3,
-                            C_nmk_ss_13, C_nmk_ss_13_err);
-                    calculate_three_particle_correlation(
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_real, event_Qn_imag,
-                            event_Qn_m_real, event_Qn_m_imag, 4,
-                            C_nmk_os_13, C_nmk_os_13_err);
-                    calculate_three_particle_correlation(
-                            event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_real, event_Qn_imag,
-                            event_Qn_p_real, event_Qn_p_imag, 4,
+                            C_nmk_ss, C_nmk_ss_err,
+                            C_nmk_os, C_nmk_os_err,
+                            C_nmk_ss_13, C_nmk_ss_13_err,
                             C_nmk_os_13, C_nmk_os_13_err);
                 }
             }
@@ -1043,11 +998,56 @@ void singleParticleSpectra::output_Qn_vectors() {
 
 
 //! This function computes the 2-particle correlation for Qn vectors
-//! within one event with charge dependence
-//!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
-//!     Real(Qn(pT)*conj(Qn)) for n = 0, 1, ... , order_max
-//! self correlation is subtracted when flag == 0 (full overlap)
+//! within one event with same sign pairs
 void singleParticleSpectra::calculate_two_particle_correlation_charge_dep(
+        vector<double> &event_Qn_p_real, vector<double> &event_Qn_p_imag,
+        vector<double> &event_Qn_m_real, vector<double> &event_Qn_m_imag,
+        vector<double> &corr_ss, vector<double> &corr_ss_err,
+        vector<double> &corr_os, vector<double> &corr_os_err) {
+    vector<double> temp_Cn2_ss_1(order_max, 0.);
+    vector<double> temp_Cn2_ss_2(order_max, 0.);
+    vector<double> temp_Cn2_ss_1_err(order_max, 0.);
+    vector<double> temp_Cn2_ss_2_err(order_max, 0.);
+    calculate_two_particle_correlation_charge_base(
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_p_real, event_Qn_p_imag, 0,
+            temp_Cn2_ss_1, temp_Cn2_ss_1_err);
+    calculate_two_particle_correlation_charge_base(
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_m_real, event_Qn_m_imag, 0,
+            temp_Cn2_ss_2, temp_Cn2_ss_2_err);
+    for (int i = 0; i < order_max; i++) {
+        double local_Cn2_ss = temp_Cn2_ss_1[i] + temp_Cn2_ss_2[i];
+        corr_ss[i]     += local_Cn2_ss;
+        corr_ss_err[i] += local_Cn2_ss*local_Cn2_ss;
+    }
+    
+    vector<double> temp_Cn2_os_1(order_max, 0.);
+    vector<double> temp_Cn2_os_2(order_max, 0.);
+    vector<double> temp_Cn2_os_1_err(order_max, 0.);
+    vector<double> temp_Cn2_os_2_err(order_max, 0.);
+    calculate_two_particle_correlation_charge_base(
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_m_real, event_Qn_m_imag, 1,
+            temp_Cn2_os_1, temp_Cn2_os_1_err);
+    calculate_two_particle_correlation_charge_base(
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_p_real, event_Qn_p_imag, 1,
+            temp_Cn2_os_2, temp_Cn2_os_2_err);
+    for (int i = 0; i < order_max; i++) {
+        double local_Cn2_os = temp_Cn2_os_1[i] + temp_Cn2_os_2[i];
+        corr_os[i]     += local_Cn2_os;
+        corr_os_err[i] += local_Cn2_os*local_Cn2_os;
+    }
+}
+
+
+
+//! This function computes the 2-particle correlation for Qn vectors
+//! within one event with particle dependence
+//!     Real(Qn*conj(Qn)) for n = 0, 1, ... , order_max
+//! self correlation is subtracted when flag == 0 (full overlap)
+void singleParticleSpectra::calculate_two_particle_correlation_charge_base(
         vector<double> &event_Q1_real, vector<double> &event_Q1_imag,
         vector<double> &event_Q2_real, vector<double> &event_Q2_imag, int flag,
         vector<double> &corr, vector<double> &corr_err) {
@@ -1157,7 +1157,7 @@ void singleParticleSpectra::calculate_two_particle_correlation_deltaeta_chdep(
             }
         }
         for (int j = 0; j < N_rap; j++) {
-            corr[i][j] += temp_corr[j];
+            corr[i][j]     += temp_corr[j];
             corr_err[i][j] += temp_corr[j]*temp_corr[j];
         }
     }
@@ -1451,6 +1451,92 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
         }
         output_ss.close();
         output_os.close();
+    }
+}
+
+
+//! This function computes the 3-particle correlation for Qn vectors
+//! within one event with same-sign and opposite-sign pairs
+void singleParticleSpectra::calculate_three_particle_correlation_charge_dep(
+        vector<double> &event_Qn_p_real, vector<double> &event_Qn_p_imag,
+        vector<double> &event_Qn_m_real, vector<double> &event_Qn_m_imag,
+        vector<double> &event_Qn_real, vector<double> &event_Qn_imag,
+        vector<double> &corr_ss, vector<double> &corr_ss_err,
+        vector<double> &corr_os, vector<double> &corr_os_err,
+        vector<double> &corr_ss_13, vector<double> &corr_ss_13_err,
+        vector<double> &corr_os_13, vector<double> &corr_os_13_err) {
+    vector<double> temp_Cmnk_ss_1(num_corr, 0.);
+    vector<double> temp_Cmnk_ss_2(num_corr, 0.);
+    vector<double> temp_Cmnk_ss_3(num_corr, 0.);
+    vector<double> temp_Cmnk_ss_4(num_corr, 0.);
+    vector<double> temp_Cmnk_ss_1_err(num_corr, 0.);
+    vector<double> temp_Cmnk_ss_2_err(num_corr, 0.);
+    vector<double> temp_Cmnk_ss_3_err(num_corr, 0.);
+    vector<double> temp_Cmnk_ss_4_err(num_corr, 0.);
+    calculate_three_particle_correlation(
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_real, event_Qn_imag, 0,
+            temp_Cmnk_ss_1, temp_Cmnk_ss_1_err);
+    calculate_three_particle_correlation(
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_real, event_Qn_imag, 0,
+            temp_Cmnk_ss_2, temp_Cmnk_ss_2_err);
+    calculate_three_particle_correlation(
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_real, event_Qn_imag,
+            event_Qn_p_real, event_Qn_p_imag, 3,
+            temp_Cmnk_ss_3, temp_Cmnk_ss_3_err);
+    calculate_three_particle_correlation(
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_real, event_Qn_imag,
+            event_Qn_m_real, event_Qn_m_imag, 3,
+            temp_Cmnk_ss_4, temp_Cmnk_ss_4_err);
+    for (int i = 0; i < num_corr; i++) {
+        double local_Cmnk_ss = temp_Cmnk_ss_1[i] + temp_Cmnk_ss_2[i];
+        corr_ss[i]     += local_Cmnk_ss;
+        corr_ss_err[i] += local_Cmnk_ss*local_Cmnk_ss;
+        double local_Cmnk_ss_13 = temp_Cmnk_ss_3[i] + temp_Cmnk_ss_4[i];
+        corr_ss_13[i]     += local_Cmnk_ss_13;
+        corr_ss_13_err[i] += local_Cmnk_ss_13*local_Cmnk_ss_13;
+    }
+    
+    vector<double> temp_Cmnk_os_1(num_corr, 0.);
+    vector<double> temp_Cmnk_os_2(num_corr, 0.);
+    vector<double> temp_Cmnk_os_3(num_corr, 0.);
+    vector<double> temp_Cmnk_os_4(num_corr, 0.);
+    vector<double> temp_Cmnk_os_1_err(num_corr, 0.);
+    vector<double> temp_Cmnk_os_2_err(num_corr, 0.);
+    vector<double> temp_Cmnk_os_3_err(num_corr, 0.);
+    vector<double> temp_Cmnk_os_4_err(num_corr, 0.);
+    calculate_three_particle_correlation(
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_real, event_Qn_imag, 1,
+            temp_Cmnk_os_1, temp_Cmnk_os_1_err);
+    calculate_three_particle_correlation(
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_real, event_Qn_imag, 1,
+            temp_Cmnk_os_2, temp_Cmnk_os_2_err);
+    calculate_three_particle_correlation(
+            event_Qn_p_real, event_Qn_p_imag,
+            event_Qn_real, event_Qn_imag,
+            event_Qn_m_real, event_Qn_m_imag, 4,
+            temp_Cmnk_os_3, temp_Cmnk_os_3_err);
+    calculate_three_particle_correlation(
+            event_Qn_m_real, event_Qn_m_imag,
+            event_Qn_real, event_Qn_imag,
+            event_Qn_p_real, event_Qn_p_imag, 4,
+            temp_Cmnk_os_4, temp_Cmnk_os_4_err);
+    for (int i = 0; i < num_corr; i++) {
+        double local_Cmnk_os = temp_Cmnk_os_1[i] + temp_Cmnk_os_2[i];
+        corr_os[i]     += local_Cmnk_os;
+        corr_os_err[i] += local_Cmnk_os*local_Cmnk_os;
+        double local_Cmnk_os_13 = temp_Cmnk_os_3[i] + temp_Cmnk_os_4[i];
+        corr_os_13[i]     += local_Cmnk_os_13;
+        corr_os_13_err[i] += local_Cmnk_os_13*local_Cmnk_os_13;
     }
 }
 
