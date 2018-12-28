@@ -70,8 +70,10 @@ class singleParticleSpectra {
     int num_corr;
     std::vector<double> C_nmk;
     std::vector<double> C_nmk_err;
-    double **C_nmk_eta12, **C_nmk_eta12_err;
-    double **C_nmk_eta13, **C_nmk_eta13_err;
+    std::vector<std::vector<double>>C_nmk_eta12;
+    std::vector<std::vector<double>>C_nmk_eta13;
+    std::vector<std::vector<double>>C_nmk_eta12_err;
+    std::vector<std::vector<double>>C_nmk_eta13_err;
     int flag_charge_dependence;
     std::vector<double> C_nmk_ss;
     std::vector<double> C_nmk_ss_err;
@@ -85,10 +87,14 @@ class singleParticleSpectra {
     std::vector<double> C_nmk_os_13_err;
 
     // \Delta \eta dependent 3-particle correlators
-    double **C_nmk_eta12_ss, **C_nmk_eta12_ss_err;
-    double **C_nmk_eta12_os, **C_nmk_eta12_os_err;
-    double **C_nmk_eta13_ss, **C_nmk_eta13_ss_err;
-    double **C_nmk_eta13_os, **C_nmk_eta13_os_err;
+    std::vector<std::vector<double>> C_nmk_eta12_ss;
+    std::vector<std::vector<double>> C_nmk_eta12_os;
+    std::vector<std::vector<double>> C_nmk_eta13_ss;
+    std::vector<std::vector<double>> C_nmk_eta13_os;
+    std::vector<std::vector<double>> C_nmk_eta12_ss_err;
+    std::vector<std::vector<double>> C_nmk_eta12_os_err;
+    std::vector<std::vector<double>> C_nmk_eta13_ss_err;
+    std::vector<std::vector<double>> C_nmk_eta13_os_err;
 
     // 4-particle symmetric cumulants
     int SC_num_corr;
@@ -201,6 +207,20 @@ class singleParticleSpectra {
     //!     Real(Qn(eta_1)*conj(Qn(eta_2))) for n = 0, 1, ... , order_max
     //! self correlation is subtracted when eta_1 = eta_2 and flag == 0
     void calculate_two_particle_correlation_deltaeta_chdep(
+            std::vector<std::vector<double>> &event_Qn_p_rap_real,
+            std::vector<std::vector<double>> &event_Qn_p_rap_imag,
+            std::vector<std::vector<double>> &event_Qn_m_rap_real,
+            std::vector<std::vector<double>> &event_Qn_m_rap_imag,
+            std::vector<std::vector<double>> &Cn2_ss_eta12,
+            std::vector<std::vector<double>> &Cn2_ss_eta12_err,
+            std::vector<std::vector<double>> &Cn2_os_eta12,
+            std::vector<std::vector<double>> &Cn2_os_eta12_err);
+
+    //! This function computes the 2-particle correlation for Qn vectors
+    //! as a function of \delta \eta within one event with charge depenedence
+    //!     Real(Qn(eta_1)*conj(Qn(eta_2))) for n = 0, 1, ... , order_max
+    //! self correlation is subtracted when eta_1 = eta_2 and flag == 0
+    void calculate_two_particle_correlation_deltaeta_chdep_base(
         std::vector<std::vector<double>> &event_Q1_diff_real,
         std::vector<std::vector<double>> &event_Q1_diff_imag,
         std::vector<std::vector<double>> &event_Q2_diff_real,
@@ -255,7 +275,26 @@ class singleParticleSpectra {
         std::vector<std::vector<double>> &event_Q2_imag,
         std::vector<std::vector<double>> &event_Q3_real,
         std::vector<std::vector<double>> &event_Q3_imag, int flag, int flag_ch,
-        double **corr_rap, double **corr_rap_err);
+        std::vector<std::vector<double>> &corr_rap,
+        std::vector<std::vector<double>> &corr_rap_err);
+
+
+    //! This function computes the charge dependent 3-particle correlations
+    void calculate_three_particle_correlation_deltaeta_chdep(
+            std::vector<std::vector<double>> &event_Qn_p_rap_real,
+            std::vector<std::vector<double>> &event_Qn_p_rap_imag,
+            std::vector<std::vector<double>> &event_Qn_m_rap_real,
+            std::vector<std::vector<double>> &event_Qn_m_rap_imag,
+            std::vector<std::vector<double>> &event_Qn_rap_real,
+            std::vector<std::vector<double>> &event_Qn_rap_imag,
+            std::vector<std::vector<double>> &Cmnk_ss_eta12,
+            std::vector<std::vector<double>> &Cmnk_ss_eta12_err,
+            std::vector<std::vector<double>> &Cmnk_os_eta12,
+            std::vector<std::vector<double>> &Cmnk_os_eta12_err,
+            std::vector<std::vector<double>> &Cmnk_ss_eta13,
+            std::vector<std::vector<double>> &Cmnk_ss_eta13_err,
+            std::vector<std::vector<double>> &Cmnk_os_eta13,
+            std::vector<std::vector<double>> &Cmnk_os_eta13_err);
 
     //! This function outputs the event averaged three-particle correlation
     void output_three_particle_correlation();
