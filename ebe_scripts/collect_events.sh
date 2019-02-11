@@ -54,6 +54,6 @@ done
 
 echo "Collected events number: " $collected_eventNum " out of " $total_eventNum
 
-#./combine_results_into_hdf5.py $toFolder/$folderName
-#mv $folderName.h5 $toFolder/
-#rm -fr $toFolder/$folderName
+./combine_results_into_hdf5.py $target_spvn_folder
+mv SPVN_RESULTS.h5 $target_folder/$folderName.h5
+rm -fr $target_spvn_folder
