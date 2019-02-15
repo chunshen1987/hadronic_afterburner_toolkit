@@ -329,6 +329,8 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     int event_id = 0;
     int buffer_size = particle_list->get_event_buffer_size();
     // initialize some temp arrays
+    vector<double> event_pT_mean    (npT, 0.);
+    vector<double> event_pT_mean_err(npT, 0.);
     vector<double> event_Qn_real    (order_max, 0.);
     vector<double> event_Qn_real_err(order_max, 0.);
     vector<double> event_Qn_imag    (order_max, 0.);
@@ -418,10 +420,15 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             event_id++;
             calculate_Qn_vector(iev,
                                 pT_min, pT_max,
+                                event_pT_mean, event_pT_mean_err,
                                 event_Qn_real, event_Qn_real_err,
                                 event_Qn_imag, event_Qn_imag_err,
                                 event_Qn_diff_real, event_Qn_diff_real_err,
                                 event_Qn_diff_imag, event_Qn_diff_imag_err);
+            for (int i = 0; i < npT; i++) {
+                pT_mean_array[i]     += event_pT_mean[i];
+                pT_mean_array_err[i] += event_pT_mean_err[i];
+            }
             for (int i = 0; i < order_max; i++) {
                 Qn_vector_real[i]     += event_Qn_real[i];
                 Qn_vector_real_err[i] += event_Qn_real_err[i];
@@ -441,6 +448,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
             if (flag_correlation == 1) {
                 calculate_Qn_vector(
                         iev, vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
+                        event_pT_mean, event_pT_mean_err,
                         event_Qn_real, event_Qn_real_err,
                         event_Qn_imag, event_Qn_imag_err,
                         event_Qn_diff_real, event_Qn_diff_real_err,
@@ -573,6 +581,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
 //! within a given rapidity region in one event
 void singleParticleSpectra::calculate_Qn_vector(int event_id,
         double pT_min_selected, double pT_max_selected,
+        vector<double> &event_pT_mean, vector<double> &event_pT_mean_err,
         vector<double> &event_Qn_real, vector<double> &event_Qn_real_err,
         vector<double> &event_Qn_imag, vector<double> &event_Qn_imag_err,
         vector<vector<double>> &event_Qn_diff_real,
@@ -581,6 +590,10 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
         vector<vector<double>> &event_Qn_diff_imag_err) {
     
     // first clean the results arrays
+    for (int i = 0; i < npT; i++) {
+        event_pT_mean[i]     = 0.0;
+        event_pT_mean_err[i] = 0.0;
+    }
     for (int i = 0; i < order_max; i++) {
         event_Qn_real[i] = 0.0;
         event_Qn_real_err[i] = 0.0;
@@ -624,8 +637,8 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                 }
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 if (p_idx < 0 || p_idx >= npT) continue;
-                pT_mean_array[p_idx]     += p_perp;
-                pT_mean_array_err[p_idx] += p_perp*p_perp;
+                event_pT_mean[p_idx]     += p_perp;
+                event_pT_mean_err[p_idx] += p_perp*p_perp;
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);

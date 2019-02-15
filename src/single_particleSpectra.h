@@ -134,6 +134,7 @@ class singleParticleSpectra {
     //! within a given rapidity region in one event
     void calculate_Qn_vector(int event_id,
         double pT_min_selected, double pT_max_selected,
+        std::vector<double> &event_pT_mean, std::vector<double> &event_pT_mean_err,
         std::vector<double> &event_Qn_real, std::vector<double> &event_Qn_real_err,
         std::vector<double> &event_Qn_imag, std::vector<double> &event_Qn_imag_err,
         std::vector<std::vector<double>> &event_Qn_diff_real,
