@@ -383,8 +383,8 @@ def calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array):
     N2_weight = dN*(dN - 1.)
     Q6_2 = abs(Q6)**2. - dN
 
-    v6_Psi6 = sqrt(mean(Q6_2)/mean(N2_weight))
-    v6_Psi6_err = std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev)
+    v6_Psi6 = nan_to_num(sqrt(mean(Q6_2)/mean(N2_weight)))
+    v6_Psi6_err = nan_to_num(std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev))
 
     rho_6222 = v6_Psi2/v6_Psi6
     rho_6222_err = sqrt((v6_Psi2_err/v6_Psi6)**2.
@@ -403,8 +403,8 @@ def calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array):
     N2_weight = dN*(dN - 1.)
     Q6_2 = abs(Q6)**2. - dN
 
-    v6_Psi6 = sqrt(mean(Q6_2)/mean(N2_weight))
-    v6_Psi6_err = std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev)
+    v6_Psi6 = nan_to_num(sqrt(mean(Q6_2)/mean(N2_weight)))
+    v6_Psi6_err = nan_to_num(std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev))
 
     rho_633 = v6_Psi3/v6_Psi6
     rho_633_err = sqrt((v6_Psi3_err/v6_Psi6)**2.
