@@ -3,30 +3,32 @@
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
+#include <vector>
 #include <iomanip>
+#include <string>
 #include "parameters.h"
 #include "HBT_correlation.h"
-using namespace std;
 
-HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in, 
+HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in,
+                                 std::string path_in, 
                                  std::shared_ptr<RandomUtil::Random> ran_gen,
                                  particleSamples *particle_list_in) {
-    paraRdr = paraRdr_in;
-    path = path_in;
+    paraRdr       = paraRdr_in;
+    path          = path_in;
     particle_list = particle_list_in;
     
     ran_gen_ptr = ran_gen;
 
-    qnpts = paraRdr->getVal("qnpts");
-    q_min = paraRdr->getVal("q_min");
-    q_max = paraRdr->getVal("q_max");
+    qnpts   = paraRdr->getVal("qnpts");
+    q_min   = paraRdr->getVal("q_min");
+    q_max   = paraRdr->getVal("q_max");
     delta_q = (q_max - q_min)/(qnpts - 1);
     
     q_out = new double [qnpts];
     q_side = new double [qnpts];
     q_long = new double [qnpts];
     for (int i = 0; i < qnpts; i++) {
-        q_out[i] = q_min + i*delta_q;
+        q_out[i]  = q_min + i*delta_q;
         q_side[i] = q_min + i*delta_q;
         q_long[i] = q_min + i*delta_q;
     }
@@ -36,15 +38,15 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in, string path_in,
     azimuthal_flag = paraRdr->getVal("azimuthal_flag");
     invariant_radius_flag = paraRdr->getVal("invariant_radius_flag");
 
-    n_KT = paraRdr->getVal("n_KT");
-    n_Kphi = paraRdr->getVal("n_Kphi");
-    KT_min = paraRdr->getVal("KT_min");
-    KT_max = paraRdr->getVal("KT_max");
-    Krap_min = paraRdr->getVal("Krap_min");
-    Krap_max = paraRdr->getVal("Krap_max");
+    n_KT            = paraRdr->getVal("n_KT");
+    n_Kphi          = paraRdr->getVal("n_Kphi");
+    KT_min          = paraRdr->getVal("KT_min");
+    KT_max          = paraRdr->getVal("KT_max");
+    Krap_min        = paraRdr->getVal("Krap_min");
+    Krap_max        = paraRdr->getVal("Krap_max");
     buffer_rapidity = paraRdr->getVal("buffer_rapidity");
 
-    dKT = (KT_max - KT_min)/(n_KT - 1);
+    dKT   = (KT_max - KT_min)/(n_KT - 1);
     dKphi = 2*M_PI/n_Kphi;                  // does not need 0 and 2*pi
     
     KT_array = new double [n_KT];
@@ -309,44 +311,59 @@ void HBT_correlation::calculate_HBT_correlation_function() {
     int event_id = 0;
     int buffer_size = particle_list->get_event_buffer_size();
     while (!particle_list->end_of_file()) {
-        cout << "Reading event: " << event_id+1 << "-" 
-             << event_id + buffer_size << " ... " << flush;
+        messager << "Reading event: " << event_id+1 << "-" 
+                 << event_id + buffer_size << " ... ";
+        messager.flush("info");
+
         particle_list->read_in_particle_samples();
         particle_list->read_in_particle_samples_mixed_event();
-        cout << " processing ..." << endl;
+        int nev = particle_list->get_number_of_events();
+        messager << "nev = " << nev;
+        messager.flush("info");
+
+        messager.info(" processing ...");
+
         if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
             calculate_flow_event_plane_angle(2);
         }
-        int nev = particle_list->get_number_of_events();
-        int n_skip_ev = static_cast<int>(nev/number_of_oversample_events);
+
         // first pairs from the same event
-        cout << "Compute pairs from the same event ..." << endl;
+        number_of_oversample_events = std::min(nev,
+                                               number_of_oversample_events);
+        int n_skip_ev = static_cast<int>(nev/number_of_oversample_events);
+        messager.info("Compute pairs from the same event ...");
         for (int iev = 0; iev < n_skip_ev; iev++) {
-            cout << "progess: " << iev << "/" << n_skip_ev << endl;
-            int *event_list = new int [number_of_oversample_events];
+            messager << "progess: " << iev << "/" << n_skip_ev;
+            messager.flush("info");
+
+            std::vector<int> event_list(number_of_oversample_events, 0);
             for (int isample = 0; isample < number_of_oversample_events;
                     isample++) {
                 event_list[isample] = iev + isample*n_skip_ev;
             }
             combine_and_bin_particle_pairs(event_list);
-            delete[] event_list;
         }
 
         // then pairs from mixed events
-        cout << "Compute pairs from the mixed event ..." << endl;
         int mixed_nev = particle_list->get_number_of_mixed_events();
+        messager << "nev_mixed = " << mixed_nev;
+        messager.flush("info");
+        number_of_mixed_events = std::min(number_of_mixed_events, mixed_nev);
+        messager.info("Compute pairs from the mixed event ...");
         for (int iev = 0; iev < nev; iev++) {
-            cout << "progess: " << iev << "/" << nev << endl;
-            int *mixed_event_list = new int [number_of_mixed_events];
+            messager << "progess: " << iev << "/" << nev;
+            messager.flush("info");
+
+            std::vector<int> mixed_event_list(number_of_mixed_events, 0);
             int count = 0;
             while (count < number_of_mixed_events) {
-                int mixed_event_id = ran_gen_ptr.lock()->rand_int_uniform() % mixed_nev;
+                int mixed_event_id = (
+                        ran_gen_ptr.lock()->rand_int_uniform() % mixed_nev);
                 mixed_event_list[count] = mixed_event_id;
                 count++;
             }
             combine_and_bin_particle_pairs_mixed_events(iev, mixed_event_list);
             event_id++;
-            delete [] mixed_event_list;
         }
     }
     if (invariant_radius_flag == 1) {
@@ -383,9 +400,10 @@ void HBT_correlation::calculate_flow_event_plane_angle(int n_order) {
 }
 
 
-void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
+void HBT_correlation::combine_and_bin_particle_pairs(
+                                                std::vector<int> event_list) {
     double hbarC_inv = 1./hbarC;
-    vector<particle_info> temp_particle_list;
+    std::vector<particle_info> temp_particle_list;
     double particle_list_rapidity_cut_max = tanh(Krap_max + buffer_rapidity);
     double particle_list_rapidity_cut_min = tanh(Krap_min - buffer_rapidity);
     for (int j = 0; j < number_of_oversample_events; j++) {
@@ -418,7 +436,8 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                     number_of_particles*(number_of_particles - 1)/2);
 
     // nested pair loop
-    cout << "number of pairs: " << number_of_pairs << endl;
+    messager << "number of pairs: " << number_of_pairs;
+    messager.flush("info");
     double rapidity_cut_max = tanh(Krap_max);
     double rapidity_cut_min = tanh(Krap_min);
     double KT_min_sq = KT_min*KT_min;
@@ -555,9 +574,10 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
                     }
                     Kphi_idx = static_cast<int>(delta_phi/dKphi);
                     if (Kphi_idx < 0 || Kphi_idx >= n_Kphi) {
-                        cout << "[Warning] delta_phi = " << delta_phi
+                        messager << "delta_phi = " << delta_phi
                              << " is out of bound of [0, 2pi]! "
-                             << "Kphi_idx = " << Kphi_idx << endl;
+                             << "Kphi_idx = " << Kphi_idx;
+                        messager.flush("warning");
                         continue;
                     }
                     if (number_of_pairs_numerator_KTKphidiff[Kperp_idx][Kphi_idx]
@@ -592,12 +612,13 @@ void HBT_correlation::combine_and_bin_particle_pairs(int* event_list) {
 }
 
 void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
-                                        int event_id1, int* mixed_event_list) {
+                                        int event_id1,
+                                        std::vector<int> mixed_event_list) {
     long long int number_of_particles_1 = (
             particle_list->get_number_of_particles(event_id1));
     double particle_list_rapidity_cut_max = tanh(Krap_max + buffer_rapidity);
     double particle_list_rapidity_cut_min = tanh(Krap_min - buffer_rapidity);
-    vector<particle_info> temp_particle_list_1;
+    std::vector<particle_info> temp_particle_list_1;
     for (int i = 0; i < number_of_particles_1; i++) {
         double temp_E = particle_list->get_particle(event_id1, i).E;
         double temp_pz = particle_list->get_particle(event_id1, i).pz;
@@ -619,7 +640,7 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
     }
 
     // prepare for the mixed events
-    vector<particle_info> temp_particle_list_2;
+    std::vector<particle_info> temp_particle_list_2;
     for (int iev = 0; iev < number_of_mixed_events; iev++) {
         // introduce a random rotation for the mixed event
         double random_rotation = ran_gen_ptr.lock()->rand_uniform()*2*M_PI;
@@ -678,7 +699,8 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
     long long int number_of_particles_2 = temp_particle_list_2.size();
     unsigned long long int number_of_pairs = (
             number_of_particles_1*number_of_particles_2);
-    cout << "number of mixed pairs: " << number_of_pairs << endl;
+    messager << "number of mixed pairs: " << number_of_pairs;
+    messager.flush("info");
     double rapidity_cut_min = tanh(Krap_min);
     double rapidity_cut_max = tanh(Krap_max);
     double KT_min_sq = KT_min*KT_min;
@@ -791,9 +813,10 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                     }
                     Kphi_idx = static_cast<int>(delta_phi/dKphi);
                     if (Kphi_idx < 0 || Kphi_idx >= n_Kphi) {
-                        cout << "[Warning] delta_phi = " << delta_phi
-                             << " is out of bound of [0, 2pi]! "
-                             << "Kphi_idx = " << Kphi_idx << endl;
+                        messager << "delta_phi = " << delta_phi
+                                 << " is out of bound of [0, 2pi]! "
+                                 << "Kphi_idx = " << Kphi_idx;
+                        messager.flush("warning");
                         continue;
                     }
                     if (number_of_pairs_denormenator_KTKphidiff[Kperp_idx][Kphi_idx]
@@ -822,10 +845,10 @@ void HBT_correlation::output_correlation_function_inv() {
         double npair_ratio = (
                 static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
                 /static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
-        ostringstream filename;
+        std::ostringstream filename;
         filename << path << "/HBT_correlation_function_inv_KT_" 
                  << KT_array[iK] << "_" << KT_array[iK+1] << ".dat";
-        ofstream output(filename.str().c_str());
+        std::ofstream output(filename.str().c_str());
         for (int iqinv = 0; iqinv < qnpts; iqinv++) {
             int npart_num = correl_1d_inv_num_count[iK][iqinv];
             int npart_denorm = correl_1d_inv_denorm[iK][iqinv];
@@ -845,11 +868,12 @@ void HBT_correlation::output_correlation_function_inv() {
             }
 
             if (q_out[iqinv] > 0.) {
-                output << scientific << setw(18) << setprecision(8) 
+                output << std::scientific << std::setw(18)
+                       << std::setprecision(8) 
                        << q_inv_local << "    "
                        << npart_num << "    " << correl_fun_num << "    "  
                        << correl_fun_denorm << "    "
-                       << correl_fun_val << "    " << 0.0 << endl;
+                       << correl_fun_val << "    " << 0.0 << std::endl;
             }
         }
         output.close();
@@ -861,10 +885,10 @@ void HBT_correlation::output_correlation_function() {
         double npair_ratio = (
                 static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
                 /static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
-        ostringstream filename;
+        std::ostringstream filename;
         filename << path << "/HBT_correlation_function_KT_" 
                  << KT_array[iK] << "_" << KT_array[iK+1] << ".dat";
-        ofstream output(filename.str().c_str());
+        std::ofstream output(filename.str().c_str());
         for (int iqlong = 0; iqlong < qnpts; iqlong++) {
             for (int iqout = 0; iqout < qnpts; iqout++) {
                 for (int iqside = 0; iqside < qnpts; iqside++) {
@@ -897,12 +921,13 @@ void HBT_correlation::output_correlation_function() {
                                           /(correl_fun_denorm*npair_ratio));
                     }
 
-                    output << scientific << setw(18) << setprecision(8) 
+                    output << std::scientific << std::setw(18)
+                           << std::setprecision(8) 
                            << q_out_local << "    " << q_side_local << "    " 
                            << q_long_local << "    "
                            << npart_num << "    " << correl_fun_num << "    "  
                            << correl_fun_denorm << "    "
-                           << correl_fun_val << "    " << 0.0 << endl;
+                           << correl_fun_val << "    " << 0.0 << std::endl;
                 }
             }
         }
@@ -916,11 +941,11 @@ void HBT_correlation::output_correlation_function_Kphi_differential() {
             double npair_ratio = (
                 static_cast<double>(number_of_pairs_numerator_KTKphidiff[iK][iKphi])
                 /static_cast<double>(number_of_pairs_denormenator_KTKphidiff[iK][iKphi]));
-            ostringstream filename;
+            std::ostringstream filename;
             filename << path << "/HBT_correlation_function_KT_" 
                      << KT_array[iK] << "_" << KT_array[iK+1] << "_Kphi_" 
                      << Kphi_array[iKphi] << ".dat";
-            ofstream output(filename.str().c_str());
+            std::ofstream output(filename.str().c_str());
             for (int iqlong = 0; iqlong < qnpts; iqlong++) {
                 for (int iqout = 0; iqout < qnpts; iqout++) {
                     for (int iqside = 0; iqside < qnpts; iqside++) {
@@ -955,14 +980,15 @@ void HBT_correlation::output_correlation_function_Kphi_differential() {
                                               /correl_fun_denorm/npair_ratio);
                         }
 
-                        output << scientific << setw(18) << setprecision(8) 
+                        output << std::scientific << std::setw(18)
+                               << std::setprecision(8) 
                                << q_out_local << "    " 
                                << q_side_local << "    "
                                << q_long_local << "    "
                                << npart_num << "    "
                                << correl_fun_num << "    " 
                                << correl_fun_denorm << "    "
-                               << correl_fun_val << "    " << 0.0 << endl;
+                               << correl_fun_val << "    " << 0.0 << std::endl;
                     }
                 }
             }

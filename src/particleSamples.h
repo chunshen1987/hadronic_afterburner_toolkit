@@ -14,10 +14,12 @@
 #include "particle_info.h"
 #include "particle_decay.h"
 #include "Random.h"
+#include "pretty_ostream.h"
 
 class particleSamples {
  private:
     ParameterReader *paraRdr;
+    pretty_ostream messager;
     //! path for results folder
     std::string path;
     std::ifstream inputfile;
@@ -64,7 +66,7 @@ class particleSamples {
     int particle_monval_b;
     int particle_monval_bbar;
 
-    std::map<std::pair<int,int>, int> urqmd_to_pdg;
+    std::map<std::pair<int, int>, int> urqmd_to_pdg;
 
     //! this list store all particle samples
     std::vector< std::vector<particle_info>* >* full_particle_list;
@@ -110,6 +112,7 @@ class particleSamples {
 
     //! particle decay
     particle_decay *decayer_ptr;
+
  public:
     particleSamples(ParameterReader* paraRdr_in, std::string path_in,
                     std::shared_ptr<RandomUtil::Random> ran_gen);

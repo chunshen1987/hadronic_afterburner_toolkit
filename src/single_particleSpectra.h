@@ -7,6 +7,7 @@
 #include "ParameterReader.h"
 #include "particleSamples.h"
 #include "Random.h"
+#include "pretty_ostream.h"
 
 class singleParticleSpectra {
  private:
@@ -15,6 +16,8 @@ class singleParticleSpectra {
     particleSamples *particle_list;
     
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
+
+    pretty_ostream messager;
 
     int particle_monval;
 

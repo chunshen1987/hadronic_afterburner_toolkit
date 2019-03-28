@@ -8,7 +8,7 @@ read_in_mode = 2              # mode for reading in particle information
                               # 4: reads outputs from UrQMD 3.3p2 outputs
                               # 10: reads outputf from gzip outputs
 
-run_mode = 0                  # running mode for the program
+run_mode = 1                  # running mode for the program
                               # 0: collect single particle spectra and vn
                               # 1: compute HBT correlation function
                               # 2: collect event-by-event particle yield
@@ -18,7 +18,7 @@ run_mode = 0                  # running mode for the program
                               # 3: compute balance function
 
 randomSeed = -1
-particle_monval = 9999         # particle Monte-Carlo number
+particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
@@ -73,9 +73,9 @@ reject_decay_flag = 0         # reject particles from resonance decays
 tau_reject = 10.              # reject decay particle whose tau_f > tau_reject
                               # only effective when reject_decay_flag == 2
 needed_number_of_pairs = 30000000    # number of pairs for eack K point
-number_of_mixed_events = 100         # number of the mixed events in the 
+number_of_mixed_events = 250         # number of the mixed events in the 
                                      # denorminator
-number_of_oversample_events = 200    # number of the combined events in the 
+number_of_oversample_events = 500    # number of the combined events in the 
                                      # numerator
 invariant_radius_flag = 0            # 0: compute 3D HBT correlation function
                                      # 1: compute 1D HBT correlation function

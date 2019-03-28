@@ -18,10 +18,10 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     paraRdr = paraRdr_in;
     path = path_in;
 
-    echo_level = paraRdr->getVal("echo_level");
+    echo_level        = paraRdr->getVal("echo_level");
     event_buffer_size = paraRdr->getVal("event_buffer_size");
-    read_in_mode = paraRdr->getVal("read_in_mode");
-    run_mode = paraRdr->getVal("run_mode");
+    read_in_mode      = paraRdr->getVal("read_in_mode");
+    run_mode          = paraRdr->getVal("run_mode");
 
     read_mixed_events = false;
     if (run_mode == 1 || run_mode == 3) {
@@ -41,7 +41,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     
     // read in particle Monte-Carlo number
     particle_monval = paraRdr->getVal("particle_monval");
-    flag_isospin = paraRdr->getVal("distinguish_isospin");
+    flag_isospin    = paraRdr->getVal("distinguish_isospin");
 
     if (run_mode == 3) {
         particle_monval_a    = paraRdr->getVal("particle_alpha");
@@ -67,10 +67,10 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
         initialize_selected_resonance_list();
     }
 
-    full_particle_list = new vector< vector<particle_info>* >;
+    full_particle_list             = new vector< vector<particle_info>* >;
     full_particle_list_mixed_event = new vector< vector<particle_info>* >;
-    particle_list = new vector< vector<particle_info>* >;
-    particle_list_mixed_event = new vector< vector<particle_info>* >;
+    particle_list                  = new vector< vector<particle_info>* >;
+    particle_list_mixed_event      = new vector< vector<particle_info>* >;
     if (abs(particle_monval) == 3122) {
         // for Lambda and anti-Lambda
         resonance_weak_feed_down_flag = paraRdr->getVal(
@@ -85,7 +85,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
 
     if (particle_monval == 333) {
         // for phi(1020) meson, we need reconstruct them from (K^+ K^-) pairs
-        reconst_flag = 1;
+        reconst_flag   = 1;
         reconst_list_1 = new vector< vector<particle_info>* >;
         reconst_list_2 = new vector< vector<particle_info>* >;
     } else {
@@ -118,31 +118,35 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     if (read_in_mode != 2 && read_in_mode != 10) {
         inputfile.open(filename.str().c_str());
         if (!inputfile.is_open()) {
-            cout << "particleSamples:: Error: input file: " << filename.str() 
-                 << " can not open!" << endl;
+            messager << "particleSamples:: Error: input file: "
+                     << filename.str() << " can not open!";
+            messager.flush("error");
             exit(1);
         }
         if (read_mixed_events) {
             inputfile_mixed_event.open(filename_mixed_event.str().c_str());
             if (!inputfile_mixed_event.is_open()) {
-                cout << "particleSamples:: Error: input file: " 
-                     << filename_mixed_event.str() << " can not open!" << endl;
+                messager << "particleSamples:: Error: input file: " 
+                         << filename_mixed_event.str() << " can not open!";
+                messager.flush("error");
                 exit(1);
             }
         }
     } else {
         inputfile_gz = gzopen(filename.str().c_str(), "rb");
         if (!inputfile_gz) {
-            cout << "particleSamples:: Error: input file: " << filename.str() 
-                 << " can not open!" << endl;
+            messager << "particleSamples:: Error: input file: "
+                     << filename.str() << " can not open!";
+            messager.flush("error");
             exit(1);
         }
         if (read_mixed_events) {
             inputfile_mixed_event_gz =
                             gzopen(filename_mixed_event.str().c_str(), "rb");
             if (!inputfile_mixed_event_gz) {
-                cout << "particleSamples:: Error: input file: " 
-                     << filename_mixed_event.str() << " can not open!" << endl;
+                messager << "particleSamples:: Error: input file: " 
+                         << filename_mixed_event.str() << " can not open!";
+                messager.flush("error");
                 exit(1);
             }
         }
@@ -281,9 +285,10 @@ void particleSamples::initialize_selected_resonance_list() {
     filename << "EOS/selected_resonances_list.dat";
     ifstream reso_file(filename.str().c_str());
     if (!reso_file.is_open()) {
-        cout << "[Error]:particleSamples::initialize_selected_resonance_list:"
-             << "Can not find the selected resonance list file: "
-             << filename.str() << endl;
+        messager << "particleSamples::initialize_selected_resonance_list:"
+                 << "Can not find the selected resonance list file: "
+                 << filename.str();
+        messager.flush("error");
         exit(1);
     }
     int temp_id;
@@ -294,11 +299,13 @@ void particleSamples::initialize_selected_resonance_list() {
     }
     reso_file.close();
     if (select_resonances_flag == 1 && echo_level > 8) {
-        cout << "[Info]:particleSamples::initialize_selected_resonance_list:"
-             << "selected resonance list: " << endl;
+        messager << "particleSamples::initialize_selected_resonance_list:"
+                 << "selected resonance list: ";
+        messager.flush("info");
         for (unsigned int ireso = 0; ireso < select_resonances_list.size();
                 ireso++) {
-            cout << select_resonances_list[ireso] << endl;
+            messager << select_resonances_list[ireso];
+            messager.flush("info");
         }
     }
 }
@@ -1389,7 +1396,7 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
 
 void particleSamples::perform_resonance_feed_down(
                     vector< vector<particle_info>* >* input_particle_list) {
-    cout << "perform resonance decays... " << endl;
+    messager.info("perform resonance decays... ");
     // loop over events
     int ievent = 0;
     for (auto &ev_i: (*input_particle_list)) {
