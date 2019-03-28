@@ -891,8 +891,10 @@ void particleSamples::filter_particles(
 
 void particleSamples::clear_out_previous_record(
                     vector< vector<particle_info>* >* plist) {
-    for (auto &ev_i: (*plist))
+    for (auto &ev_i: (*plist)) {
         ev_i->clear();
+        delete ev_i;
+    }
     plist->clear();
 }
 
