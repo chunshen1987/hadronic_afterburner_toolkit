@@ -368,6 +368,7 @@ int particleSamples::read_in_particle_samples() {
     if (reconst_flag == 1)
         perform_particle_reconstruction();
 
+    clear_out_previous_record(full_particle_list);
     return(0);
 }
 
@@ -567,19 +568,18 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                 getline(inputfile, temp_string);
                 std::stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                particle_info *temp_particle_info = new particle_info;
-                temp_particle_info->monval = temp_monval;
-                temp2 >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->mass 
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->t;
-                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
-                delete temp_particle_info;
+                particle_info temp_particle_info;
+                temp_particle_info.monval = temp_monval;
+                temp2 >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.mass 
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.t;
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
         } else {
             break;
@@ -608,22 +608,21 @@ int particleSamples::read_in_particle_samples_JAM() {
                 std::stringstream temp2(temp_string);
                 temp2 >> temp_monval;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->mass
-                      >> temp_particle_info->px
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->t;
-                temp_particle_info->E = sqrt(
-                    temp_particle_info->mass*temp_particle_info->mass
-                    + temp_particle_info->px*temp_particle_info->px
-                    + temp_particle_info->py*temp_particle_info->py
-                    + temp_particle_info->pz*temp_particle_info->pz);
-                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
-                delete temp_particle_info;
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.mass
+                      >> temp_particle_info.px
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.t;
+                temp_particle_info.E = sqrt(
+                    temp_particle_info.mass*temp_particle_info.mass
+                    + temp_particle_info.px*temp_particle_info.px
+                    + temp_particle_info.py*temp_particle_info.py
+                    + temp_particle_info.pz*temp_particle_info.pz);
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
         } else {
             break;
@@ -651,20 +650,19 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
                 getline(inputfile_mixed_event, temp_string);
                 std::stringstream temp2(temp_string);
                 temp2 >> dummy >> temp_monval;
-                particle_info *temp_particle_info = new particle_info;
-                temp_particle_info->monval = temp_monval;
-                temp2 >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->mass 
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->t;
+                particle_info temp_particle_info;
+                temp_particle_info.monval = temp_monval;
+                temp2 >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.mass 
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.t;
                 (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                        *temp_particle_info);
-                delete temp_particle_info;
+                                                        temp_particle_info);
             }
         } else {
             break;
@@ -694,23 +692,22 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
                 getline(inputfile_mixed_event, temp_string);
                 std::stringstream temp2(temp_string);
                 temp2 >> temp_monval;
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->mass
-                      >> temp_particle_info->px
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz
-                      >> temp_particle_info->x
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z
-                      >> temp_particle_info->t;
-                temp_particle_info->E = sqrt(
-                    temp_particle_info->mass*temp_particle_info->mass
-                    + temp_particle_info->px*temp_particle_info->px
-                    + temp_particle_info->py*temp_particle_info->py
-                    + temp_particle_info->pz*temp_particle_info->pz);
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.mass
+                      >> temp_particle_info.px
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz
+                      >> temp_particle_info.x
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z
+                      >> temp_particle_info.t;
+                temp_particle_info.E = sqrt(
+                    temp_particle_info.mass*temp_particle_info.mass
+                    + temp_particle_info.px*temp_particle_info.px
+                    + temp_particle_info.py*temp_particle_info.py
+                    + temp_particle_info.pz*temp_particle_info.pz);
                 (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                        *temp_particle_info);
-                delete temp_particle_info;
+                                                        temp_particle_info);
             }
         } else {
             break;
@@ -755,20 +752,19 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->t
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
-                temp_particle_info->mass = temp_mass;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.t
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
+                temp_particle_info.mass = temp_mass;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid,
                                                         urqmd_iso3);
-                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
-                delete temp_particle_info;
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
         } else {
             break;
@@ -805,20 +801,19 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                 temp2 >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->mass
-                      >> temp_particle_info->t
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.mass
+                      >> temp_particle_info.t
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid,
                                                         urqmd_iso3);
-                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
-                delete temp_particle_info;
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
         } else {
             break;
@@ -852,20 +847,19 @@ int particleSamples::read_in_particle_samples_gzipped() {
                 temp_string = gz_readline(inputfile_gz);
                 std::stringstream temp2(temp_string);
                 temp2 >> temp_monval;
-                particle_info *temp_particle_info = new particle_info;
-                temp_particle_info->monval = temp_monval;
-                temp2 >> temp_particle_info->mass
-                      >> temp_particle_info->t
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
+                particle_info temp_particle_info;
+                temp_particle_info.monval = temp_monval;
+                temp2 >> temp_particle_info.mass
+                      >> temp_particle_info.t
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
 
-                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
-                delete temp_particle_info;
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
         } else {
             break;
@@ -1048,20 +1042,19 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->t
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
-                temp_particle_info->mass = temp_mass;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.t
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
+                temp_particle_info.mass = temp_mass;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid,
                                                         urqmd_iso3);
-                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
-                delete temp_particle_info;
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
         } else {
             break;
@@ -1106,21 +1099,20 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->t
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz ;
-                temp_particle_info->mass = temp_mass;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.t
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz ;
+                temp_particle_info.mass = temp_mass;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid,
                                                         urqmd_iso3);
                 (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                        *temp_particle_info);
-                delete temp_particle_info;
+                                                        temp_particle_info);
             }
         } else {
             break;
@@ -1157,21 +1149,20 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
                       >> dummy >> dummy >> parent_proc_type;
 
                 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->mass
-                      >> temp_particle_info->t
-                      >> temp_particle_info->x
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.mass
+                      >> temp_particle_info.t
+                      >> temp_particle_info.x
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid,
                                                         urqmd_iso3);
                 (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                        *temp_particle_info);
-                delete temp_particle_info;
+                                                        temp_particle_info);
             }
         } else {
             break;
@@ -1206,21 +1197,20 @@ int particleSamples::read_in_particle_samples_mixed_event_gzipped() {
                 stringstream temp2(temp_string);
                 temp2 >> temp_monval;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp_particle_info->monval = temp_monval;
-                temp2 >> temp_particle_info->mass
-                      >> temp_particle_info->t
-                      >> temp_particle_info->x
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
+                particle_info temp_particle_info;
+                temp_particle_info.monval = temp_monval;
+                temp2 >> temp_particle_info.mass
+                      >> temp_particle_info.t
+                      >> temp_particle_info.x
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
 
                 (*full_particle_list_mixed_event)[idx]->push_back(
-                                                       *temp_particle_info);
-                delete temp_particle_info;
+                                                       temp_particle_info);
             }
         } else {
             break;
@@ -1266,21 +1256,20 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->t
-                      >> temp_particle_info->x 
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z 
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px 
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz ;
-                temp_particle_info->mass = temp_mass;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.t
+                      >> temp_particle_info.x 
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z 
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px 
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz ;
+                temp_particle_info.mass = temp_mass;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid,
                                                         urqmd_iso3);
                 (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                        *temp_particle_info);
-                delete temp_particle_info;
+                                                        temp_particle_info);
             }
         } else {
             break;
@@ -1319,19 +1308,18 @@ int particleSamples::read_in_particle_samples_Sangwook() {
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->t
-                      >> temp_particle_info->x
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
-                temp_particle_info->mass = temp_mass;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-                (*full_particle_list)[ievent]->push_back(*temp_particle_info);
-                delete temp_particle_info;
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.t
+                      >> temp_particle_info.x
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
+                temp_particle_info.mass = temp_mass;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
         } else {
             break;
@@ -1371,21 +1359,20 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
                       >> temp_mass >> urqmd_pid >> urqmd_iso3 >> urqmd_charge
                       >> dummy >> dummy >> parent_proc_type;
 
-                particle_info *temp_particle_info = new particle_info;
-                temp2 >> temp_particle_info->t
-                      >> temp_particle_info->x
-                      >> temp_particle_info->y
-                      >> temp_particle_info->z
-                      >> temp_particle_info->E
-                      >> temp_particle_info->px
-                      >> temp_particle_info->py
-                      >> temp_particle_info->pz;
-                temp_particle_info->mass = temp_mass;
-                temp_particle_info->monval = get_pdg_id(urqmd_pid,
+                particle_info temp_particle_info;
+                temp2 >> temp_particle_info.t
+                      >> temp_particle_info.x
+                      >> temp_particle_info.y
+                      >> temp_particle_info.z
+                      >> temp_particle_info.E
+                      >> temp_particle_info.px
+                      >> temp_particle_info.py
+                      >> temp_particle_info.pz;
+                temp_particle_info.mass = temp_mass;
+                temp_particle_info.monval = get_pdg_id(urqmd_pid,
                                                         urqmd_iso3);
                 (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                        *temp_particle_info);
-                delete temp_particle_info;
+                                                        temp_particle_info);
             }
         } else {
             break;
