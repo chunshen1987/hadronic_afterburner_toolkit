@@ -32,7 +32,8 @@ class ParameterReader
     void phraseOneLine(std::string str, std::string commentSymbol=(std::string)("#")); 
 
     // read in parameters from a file
-    void readFromFile(std::string filename, std::string commentSymbol=(std::string)("#")); 
+    //void readFromFile(std::string filename, std::string commentSymbol=(std::string)("#")); 
+    void readFromFile(std::string filename); 
 
     // read in parameter from argument list. 
     // The process starts with index="start_from".

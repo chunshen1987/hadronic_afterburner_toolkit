@@ -93,7 +93,8 @@ void ParameterReader::phraseOneLine(string str, string commentSymbol)
 
 
 //----------------------------------------------------------------------
-void ParameterReader::readFromFile(string filename, string commentSymbol)
+//void ParameterReader::readFromFile(string filename, string commentSymbol)
+void ParameterReader::readFromFile(string filename)
 /*
   Read all lines in a file as parameter assignment list. Each line is 
   processed by the phraseOneLine function.
