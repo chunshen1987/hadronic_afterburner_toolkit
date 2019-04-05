@@ -37,6 +37,16 @@ int main(int argc, char *argv[]) {
          << input_filename1 << " ... " << endl;
     gzFile f1_gz = gzopen(input_filename1.c_str(), "ab");
     gzFile f2_gz = gzopen(input_filename2.c_str(), "rb");
+    if (!f1_gz) {
+        cout << "can not open " << input_filename1 << endl;
+        cout << "exit." << endl;
+        exit(1);
+    }
+    if (!f2_gz) {
+        cout << "can not open " << input_filename2 << endl;
+        cout << "exit." << endl;
+        exit(1);
+    }
     string temp_string = gzreadline(f2_gz);
     int n_particle;
     stringstream temp1(temp_string);

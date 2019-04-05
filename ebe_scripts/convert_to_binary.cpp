@@ -22,6 +22,11 @@ int main(int argc, char *argv[]) {
     stringstream output_filename;
     output_filename << temp_filename << ".gz";
     ifstream urqmd_file(input_filename.c_str());
+    if (!urqmd_file.is_open()) {
+        cout << "can not open " << input_filename << endl;
+        cout << "exit" << endl;
+        exit(1);
+    }
     gzFile fp_gz = gzopen(output_filename.str().c_str(), "wb");
     string temp_string;
 
