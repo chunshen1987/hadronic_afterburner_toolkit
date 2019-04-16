@@ -1200,11 +1200,11 @@ def output_rn_ratios(rn, exp_name, avg_folder):
             ipTtrig += 1
             if ipTtrig < (len(pT_trig) - 1):
                 output_filename = ("{}_rn_ratios_{}_pTtrig_{}_{}.dat".format(
-                                      particle_name_list[ipart], exp_name
+                                      particle_name_list[ipart], exp_name,
                                       pT_trig[ipTtrig],
                                       pT_trig[ipTtrig+1]))
                 f = open(output_filename, 'w')
-                    f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
+                f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
 
 def output_event_plane_correlation(vn_corr, vn_corr_err, output_filename,
                                    avg_folder):
@@ -1220,7 +1220,7 @@ def output_event_plane_correlation(vn_corr, vn_corr_err, output_filename,
     f.close()
     shutil.move(output_filename, avg_folder)
 
-def output_nonlinear_response_coefficients(nonlinear_reponse_array,
+def output_nonlinear_response_coefficients(nonlinear_response_array,
                                            output_filename, avg_folder):
     f = open(output_filename, 'w')
     f.write("# type  value  stat. err\n")
@@ -1767,7 +1767,7 @@ for ipart, particle_id in enumerate(particle_list):
         
         output_filename = (
             "{}_vn_distribution_CMS.dat".format(particle_name_list[ipart]))
-        output_vn_distribution(vn_CMS_dis, output_filename, avg_folder)
+        output_vn_distribution(vn_cms_dis, output_filename, avg_folder)
         
         output_filename = (
             "{}_vn_distribution_ATLAS.dat".format(particle_name_list[ipart]))
