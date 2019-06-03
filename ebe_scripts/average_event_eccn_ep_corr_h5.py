@@ -23,6 +23,32 @@ from numpy import *
 import h5py
 import shutil
 
+def compute_psi_n(ep_n_cos, ep_n_sin, ecc_n_cos_init, ecc_n_sin_init):
+    eccn_init_dot_epn_cos = ecc_n_cos_init*ep_n_cos + ecc_n_sin_init*ep_n_sin
+    eccn_init_dot_epn_sin = ecc_n_cos_init*ep_n_sin - ecc_n_sin_init*ep_n_cos
+    psi_n = arctan2(eccn_init_dot_epn_sin, eccn_init_dot_epn_cos)
+    return(psi_n)
+
+def pack_arrays(data, data_ideal, data_shear, data_full, ntau, ntau_loc):
+    if ntau_loc < ntau:
+        data[:ntau_loc, 1] += data_ideal
+        data[:ntau_loc, 2] += data_ideal**2.
+        data[:ntau_loc, 3] += data_shear
+        data[:ntau_loc, 4] += data_shear**2.
+        data[:ntau_loc, 5] += data_full
+        data[:ntau_loc, 6] += data_full**2.
+    else:
+        data[:, 1] += data_ideal[:ntau]
+        data[:, 2] += data_ideal[:ntau]**2.
+        data[:, 3] += data_shear[:ntau]
+        data[:, 4] += data_shear[:ntau]**2.
+        data[:, 5] += data_full[:ntau]
+        data[:, 6] += data_full[:ntau]**2.
+
+def compute_stat_error(data, nev):
+    data[:, 1:] /= nev
+    data[:, 2::2] = sqrt(data[:, 2::2] - data[:, 1::2]**2.)/sqrt(nev)
+
 try:
     data_path = path.abspath(argv[1])
     data_name = data_path.split("/")[-1]
@@ -54,10 +80,14 @@ nev = len(event_list)
 
 ep2 = zeros([ntau, 7])
 ep3 = zeros([ntau, 7])
+psi_2 = zeros([ntau, 7])
+psi_3 = zeros([ntau, 7])
 ecc2_dot_ep2 = zeros([ntau, 7])
 ecc3_dot_ep3 = zeros([ntau, 7])
 ep2[:, 0] = tau
 ep3[:, 0] = tau
+psi_2[:, 0] = tau
+psi_3[:, 0] = tau
 ecc2_dot_ep2[:, 0] = tau
 ecc3_dot_ep3[:, 0] = tau
 
@@ -74,6 +104,20 @@ for ifolder, event_name in enumerate(event_list):
     ep_3_ideal = sqrt(ep_n_data[:, 10]**2. + ep_n_data[:, 11]**2.)
     ep_3_shear = sqrt(ep_n_data[:, 12]**2. + ep_n_data[:, 13]**2.)
     ep_3_full = sqrt(ep_n_data[:, 14]**2. + ep_n_data[:, 15]**2.)
+
+    psi2_ideal = compute_psi_n(ep_n_data[:, 4], ep_n_data[:, 5],
+                               ecc_n_data[0, 3], ecc_n_data[0, 4])
+    psi2_shear = compute_psi_n(ep_n_data[:, 6], ep_n_data[:, 7],
+                               ecc_n_data[0, 3], ecc_n_data[0, 4])
+    psi2_full = compute_psi_n(ep_n_data[:, 8], ep_n_data[:, 9],
+                               ecc_n_data[0, 3], ecc_n_data[0, 4])
+    psi3_ideal = compute_psi_n(ep_n_data[:, 10], ep_n_data[:, 11],
+                               ecc_n_data[0, 5], ecc_n_data[0, 6])
+    psi3_shear = compute_psi_n(ep_n_data[:, 12], ep_n_data[:, 13],
+                               ecc_n_data[0, 5], ecc_n_data[0, 6])
+    psi3_full = compute_psi_n(ep_n_data[:, 14], ep_n_data[:, 15],
+                               ecc_n_data[0, 5], ecc_n_data[0, 6])
+
     ecc2_dot_ep2_ideal = (
         ecc_n_data[:, 3]*ep_n_data[:, 4] + ecc_n_data[:, 4]*ep_n_data[:, 5])
     ecc2_dot_ep2_shear = (
@@ -87,67 +131,21 @@ for ifolder, event_name in enumerate(event_list):
     ecc3_dot_ep3_full = (
         ecc_n_data[:, 5]*ep_n_data[:, 14] + ecc_n_data[:, 6]*ep_n_data[:, 15])
 
-    if ntau_loc < ntau:
-        ep2[:ntau_loc, 1] += ep_2_ideal
-        ep2[:ntau_loc, 2] += ep_2_ideal**2.
-        ep2[:ntau_loc, 3] += ep_2_shear
-        ep2[:ntau_loc, 4] += ep_2_shear**2.
-        ep2[:ntau_loc, 5] += ep_2_full
-        ep2[:ntau_loc, 6] += ep_2_full**2.
-        ep3[:ntau_loc, 1] += ep_3_ideal
-        ep3[:ntau_loc, 2] += ep_3_ideal**2.
-        ep3[:ntau_loc, 3] += ep_3_shear
-        ep3[:ntau_loc, 4] += ep_3_shear**2.
-        ep3[:ntau_loc, 5] += ep_3_full
-        ep3[:ntau_loc, 6] += ep_3_full**2.
-        ecc2_dot_ep2[:ntau_loc, 1] += ecc2_dot_ep2_ideal
-        ecc2_dot_ep2[:ntau_loc, 2] += ecc2_dot_ep2_ideal**2.
-        ecc2_dot_ep2[:ntau_loc, 3] += ecc2_dot_ep2_shear
-        ecc2_dot_ep2[:ntau_loc, 4] += ecc2_dot_ep2_shear**2.
-        ecc2_dot_ep2[:ntau_loc, 5] += ecc2_dot_ep2_full
-        ecc2_dot_ep2[:ntau_loc, 6] += ecc2_dot_ep2_full**2.
-        ecc3_dot_ep3[:ntau_loc, 1] += ecc3_dot_ep3_ideal
-        ecc3_dot_ep3[:ntau_loc, 2] += ecc3_dot_ep3_ideal**2.
-        ecc3_dot_ep3[:ntau_loc, 3] += ecc3_dot_ep3_shear
-        ecc3_dot_ep3[:ntau_loc, 4] += ecc3_dot_ep3_shear**2.
-        ecc3_dot_ep3[:ntau_loc, 5] += ecc3_dot_ep3_full
-        ecc3_dot_ep3[:ntau_loc, 6] += ecc3_dot_ep3_full**2.
-    else:
-        ep2[:, 1] += ep_2_ideal[:ntau]
-        ep2[:, 2] += ep_2_ideal[:ntau]**2.
-        ep2[:, 3] += ep_2_shear[:ntau]
-        ep2[:, 4] += ep_2_shear[:ntau]**2.
-        ep2[:, 5] += ep_2_full[:ntau]
-        ep2[:, 6] += ep_2_full[:ntau]**2.
-        ep3[:, 1] += ep_3_ideal[:ntau]
-        ep3[:, 2] += ep_3_ideal[:ntau]**2.
-        ep3[:, 3] += ep_3_shear[:ntau]
-        ep3[:, 4] += ep_3_shear[:ntau]**2.
-        ep3[:, 5] += ep_3_full[:ntau]
-        ep3[:, 6] += ep_3_full[:ntau]**2.
-        ecc2_dot_ep2[:, 1] += ecc2_dot_ep2_ideal[:ntau]
-        ecc2_dot_ep2[:, 2] += ecc2_dot_ep2_ideal[:ntau]**2.
-        ecc2_dot_ep2[:, 3] += ecc2_dot_ep2_shear[:ntau]
-        ecc2_dot_ep2[:, 4] += ecc2_dot_ep2_shear[:ntau]**2.
-        ecc2_dot_ep2[:, 5] += ecc2_dot_ep2_full[:ntau]
-        ecc2_dot_ep2[:, 6] += ecc2_dot_ep2_full[:ntau]**2.
-        ecc3_dot_ep3[:, 1] += ecc3_dot_ep3_ideal[:ntau]
-        ecc3_dot_ep3[:, 2] += ecc3_dot_ep3_ideal[:ntau]**2.
-        ecc3_dot_ep3[:, 3] += ecc3_dot_ep3_shear[:ntau]
-        ecc3_dot_ep3[:, 4] += ecc3_dot_ep3_shear[:ntau]**2.
-        ecc3_dot_ep3[:, 5] += ecc3_dot_ep3_full[:ntau]
-        ecc3_dot_ep3[:, 6] += ecc3_dot_ep3_full[:ntau]**2.
+    pack_arrays(ep2, ep_2_ideal, ep_2_shear, ep_2_full, ntau, ntau_loc)
+    pack_arrays(ep3, ep_3_ideal, ep_3_shear, ep_3_full, ntau, ntau_loc)
+    pack_arrays(psi_2, psi2_ideal, psi2_shear, psi2_full, ntau, ntau_loc)
+    pack_arrays(psi_3, psi3_ideal, psi3_shear, psi3_full, ntau, ntau_loc)
+    pack_arrays(ecc2_dot_ep2, ecc2_dot_ep2_ideal, ecc2_dot_ep2_shear,
+                ecc2_dot_ep2_full, ntau, ntau_loc)
+    pack_arrays(ecc3_dot_ep3, ecc3_dot_ep3_ideal, ecc3_dot_ep3_shear,
+                ecc3_dot_ep3_full, ntau, ntau_loc)
 
-ep2[:, 1:] /= nev
-ep2[:, 2::2] = sqrt(ep2[:, 2::2] - ep2[:, 1::2]**2.)/sqrt(nev)
-ep3[:, 1:] /= nev
-ep3[:, 2::2] = sqrt(ep3[:, 2::2] - ep3[:, 1::2]**2.)/sqrt(nev)
-ecc2_dot_ep2[:, 1:] /= nev
-ecc2_dot_ep2[:, 2::2] = (
-        sqrt(ecc2_dot_ep2[:, 2::2] - ecc2_dot_ep2[:, 1::2]**2.)/sqrt(nev))
-ecc3_dot_ep3[:, 1:] /= nev
-ecc3_dot_ep3[:, 2::2] = (
-        sqrt(ecc3_dot_ep3[:, 2::2] - ecc3_dot_ep3[:, 1::2]**2.)/sqrt(nev))
+compute_stat_error(ep2, nev)
+compute_stat_error(ep3, nev)
+compute_stat_error(psi_2, nev)
+compute_stat_error(psi_3, nev)
+compute_stat_error(ecc2_dot_ep2, nev)
+compute_stat_error(ecc3_dot_ep3, nev)
 
 filename = 'momentum_aniso_ep2_evo.dat'
 header_text = ("# tau  ep2_ideal  ep2_ideal_err  ep2_shear  ep2_shear_err  "
@@ -159,6 +157,18 @@ filename = 'momentum_aniso_ep3_evo.dat'
 header_text = ("# tau  ep3_ideal  ep3_ideal_err  ep3_shear  ep3_shear_err  "
                 + "ep3_full  ep3_full_err")
 savetxt(filename, ep3, fmt="%.8e", delimiter="  ", header=header_text)
+shutil.move(filename, avg_folder)
+
+filename = 'momentum_aniso_psi2_evo.dat'
+header_text = ("# tau  psi2_ideal  psi2_ideal_err  "
+                + "psi2_shear  psi2_shear_err  psi2_full  psi2_full_err")
+savetxt(filename, psi_2, fmt="%.8e", delimiter="  ", header=header_text)
+shutil.move(filename, avg_folder)
+
+filename = 'momentum_aniso_psi3_evo.dat'
+header_text = ("# tau  psi3_ideal  psi3_ideal_err  "
+                + "psi3_shear  psi3_shear_err  psi3_full  psi3_full_err")
+savetxt(filename, psi_3, fmt="%.8e", delimiter="  ", header=header_text)
 shutil.move(filename, avg_folder)
 
 filename = 'ecc2_dot_ep2_evo.dat'
