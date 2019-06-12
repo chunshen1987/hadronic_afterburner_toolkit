@@ -1,19 +1,7 @@
 #! /usr/bin/env python
 """
-     This script performs event averaging for particle 
-     spectra and anisotropic flow coefficients calculated 
-     from event-by-event simulations
-
-     v_n is analyzed up to n = 6
-
-     Format for particle_XXX_vndata.dat file:
-     n_order  real_part  real_part_err  imag_part  imag_part_err
-     
-     Format for particle_XXX_vndata_diff.dat file:
-     pT(GeV)  pT_err(GeV)  dN/(2pi dy pT dpT)(GeV^-2)  dN/(2pi dy pT dpT)_err(GeV^-2)
-     vn_real  vn_real_err  vn_imag  vn_imag_err
-
-     All the errors are only statistic errors
+     This script computes the correlation between spatial eccentriicty
+     and momentum anisotropy
 """
 
 from sys import argv, exit
@@ -29,7 +17,7 @@ def compute_psi_n(ep_n_cos, ep_n_sin, ecc_n_cos_init, ecc_n_sin_init):
     eccn_init_dot_epn_cos = ecc_n_cos_init*ep_n_cos + ecc_n_sin_init*ep_n_sin
     eccn_init_dot_epn_sin = ecc_n_cos_init*ep_n_sin - ecc_n_sin_init*ep_n_cos
     psi_n = arctan2(eccn_init_dot_epn_sin, eccn_init_dot_epn_cos)
-    return(psi_n)
+    return psi_n
 
 def pack_arrays(data, data_ideal, data_shear, data_full, ntau, ntau_loc):
     """package the first ntau elements to data"""
@@ -62,7 +50,7 @@ try:
     avg_folder = path.join(path.abspath(argv[2]),
                            results_folder_name)
     print("output folder: %s" % avg_folder)
-    if(path.isdir(avg_folder)):
+    if path.isdir(avg_folder):
         print("folder %s already exists!" % avg_folder)
         var = input("do you want to delete it? [y/N]")
         if 'y' in var:
@@ -76,7 +64,7 @@ except IndexError:
     exit(1)
 
 ecc_filename = "eccentricities_evo_eta_-0.5_0.5.dat"
-ep_filename  = "momentum_anisotropy_eta_-0.5_0.5.dat"
+ep_filename = "momentum_anisotropy_eta_-0.5_0.5.dat"
 
 tau = linspace(0.4, 5.4, 1001)
 #tau = linspace(0.4, 8.4, 1601)
@@ -106,7 +94,7 @@ psi_3_final_list = []
 for ifolder, event_name in enumerate(event_list):
     event_group = hf.get(event_name)
     ecc_n_data = array(event_group.get(ecc_filename))
-    ep_n_data  = array(event_group.get(ep_filename))
+    ep_n_data = array(event_group.get(ep_filename))
 
     ntau_loc = len(ecc_n_data[:, 0])
 
@@ -122,7 +110,7 @@ for ifolder, event_name in enumerate(event_list):
     psi2_shear = compute_psi_n(ep_n_data[:, 6], ep_n_data[:, 7],
                                ecc_n_data[0, 3], ecc_n_data[0, 4])
     psi2_full = compute_psi_n(ep_n_data[:, 8], ep_n_data[:, 9],
-                               ecc_n_data[0, 3], ecc_n_data[0, 4])
+                              ecc_n_data[0, 3], ecc_n_data[0, 4])
     psi_2_init_list.append([psi2_ideal[0], psi2_shear[0], psi2_full[0]])
     psi_2_final_list.append([psi2_ideal[-1], psi2_shear[-1], psi2_full[-1]])
     psi3_ideal = compute_psi_n(ep_n_data[:, 10], ep_n_data[:, 11],
@@ -130,7 +118,7 @@ for ifolder, event_name in enumerate(event_list):
     psi3_shear = compute_psi_n(ep_n_data[:, 12], ep_n_data[:, 13],
                                ecc_n_data[0, 5], ecc_n_data[0, 6])
     psi3_full = compute_psi_n(ep_n_data[:, 14], ep_n_data[:, 15],
-                               ecc_n_data[0, 5], ecc_n_data[0, 6])
+                              ecc_n_data[0, 5], ecc_n_data[0, 6])
     psi_3_init_list.append([psi3_ideal[0], psi3_shear[0], psi3_full[0]])
     psi_3_final_list.append([psi3_ideal[-1], psi3_shear[-1], psi3_full[-1]])
 
@@ -214,19 +202,25 @@ for ifile, filename in enumerate(filename_list):
     center2 = (psi_bins[:-1] + psi_bins[1:])/2 + 0.5*width
     fig = plt.figure()
     ax = plt.axes([0.12, 0.12, 0.83, 0.83])
-    plt.bar(center1, hist1, align='center', width=width)
-    plt.bar(center2, hist2, align='center', width=width)
-    plt.savefig("{}_{}_psi_2_dist.pdf".format(results_folder_name, filename),
-                fmt="pdf")
-    
+    plt.bar(center1, hist1/nev, align='center', width=width, label='initial')
+    plt.bar(center2, hist2/nev, align='center', width=width, label='final')
+    plt.legend(loc=0, fontsize=18)
+    plt.xlabel(r"$2(\Psi_{2p} - \Psi_2)$", fontsize=18)
+    plt.ylabel(r"$P(2(\Psi_{2p} - \Psi_2))$", fontsize=18)
+    plt.savefig("{0}/{0}_{1}_psi_2_dist.pdf".format(
+        results_folder_name, filename), fmt="pdf")
+
     hist1, bins1 = histogram(psi_3_init_list[:, ifile], bins=psi_bins)
     hist2, bins2 = histogram(psi_3_final_list[:, ifile], bins=psi_bins)
     width = 0.5*(psi_bins[1] - psi_bins[0])
     center1 = (psi_bins[:-1] + psi_bins[1:])/2 - 0.5*width
     center2 = (psi_bins[:-1] + psi_bins[1:])/2 + 0.5*width
     fig = plt.figure()
-    ax = plt.axes([0.12, 0.12, 0.83, 0.83])
-    plt.bar(center1, hist1, align='center', width=width)
-    plt.bar(center2, hist2, align='center', width=width)
-    plt.savefig("{}_{}_psi_3_dist.pdf".format(results_folder_name, filename),
-                fmt="pdf")
+    ax = plt.axes([0.14, 0.12, 0.81, 0.83])
+    plt.bar(center1, hist1/nev, align='center', width=width, label='initial')
+    plt.bar(center2, hist2/nev, align='center', width=width, label='final')
+    plt.legend(loc=0, fontsize=18)
+    plt.xlabel(r"$3(\Psi_{3p} - \Psi_3)$", fontsize=18)
+    plt.ylabel(r"$P(3(\Psi_{3p} - \Psi_3))$", fontsize=18)
+    plt.savefig("{0}/{0}_{1}_psi_3_dist.pdf".format(
+        results_folder_name, filename), fmt="pdf")
