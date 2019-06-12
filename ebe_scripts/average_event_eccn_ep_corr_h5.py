@@ -21,33 +21,39 @@ from os import path, mkdir
 from glob import glob
 from numpy import *
 import h5py
+import matplotlib.pyplot as plt
 import shutil
 
 def compute_psi_n(ep_n_cos, ep_n_sin, ecc_n_cos_init, ecc_n_sin_init):
+    """Compute the angle between ep_n and ecc_n"""
     eccn_init_dot_epn_cos = ecc_n_cos_init*ep_n_cos + ecc_n_sin_init*ep_n_sin
     eccn_init_dot_epn_sin = ecc_n_cos_init*ep_n_sin - ecc_n_sin_init*ep_n_cos
     psi_n = arctan2(eccn_init_dot_epn_sin, eccn_init_dot_epn_cos)
     return(psi_n)
 
 def pack_arrays(data, data_ideal, data_shear, data_full, ntau, ntau_loc):
+    """package the first ntau elements to data"""
     if ntau_loc < ntau:
-        data[:ntau_loc, 1] += data_ideal
-        data[:ntau_loc, 2] += data_ideal**2.
-        data[:ntau_loc, 3] += data_shear
-        data[:ntau_loc, 4] += data_shear**2.
-        data[:ntau_loc, 5] += data_full
-        data[:ntau_loc, 6] += data_full**2.
+        data[:ntau_loc, 1] += data_ideal**2.
+        data[:ntau_loc, 2] += data_ideal**4.
+        data[:ntau_loc, 3] += data_shear**2.
+        data[:ntau_loc, 4] += data_shear**4.
+        data[:ntau_loc, 5] += data_full**2.
+        data[:ntau_loc, 6] += data_full**4.
     else:
-        data[:, 1] += data_ideal[:ntau]
-        data[:, 2] += data_ideal[:ntau]**2.
-        data[:, 3] += data_shear[:ntau]
-        data[:, 4] += data_shear[:ntau]**2.
-        data[:, 5] += data_full[:ntau]
-        data[:, 6] += data_full[:ntau]**2.
+        data[:, 1] += data_ideal[:ntau]**2.
+        data[:, 2] += data_ideal[:ntau]**4.
+        data[:, 3] += data_shear[:ntau]**2.
+        data[:, 4] += data_shear[:ntau]**4.
+        data[:, 5] += data_full[:ntau]**2.
+        data[:, 6] += data_full[:ntau]**4.
 
-def compute_stat_error(data, nev):
+def compute_mean_and_stat_error(data, nev):
+    """compute the mean and statistical error for data"""
     data[:, 1:] /= nev
     data[:, 2::2] = sqrt(data[:, 2::2] - data[:, 1::2]**2.)/sqrt(nev)
+    data[:, 1::2] = sqrt(data[:, 1::2])
+    data[:, 2::2] = data[:, 2::2]/(2.*data[:, 1::2] + 1e-16)
 
 try:
     data_path = path.abspath(argv[1])
@@ -73,6 +79,7 @@ ecc_filename = "eccentricities_evo_eta_-0.5_0.5.dat"
 ep_filename  = "momentum_anisotropy_eta_-0.5_0.5.dat"
 
 tau = linspace(0.4, 5.4, 1001)
+#tau = linspace(0.4, 8.4, 1601)
 ntau = len(tau)
 hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
@@ -90,6 +97,11 @@ psi_2[:, 0] = tau
 psi_3[:, 0] = tau
 ecc2_dot_ep2[:, 0] = tau
 ecc3_dot_ep3[:, 0] = tau
+
+psi_2_init_list = []
+psi_3_init_list = []
+psi_2_final_list = []
+psi_3_final_list = []
 
 for ifolder, event_name in enumerate(event_list):
     event_group = hf.get(event_name)
@@ -111,12 +123,16 @@ for ifolder, event_name in enumerate(event_list):
                                ecc_n_data[0, 3], ecc_n_data[0, 4])
     psi2_full = compute_psi_n(ep_n_data[:, 8], ep_n_data[:, 9],
                                ecc_n_data[0, 3], ecc_n_data[0, 4])
+    psi_2_init_list.append([psi2_ideal[0], psi2_shear[0], psi2_full[0]])
+    psi_2_final_list.append([psi2_ideal[-1], psi2_shear[-1], psi2_full[-1]])
     psi3_ideal = compute_psi_n(ep_n_data[:, 10], ep_n_data[:, 11],
                                ecc_n_data[0, 5], ecc_n_data[0, 6])
     psi3_shear = compute_psi_n(ep_n_data[:, 12], ep_n_data[:, 13],
                                ecc_n_data[0, 5], ecc_n_data[0, 6])
     psi3_full = compute_psi_n(ep_n_data[:, 14], ep_n_data[:, 15],
                                ecc_n_data[0, 5], ecc_n_data[0, 6])
+    psi_3_init_list.append([psi3_ideal[0], psi3_shear[0], psi3_full[0]])
+    psi_3_final_list.append([psi3_ideal[-1], psi3_shear[-1], psi3_full[-1]])
 
     ecc2_dot_ep2_ideal = (
         ecc_n_data[:, 3]*ep_n_data[:, 4] + ecc_n_data[:, 4]*ep_n_data[:, 5])
@@ -140,12 +156,12 @@ for ifolder, event_name in enumerate(event_list):
     pack_arrays(ecc3_dot_ep3, ecc3_dot_ep3_ideal, ecc3_dot_ep3_shear,
                 ecc3_dot_ep3_full, ntau, ntau_loc)
 
-compute_stat_error(ep2, nev)
-compute_stat_error(ep3, nev)
-compute_stat_error(psi_2, nev)
-compute_stat_error(psi_3, nev)
-compute_stat_error(ecc2_dot_ep2, nev)
-compute_stat_error(ecc3_dot_ep3, nev)
+compute_mean_and_stat_error(ep2, nev)
+compute_mean_and_stat_error(ep3, nev)
+compute_mean_and_stat_error(psi_2, nev)
+compute_mean_and_stat_error(psi_3, nev)
+compute_mean_and_stat_error(ecc2_dot_ep2, nev)
+compute_mean_and_stat_error(ecc3_dot_ep3, nev)
 
 filename = 'momentum_aniso_ep2_evo.dat'
 header_text = ("# tau  ep2_ideal  ep2_ideal_err  ep2_shear  ep2_shear_err  "
@@ -180,3 +196,37 @@ filename = 'ecc3_dot_ep3_evo.dat'
 header_text = ("# tau  ideal  ideal_err  shear  shear_err  full  full_err")
 savetxt(filename, ecc3_dot_ep3, fmt="%.8e", delimiter="  ", header=header_text)
 shutil.move(filename, avg_folder)
+
+
+psi_2_init_list = array(psi_2_init_list)
+psi_2_final_list = array(psi_2_final_list)
+psi_3_init_list = array(psi_3_init_list)
+psi_3_final_list = array(psi_3_final_list)
+
+
+filename_list = ['ideal', 'shear', 'full']
+psi_bins = linspace(-pi, pi, 23)
+for ifile, filename in enumerate(filename_list):
+    hist1, bins1 = histogram(psi_2_init_list[:, ifile], bins=psi_bins)
+    hist2, bins2 = histogram(psi_2_final_list[:, ifile], bins=psi_bins)
+    width = 0.5*(psi_bins[1] - psi_bins[0])
+    center1 = (psi_bins[:-1] + psi_bins[1:])/2 - 0.5*width
+    center2 = (psi_bins[:-1] + psi_bins[1:])/2 + 0.5*width
+    fig = plt.figure()
+    ax = plt.axes([0.12, 0.12, 0.83, 0.83])
+    plt.bar(center1, hist1, align='center', width=width)
+    plt.bar(center2, hist2, align='center', width=width)
+    plt.savefig("{}_{}_psi_2_dist.pdf".format(results_folder_name, filename),
+                fmt="pdf")
+    
+    hist1, bins1 = histogram(psi_3_init_list[:, ifile], bins=psi_bins)
+    hist2, bins2 = histogram(psi_3_final_list[:, ifile], bins=psi_bins)
+    width = 0.5*(psi_bins[1] - psi_bins[0])
+    center1 = (psi_bins[:-1] + psi_bins[1:])/2 - 0.5*width
+    center2 = (psi_bins[:-1] + psi_bins[1:])/2 + 0.5*width
+    fig = plt.figure()
+    ax = plt.axes([0.12, 0.12, 0.83, 0.83])
+    plt.bar(center1, hist1, align='center', width=width)
+    plt.bar(center2, hist2, align='center', width=width)
+    plt.savefig("{}_{}_psi_3_dist.pdf".format(results_folder_name, filename),
+                fmt="pdf")
