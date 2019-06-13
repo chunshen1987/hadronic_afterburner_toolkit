@@ -595,6 +595,15 @@ def generate_event_folder_UrQMD(cluster_name, working_folder, event_id, mode):
     shutil.copytree('codes/hadronic_afterburner_toolkit', 
                     path.join(path.abspath(event_folder), 
                     'hadronic_afterburner_toolkit'))
+    subprocess.call("ln -s {0:s} {1:s}".format(
+        path.abspath(path.join('codes', 'hadronic_afterburner_toolkit_code',
+                               'hadronic_afterburner_tools.e')),
+        path.join(path.abspath(event_folder), "hadronic_afterburner_toolkit",
+                  "hadronic_afterburner_tools.e")), shell=True)
+    subprocess.call("ln -s {0:s} {1:s}".format(
+        path.abspath('codes/hadronic_afterburner_toolkit_code/EOS'),
+        path.join(path.abspath(event_folder),
+                  "hadronic_afterburner_toolkit/EOS")), shell=True)
 
 
 def generate_event_folder_JAM(cluster_name, working_folder, event_id, mode):
@@ -632,6 +641,9 @@ def generate_event_folder(cluster_name, working_folder, event_id):
                     path.join(path.abspath(event_folder), 'osc2u'))
     shutil.copytree('codes/urqmd', 
                     path.join(path.abspath(event_folder), 'urqmd'))
+    subprocess.call("ln -s {0:s} {1:s}".format(
+        path.abspath('codes/urqmd_code/urqmd/urqmd.e'),
+        path.join(path.abspath(event_folder), "urqmd/urqmd.e")), shell=True)
 
 def copy_OSCAR_events(number_of_cores, input_folder, working_folder):
     events_list = glob('%s/*.dat' % input_folder)
@@ -667,13 +679,26 @@ def generate_event_folder_iSS(cluster_name, working_folder, event_id):
     generate_script_iSS(cluster_name, event_folder)
     shutil.copytree('codes/iSS', 
                     path.join(path.abspath(event_folder), 'iSS'))
+    subprocess.call("ln -s {0:s} {1:s}".format(
+        path.abspath('codes/iSS_code/iSS_tables'),
+        path.join(path.abspath(event_folder), "iSS/iSS_tables")), shell=True)
+    subprocess.call("ln -s {0:s} {1:s}".format(
+        path.abspath('codes/iSS_code/iSS.e'),
+        path.join(path.abspath(event_folder), "iSS/iSS.e")), shell=True)
     shutil.copytree('codes/osc2u', 
                     path.join(path.abspath(event_folder), 'osc2u'))
     shutil.copytree('codes/urqmd', 
                     path.join(path.abspath(event_folder), 'urqmd'))
+    subprocess.call("ln -s {0:s} {1:s}".format(
+        path.abspath('codes/urqmd_code/urqmd/urqmd.e'),
+        path.join(path.abspath(event_folder), "urqmd/urqmd.e")), shell=True)
     shutil.copytree('codes/hadronic_afterburner_toolkit', 
                     path.join(path.abspath(event_folder), 
                     'hadronic_afterburner_toolkit'))
+    subprocess.call("ln -s {0:s} {1:s}".format(
+        path.abspath('codes/hadronic_afterburner_toolkit_code/EOS'),
+        path.join(path.abspath(event_folder),
+                  "hadronic_afterburner_toolkit/EOS")), shell=True)
 
 def generate_event_folder_iS(cluster_name, working_folder, event_id):
     event_folder = path.join(working_folder, 'event_%d' % event_id)
