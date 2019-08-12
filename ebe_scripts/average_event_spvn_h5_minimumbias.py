@@ -33,6 +33,7 @@ normal = "\033[0m"
 
 centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
                        60., 70., 80., 90., 100.]
+Centrality_flag = 0
 
 try:
     data_path = path.abspath(argv[1])
@@ -1197,13 +1198,21 @@ for icen in range(len(centrality_cut_list) - 1):
 
     selected_events_list = []
     for ifolder, event_name in enumerate(event_list):
-        file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
-        event_group = hf.get(event_name)
-        temp_data   = event_group.get(file_name)
-        temp_data   = nan_to_num(temp_data)
-        if (temp_data[0, 1] > dN_dy_cut_low
-            and temp_data[0, 1] <= dN_dy_cut_high):
-            selected_events_list.append(event_name)
+        if Centrality_flag == 0:
+            cen_label = ("C{0:d}-{1:d}_".format(
+                int(centrality_cut_list[icen]),
+                int(centrality_cut_list[icen+1]))
+            )
+            if cen_label in event_name:
+                selected_events_list.append(event_name)
+        elif Centrality_flag == 1:
+            file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
+            event_group = hf.get(event_name)
+            temp_data   = event_group.get(file_name)
+            temp_data   = nan_to_num(temp_data)
+            if (temp_data[0, 1] > dN_dy_cut_low
+                and temp_data[0, 1] <= dN_dy_cut_high):
+                selected_events_list.append(event_name)
 
     nev = len(selected_events_list)
     print("analysis {}%-{}% nev = {}...".format(
