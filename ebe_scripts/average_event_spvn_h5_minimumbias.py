@@ -31,7 +31,8 @@ yellow = "\033[93m"
 red = "\033[91m"
 normal = "\033[0m"
 
-centrality_cut_list = [0., 5., 10., 20., 30., 40., 50., 60., 70., 80.]
+centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
+                       60., 70., 80., 90., 100.]
 
 try:
     data_path = path.abspath(argv[1])
@@ -108,12 +109,12 @@ def calculate_chi_422(vn_array):
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
-    
+
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
              - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
              + 2*dN*(dN - 3.))
-    
+
     N3_weight = dN*(dN - 1.)*(dN - 2.)
     chi_422_num = Q4*conj(Q2)*conj(Q2) - 2.*Q2*conj(Q2) - Q4*conj(Q4) + 2.*dN
 
@@ -145,7 +146,7 @@ def calculate_chi_523(vn_array):
         - 2.*real(Q3*conj(Q1)*conj(Q2)) + abs(Q5)**2. + abs(Q1)**2.
         - (dN - 4.)*(abs(Q2)**2. + abs(Q3)**2.) + dN*(dN - 6.)
     )
-    
+
     N3_weight = dN*(dN - 1.)*(dN - 2.)
     chi_523_num = (Q5*conj(Q2)*conj(Q3) - Q3*conj(Q3) - Q2*conj(Q2)
                    - Q5*conj(Q5) + 2.*dN)
@@ -216,7 +217,7 @@ def calculate_chi_633(vn_array):
 
     N3_weight = dN*(dN - 1.)*(dN - 2.)
     chi_633_num = Q6*conj(Q3)*conj(Q3) - 2.*Q3*conj(Q3) - Q6*conj(Q6) + 2.*dN
-    
+
     chi_633_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
@@ -265,7 +266,7 @@ def calculate_v5_Psi23(chi_523, chi_523_err, vn_array):
     Q3 = dN*vn_array[:, 3]
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
-    
+
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
         - 2.*real(Q3*conj(Q1)*conj(Q2)) + abs(Q5)**2. + abs(Q1)**2.
@@ -421,7 +422,7 @@ def calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array):
     dN = real(vn_array[:, 0])
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
-    
+
     N2_weight = dN*(dN - 1.)
     Q4_2 = abs(Q4)**2. - dN
 
@@ -441,7 +442,7 @@ def calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array):
     dN = real(vn_array[:, 0])
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
-    
+
     N2_weight = dN*(dN - 1.)
     Q5_2 = abs(Q5)**2. - dN
 
@@ -464,7 +465,7 @@ def calculate_v6_L(chi_6222, chi_6222_err, chi_633, chi_633_err, vn_array):
     v3_array = vn_array[:, 3]
     v6_array = vn_array[:, 6]
     nev = len(dN)
-    
+
     v6_Psi6_sq = mean(abs(v6_array)**2.)
     v6_Psi6_sq_err = std(abs(v6_array)**2.)/sqrt(nev)
     v2_6 = mean(abs(v2_array)**6.)
@@ -952,7 +953,6 @@ def calculate_vn4(vn_data_array):
         v1_4 = (-C_1_4)**0.25
         v1_4_err = 0.25*((-C_1_4)**(-0.75))*C_1_4_err
 
-    
     C_2_4 = mean(Q2_4)/mean(N4_weight) - 2.*((mean(Q2_2)/mean(N2_weight))**2.)
     stat_err_1 = sqrt((std(Q2_4)/mean(N4_weight))**2.
                       + (mean(Q2_4)*std(N4_weight)/(mean(N4_weight)**2.))**2.
@@ -1078,7 +1078,7 @@ def calculate_vn4_over_vn2(vn_data_array):
     r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
     r3_mean = mean(r3_array)
     r3_err = sqrt((nev - 1.)/nev*sum((r3_array - r3_mean)**2.))
-    
+
     F1_mean = mean(F1_array)
     F1_err = sqrt((nev - 1.)/nev*sum((F1_array - F1_mean)**2.))
     F2_mean = mean(F2_array)
@@ -1164,7 +1164,7 @@ def calculate_vn6_over_vn4(vn_data_array):
     r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
     gamma1_mean = mean(gamma1_array)
     gamma1_err = sqrt((nev - 1.)/nev*sum((gamma1_array - gamma1_mean)**2.))
-    
+
     results = [r2_mean, r2_err, gamma1_mean, gamma1_err]
     return(results)
 
@@ -1178,18 +1178,22 @@ for ifolder, event_name in enumerate(event_list):
     temp_data   = event_group.get(file_name)
     temp_data   = nan_to_num(temp_data)
     dN_dy_mb.append(-temp_data[0, 1])
-dN_dy_mb       = -sort(array(dN_dy_mb))
+dN_dy_mb = -sort(array(dN_dy_mb))
 print("total number of events: {}".format(len(dN_dy_mb)))
 
 for icen in range(len(centrality_cut_list) - 1):
-    avg_folder = path.join(avg_folder_header,
-                           "{0:02.0f}-{1:02.0f}".format(
-                                            centrality_cut_list[icen],
-                                            centrality_cut_list[icen+1]))
+    avg_folder = path.join(
+        avg_folder_header, "{0:02.0f}-{1:02.0f}".format(
+            centrality_cut_list[icen], centrality_cut_list[icen+1])
+    )
     mkdir(avg_folder)
 
-    dN_dy_cut_high = dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)]
-    dN_dy_cut_low  = dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen+1]/100.)]
+    dN_dy_cut_high = (
+        dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)])
+    dN_dy_cut_low  = dN_dy_mb[
+        min(len(dN_dy_mb)-1,
+            int(len(dN_dy_mb)*centrality_cut_list[icen+1]/100.))
+    ]
 
     selected_events_list = []
     for ifolder, event_name in enumerate(event_list):
@@ -1207,25 +1211,25 @@ for icen in range(len(centrality_cut_list) - 1):
 
     for ipart, particle_id in enumerate(particle_list):
         print("processing %s ..." % particle_name_list[ipart])
-        
+
         # first particle yield dN/dy
         if particle_id == '9999':
             file_name = 'particle_%s_vndata_eta_-0.5_0.5.dat' % particle_id
         else:
             file_name = 'particle_%s_vndata_y_-0.5_0.5.dat' % particle_id
-    
+
         dN_dy = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
             temp_data = nan_to_num(temp_data)
-    
+
             dN_dy.append(temp_data[0, 1])
-    
+
         dN_dy = array(dN_dy)
         dN_dy_avg = mean(dN_dy)
         dN_dy_avg_err = std(dN_dy)/sqrt(nev)
-    
+
         # then <pT>, vn, dN/(2pi dy pT dpT), vn{SP}(pT)
         if particle_id == '9999':
             file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
@@ -1234,7 +1238,7 @@ for icen in range(len(centrality_cut_list) - 1):
         file_name_ref = 'particle_9999_vndata_diff_eta_0.5_2.dat'
         file_name_ALICE = 'particle_9999_vndata_diff_eta_-1_1.dat'
         file_name_ATLAS = 'particle_9999_vndata_diff_eta_-2_2.dat'
-       
+
         pT_array = []
         dN_array = []
         pT_array_ALICE = []
@@ -1264,10 +1268,10 @@ for icen in range(len(centrality_cut_list) - 1):
             temp_data = nan_to_num(temp_data)
             temp_data_ref = event_group.get(file_name_ref)
             temp_data_ref = nan_to_num(temp_data_ref)
-            
+
             dN_event = temp_data[:, 2]  # dN/(2pi dy pT dpT)
             pT_event = temp_data[:, 0]
-    
+
             # record particle spectra
             pT_array.append(pT_event)
             dN_array.append(dN_event)
@@ -1278,20 +1282,20 @@ for icen in range(len(centrality_cut_list) - 1):
                 temp_data1 = event_group.get(file_name_ALICE)
                 pT_array_ALICE.append(temp_data1[:, 0])
                 dN_array_ALICE.append(temp_data1[:, 2])
-    
+
             # pT-integrated vn
             # vn with PHENIX pT cut
             temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data)
             vn_phenix_array.append(temp_vn_array)
-    
+
             # vn with STAR pT cut
             temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data)
             vn_star_array.append(temp_vn_array)
-    
+
             # vn with ALICE pT cut
             temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data)
             vn_alice_array.append(temp_vn_array)
-            
+
             # vn with CMS pT cut
             temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data)
             vn_cms_array.append(temp_vn_array)
@@ -1299,11 +1303,11 @@ for icen in range(len(centrality_cut_list) - 1):
                 temp_vn_arrays = (
                         calculate_vn_arrays_for_rn_ratios(temp_data))
                 vn_cms_arrays_for_rn.append(temp_vn_arrays)
-            
+
             # vn with ATLAS pT cut
             temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data)
             vn_atlas_array.append(temp_vn_array)
-    
+
             # pT-differential vn using scalar-product method
             # vn{SP}(pT) with PHENIX pT cut
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
@@ -1313,7 +1317,7 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_diff_phenix_imag.append(temp_vn_diff_imag);
             vn_diff_phenix_denorm1.append(temp_dn_diff);
             vn_diff_phenix_denorm2.append(temp_vn2);
-    
+
             # vn{SP}(pT) with STAR pT cut
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
                             calculate_diff_vn_single_event(0.15, 2.0, temp_data,
@@ -1322,7 +1326,7 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_diff_star_imag.append(temp_vn_diff_imag);
             vn_diff_star_denorm1.append(temp_dn_diff);
             vn_diff_star_denorm2.append(temp_vn2);
-            
+
             # vn{SP}(pT) with ALICE pT cut
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
                             calculate_diff_vn_single_event(0.2, 3.0, temp_data,
@@ -1331,7 +1335,7 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_diff_alice_imag.append(temp_vn_diff_imag);
             vn_diff_alice_denorm1.append(temp_dn_diff);
             vn_diff_alice_denorm2.append(temp_vn2);
-            
+
             # vn{SP}(pT) with CMS pT cut
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
                             calculate_diff_vn_single_event(0.3, 3.0, temp_data,
@@ -1340,7 +1344,7 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_diff_cms_imag.append(temp_vn_diff_imag);
             vn_diff_cms_denorm1.append(temp_dn_diff);
             vn_diff_cms_denorm2.append(temp_vn2);
-            
+
             # vn{SP}(pT) with ATLAS pT cut
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
                             calculate_diff_vn_single_event(0.5, 3.0, temp_data,
@@ -1349,7 +1353,7 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_diff_atlas_imag.append(temp_vn_diff_imag);
             vn_diff_atlas_denorm1.append(temp_dn_diff);
             vn_diff_atlas_denorm2.append(temp_vn2);
-            
+
             # pT-differential vn using 2PC method
             # vn[2](pT)
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
@@ -1357,11 +1361,11 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_diff_2PC_real.append(temp_vn_diff_real)
             vn_diff_2PC_imag.append(temp_vn_diff_imag)
             vn_diff_2PC_denorm.append(temp_dn_diff)
-    
+
         # now we perform event average
         dN_array = array(dN_array)
         pT_array = array(pT_array)
-    
+
         n_pT = len(pT_array[0, :])
         pT_spectra = zeros([n_pT])
         for ipT in range(len(pT_array[0, :])):
@@ -1373,12 +1377,12 @@ for icen in range(len(centrality_cut_list) - 1):
                 pT_spectra[ipT] = mean(pT_array[:, ipT])
         dN_spectra = mean(pT_array*dN_array, 0)/pT_spectra   # dN/(2pi dy pT dpT)
         dN_spectra_err = std(pT_array*dN_array, 0)/pT_spectra/sqrt(nev)
-    
+
         if particle_id == "9999":
             # calculate dNch (pT > 0.4 |eta| < 2.5) for ATLAS
             dN_array_ATLAS = array(dN_array_ATLAS)
             pT_array_ATLAS = array(pT_array_ATLAS)
-    
+
             n_pT = len(pT_array_ATLAS[0, :])
             pT_spectra_ATLAS = zeros([n_pT])
             for ipT in range(len(pT_array_ATLAS[0, :])):
@@ -1395,11 +1399,11 @@ for icen in range(len(centrality_cut_list) - 1):
             dN_interp1_err = interp(pT_interp1, pT_spectra_ATLAS, dN_spectra_ATLAS_err)
             dNch_ATLAS = sum(pT_interp1*dN_interp1)*dpT1*2*pi*5.
             print("dNch(pT > 0.4, |eta| < 2.5) = {0:.4f} ".format(dNch_ATLAS))
-            
+
             # calculate dNch (pT > 0.2 |eta| < 0.8) for ALICE
             dN_array_ALICE = array(dN_array_ALICE)
             pT_array_ALICE = array(pT_array_ALICE)
-    
+
             n_pT = len(pT_array_ALICE[0, :])
             pT_spectra_ALICE = zeros([n_pT])
             for ipT in range(len(pT_array_ALICE[0, :])):
@@ -1416,8 +1420,8 @@ for icen in range(len(centrality_cut_list) - 1):
             dN_interp1_err = interp(pT_interp1, pT_spectra_ALICE, dN_spectra_ALICE_err)
             dNch_ALICE = sum(pT_interp1*dN_interp1)*dpT1*2*pi*1.6
             print("dNch(pT > 0.2 GeV, |eta| < 0.8) = {0:.4f} ".format(dNch_ALICE))
-    
-    
+
+
         # calculate mean pT
         pT_interp = linspace(0.05, 2.95, 30)
         dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra+1e-30)))
@@ -1439,14 +1443,14 @@ for icen in range(len(centrality_cut_list) - 1):
                          /sum(pT_interp*(dN_interp-dN_interp_err)))
         mean_pT_1_err = max(abs(mean_pT_1_upper - mean_pT_1), 
                           abs(mean_pT_1 - mean_pT_1_lower))
-    
+
         # calcualte vn{2}
         vn_phenix_2, vn_phenix_2_err = calcualte_vn_2(vn_phenix_array)
         vn_star_2, vn_star_2_err = calcualte_vn_2(vn_star_array)
         vn_alice_2, vn_alice_2_err = calcualte_vn_2(vn_alice_array)
         vn_cms_2, vn_cms_2_err = calcualte_vn_2(vn_cms_array)
         vn_atlas_2, vn_atlas_2_err = calcualte_vn_2(vn_atlas_array)
-    
+
         if (particle_id == '9999'):
             vn_alice_array2 = array(vn_alice_array)
             vn_cms_array2 = array(vn_cms_array)
@@ -1457,10 +1461,10 @@ for icen in range(len(centrality_cut_list) - 1):
             nonlinear_response_cms = calculate_nonlinear_reponse(vn_cms_array2)
             # calculate non-linear response coefficents with ATLAS pT cut
             nonlinear_response_atlas = calculate_nonlinear_reponse(vn_atlas_array2)
-            
+
             # calculate symmetric cumulant coefficents with ALICE pT cut
             SC_alice = calculate_symmetric_cumulant(vn_alice_array)
-    
+
             # calculate vn{4}
             vn4_alice = calculate_vn4(vn_alice_array)
             vn4_cms = calculate_vn4(vn_cms_array)
@@ -1472,54 +1476,54 @@ for icen in range(len(centrality_cut_list) - 1):
             vn6_over_vn4_alice = calculate_vn6_over_vn4(vn_alice_array)
             vn6_over_vn4_cms = calculate_vn6_over_vn4(vn_cms_array)
             vn6_over_vn4_atlas = calculate_vn6_over_vn4(vn_atlas_array)
-    
+
             # calculate vn distribution for charged hadrons
             vn_phenix_dis = calculate_vn_distribution(vn_phenix_array)
             vn_star_dis = calculate_vn_distribution(vn_star_array)
             vn_alice_dis = calculate_vn_distribution(vn_alice_array)
             vn_cms_dis = calculate_vn_distribution(vn_cms_array)
             vn_atlas_dis = calculate_vn_distribution(vn_atlas_array)
-    
+
             # calculate rn ratios
             rn_cms = calculate_rn_ratios(vn_cms_arrays_for_rn)
-    
+
             # calculate flow event-plane correlation
             vn_corr_alice, vn_corr_alice_err = (
                     calcualte_event_plane_correlations(vn_alice_array))
             vn_corr_atlas, vn_corr_atlas_err = (
                     calcualte_event_plane_correlations(vn_atlas_array))
-    
+
         # calcualte vn{SP}(pT)
         vn_diff_SP_phenix, vn_diff_SP_phenix_err = calculate_vn_diff_SP(
                 vn_diff_phenix_real, vn_diff_phenix_imag,
                 vn_diff_phenix_denorm1, vn_diff_phenix_denorm2)
-    
+
         vn_diff_SP_star, vn_diff_SP_star_err = calculate_vn_diff_SP(
                 vn_diff_star_real, vn_diff_star_imag,
                 vn_diff_star_denorm1, vn_diff_star_denorm2)
-        
+
         vn_diff_SP_alice, vn_diff_SP_alice_err = calculate_vn_diff_SP(
                 vn_diff_alice_real, vn_diff_alice_imag,
                 vn_diff_alice_denorm1, vn_diff_alice_denorm2)
-        
+
         vn_diff_SP_cms, vn_diff_SP_cms_err = calculate_vn_diff_SP(
                 vn_diff_cms_real, vn_diff_cms_imag,
                 vn_diff_cms_denorm1, vn_diff_cms_denorm2)
-            
+
         vn_diff_SP_atlas, vn_diff_SP_atlas_err = calculate_vn_diff_SP(
                 vn_diff_atlas_real, vn_diff_atlas_imag,
                 vn_diff_atlas_denorm1, vn_diff_atlas_denorm2)
-        
+
         # calcualte vn[2](pT)
         vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
                 vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
-        
+
         # then particle rapidity distribution
         if particle_id == '9999':
             file_name = 'particle_%s_dNdeta_pT_0.2_3.dat' % particle_id
         else:
             file_name = 'particle_%s_dNdy_pT_0.2_3.dat' % particle_id
-    
+
         eta_array = []
         dN_array = []
         vn_array = []
@@ -1527,7 +1531,7 @@ for icen in range(len(centrality_cut_list) - 1):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
             temp_data = nan_to_num(temp_data)
-    
+
             eta_array.append(temp_data[:, 0])
             dN_array.append(temp_data[:, 1])
             temp_vn_array = []
@@ -1537,11 +1541,11 @@ for icen in range(len(centrality_cut_list) - 1):
                 vn = vn_real + 1j*vn_imag
                 temp_vn_array.append(vn)
             vn_array.append(temp_vn_array)
-    
+
         eta_array = array(eta_array)
         dN_array = array(dN_array)
         vn_array = array(vn_array)
-    
+
         eta_point = mean(eta_array, 0)
         dNdeta = mean(dN_array, 0)
         dNdeta_err = std(dN_array, 0)/sqrt(nev)
@@ -1549,11 +1553,11 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
         vn_eta_real = mean(real(vn_array), 0)
         vn_eta_real_err = std(real(vn_array), 0)/sqrt(nev)
-       
-        ###########################################################################
+
+        ######################################################################
         # finally, output all the results
-        ###########################################################################
-        
+        ######################################################################
+
         if (particle_id =='9999'):
             # output non-linear response coefficients chi_n for CMS pt cut
             output_filename = ("non_linear_response_coefficients_CMS.dat")
@@ -1566,7 +1570,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            nonlinear_response_cms[2*i+1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-    
+
             # output non-linear response coefficients chi_n for ALICE pt cut
             output_filename = ("non_linear_response_coefficients_ALICE.dat")
             f = open(output_filename, 'w')
@@ -1578,7 +1582,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            nonlinear_response_alice[2*i+1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output non-linear response coefficients chi_n for ATLAS pt cut
             output_filename = ("non_linear_response_coefficients_ATLAS.dat")
             f = open(output_filename, 'w')
@@ -1590,7 +1594,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            nonlinear_response_atlas[2*i+1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output symmetric cumulants for ALICE pt cut
             output_filename = ("symmetric_cumulant_ALICE.dat")
             f = open(output_filename, 'w')
@@ -1601,7 +1605,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            SC_alice[2*i], SC_alice[2*i+1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn4 for ALICE pt cut
             output_filename = ("charged_hadron_vn4_ALICE.dat")
             f = open(output_filename, 'w')
@@ -1612,7 +1616,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_alice[4*i-2], vn4_alice[4*i-1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-    
+
             # output vn4 for CMS pt cut
             output_filename = ("charged_hadron_vn4_CMS.dat")
             f = open(output_filename, 'w')
@@ -1623,7 +1627,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_cms[4*i-2], vn4_cms[4*i-1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn4 for ATLAS pt cut
             output_filename = ("charged_hadron_vn4_ATLAS.dat")
             f = open(output_filename, 'w')
@@ -1634,7 +1638,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_atlas[4*i-2], vn4_atlas[4*i-1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn4/vn2 ratio for ALICE pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_ALICE.dat")
             f = open(output_filename, 'w')
@@ -1646,7 +1650,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_alice[4*i-2], vn4_over_vn2_alice[4*i-1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn4/vn2 ratio for CMS pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_CMS.dat")
             f = open(output_filename, 'w')
@@ -1658,7 +1662,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_cms[4*i-2], vn4_over_vn2_cms[4*i-1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn4/vn2 ratio for ATLAS pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_ATLAS.dat")
             f = open(output_filename, 'w')
@@ -1670,7 +1674,7 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_atlas[4*i-2], vn4_over_vn2_atlas[4*i-1]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn6/vn4 ratio for ALICE pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ALICE.dat")
             f = open(output_filename, 'w')
@@ -1680,7 +1684,7 @@ for icen in range(len(centrality_cut_list) - 1):
                        vn6_over_vn4_alice[2], vn6_over_vn4_alice[3]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn6/vn4 ratio for CMS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_CMS.dat")
             f = open(output_filename, 'w')
@@ -1690,7 +1694,7 @@ for icen in range(len(centrality_cut_list) - 1):
                        vn6_over_vn4_cms[2], vn6_over_vn4_cms[3]))
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             # output vn6/vn4 ratio for ATLAS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ATLAS.dat")
             f = open(output_filename, 'w')
@@ -1700,7 +1704,7 @@ for icen in range(len(centrality_cut_list) - 1):
                        vn6_over_vn4_atlas[2], vn6_over_vn4_atlas[3]))
             f.close()
             shutil.move(output_filename, avg_folder)
-    
+
         output_filename = ("%s_integrated_observables.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1723,7 +1727,7 @@ for icen in range(len(centrality_cut_list) - 1):
                     % (iorder, vn_atlas_2[iorder-1], vn_atlas_2_err[iorder-1]))
         f.close()
         shutil.move(output_filename, avg_folder)
-        
+
         output_filename = ("%s_differential_observables_PHENIX.dat" 
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1738,7 +1742,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-    
+
         output_filename = ("%s_differential_observables_STAR.dat" 
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1753,7 +1757,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-        
+
         output_filename = ("%s_differential_observables_ALICE.dat" 
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1768,7 +1772,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-        
+
         output_filename = ("%s_differential_observables_2PC.dat" 
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1783,7 +1787,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-        
+
         output_filename = ("%s_differential_observables_CMS.dat" 
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1798,7 +1802,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-        
+
         output_filename = ("%s_differential_observables_ATLAS.dat" 
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1813,7 +1817,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-    
+
         output_filename = ("%s_rapidity_distribution.dat" 
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
@@ -1832,7 +1836,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
-        
+
         if (particle_id == '9999'):
             output_filename = ("%s_vn_distribution_PHENIX.dat"
                                % particle_name_list[ipart])
@@ -1847,7 +1851,7 @@ for icen in range(len(centrality_cut_list) - 1):
                 f.write("\n")
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             output_filename = ("%s_vn_distribution_STAR.dat"
                                % particle_name_list[ipart])
             f = open(output_filename, 'w')
@@ -1861,7 +1865,7 @@ for icen in range(len(centrality_cut_list) - 1):
                 f.write("\n")
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             output_filename = ("%s_vn_distribution_ALICE.dat"
                                % particle_name_list[ipart])
             f = open(output_filename, 'w')
@@ -1875,7 +1879,7 @@ for icen in range(len(centrality_cut_list) - 1):
                 f.write("\n")
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             output_filename = ("%s_vn_distribution_CMS.dat"
                                % particle_name_list[ipart])
             f = open(output_filename, 'w')
@@ -1889,7 +1893,7 @@ for icen in range(len(centrality_cut_list) - 1):
                 f.write("\n")
             f.close()
             shutil.move(output_filename, avg_folder)
-            
+
             output_filename = ("%s_vn_distribution_ATLAS.dat"
                                % particle_name_list[ipart])
             f = open(output_filename, 'w')
@@ -1903,7 +1907,7 @@ for icen in range(len(centrality_cut_list) - 1):
                 f.write("\n")
             f.close()
             shutil.move(output_filename, avg_folder)
-    
+
             # output rn ratios
             pT_trig = ['1.0', '1.5', '2.0', '2.5', '3.0']
             ipTtrig = 0
@@ -1930,7 +1934,7 @@ for icen in range(len(centrality_cut_list) - 1):
                                               pT_trig[ipTtrig+1]))
                         f = open(output_filename, 'w')
                         f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
-            
+
             # output flow event-plane correlation
             output_filename = ("%s_event_plane_correlation_ALICE.dat"
                                % particle_name_list[ipart])
