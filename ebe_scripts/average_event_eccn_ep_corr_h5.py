@@ -74,21 +74,29 @@ event_list = list(hf.keys())
 nev = len(event_list)
 
 ep2 = zeros([ntau, 7])
+ep2_org = zeros([ntau, 7])
 ep3 = zeros([ntau, 7])
 psi_2 = zeros([ntau, 7])
+psi_2_org = zeros([ntau, 7])
 psi_3 = zeros([ntau, 7])
 ecc2_dot_ep2 = zeros([ntau, 7])
+ecc2_dot_ep2_org = zeros([ntau, 7])
 ecc3_dot_ep3 = zeros([ntau, 7])
 ep2[:, 0] = tau
+ep2_org[:, 0] = tau
 ep3[:, 0] = tau
 psi_2[:, 0] = tau
+psi_2_org[:, 0] = tau
 psi_3[:, 0] = tau
 ecc2_dot_ep2[:, 0] = tau
+ecc2_dot_ep2_org[:, 0] = tau
 ecc3_dot_ep3[:, 0] = tau
 
 psi_2_init_list = []
+psi_2_org_init_list = []
 psi_3_init_list = []
 psi_2_final_list = []
+psi_2_org_final_list = []
 psi_3_final_list = []
 
 for ifolder, event_name in enumerate(event_list):
@@ -98,63 +106,97 @@ for ifolder, event_name in enumerate(event_list):
 
     ntau_loc = len(ecc_n_data[:, 0])
 
-    ep_2_ideal = sqrt(ep_n_data[:, 4]**2. + ep_n_data[:, 5]**2.)
-    ep_2_shear = sqrt(ep_n_data[:, 6]**2. + ep_n_data[:, 7]**2.)
-    ep_2_full = sqrt(ep_n_data[:, 8]**2. + ep_n_data[:, 9]**2.)
-    ep_3_ideal = sqrt(ep_n_data[:, 10]**2. + ep_n_data[:, 11]**2.)
-    ep_3_shear = sqrt(ep_n_data[:, 12]**2. + ep_n_data[:, 13]**2.)
-    ep_3_full = sqrt(ep_n_data[:, 14]**2. + ep_n_data[:, 15]**2.)
+    ep_2_org_ideal = sqrt(ep_n_data[:, 1]**2. + ep_n_data[:, 2]**2.)
+    ep_2_org_shear = sqrt(ep_n_data[:, 3]**2. + ep_n_data[:, 4]**2.)
+    ep_2_org_full = sqrt(ep_n_data[:, 5]**2. + ep_n_data[:, 6]**2.)
+    ep_2_ideal = sqrt(ep_n_data[:, 7]**2. + ep_n_data[:, 8]**2.)
+    ep_2_shear = sqrt(ep_n_data[:, 9]**2. + ep_n_data[:, 10]**2.)
+    ep_2_full = sqrt(ep_n_data[:, 11]**2. + ep_n_data[:, 12]**2.)
+    ep_3_ideal = sqrt(ep_n_data[:, 13]**2. + ep_n_data[:, 14]**2.)
+    ep_3_shear = sqrt(ep_n_data[:, 15]**2. + ep_n_data[:, 16]**2.)
+    ep_3_full = sqrt(ep_n_data[:, 17]**2. + ep_n_data[:, 18]**2.)
 
-    psi2_ideal = compute_psi_n(ep_n_data[:, 4], ep_n_data[:, 5],
+    psi2_org_ideal = compute_psi_n(ep_n_data[:, 1], ep_n_data[:, 2],
+                                   ecc_n_data[0, 3], ecc_n_data[0, 4])
+    psi2_org_shear = compute_psi_n(ep_n_data[:, 3], ep_n_data[:, 4],
+                                   ecc_n_data[0, 3], ecc_n_data[0, 4])
+    psi2_org_full = compute_psi_n(ep_n_data[:, 5], ep_n_data[:, 6],
+                                  ecc_n_data[0, 3], ecc_n_data[0, 4])
+    psi2_ideal = compute_psi_n(ep_n_data[:, 7], ep_n_data[:, 8],
                                ecc_n_data[0, 3], ecc_n_data[0, 4])
-    psi2_shear = compute_psi_n(ep_n_data[:, 6], ep_n_data[:, 7],
+    psi2_shear = compute_psi_n(ep_n_data[:, 9], ep_n_data[:, 10],
                                ecc_n_data[0, 3], ecc_n_data[0, 4])
-    psi2_full = compute_psi_n(ep_n_data[:, 8], ep_n_data[:, 9],
+    psi2_full = compute_psi_n(ep_n_data[:, 11], ep_n_data[:, 12],
                               ecc_n_data[0, 3], ecc_n_data[0, 4])
     psi_2_init_list.append([psi2_ideal[0], psi2_shear[0], psi2_full[0]])
     psi_2_final_list.append([psi2_ideal[-1], psi2_shear[-1], psi2_full[-1]])
-    psi3_ideal = compute_psi_n(ep_n_data[:, 10], ep_n_data[:, 11],
+    psi_2_org_init_list.append([psi2_org_ideal[0], psi2_org_shear[0],
+                                psi2_org_full[0]])
+    psi_2_org_final_list.append([psi2_org_ideal[-1], psi2_org_shear[-1],
+                                 psi2_org_full[-1]])
+    psi3_ideal = compute_psi_n(ep_n_data[:, 13], ep_n_data[:, 14],
                                ecc_n_data[0, 5], ecc_n_data[0, 6])
-    psi3_shear = compute_psi_n(ep_n_data[:, 12], ep_n_data[:, 13],
+    psi3_shear = compute_psi_n(ep_n_data[:, 15], ep_n_data[:, 16],
                                ecc_n_data[0, 5], ecc_n_data[0, 6])
-    psi3_full = compute_psi_n(ep_n_data[:, 14], ep_n_data[:, 15],
+    psi3_full = compute_psi_n(ep_n_data[:, 17], ep_n_data[:, 18],
                               ecc_n_data[0, 5], ecc_n_data[0, 6])
     psi_3_init_list.append([psi3_ideal[0], psi3_shear[0], psi3_full[0]])
     psi_3_final_list.append([psi3_ideal[-1], psi3_shear[-1], psi3_full[-1]])
 
+    ecc2_dot_ep2_org_ideal = (
+        ecc_n_data[:, 3]*ep_n_data[:, 1] + ecc_n_data[:, 4]*ep_n_data[:, 2])
+    ecc2_dot_ep2_org_shear = (
+        ecc_n_data[:, 3]*ep_n_data[:, 3] + ecc_n_data[:, 4]*ep_n_data[:, 4])
+    ecc2_dot_ep2_org_full = (
+        ecc_n_data[:, 3]*ep_n_data[:, 5] + ecc_n_data[:, 4]*ep_n_data[:, 6])
     ecc2_dot_ep2_ideal = (
-        ecc_n_data[:, 3]*ep_n_data[:, 4] + ecc_n_data[:, 4]*ep_n_data[:, 5])
+        ecc_n_data[:, 3]*ep_n_data[:, 7] + ecc_n_data[:, 4]*ep_n_data[:, 8])
     ecc2_dot_ep2_shear = (
-        ecc_n_data[:, 3]*ep_n_data[:, 6] + ecc_n_data[:, 4]*ep_n_data[:, 7])
+        ecc_n_data[:, 3]*ep_n_data[:, 9] + ecc_n_data[:, 4]*ep_n_data[:, 10])
     ecc2_dot_ep2_full = (
-        ecc_n_data[:, 3]*ep_n_data[:, 8] + ecc_n_data[:, 4]*ep_n_data[:, 9])
+        ecc_n_data[:, 3]*ep_n_data[:, 11] + ecc_n_data[:, 4]*ep_n_data[:, 12])
     ecc3_dot_ep3_ideal = (
-        ecc_n_data[:, 5]*ep_n_data[:, 10] + ecc_n_data[:, 6]*ep_n_data[:, 11])
+        ecc_n_data[:, 5]*ep_n_data[:, 13] + ecc_n_data[:, 6]*ep_n_data[:, 14])
     ecc3_dot_ep3_shear = (
-        ecc_n_data[:, 5]*ep_n_data[:, 12] + ecc_n_data[:, 6]*ep_n_data[:, 13])
+        ecc_n_data[:, 5]*ep_n_data[:, 15] + ecc_n_data[:, 6]*ep_n_data[:, 16])
     ecc3_dot_ep3_full = (
-        ecc_n_data[:, 5]*ep_n_data[:, 14] + ecc_n_data[:, 6]*ep_n_data[:, 15])
+        ecc_n_data[:, 5]*ep_n_data[:, 17] + ecc_n_data[:, 6]*ep_n_data[:, 18])
 
     pack_arrays(ep2, ep_2_ideal, ep_2_shear, ep_2_full, ntau, ntau_loc)
+    pack_arrays(ep2_org, ep_2_org_ideal, ep_2_org_shear, ep_2_org_full,
+                ntau, ntau_loc)
     pack_arrays(ep3, ep_3_ideal, ep_3_shear, ep_3_full, ntau, ntau_loc)
     pack_arrays(psi_2, psi2_ideal, psi2_shear, psi2_full, ntau, ntau_loc)
+    pack_arrays(psi_2_org, psi2_org_ideal, psi2_org_shear, psi2_org_full,
+                ntau, ntau_loc)
     pack_arrays(psi_3, psi3_ideal, psi3_shear, psi3_full, ntau, ntau_loc)
     pack_arrays(ecc2_dot_ep2, ecc2_dot_ep2_ideal, ecc2_dot_ep2_shear,
                 ecc2_dot_ep2_full, ntau, ntau_loc)
+    pack_arrays(ecc2_dot_ep2_org, ecc2_dot_ep2_org_ideal,
+                ecc2_dot_ep2_org_shear, ecc2_dot_ep2_org_full, ntau, ntau_loc)
     pack_arrays(ecc3_dot_ep3, ecc3_dot_ep3_ideal, ecc3_dot_ep3_shear,
                 ecc3_dot_ep3_full, ntau, ntau_loc)
 
 compute_mean_and_stat_error(ep2, nev)
+compute_mean_and_stat_error(ep2_org, nev)
 compute_mean_and_stat_error(ep3, nev)
 compute_mean_and_stat_error(psi_2, nev)
+compute_mean_and_stat_error(psi_2_org, nev)
 compute_mean_and_stat_error(psi_3, nev)
 compute_mean_and_stat_error(ecc2_dot_ep2, nev)
+compute_mean_and_stat_error(ecc2_dot_ep2_org, nev)
 compute_mean_and_stat_error(ecc3_dot_ep3, nev)
 
 filename = 'momentum_aniso_ep2_evo.dat'
 header_text = ("# tau  ep2_ideal  ep2_ideal_err  ep2_shear  ep2_shear_err  "
                 + "ep2_full  ep2_full_err")
 savetxt(filename, ep2, fmt="%.8e", delimiter="  ", header=header_text)
+shutil.move(filename, avg_folder)
+
+filename = 'momentum_aniso_ep2_org_evo.dat'
+header_text = ("# tau  ep2_ideal  ep2_ideal_err  ep2_shear  ep2_shear_err  "
+                + "ep2_full  ep2_full_err")
+savetxt(filename, ep2_org, fmt="%.8e", delimiter="  ", header=header_text)
 shutil.move(filename, avg_folder)
 
 filename = 'momentum_aniso_ep3_evo.dat'
@@ -169,6 +211,12 @@ header_text = ("# tau  psi2_ideal  psi2_ideal_err  "
 savetxt(filename, psi_2, fmt="%.8e", delimiter="  ", header=header_text)
 shutil.move(filename, avg_folder)
 
+filename = 'momentum_aniso_psi2_org_evo.dat'
+header_text = ("# tau  psi2_ideal  psi2_ideal_err  "
+                + "psi2_shear  psi2_shear_err  psi2_full  psi2_full_err")
+savetxt(filename, psi_2_org, fmt="%.8e", delimiter="  ", header=header_text)
+shutil.move(filename, avg_folder)
+
 filename = 'momentum_aniso_psi3_evo.dat'
 header_text = ("# tau  psi3_ideal  psi3_ideal_err  "
                 + "psi3_shear  psi3_shear_err  psi3_full  psi3_full_err")
@@ -180,6 +228,12 @@ header_text = ("# tau  ideal  ideal_err  shear  shear_err  full  full_err")
 savetxt(filename, ecc2_dot_ep2, fmt="%.8e", delimiter="  ", header=header_text)
 shutil.move(filename, avg_folder)
 
+filename = 'ecc2_dot_ep2_org_evo.dat'
+header_text = ("# tau  ideal  ideal_err  shear  shear_err  full  full_err")
+savetxt(filename, ecc2_dot_ep2_org, fmt="%.8e", delimiter="  ",
+        header=header_text)
+shutil.move(filename, avg_folder)
+
 filename = 'ecc3_dot_ep3_evo.dat'
 header_text = ("# tau  ideal  ideal_err  shear  shear_err  full  full_err")
 savetxt(filename, ecc3_dot_ep3, fmt="%.8e", delimiter="  ", header=header_text)
@@ -188,6 +242,8 @@ shutil.move(filename, avg_folder)
 
 psi_2_init_list = array(psi_2_init_list)
 psi_2_final_list = array(psi_2_final_list)
+psi_2_org_init_list = array(psi_2_org_init_list)
+psi_2_org_final_list = array(psi_2_org_final_list)
 psi_3_init_list = array(psi_3_init_list)
 psi_3_final_list = array(psi_3_final_list)
 
@@ -208,6 +264,21 @@ for ifile, filename in enumerate(filename_list):
     plt.xlabel(r"$2(\Psi_{2p} - \Psi_2)$", fontsize=18)
     plt.ylabel(r"$P(2(\Psi_{2p} - \Psi_2))$", fontsize=18)
     plt.savefig("{0}/{0}_{1}_psi_2_dist.pdf".format(
+        results_folder_name, filename), fmt="pdf")
+    
+    hist1, bins1 = histogram(psi_2_org_init_list[:, ifile], bins=psi_bins)
+    hist2, bins2 = histogram(psi_2_org_final_list[:, ifile], bins=psi_bins)
+    width = 0.5*(psi_bins[1] - psi_bins[0])
+    center1 = (psi_bins[:-1] + psi_bins[1:])/2 - 0.5*width
+    center2 = (psi_bins[:-1] + psi_bins[1:])/2 + 0.5*width
+    fig = plt.figure()
+    ax = plt.axes([0.12, 0.12, 0.83, 0.83])
+    plt.bar(center1, hist1/nev, align='center', width=width, label='initial')
+    plt.bar(center2, hist2/nev, align='center', width=width, label='final')
+    plt.legend(loc=0, fontsize=18)
+    plt.xlabel(r"$2(\Psi_{2p} - \Psi_2)$", fontsize=18)
+    plt.ylabel(r"$P(2(\Psi_{2p} - \Psi_2))$", fontsize=18)
+    plt.savefig("{0}/{0}_{1}_psi_2_org_dist.pdf".format(
         results_folder_name, filename), fmt="pdf")
 
     hist1, bins1 = histogram(psi_3_init_list[:, ifile], bins=psi_bins)
