@@ -40,13 +40,14 @@ class particleSamples {
 
     //! perform resonance feed down for all unstable particles
     int resonance_feed_down_flag;
+    int resonance_weak_feed_down_flag;
     //! perform resonance decays for only selected particle species
     int select_resonances_flag;
     //! store the monval of the selected resonance states
     std::vector<int> select_resonances_list;
 
     //! include Sigma0 feed down of Lambda
-    int resonance_weak_feed_down_flag;
+    int resonance_weak_feed_down_Sigma_to_Lambda_flag;
 
     //! reconst phi meson from (K^+, K^-) pairs
     int reconst_flag;
@@ -83,15 +84,17 @@ class particleSamples {
     //! (used when run_mode == 1 for HBT calculation)
     std::vector< std::vector<particle_info>* >* particle_list_mixed_event;
 
-    //! particle list to store the resonance particles (Sigma0)
-    //! (used when resonance_weak_feed_down_flag == 1)
     std::vector< std::vector<particle_info>* >* resonance_list;
+
+    //! particle list to store the resonance particles (Sigma0)
+    //! (used when resonance_weak_feed_down_Sigma_to_Lambda_flag == 1)
+    std::vector< std::vector<particle_info>* >* resonance_list_Sigma0;
 
     //! particle list to store the (K^+ and K^-) pairs
     //! (used when reconst_flag == 1)
     std::vector< std::vector<particle_info>* >* reconst_list_1;
     std::vector< std::vector<particle_info>* >* reconst_list_2;
-    
+
     //! particle list to store the positive hadrons
     //! (used when flag_charge_dependence == 1)
     std::vector< std::vector<particle_info>* >* positive_charge_hadron_list;
@@ -130,8 +133,8 @@ class particleSamples {
     void initialize_selected_resonance_list();
     void perform_resonance_feed_down(
             std::vector< std::vector<particle_info>* >* input_particle_list);
-    void perform_weak_resonance_feed_down();
-    void perform_particle_reconstruction(); 
+    void perform_weak_resonance_feed_down_Sigma_to_Lambda();
+    void perform_particle_reconstruction();
 
     int read_in_particle_samples();
     int read_in_particle_samples_mixed_event();

@@ -37,9 +37,11 @@ class particle_decay {
  private:
     std::vector<particle_decay_info*> resonance_table;
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
+    int weak_flag_;
 
  public:
-    particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen);
+    particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen,
+                   int weak_flag);
     ~particle_decay();
 
     //! This function reads in resonance decay table

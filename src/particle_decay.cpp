@@ -10,8 +10,10 @@
 using std::cout;
 using std::endl;
 
-particle_decay::particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen) {
+particle_decay::particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen,
+                               int weak_flag) {
     ran_gen_ptr = ran_gen;
+    weak_flag_ = weak_flag;
 
     resonance_table.clear();
     read_resonances_list();
@@ -31,9 +33,15 @@ particle_decay::~particle_decay() {
 int particle_decay::read_resonances_list() {
     double eps = 1e-15;
     cout << " -- Read in particle resonance decay table..." << endl;
-    std::ifstream resofile("EOS/pdg.dat");
+    std::string pdgfilename;
+    if (weak_flag_ == 0) {
+        pdgfilename = "EOS/pdg.dat";
+    } else {
+        pdgfilename = "EOS/pdg_weak.dat";
+    }
+    std::ifstream resofile(pdgfilename.c_str());
     if (!resofile) {
-        cout << "can not find the file EOS/pdg.dat!" << endl;
+        cout << "can not find the file " << pdgfilename << "!" << endl;
         exit(1);
     }
     int dummy_int;
@@ -265,6 +273,8 @@ void particle_decay::perform_decays(
         daughter_list->push_back(*mother);
         return;
     }
+    //std::cout << "Decaying " << mother_decay_info->name
+    //          << "(" << mother_decay_info->monval << ") ..." << std::endl;
     int N_decay_channel = mother_decay_info->decays;
     double random_local = ran_gen_ptr.lock()->rand_uniform();
     double cumulated_branching_ratio = 0.0;
