@@ -31,8 +31,10 @@ yellow = "\033[93m"
 red = "\033[91m"
 normal = "\033[0m"
 
-centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
-                       60., 70., 80., 90., 100.]
+Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
+                           60., 70., 80., 90., 100.]
+Special_centrality_cut_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS 200
+centrality_cut_list = Reg_centrality_cut_list + Special_centrality_cut_list
 Centrality_flag = 0
 
 try:
@@ -1183,6 +1185,7 @@ dN_dy_mb = -sort(array(dN_dy_mb))
 print("total number of events: {}".format(len(dN_dy_mb)))
 
 for icen in range(len(centrality_cut_list) - 1):
+    if centrality_cut_list[icen+1] < centrality_cut_list[icen]: continue
     avg_folder = path.join(
         avg_folder_header, "{0:02.0f}-{1:02.0f}".format(
             centrality_cut_list[icen], centrality_cut_list[icen+1])
