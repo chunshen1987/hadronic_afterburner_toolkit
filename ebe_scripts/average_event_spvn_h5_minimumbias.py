@@ -8,7 +8,7 @@
 
      Format for particle_XXX_vndata.dat file:
      n_order  real_part  real_part_err  imag_part  imag_part_err
-     
+
      Format for particle_XXX_vndata_diff.dat file:
      pT(GeV)  pT_err(GeV)  dN/(2pi dy pT dpT)(GeV^-2)  dN/(2pi dy pT dpT)_err(GeV^-2)
      vn_real  vn_real_err  vn_imag  vn_imag_err
@@ -105,9 +105,7 @@ def calcualte_inte_vn(pT_low, pT_high, data):
 
 
 def calculate_chi_422(vn_array):
-    """
-        chi_422 = Re(v4*conj(v2)**2.)/|v2|^4
-    """
+    """chi_422 = Re(v4*conj(v2)**2.)/|v2|^4"""
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
@@ -137,6 +135,7 @@ def calculate_chi_422(vn_array):
 
 
 def calculate_chi_523(vn_array):
+    """chi_523 = Re(v5*conj(v2*v3))/|v2|^2/|v3|^2"""
     dN = real(vn_array[:, 0])
     Q1 = dN*vn_array[:, 1]
     Q2 = dN*vn_array[:, 2]
@@ -170,6 +169,7 @@ def calculate_chi_523(vn_array):
 
 
 def calculate_chi_6222(vn_array):
+    """chi_6222 = Re(v6*conj(v2)**3.)/|v2|^6"""
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
@@ -208,6 +208,7 @@ def calculate_chi_6222(vn_array):
 
 
 def calculate_chi_633(vn_array):
+    """chi_633 = Re(v6*conj(v3)**2.)/|v3|^4"""
     dN = real(vn_array[:, 0])
     Q3 = dN*vn_array[:, 3]
     Q6 = dN*vn_array[:, 6]
@@ -237,9 +238,7 @@ def calculate_chi_633(vn_array):
 
 
 def calculate_v4_Psi2(chi_422, chi_422_err, vn_array):
-    """
-        v4(Psi2) = chi_422*sqrt(<abs(V2)**4>)
-    """
+    """v4(Psi2) = chi_422*sqrt(<abs(V2)**4>)"""
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
@@ -260,9 +259,7 @@ def calculate_v4_Psi2(chi_422, chi_422_err, vn_array):
 
 
 def calculate_v5_Psi23(chi_523, chi_523_err, vn_array):
-    """
-        v5(Psi23) = chi_523*sqrt(<abs(V2)**2*abs(V3)**2>)
-    """
+    """v5(Psi23) = chi_523*sqrt(<abs(V2)**2*abs(V3)**2>)"""
     dN = real(vn_array[:, 0])
     Q1 = dN*vn_array[:, 1]
     Q2 = dN*vn_array[:, 2]
@@ -286,9 +283,7 @@ def calculate_v5_Psi23(chi_523, chi_523_err, vn_array):
 
 
 def calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array):
-    """
-        v6(Psi2) = chi_6222*sqrt(<abs(V2)**6>)
-    """
+    """v6(Psi2) = chi_6222*sqrt(<abs(V2)**6>)"""
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
@@ -316,9 +311,7 @@ def calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array):
 
 
 def calculate_v6_Psi3(chi_633, chi_633_err, vn_array):
-    """
-        v6(Psi3) = chi_633*sqrt(<abs(V3)**4>)
-    """
+    """v6(Psi3) = chi_633*sqrt(<abs(V3)**4>)"""
     dN = real(vn_array[:, 0])
     Q3 = dN*vn_array[:, 3]
     Q6 = dN*vn_array[:, 6]
@@ -339,9 +332,7 @@ def calculate_v6_Psi3(chi_633, chi_633_err, vn_array):
 
 
 def calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array):
-    """
-        rho_422 = v4(Psi2)/v4(Psi4)
-    """
+    """rho_422 = v4(Psi2)/v4(Psi4)"""
     dN = real(vn_array[:, 0])
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
@@ -359,9 +350,7 @@ def calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array):
 
 
 def calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array):
-    """
-        rho_523 = v5(Psi23)/v5(Psi5)
-    """
+    """rho_523 = v5(Psi23)/v5(Psi5)"""
     dN = real(vn_array[:, 0])
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
@@ -379,9 +368,7 @@ def calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array):
 
 
 def calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array):
-    """
-        rho_6222 = v6(Psi2)/v6(Psi6)
-    """
+    """rho_6222 = v6(Psi2)/v6(Psi6)"""
     dN = real(vn_array[:, 0])
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
@@ -399,9 +386,7 @@ def calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array):
 
 
 def calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array):
-    """
-        rho_633 = v6(Psi3)/v6(Psi6)
-    """
+    """rho_633 = v6(Psi3)/v6(Psi6)"""
     dN = real(vn_array[:, 0])
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
@@ -419,9 +404,7 @@ def calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array):
 
 
 def calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array):
-    """
-        v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)
-    """
+    """v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)"""
     dN = real(vn_array[:, 0])
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
@@ -439,9 +422,7 @@ def calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array):
 
 
 def calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array):
-    """
-        v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)
-    """
+    """v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)"""
     dN = real(vn_array[:, 0])
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
@@ -541,6 +522,7 @@ def calcualte_vn_2(vn_data_array):
 
 
 def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
+    """This function computes pT differential vn for a single event"""
     npT = 50
     pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
@@ -582,6 +564,7 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
 
 
 def get_vn_diff_2PC_from_single_event(data):
+    """This function computes the 2PC vn for a single event"""
     dN_event = data[:, -1]
     temp_vn_real_array = []
     temp_vn_imag_array = []
@@ -630,9 +613,7 @@ def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag,
 
 
 def calculate_vn_diff_2PC(vn_diff_real, vn_diff_imag, vn_diff_denorm):
-    """
-        this funciton calculates the rms vn[2](pT)
-    """
+    """this funciton calculates the rms vn[2](pT)"""
     vn_diff_real = array(vn_diff_real)
     vn_diff_imag = array(vn_diff_imag)
     vn_diff_denorm = array(vn_diff_denorm)
@@ -648,6 +629,7 @@ def calculate_vn_diff_2PC(vn_diff_real, vn_diff_imag, vn_diff_denorm):
 
 
 def calculate_vn_distribution(vn_array):
+    """This function computes the vn distribution"""
     nbin = 20
     vn_array = array(vn_array)
     vn_dim = len(vn_array[0, :])
@@ -771,9 +753,11 @@ def calcualte_event_plane_correlations(vn_array):
 
 
 def calculate_vn_arrays_for_rn_ratios(data):
-    # this function compute the complex pT-integrated Vn vector
-    # in different pT ranges for a single event
-    # it returns a 2d matrix vn_arrays[pT_idx, n_order_idx]
+    """
+        this function compute the complex pT-integrated Vn vector
+        in different pT ranges for a single event
+        it returns a 2d matrix vn_arrays[pT_idx, n_order_idx]
+    """
     pT_boundaries = [0.3, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0]
     npT = 50
     vn_arrays = []
@@ -788,11 +772,13 @@ def calculate_vn_arrays_for_rn_ratios(data):
 
 
 def calculate_rn_ratios(vn_event_arrays):
-    # this function compute rn ratio in different pT bins
-    # according to the CMS measurements
-    # it reads in a 3d data cube
-    #       vn_event_arrays[event_idx, pT_idx, n_order_idx]
-    # it returns rn_arrays[iorder, pT_idx, 3]
+    """
+        this function compute rn ratio in different pT bins
+        according to the CMS measurements
+        it reads in a 3d data cube
+              vn_event_arrays[event_idx, pT_idx, n_order_idx]
+        it returns rn_arrays[iorder, pT_idx, 3]
+    """
     vn_event_arrays = array(vn_event_arrays)
     rn_arrays = []
     for iorder in range(3, 6):
@@ -1289,9 +1275,11 @@ for icen in range(len(centrality_cut_list) - 1):
             dN_array.append(dN_event)
             if particle_id == "9999":
                 temp_data1 = event_group.get(file_name_ATLAS)
+                temp_data1 = nan_to_num(temp_data1)
                 pT_array_ATLAS.append(temp_data1[:, 0])
                 dN_array_ATLAS.append(temp_data1[:, 2])
                 temp_data1 = event_group.get(file_name_ALICE)
+                temp_data1 = nan_to_num(temp_data1)
                 pT_array_ALICE.append(temp_data1[:, 0])
                 dN_array_ALICE.append(temp_data1[:, 2])
 
@@ -1369,7 +1357,7 @@ for icen in range(len(centrality_cut_list) - 1):
             # pT-differential vn using 2PC method
             # vn[2](pT)
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
-                                    get_vn_diff_2PC_from_single_event(temp_data))
+                                get_vn_diff_2PC_from_single_event(temp_data))
             vn_diff_2PC_real.append(temp_vn_diff_real)
             vn_diff_2PC_imag.append(temp_vn_diff_imag)
             vn_diff_2PC_denorm.append(temp_dn_diff)
@@ -1387,7 +1375,8 @@ for icen in range(len(centrality_cut_list) - 1):
                         sum(pT_array[:, ipT]**2.*dN_array[:, ipT])/dN_temp)
             else:
                 pT_spectra[ipT] = mean(pT_array[:, ipT])
-        dN_spectra = mean(pT_array*dN_array, 0)/pT_spectra   # dN/(2pi dy pT dpT)
+        # dN/(2pi dy pT dpT)
+        dN_spectra = mean(pT_array*dN_array, 0)/pT_spectra
         dN_spectra_err = std(pT_array*dN_array, 0)/pT_spectra/sqrt(nev)
 
         if particle_id == "9999":
@@ -1401,16 +1390,24 @@ for icen in range(len(centrality_cut_list) - 1):
                 dN_temp = sum(dN_array_ATLAS[:, ipT]*pT_array_ATLAS[:, ipT])
                 if (dN_temp > 0):
                     pT_spectra_ATLAS[ipT] = (
-                        sum(pT_array_ATLAS[:, ipT]**2.*dN_array_ATLAS[:, ipT])/dN_temp)
+                        sum(pT_array_ATLAS[:, ipT]**2.*dN_array_ATLAS[:, ipT])
+                        /dN_temp)
                 else:
                     pT_spectra_ATLAS[ipT] = mean(pT_array_ATLAS[:, ipT])
-            dN_spectra_ATLAS = mean(pT_array_ATLAS*dN_array_ATLAS, 0)/pT_spectra_ATLAS   # dN/(2pi pT dpT)
-            dN_spectra_ATLAS_err = std(pT_array_ATLAS*dN_array_ATLAS, 0)/pT_spectra_ATLAS/sqrt(nev)
-            pT_interp1 = linspace(0.4, 3.0, 30); dpT1 = pT_interp1[1] - pT_interp1[0]
-            dN_interp1 = exp(interp(pT_interp1, pT_spectra_ATLAS, log(dN_spectra_ATLAS+1e-30)))
-            dN_interp1_err = interp(pT_interp1, pT_spectra_ATLAS, dN_spectra_ATLAS_err)
+            # dN/(2pi pT dpT) (ATLAS)
+            dN_spectra_ATLAS = (mean(pT_array_ATLAS*dN_array_ATLAS, 0)
+                                /(pT_spectra_ATLAS + 1e-30))
+            dN_spectra_ATLAS_err = (std(pT_array_ATLAS*dN_array_ATLAS, 0)
+                                    /(pT_spectra_ATLAS + 1e-30)/sqrt(nev))
+            pT_interp1 = linspace(0.4, 3.0, 30)
+            dpT1 = pT_interp1[1] - pT_interp1[0]
+            dN_interp1 = exp(interp(pT_interp1, pT_spectra_ATLAS,
+                                    log(dN_spectra_ATLAS + 1e-30)))
+            dN_interp1_err = interp(pT_interp1, pT_spectra_ATLAS,
+                                    dN_spectra_ATLAS_err)
             dNch_ATLAS = sum(pT_interp1*dN_interp1)*dpT1*2*pi*5.
-            print("dNch(pT > 0.4, |eta| < 2.5) = {0:.4f} ".format(dNch_ATLAS))
+            print("dNch(pT > 0.4 GeV, |eta| < 2.5) = {0:.4f}".format(
+                                                                dNch_ATLAS))
 
             # calculate dNch (pT > 0.2 |eta| < 0.8) for ALICE
             dN_array_ALICE = array(dN_array_ALICE)
@@ -1422,21 +1419,29 @@ for icen in range(len(centrality_cut_list) - 1):
                 dN_temp = sum(dN_array_ALICE[:, ipT]*pT_array_ALICE[:, ipT])
                 if (dN_temp > 0):
                     pT_spectra_ALICE[ipT] = (
-                        sum(pT_array_ALICE[:, ipT]**2.*dN_array_ALICE[:, ipT])/dN_temp)
+                        sum(pT_array_ALICE[:, ipT]**2.*dN_array_ALICE[:, ipT])
+                        /dN_temp)
                 else:
                     pT_spectra_ALICE[ipT] = mean(pT_array_ALICE[:, ipT])
-            dN_spectra_ALICE = mean(pT_array_ALICE*dN_array_ALICE, 0)/pT_spectra_ALICE   # dN/(2pi pT dpT)
-            dN_spectra_ALICE_err = std(pT_array_ALICE*dN_array_ALICE, 0)/pT_spectra_ALICE/sqrt(nev)
-            pT_interp1 = linspace(0.2, 3.0, 30); dpT1 = pT_interp1[1] - pT_interp1[0]
-            dN_interp1 = exp(interp(pT_interp1, pT_spectra_ALICE, log(dN_spectra_ALICE+1e-30)))
-            dN_interp1_err = interp(pT_interp1, pT_spectra_ALICE, dN_spectra_ALICE_err)
+            # dN/(2pi pT dpT)
+            dN_spectra_ALICE = (mean(pT_array_ALICE*dN_array_ALICE, 0)
+                                /(pT_spectra_ALICE + 1e-30))
+            dN_spectra_ALICE_err = (std(pT_array_ALICE*dN_array_ALICE, 0)
+                                    /(pT_spectra_ALICE + 1e-30)/sqrt(nev))
+            pT_interp1 = linspace(0.2, 3.0, 30)
+            dpT1 = pT_interp1[1] - pT_interp1[0]
+            dN_interp1 = exp(interp(pT_interp1, pT_spectra_ALICE,
+                                    log(dN_spectra_ALICE + 1e-30)))
+            dN_interp1_err = interp(pT_interp1, pT_spectra_ALICE,
+                                    dN_spectra_ALICE_err)
             dNch_ALICE = sum(pT_interp1*dN_interp1)*dpT1*2*pi*1.6
-            print("dNch(pT > 0.2 GeV, |eta| < 0.8) = {0:.4f} ".format(dNch_ALICE))
+            print("dNch(pT > 0.2 GeV, |eta| < 0.8) = {0:.4f}".format(
+                                                                dNch_ALICE))
 
 
         # calculate mean pT
         pT_interp = linspace(0.05, 2.95, 30)
-        dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra+1e-30)))
+        dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra + 1e-30)))
         dN_interp_err = interp(pT_interp, pT_spectra, dN_spectra_err)
         mean_pT = sum(pT_interp**2.*dN_interp)/sum(pT_interp*dN_interp)
         mean_pT_upper = (sum(pT_interp**2.*(dN_interp+dN_interp_err))
@@ -1446,7 +1451,7 @@ for icen in range(len(centrality_cut_list) - 1):
         mean_pT_err = max(abs(mean_pT_upper - mean_pT), 
                           abs(mean_pT - mean_pT_lower))
         pT_interp = linspace(0.15, 2.95, 30)
-        dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra+1e-30)))
+        dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra + 1e-30)))
         dN_interp_err = interp(pT_interp, pT_spectra, dN_spectra_err)
         mean_pT_1 = sum(pT_interp**2.*dN_interp)/sum(pT_interp*dN_interp)
         mean_pT_1_upper = (sum(pT_interp**2.*(dN_interp+dN_interp_err))
@@ -1468,11 +1473,13 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_cms_array2 = array(vn_cms_array)
             vn_atlas_array2 = array(vn_atlas_array)
             # calculate non-linear response coefficents with ALICE pT cut
-            nonlinear_response_alice = calculate_nonlinear_reponse(vn_alice_array2)
+            nonlinear_response_alice = calculate_nonlinear_reponse(
+                                                            vn_alice_array2)
             # calculate non-linear response coefficents with CMS pT cut
             nonlinear_response_cms = calculate_nonlinear_reponse(vn_cms_array2)
             # calculate non-linear response coefficents with ATLAS pT cut
-            nonlinear_response_atlas = calculate_nonlinear_reponse(vn_atlas_array2)
+            nonlinear_response_atlas = calculate_nonlinear_reponse(
+                                                            vn_atlas_array2)
 
             # calculate symmetric cumulant coefficents with ALICE pT cut
             SC_alice = calculate_symmetric_cumulant(vn_alice_array)
