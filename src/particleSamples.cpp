@@ -560,9 +560,10 @@ int particleSamples::read_in_particle_samples_OSCAR() {
 
     std::string temp_string;
     int event_id, n_particle, dummy;
-    int ievent;
+    int ievent = 0;
     int temp_monval;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile, temp_string);
         std::stringstream temp1(temp_string);
         temp1 >> event_id >> n_particle;
@@ -587,6 +588,8 @@ int particleSamples::read_in_particle_samples_OSCAR() {
                   >> temp_particle_info.t;
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -598,9 +601,10 @@ int particleSamples::read_in_particle_samples_JAM() {
     std::string temp_string;
     int event_id, n_particle;
     char cdummy;
-    int ievent;
+    int ievent = 0;
     int temp_monval;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile, temp_string);
         std::stringstream temp1(temp_string);
         temp1 >> cdummy >> event_id >> n_particle;
@@ -629,6 +633,8 @@ int particleSamples::read_in_particle_samples_JAM() {
                 + temp_particle_info.pz*temp_particle_info.pz);
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -639,9 +645,10 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
 
     std::string temp_string;
     int event_id, n_particle, dummy;
-    int ievent;
+    int ievent = 0;
     int temp_monval;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile_mixed_event, temp_string);
         std::stringstream temp1(temp_string);
         temp1 >> event_id >> n_particle;
@@ -656,18 +663,20 @@ int particleSamples::read_in_particle_samples_OSCAR_mixed_event() {
             temp2 >> dummy >> temp_monval;
             particle_info temp_particle_info;
             temp_particle_info.monval = temp_monval;
-            temp2 >> temp_particle_info.px 
+            temp2 >> temp_particle_info.px
                   >> temp_particle_info.py
-                  >> temp_particle_info.pz 
+                  >> temp_particle_info.pz
                   >> temp_particle_info.E
-                  >> temp_particle_info.mass 
-                  >> temp_particle_info.x 
+                  >> temp_particle_info.mass
+                  >> temp_particle_info.x
                   >> temp_particle_info.y
-                  >> temp_particle_info.z 
+                  >> temp_particle_info.z
                   >> temp_particle_info.t;
             (*full_particle_list_mixed_event)[ievent]->push_back(
                                                     temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -679,9 +688,10 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
     std::string temp_string;
     int event_id, n_particle;
     char cdummy;
-    int ievent;
+    int ievent = 0;
     int temp_monval;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile_mixed_event, temp_string);
         std::stringstream temp1(temp_string);
         temp1 >> cdummy >> event_id >> n_particle;
@@ -712,6 +722,8 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
             (*full_particle_list_mixed_event)[ievent]->push_back(
                                                     temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -724,10 +736,11 @@ int particleSamples::read_in_particle_samples_UrQMD() {
     int n_particle;
     double dummy;
     int parent_proc_type;
-    int ievent;
+    int ievent = 0;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile, temp_string);
 
         if (inputfile.eof()) break;
@@ -767,6 +780,8 @@ int particleSamples::read_in_particle_samples_UrQMD() {
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -779,9 +794,10 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
     int n_particle;
     double dummy;
     int parent_proc_type;
-    int ievent;
+    int ievent = 0;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         temp_string = gz_readline(inputfile_gz);
 
         if (gzeof(inputfile_gz)) break;
@@ -814,6 +830,8 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -826,7 +844,9 @@ int particleSamples::read_in_particle_samples_gzipped() {
     std::string temp_string;
     int n_particle;
     int temp_monval;
-    for (int ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    int ievent = 0;
+    while (num_particles < event_buffer_size) {
         temp_string = gz_readline(inputfile_gz);
 
         if (gzeof(inputfile_gz)) break;
@@ -837,9 +857,6 @@ int particleSamples::read_in_particle_samples_gzipped() {
         // get number of particles within the event
         std::stringstream temp1(temp_string);
         temp1 >> n_particle;
-
-        // clean out the previous record
-        (*full_particle_list)[ievent]->clear();
 
         for (int ipart = 0; ipart < n_particle; ipart++) {
             temp_string = gz_readline(inputfile_gz);
@@ -859,6 +876,8 @@ int particleSamples::read_in_particle_samples_gzipped() {
 
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -1013,10 +1032,11 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
     int n_particle;
     double dummy;
     int parent_proc_type;
-    int ievent;
+    int ievent = 0;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile, temp_string);
         if (inputfile.eof()) break;
         // create one event
@@ -1052,6 +1072,8 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -1065,10 +1087,11 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
     int n_particle;
     double dummy;
     int parent_proc_type;
-    int ievent;
+    int ievent = 0;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile_mixed_event, temp_string);
 
         if (inputfile_mixed_event.eof()) break;
@@ -1108,6 +1131,8 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
             (*full_particle_list_mixed_event)[ievent]->push_back(
                                                     temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -1121,7 +1146,9 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
     double dummy;
     int parent_proc_type;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
-    for (int ievent = 0; ievent < event_buffer_size; ievent++) {
+    int ievent = 0;
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         temp_string = gz_readline(inputfile_mixed_event_gz);
 
         if (gzeof(inputfile_mixed_event_gz)) break;
@@ -1156,6 +1183,8 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
             (*full_particle_list_mixed_event)[ievent]->push_back(
                                                     temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -1169,7 +1198,9 @@ int particleSamples::read_in_particle_samples_mixed_event_gzipped() {
     string temp_string;
     int n_particle;
     int temp_monval;
-    for (int ievent = 0; ievent < event_buffer_size; ievent++) {
+    int ievent = 0;
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         temp_string = gz_readline(inputfile_mixed_event_gz);
         if (gzeof(inputfile_mixed_event_gz)) break;
         full_particle_list_mixed_event->push_back(
@@ -1177,9 +1208,6 @@ int particleSamples::read_in_particle_samples_mixed_event_gzipped() {
         // get number of particles within the event
         stringstream temp1(temp_string);
         temp1 >> n_particle;
-        // clean out the previous record
-        int idx = ievent;
-        (*full_particle_list_mixed_event)[idx]->clear(); 
 
         for (int ipart = 0; ipart < n_particle; ipart++) {
             temp_string = gz_readline(inputfile_mixed_event_gz);
@@ -1198,9 +1226,11 @@ int particleSamples::read_in_particle_samples_mixed_event_gzipped() {
                   >> temp_particle_info.py
                   >> temp_particle_info.pz;
 
-            (*full_particle_list_mixed_event)[idx]->push_back(
+            (*full_particle_list_mixed_event)[ievent]->push_back(
                                                    temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -1215,10 +1245,11 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
     int n_particle;
     double dummy;
     int parent_proc_type;
-    int ievent;
+    int ievent = 0;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile_mixed_event, temp_string);
 
         if (inputfile_mixed_event.eof()) break;
@@ -1258,6 +1289,8 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
             (*full_particle_list_mixed_event)[ievent]->push_back(
                                                     temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -1270,10 +1303,11 @@ int particleSamples::read_in_particle_samples_Sangwook() {
     int n_particle;
     double dummy;
     int parent_proc_type;
-    int ievent;
+    int ievent = 0;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile, temp_string);
 
         if (inputfile.eof()) break;
@@ -1307,6 +1341,8 @@ int particleSamples::read_in_particle_samples_Sangwook() {
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }
@@ -1319,10 +1355,11 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
     int n_particle;
     double dummy;
     int parent_proc_type;
-    int ievent;
+    int ievent = 0;
     int urqmd_pid, urqmd_iso3, urqmd_charge;
     double temp_mass;
-    for (ievent = 0; ievent < event_buffer_size; ievent++) {
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
         getline(inputfile_mixed_event, temp_string);
 
         if (inputfile_mixed_event.eof()) break;
@@ -1358,6 +1395,8 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
             (*full_particle_list_mixed_event)[ievent]->push_back(
                                                     temp_particle_info);
         }
+        num_particles += n_particle;
+        ievent++;
     }
     return(0);
 }

@@ -48,7 +48,7 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in,
 
     dKT   = (KT_max - KT_min)/(n_KT - 1);
     dKphi = 2*M_PI/n_Kphi;                  // does not need 0 and 2*pi
-    
+
     KT_array = new double [n_KT];
     number_of_pairs_numerator_KTdiff = new unsigned long long int [n_KT];
     number_of_pairs_denormenator_KTdiff = new unsigned long long int [n_KT];
@@ -57,7 +57,7 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in,
         number_of_pairs_numerator_KTdiff[i] = 0;
         number_of_pairs_denormenator_KTdiff[i] = 0;
     }
-      
+
     Kphi_array = new double [n_Kphi];
     for (int i = 0; i < n_Kphi; i++) {
         Kphi_array[i] = 0.0 + i*dKphi;
@@ -79,7 +79,7 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in,
             }
         }
     }
-    
+
     number_of_mixed_events = paraRdr->getVal("number_of_mixed_events");
     number_of_oversample_events = (
                              paraRdr->getVal("number_of_oversample_events"));
@@ -309,10 +309,8 @@ HBT_correlation::~HBT_correlation() {
 
 void HBT_correlation::calculate_HBT_correlation_function() {
     int event_id = 0;
-    int buffer_size = particle_list->get_event_buffer_size();
     while (!particle_list->end_of_file()) {
-        messager << "Reading event: " << event_id+1 << "-" 
-                 << event_id + buffer_size << " ... ";
+        messager << "Reading event: " << event_id + 1 << " ... ";
         messager.flush("info");
 
         particle_list->read_in_particle_samples();

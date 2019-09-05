@@ -14,7 +14,7 @@ class singleParticleSpectra {
     ParameterReader *paraRdr;
     std::string path;
     particleSamples *particle_list;
-    
+
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
     pretty_ostream messager;
@@ -346,7 +346,7 @@ class singleParticleSpectra {
         std::vector<std::vector<double>> &event_Qn_imag_err, int flag);
 
     void output_rapidity_distribution();
-    
+
     void check_dNdSV(int event_id);
     void output_dNdSV();
 

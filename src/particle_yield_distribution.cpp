@@ -33,7 +33,7 @@ particle_yield_distribution::particle_yield_distribution(
 
     pT_min = paraRdr->getVal("pT_min");
     pT_max = paraRdr->getVal("pT_max");
-    
+
     total_number_of_events = 0;
 
     rap_type = paraRdr->getVal("rap_type");
@@ -50,18 +50,18 @@ particle_yield_distribution::~particle_yield_distribution() {
 
 void particle_yield_distribution::collect_particle_yield_distribution() {
     int event_id = 0;
-    int buffer_size = particle_list->get_event_buffer_size();
     while (!particle_list->end_of_file()) {
-        cout << "Reading event: " << event_id+1 
-             << "-" << event_id + buffer_size << " ... " << flush;
+        cout << "Reading event: " << event_id + 1 << " ... " << flush;
         particle_list->read_in_particle_samples();
-        cout << " processing ..." << flush;
         int nev = particle_list->get_number_of_events();
+        messager << "nev = " << nev;
+        messager.flush("info");
+        messager.info(" processing ...");
         for (int iev = 0; iev < nev; iev++) {
             event_id++;
             collect_particle_yield(iev);
         }
-        cout << " done!" << endl;
+        messager.info("done!");
     }
     total_number_of_events = event_id;
     output_particle_yield_distribution();

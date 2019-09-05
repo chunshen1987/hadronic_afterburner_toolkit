@@ -64,16 +64,18 @@ BalanceFunction::BalanceFunction(
 
 void BalanceFunction::calculate_balance_function() {
     int event_id = 0;
-    const int buffer_size = particle_list->get_event_buffer_size();
 
     while (!particle_list->end_of_file()) {
-        cout << "Reading event: " << event_id + 1 << "-" 
-             << event_id + buffer_size << " ... " << std::flush;
+        cout << "Reading event: " << event_id + 1 << " ..." << std::flush;
 
         particle_list->read_in_particle_samples();
         particle_list->read_in_particle_samples_mixed_event();
 
-        cout << " processing ..." << endl;
+        int nev = particle_list->get_number_of_events();
+        messager << "nev = " << nev;
+        messager.flush("info");
+
+        messager.info(" processing ...");
         auto plist_a    = particle_list->get_balance_function_particle_list_a();
         auto plist_b    = particle_list->get_balance_function_particle_list_b();
         auto plist_abar = particle_list->get_balance_function_particle_list_abar();
@@ -81,23 +83,23 @@ void BalanceFunction::calculate_balance_function() {
 
         N_b    += get_number_of_particles(plist_b);
         N_bbar += get_number_of_particles(plist_bbar);
-        cout << "calculating C_ab ... " << endl;
+        messager.info("calculating C_ab ... ");
         combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
-        cout << "calculating C_abarbbar ... " << endl;
+        messager.info("calculating C_abarbbar ... ");
         combine_and_bin_particle_pairs(C_abarbbar, plist_abar, plist_bbar);
-        cout << "calculating C_abbar ... " << endl;
+        messager.info("calculating C_abbar ... ");
         combine_and_bin_particle_pairs(C_abbar, plist_a, plist_bbar);
-        cout << "calculating C_abarb ... " << endl;
+        messager.info("calculating C_abarb ... ");
         combine_and_bin_particle_pairs(C_abarb, plist_abar, plist_b);
 
-        cout << "calculating correlatoin function using mixed events ... "
-             << endl;
-        
+        messager.info(
+            "calculating correlatoin function using mixed events ... ");
+
         auto plist_a_mixed_event    = particle_list->get_balance_function_particle_list_a_mixed_event();
         auto plist_b_mixed_event    = particle_list->get_balance_function_particle_list_b_mixed_event();
         auto plist_abar_mixed_event = particle_list->get_balance_function_particle_list_abar_mixed_event();
         auto plist_bbar_mixed_event = particle_list->get_balance_function_particle_list_bbar_mixed_event();
-        
+
         combine_and_bin_mixed_particle_pairs(
                         C_mixed_ab, plist_a, plist_b_mixed_event);
         combine_and_bin_mixed_particle_pairs(
@@ -107,9 +109,8 @@ void BalanceFunction::calculate_balance_function() {
         combine_and_bin_mixed_particle_pairs(
                         C_mixed_abbar, plist_abar, plist_b_mixed_event);
 
-        event_id += buffer_size;
+        event_id += nev;
     }
-    
     output_balance_function();
 }
 

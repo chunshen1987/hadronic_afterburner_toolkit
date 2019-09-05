@@ -11,6 +11,7 @@
 #include "ParameterReader.h"
 #include "particleSamples.h"
 #include "Random.h"
+#include "pretty_ostream.h"
 
 class BalanceFunction {
  private:
@@ -19,6 +20,8 @@ class BalanceFunction {
     particleSamples *particle_list;
 
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
+
+    pretty_ostream messager;
 
     int particle_monval_a;
     int particle_monval_b;
@@ -38,7 +41,7 @@ class BalanceFunction {
     std::vector<std::vector<double>> C_abarbbar;
     std::vector<std::vector<double>> C_abbar;
     std::vector<std::vector<double>> C_abarb;
-    
+
     std::vector<std::vector<double>> C_mixed_ab;
     std::vector<std::vector<double>> C_mixed_abarbbar;
     std::vector<std::vector<double>> C_mixed_abbar;

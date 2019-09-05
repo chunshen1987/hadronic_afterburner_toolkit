@@ -5,12 +5,15 @@
 
 #include "ParameterReader.h"
 #include "particleSamples.h"
+#include "pretty_ostream.h"
 
 class particle_yield_distribution {
  private:
     ParameterReader *paraRdr;
     std::string path;
     particleSamples *particle_list;
+
+    pretty_ostream messager;
 
     int particle_monval;
     int net_particle_flag;
