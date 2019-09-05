@@ -101,7 +101,7 @@ class particleSamples {
     //! particle list to store the negative hadrons
     //! (used when flag_charge_dependence == 1)
     std::vector< std::vector<particle_info>* >* negative_charge_hadron_list;
-    
+
     //! particle list to store the select particle samples for balance function
     std::vector< std::vector<particle_info>* >* balance_function_particle_a;
     std::vector< std::vector<particle_info>* >* balance_function_particle_b;
@@ -218,35 +218,35 @@ class particleSamples {
     particle_info get_negative_particle(int event_id, int part_id) {
         return((*(*negative_charge_hadron_list)[event_id])[part_id]);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_a() const {
         return(balance_function_particle_a);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_abar() const {
         return(balance_function_particle_abar);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_b() const {
         return(balance_function_particle_b);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_bbar() const {
         return(balance_function_particle_bbar);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_a_mixed_event() const {
         return(balance_function_particle_a_mixed_event);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_abar_mixed_event() const {
         return(balance_function_particle_abar_mixed_event);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_b_mixed_event() const {
         return(balance_function_particle_b_mixed_event);
     }
-    
+
     std::vector< std::vector<particle_info>* >* get_balance_function_particle_list_bbar_mixed_event() const {
         return(balance_function_particle_bbar_mixed_event);
     }
