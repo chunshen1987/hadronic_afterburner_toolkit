@@ -415,9 +415,9 @@ for ii in range(1, len(Qn4_ch_array[0, :, 0])):
     Cn4_ch_err = sqrt(vn4_ch_err**2. + (2.*2.*vn2_ch*vn2_ch_err)**2.)
     vn4_avg = 0.0
     vn4_err = 0.0
-    if Cn4_avg < 0.:
-        vn4_avg = (-Cn4_avg)**0.25
-        vn4_err = Cn4_ch_err/(4.*(-Cn4_avg)**0.75)
+    if Cn4_ch_avg < 0.:
+        vn4_avg = (-Cn4_ch_avg)**0.25
+        vn4_err = Cn4_ch_err/(4.*(-Cn4_ch_avg)**0.75)
     f.write("%s  %.5e  %.5e  %.5e  %.5e\n"
             % (ii, vn4_avg, vn4_err, Cn4_ch_avg, Cn4_ch_err))
 f.close()
