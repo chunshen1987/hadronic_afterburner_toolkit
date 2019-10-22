@@ -1158,6 +1158,93 @@ def calculate_vn6_over_vn4(vn_data_array):
     return(results)
 
 
+def calculate_vn_eta(dN_array, vn_array):
+    """This function computes vn(eta) """
+    nev, neta   = dN_array.shape
+    dN_array    = dN_array.reshape((nev, 1, neta))
+    vn_ref      = sum(dN_array*vn_array, axis=2)/(sum(dN_array, axis=2) + 1e-15)
+    vnshape     = vn_ref.shape
+    nvn         = vnshape[1]
+    vn_ref      = vn_ref.reshape((vnshape[0], vnshape[1], 1))
+    vn_SP_ev    = real(vn_array*conj(vn_ref))
+    vn_SP_array = zeros([nev, nvn, neta])
+    for iev in range(nev):
+        array_idx      = [True]*nev
+        array_idx[iev] = False
+        array_idx      = array(array_idx)
+        vn_den         = mean((absolute(vn_ref[array_idx, :, :]))**2., axis=0)
+        vn_SP          = mean(vn_SP_ev[array_idx, :, :], axis=0)/sqrt(vn_den)
+        vn_SP_array[iev, :, :] = vn_SP
+    vn_SP_mean = mean(vn_SP_array, axis=0)
+    vn_SP_err  = sqrt((nev - 1.)/nev*sum((vn_SP_array - vn_SP_mean)**2., axis=0))
+    return([vn_SP_mean, vn_SP_err])
+
+
+def calculate_rn_eta(eta_array, dN_array, vn_array):
+    """
+        This function computes the longitudinal factorization breaking ratios
+        for all n passed from vn_array
+            eta, rn(eta)
+    """
+    nev, neta = dN_array.shape
+    dN_array  = dN_array.reshape((nev, 1, neta))
+    Qn_array  = vn_array
+    Qnshape   = Qn_array.shape
+    nQn       = Qnshape[1]
+
+    # calculate the reference flow vector for every event
+    eta_b_min    = 2.5
+    eta_b_max    = 4.0
+    eta_ref1_tmp = linspace(eta_b_min, eta_b_max, 16)
+    eta_ref2_tmp = linspace(-eta_b_max, -eta_b_min, 16)
+    Qn_ref1      = [] 
+    Qn_ref2      = [] 
+    for iev in range(nev):
+        dN1_interp = interp(eta_ref1_tmp, eta_array, dN_array[iev, 0, :])
+        dN2_interp = interp(eta_ref2_tmp, eta_array, dN_array[iev, 0, :])
+        Qn_ref1_vec = []
+        Qn_ref2_vec = []
+        for iorder in range(nQn):
+            Qn1_interp = interp(eta_ref1_tmp, eta_array,
+                                Qn_array[iev, iorder, :])
+            Qn2_interp = interp(eta_ref2_tmp, eta_array,
+                                Qn_array[iev, iorder, :])
+            Qn_ref1_vec.append(sum(dN1_interp*Qn1_interp)
+                               /(sum(dN1_interp) + 1e-15))
+            Qn_ref2_vec.append(sum(dN2_interp*Qn2_interp)
+                               /(sum(dN2_interp) + 1e-15))
+        Qn_ref1.append(Qn_ref1_vec)
+        Qn_ref2.append(Qn_ref2_vec)
+    Qn_ref1 = array(Qn_ref1).reshape((nev, nQn, 1))
+    Qn_ref2 = array(Qn_ref2).reshape((nev, nQn, 1))
+
+    rn_num    = real(Qn_array[:, :, ::-1]*conj(Qn_ref1))
+    rn_den    = real(Qn_array*conj(Qn_ref1))
+    rnn_num   = real((Qn_ref2*conj(Qn_array))
+                     *(Qn_array[:, :, ::-1]*conj(Qn_ref1)))
+    rnn_den   = real((Qn_ref2*conj(Qn_array[:, :, ::-1]))
+                     *(Qn_array*conj(Qn_ref1)))
+
+    # compute the error using jack-knife
+    rn_array  = zeros([nev, nQn, neta])
+    rnn_array = zeros([nev, nQn, neta])
+    for iev in range(nev):
+        array_idx      = [True]*nev
+        array_idx[iev] = False
+        array_idx      = array(array_idx)
+        rn_ev          = (mean(rn_num[array_idx], axis=0)
+                          /(mean(rn_den[array_idx], axis=0) + 1e-15))
+        rnn_ev         = (mean(rnn_num[array_idx], axis=0)
+                          /(mean(rnn_den[array_idx], axis=0) + 1e-15))
+        rn_array[iev, :, :]  = rn_ev
+        rnn_array[iev, :, :] = rnn_ev
+    rn_mean  = mean(rn_array, axis=0)
+    rn_err   = sqrt((nev - 1.)/nev*sum((rn_array - rn_mean)**2., axis=0))
+    rnn_mean = mean(rnn_array, axis=0)
+    rnn_err  = sqrt((nev - 1.)/nev*sum((rnn_array - rnn_mean)**2., axis=0))
+    return([rn_mean, rn_err, rnn_mean, rnn_err])
+
+
 hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
 dN_dy_mb = []
@@ -1568,8 +1655,11 @@ for icen in range(len(centrality_cut_list) - 1):
         eta_point = mean(eta_array, 0)
         dNdeta = mean(dN_array, 0)
         dNdeta_err = std(dN_array, 0)/sqrt(nev)
-        vn_eta = sqrt(mean(abs(vn_array)**2., 0))
-        vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
+        #vn_eta = sqrt(mean(abs(vn_array)**2., 0))
+        #vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
+        vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(dN_array, vn_array)
+        rn_eta, rn_eta_err, rnn_eta, rnn_eta_err = calculate_rn_eta(
+                                                eta_point, dN_array, vn_array)
         vn_eta_real = mean(real(vn_array), 0)
         vn_eta_real_err = std(real(vn_array), 0)/sqrt(nev)
 
@@ -1849,7 +1939,8 @@ for icen in range(len(centrality_cut_list) - 1):
                     % (eta_point[ieta], dNdeta[ieta], dNdeta_err[ieta]))
             for iorder in range(1, n_order):
                 f.write("%.10e  %.10e  %.10e  %.10e  "
-                        % (vn_eta[iorder-1, ieta], vn_eta_err[iorder-1, ieta],
+                        % (vn_SP_eta[iorder-1, ieta],
+                           vn_SP_eta_err[iorder-1, ieta],
                            vn_eta_real[iorder-1, ieta],
                            vn_eta_real_err[iorder-1, ieta]))
             f.write("\n")
@@ -1953,6 +2044,22 @@ for icen in range(len(centrality_cut_list) - 1):
                                               pT_trig[ipTtrig+1]))
                         f = open(output_filename, 'w')
                         f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
+
+            # output the longitudinal rn ratios
+            output_filename = "{}_rn_eta.dat".format(particle_name_list[ipart])
+            f = open(output_filename, 'w')
+            f.write("#eta  rn(eta)  rn_err(eta)  rnn(eta)  rnn_err(eta)\n")
+            for ieta in range(len(eta_point)-1):
+                f.write("%.10e  " % eta_point[ieta])
+                for iorder in range(0, n_order-1):
+                    f.write("%.10e  %.10e  %.10e  %.10e  "
+                            % (rn_eta[iorder, ieta],
+                               rn_eta_err[iorder, ieta],
+                               rnn_eta[iorder, ieta],
+                               rnn_eta_err[iorder, ieta]))
+                f.write("\n")
+            f.close()
+            shutil.move(output_filename, avg_folder)
 
             # output flow event-plane correlation
             output_filename = ("%s_event_plane_correlation_ALICE.dat"

@@ -1147,7 +1147,7 @@ def calculate_vn6_over_vn4(vn_data_array):
     r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
     gamma1_mean = mean(gamma1_array)
     gamma1_err = sqrt((nev - 1.)/nev*sum((gamma1_array - gamma1_mean)**2.))
-    
+
     results = [r2_mean, r2_err, gamma1_mean, gamma1_err]
     return(results)
 
