@@ -188,7 +188,7 @@ mkdir UrQMD_results
 mkdir spvn_results
 for iev in `ls hydro_events --color=none | grep "surface"`
 do
-    event_id=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    event_id=`echo $iev | rev |  cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd iSS
     if [ -d "results" ]; then
         rm -fr results
@@ -244,7 +244,7 @@ def generate_script_iS(cluster_name, folder_name):
 mkdir spvn_results
 for iev in `ls hydro_events --color=none | grep "surface"`
 do
-    event_id=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    event_id=`echo $iev | rev | cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd iS
     if [ -d "results" ]; then
         rm -fr results
@@ -273,7 +273,7 @@ def generate_script_HBT(cluster_name, folder_name):
 mkdir HBT_results
 for iev in `ls UrQMD_events | grep "particle_list"`
 do
-    eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    eventid=`echo $iev | rev | cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
@@ -302,7 +302,7 @@ def generate_script_HBT_with_JAM(cluster_name, folder_name):
 mkdir HBT_results
 for iev in `ls JAM_events | grep "particle_list"`
 do
-    eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    eventid=`echo $iev | rev | cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
@@ -334,7 +334,7 @@ def generate_script_balance_function(cluster_name, folder_name):
 mkdir BalanceFunction_results
 for iev in `ls UrQMD_events | grep "particle_list"`
 do
-    eventid=`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    eventid=`echo $iev | rev | cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd hadronic_afterburner_toolkit
     rm -fr results
     mkdir results
@@ -378,7 +378,7 @@ do
     script.write(
 """
     mv results/particle_list.dat ../UrQMD_events/$iev
-    mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    mv results ../spvn_results/event_`echo $iev | rev | cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd ..
 done
 """)
@@ -407,7 +407,7 @@ do
     script.write(
 """
     mv results/particle_list.dat ../UrQMD_events/$iev
-    mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    mv results ../spvn_results/event_`echo $iev | rev | cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd ..
 done
 """)
@@ -466,7 +466,7 @@ do
     script.write(
 """
     mv results/particle_list.dat ../JAM_events/$iev
-    mv results ../spvn_results/event_`echo $iev | cut -f 3 -d _ | cut -f 1 -d .`
+    mv results ../spvn_results/event_`echo $iev | rev | cut -f 1 -d _ | rev | cut -f 1 -d .`
     cd ..
 done
 """)
