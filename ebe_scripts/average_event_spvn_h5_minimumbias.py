@@ -1326,6 +1326,9 @@ for icen in range(len(centrality_cut_list) - 1):
     nev = len(selected_events_list)
     print("analysis {}%-{}% nev = {}...".format(
             centrality_cut_list[icen], centrality_cut_list[icen+1], nev))
+    if nev == 0:
+        print("Skip ...")
+        continue
 
     for ipart, particle_id in enumerate(particle_list):
         print("processing %s ..." % particle_name_list[ipart])
