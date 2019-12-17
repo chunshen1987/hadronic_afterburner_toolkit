@@ -1245,6 +1245,39 @@ def calculate_rn_eta(eta_array, dN_array, vn_array):
     return([rn_mean, rn_err, rnn_mean, rnn_err])
 
 
+def calculate_meanpT_fluc(dN_array, pT_array, pT_min=0.0, pT_max=3.0):
+    """
+        This function computes the mean pT fluctuations
+            returns sigma_pT/<pT>, sigma_pT/<pT>_err
+        here sigma_pT is the standard deviation of the event-by-event mean pT
+        This function accepts pT_cut through [pT_min, pT_max]
+    """
+    npT_interp = 50
+    pT_inte_array = linspace(pT_min, pT_max, npT_interp)
+    dpT = pT_inte_array[1] - pT_inte_array[0]
+
+    nev, npT = dN_array.shape
+    mean_pT_array = zeros(nev)
+    for iev in range(nev):
+        dN_interp = exp(interp(pT_inte_array, pT_array[iev, :],
+                               log(dN_array[iev, :] + 1e-30)))
+        mean_pT_array[iev] = (sum(pT_inte_array**2.*dN_interp)
+                              /sum(pT_inte_array*dN_interp))
+
+    # compute the error using jack-knife
+    rn_array  = zeros(nev)
+    for iev in range(nev):
+        array_idx      = [True]*nev
+        array_idx[iev] = False
+        array_idx      = array(array_idx)
+        rn_ev          = (std(mean_pT_array[array_idx])
+                          /(mean(mean_pT_array[array_idx]) + 1e-15))
+        rn_array[iev]  = rn_ev
+    rn_mean  = mean(rn_array, axis=0)
+    rn_err   = sqrt((nev - 1.)/nev*sum((rn_array - rn_mean)**2.))
+    return([rn_mean, rn_err])
+
+
 hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
 dN_dy_mb = []
@@ -1466,6 +1499,9 @@ for icen in range(len(centrality_cut_list) - 1):
         dN_spectra = mean(pT_array*dN_array, 0)/pT_spectra
         dN_spectra_err = std(pT_array*dN_array, 0)/pT_spectra/sqrt(nev)
 
+        # compute mean pT event-by-event
+        sigma_pT, sigma_pT_err = calculate_meanpT_fluc(dN_array, pT_array)
+
         if particle_id == "9999":
             # calculate dNch (pT > 0.4 |eta| < 2.5) for ATLAS
             dN_array_ATLAS = array(dN_array_ATLAS)
@@ -1526,7 +1562,7 @@ for icen in range(len(centrality_cut_list) - 1):
                                                                 dNch_ALICE))
 
 
-        # calculate mean pT
+        # calculate mean pT from event-averaged particle spectrum
         pT_interp = linspace(0.05, 2.95, 30)
         dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra + 1e-30)))
         dN_interp_err = interp(pT_interp, pT_spectra, dN_spectra_err)
@@ -1817,27 +1853,28 @@ for icen in range(len(centrality_cut_list) - 1):
         output_filename = ("%s_integrated_observables.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
-        f.write("dN/dy= %.10e +/- %.10e\n" % (dN_dy_avg, dN_dy_avg_err))
+        f.write("dN/dy= %.5e +/- %.5e\n" % (dN_dy_avg, dN_dy_avg_err))
         if particle_id == "9999":
-            f.write("dN/dy(pT>0.2,|eta|<0.8)= %.10e \n" % (dNch_ALICE))
-            f.write("dN/dy(pT>0.4,|eta|<2.5)= %.10e \n" % (dNch_ATLAS))
-        f.write("<pT>= %.10e +/- %.10e\n" % (mean_pT, mean_pT_err))
-        f.write("<pT(>0.15)>= %.10e +/- %.10e\n" % (mean_pT_1, mean_pT_1_err))
+            f.write("dN/dy(pT>0.2,|eta|<0.8)= %.5e \n" % (dNch_ALICE))
+            f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
+        f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
+        f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
+        f.write("sigma_pT/<pT>= %.5e +/- %.5e\n"% (sigma_pT, sigma_pT_err))
         for iorder in range(1, n_order):
-            f.write("v_%d{2}(phenix)= %.10e +/- %.10e\n" 
+            f.write("v_%d{2}(phenix)= %.5e +/- %.5e\n"
                     % (iorder, vn_phenix_2[iorder-1], vn_phenix_2_err[iorder-1]))
-            f.write("v_%d{2}(STAR)= %.10e +/- %.10e\n" 
+            f.write("v_%d{2}(STAR)= %.5e +/- %.5e\n"
                     % (iorder, vn_star_2[iorder-1], vn_star_2_err[iorder-1]))
-            f.write("v_%d{2}(ALICE)= %.10e +/- %.10e\n" 
+            f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
                     % (iorder, vn_alice_2[iorder-1], vn_alice_2_err[iorder-1]))
-            f.write("v_%d{2}(CMS)= %.10e +/- %.10e\n" 
+            f.write("v_%d{2}(CMS)= %.5e +/- %.5e\n"
                     % (iorder, vn_cms_2[iorder-1], vn_cms_2_err[iorder-1]))
-            f.write("v_%d{2}(ATLAS)= %.10e +/- %.10e\n" 
+            f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
                     % (iorder, vn_atlas_2[iorder-1], vn_atlas_2_err[iorder-1]))
         f.close()
         shutil.move(output_filename, avg_folder)
 
-        output_filename = ("%s_differential_observables_PHENIX.dat" 
+        output_filename = ("%s_differential_observables_PHENIX.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
@@ -1852,7 +1889,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.close()
         shutil.move(output_filename, avg_folder)
 
-        output_filename = ("%s_differential_observables_STAR.dat" 
+        output_filename = ("%s_differential_observables_STAR.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
@@ -1867,7 +1904,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.close()
         shutil.move(output_filename, avg_folder)
 
-        output_filename = ("%s_differential_observables_ALICE.dat" 
+        output_filename = ("%s_differential_observables_ALICE.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
@@ -1882,7 +1919,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.close()
         shutil.move(output_filename, avg_folder)
 
-        output_filename = ("%s_differential_observables_2PC.dat" 
+        output_filename = ("%s_differential_observables_2PC.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
@@ -1897,7 +1934,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.close()
         shutil.move(output_filename, avg_folder)
 
-        output_filename = ("%s_differential_observables_CMS.dat" 
+        output_filename = ("%s_differential_observables_CMS.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
@@ -1912,7 +1949,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.close()
         shutil.move(output_filename, avg_folder)
 
-        output_filename = ("%s_differential_observables_ATLAS.dat" 
+        output_filename = ("%s_differential_observables_ATLAS.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
@@ -1927,7 +1964,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.close()
         shutil.move(output_filename, avg_folder)
 
-        output_filename = ("%s_rapidity_distribution.dat" 
+        output_filename = ("%s_rapidity_distribution.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
         if(particle_id == '9999'):
