@@ -1251,10 +1251,10 @@ def calculate_meanpT_fluc(dN_array, pT_array, pT_min=0.0, pT_max=3.0):
             returns sigma_pT/<pT>, sigma_pT/<pT>_err
         here sigma_pT is the standard deviation of the event-by-event mean pT
         This function accepts pT_cut through [pT_min, pT_max]
+        dN_array is dN/(2\pi dy pT dpT)
     """
     npT_interp = 50
     pT_inte_array = linspace(pT_min, pT_max, npT_interp)
-    dpT = pT_inte_array[1] - pT_inte_array[0]
 
     nev, npT = dN_array.shape
     mean_pT_array = zeros(nev)
@@ -1503,7 +1503,7 @@ for icen in range(len(centrality_cut_list) - 1):
         dN_spectra_err = std(pT_array*dN_array, 0)/pT_spectra/sqrt(nev)
 
         # compute mean pT event-by-event
-        sigma_pT, sigma_pT_err = calculate_meanpT_fluc(dN_array, pT_array)
+        sigma_pT, sigma_pT_err = calculate_meanpT_fluc(dN_array, pT_array, 0.15, 2.0)
 
         if particle_id == "9999":
             # calculate dNch (pT > 0.4 |eta| < 2.5) for ATLAS
