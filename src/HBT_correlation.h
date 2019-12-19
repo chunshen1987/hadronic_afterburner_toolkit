@@ -15,7 +15,7 @@ class HBT_correlation {
     ParameterReader *paraRdr;
     std::string path;
     particleSamples *particle_list;
-    
+
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
     pretty_ostream messager;

@@ -49,9 +49,9 @@ int main(int argc, char *argv[]) {
     paraRdr->echo();
   
     int run_mode = paraRdr->getVal("run_mode");
-    
+
     string path="results";
-    
+
     Stopwatch sw;
     Stopwatch sw_total;
     sw_total.tic();
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     int randomSeed = paraRdr->getVal("randomSeed");
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
-    
+
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     if (run_mode == 0) {
         // collect single particle spectra and vn
