@@ -2,6 +2,15 @@ find_package (GTest REQUIRED)
 
 include_directories(${GTEST_INCLUDE_DIRS})
 
+add_executable (histogram_unittest.e
+    histogram_unittest.cc
+    ../src/histogram.cpp
+  )
+target_link_libraries (histogram_unittest.e ${LIBS} ${ZLIB_LIBRARIES}
+                       ${GTEST_BOTH_LIBRARIES})
+install(TARGETS histogram_unittest.e
+        DESTINATION ${CMAKE_HOME_DIRECTORY}/unit_tests/)
+
 add_executable (HBT_unittest.e
   HBT_unittest.cc
   ../src/arsenal.cpp
