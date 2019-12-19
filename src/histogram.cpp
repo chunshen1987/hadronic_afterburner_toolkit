@@ -40,4 +40,13 @@ void Histogram::output_histogram(std::string filename) const {
     outf.close();
 }
 
+
+int Histogram::get_total_count() const {
+    int total_count = 0;
+    for (int i = 0; i < nbin_; i++) {
+        total_count += hist[i];
+    }
+    return(total_count);
+}
+
 }

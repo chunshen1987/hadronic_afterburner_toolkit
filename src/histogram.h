@@ -23,6 +23,13 @@ class Histogram {
     void fill(double val);
     void output_histogram(std::string filename) const;
 
+    int get_bin_count(int idx) const {return(hist[idx]);}
+    double get_bin_center(int idx) const {return(bin_center[idx]);}
+
+    std::vector<int> get_bin_count_arr() const {return(hist);}
+    std::vector<double> get_bin_center_arr() const {return(bin_center);}
+
+    int get_total_count() const;
 };
 
 }
