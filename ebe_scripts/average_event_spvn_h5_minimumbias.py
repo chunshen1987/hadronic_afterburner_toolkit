@@ -33,9 +33,13 @@ normal = "\033[0m"
 
 Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
                            60., 70., 80., 90., 100.]
-Special_centrality_cut_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS 200
-centrality_cut_list = Reg_centrality_cut_list + Special_centrality_cut_list
-Centrality_flag = 0
+PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
+SPS_cen_list    = [5., 12.5, 23.5, 33.5, 43.5]       # SPS PbPb
+PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
+STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
+centrality_cut_list = (Reg_centrality_cut_list + PHOBOS_cen_list
+                       + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
+Centrality_flag = 1
 
 try:
     data_path = path.abspath(argv[1])
@@ -1397,14 +1401,17 @@ for icen in range(len(centrality_cut_list) - 1):
             pT_array.append(pT_event)
             dN_array.append(dN_event)
             if particle_id == "9999":
-                temp_data1 = event_group.get(file_name_ATLAS)
-                temp_data1 = nan_to_num(temp_data1)
-                pT_array_ATLAS.append(temp_data1[:, 0])
-                dN_array_ATLAS.append(temp_data1[:, 2])
-                temp_data1 = event_group.get(file_name_ALICE)
-                temp_data1 = nan_to_num(temp_data1)
-                pT_array_ALICE.append(temp_data1[:, 0])
-                dN_array_ALICE.append(temp_data1[:, 2])
+                try:
+                    temp_data1 = event_group.get(file_name_ATLAS)
+                    temp_data1 = nan_to_num(temp_data1)
+                    pT_array_ATLAS.append(temp_data1[:, 0])
+                    dN_array_ATLAS.append(temp_data1[:, 2])
+                    temp_data1 = event_group.get(file_name_ALICE)
+                    temp_data1 = nan_to_num(temp_data1)
+                    pT_array_ALICE.append(temp_data1[:, 0])
+                    dN_array_ALICE.append(temp_data1[:, 2])
+                except:
+                    continue
 
             # pT-integrated vn
             # vn with PHENIX pT cut
