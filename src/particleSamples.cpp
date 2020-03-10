@@ -362,11 +362,10 @@ int particleSamples::read_in_particle_samples() {
 
     filter_particles_into_lists(full_particle_list);
 
-    if (resonance_weak_feed_down_flag == 1) {
-        // perform Sigma^0 -> Lambda, Anti-Sigma^0 -> Anti-Lambda
-        perform_weak_resonance_feed_down_Sigma_to_Lambda();
-    }
-
+    //if (resonance_weak_feed_down_flag == 1) {
+    //    // perform Sigma^0 -> Lambda, Anti-Sigma^0 -> Anti-Lambda
+    //    perform_weak_resonance_feed_down_Sigma_to_Lambda();
+    //}
 
     // reconst phi(1020) from K^+ and K^- pair
     if (reconst_flag == 1)

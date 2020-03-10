@@ -6,13 +6,14 @@
 #include <cmath>
 
 #include "particle_decay.h"
+#include "arsenal.h"
 
 using std::cout;
 using std::endl;
 
 particle_decay::particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen,
                                int weak_flag) {
-    ran_gen_ptr = ran_gen;
+    ran_gen_ptr_ = ran_gen;
     weak_flag_ = weak_flag;
 
     resonance_table.clear();
@@ -276,7 +277,7 @@ void particle_decay::perform_decays(
     //std::cout << "Decaying " << mother_decay_info->name
     //          << "(" << mother_decay_info->monval << ") ..." << std::endl;
     int N_decay_channel = mother_decay_info->decays;
-    double random_local = ran_gen_ptr.lock()->rand_uniform();
+    double random_local = ran_gen_ptr_->rand_uniform();
     double cumulated_branching_ratio = 0.0;
     decay_channel_info* picked_channel = NULL;
     for (int i_channel = 0; i_channel < N_decay_channel; i_channel++) {
@@ -368,8 +369,8 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     double p_lrf = sqrt(temp*temp - 4*m1*m1*m2*m2)/(2*M_sampled);
 
     // randomly pick emission angle
-    double phi = ran_gen_ptr.lock()->rand_uniform()*2*M_PI;
-    double cos_theta = 2.*(ran_gen_ptr.lock()->rand_uniform() - 0.5);
+    double phi = ran_gen_ptr_->rand_uniform()*2*M_PI;
+    double cos_theta = 2.*(ran_gen_ptr_->rand_uniform() - 0.5);
     double sin_theta = sqrt(1. - cos_theta*cos_theta);
 
     // compute daughter particles' energy and momentum in the rest frame
@@ -381,7 +382,7 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     double p2_lrf_x = -p1_lrf_x;
     double p2_lrf_y = -p1_lrf_y;
     double p2_lrf_z = -p1_lrf_z;
-    
+
     // compute mother velocity
     double vx = mother->px/mother->E;
     double vy = mother->py/mother->E;
@@ -406,7 +407,8 @@ void particle_decay::perform_two_body_decay(particle_info *mother,
     if (M_width > 1e-10) {
         // compute life-time = gamma*1/\Gamma
         double tau0 = mother->E/(M_sampled)*1./(M_width);
-        life_time = -tau0*log(ran_gen_ptr.lock()->rand_uniform())*0.19733;  // convert to fm
+        life_time = -tau0*log(ran_gen_ptr_->rand_uniform());
+        life_time *= AfterburnerUtil::hbarc;  // convert to fm
     }
 
     daughter1->t = mother->t + life_time;
@@ -449,8 +451,8 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     double E1_lrf, E2_lrf, E3_lrf, p1_lrf, p2_lrf, cos12_lrf;
     do {
         do {
-            E1_lrf = ran_gen_ptr.lock()->rand_uniform()*(M_sampled - m1 - m2 - m3) + m1;
-            E2_lrf = ran_gen_ptr.lock()->rand_uniform()*(M_sampled - m1 - m2 - m3) + m2;
+            E1_lrf = ran_gen_ptr_->rand_uniform()*(M_sampled - m1 - m2 - m3) + m1;
+            E2_lrf = ran_gen_ptr_->rand_uniform()*(M_sampled - m1 - m2 - m3) + m2;
         } while (E1_lrf + E2_lrf > M_sampled);
         p1_lrf = sqrt(E1_lrf*E1_lrf - m1*m1);
         p2_lrf = sqrt(E2_lrf*E2_lrf - m2*m2);
@@ -464,7 +466,8 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     double life_time = 1e10;
     if (M_width > 1e-10) {
         double tau = mother->E/(M_sampled)*1./M_width;
-        life_time = -tau*log(ran_gen_ptr.lock()->rand_uniform())*0.19733;  // convert unit to fm
+        life_time = -tau*log(ran_gen_ptr_->rand_uniform());
+        life_time *= AfterburnerUtil::hbarc;  // convert unit to fm
     }
     // compute the decay position
     double decay_time = mother->t + life_time;
@@ -477,9 +480,9 @@ void particle_decay::perform_three_body_decay(particle_info *mother,
     double tp2_lrf_z = p2_lrf*cos12_lrf;
     double tp3_lrf_x = - tp2_lrf_x;
     double tp3_lrf_z = - (p1_lrf + tp2_lrf_z); 
-    double phi = 2.*M_PI*ran_gen_ptr.lock()->rand_uniform();
-    double ksi = 2.*M_PI*ran_gen_ptr.lock()->rand_uniform();
-    double cos_theta = 2.*ran_gen_ptr.lock()->rand_uniform() - 1.0;
+    double phi = 2.*M_PI*ran_gen_ptr_->rand_uniform();
+    double ksi = 2.*M_PI*ran_gen_ptr_->rand_uniform();
+    double cos_theta = 2.*ran_gen_ptr_->rand_uniform() - 1.0;
 
     double sin_phi = sin(phi);
     double cos_phi = cos(phi);
@@ -562,7 +565,7 @@ double particle_decay::sample_breit_wigner(double mass, double width,
     // compute the minimum probability given by M_min
     double p_min = atan2((M_min - mass), width/2.)/M_PI + 0.5;
     // generate a random number from p_min to 1
-    double y = (1. - p_min)*ran_gen_ptr.lock()->rand_uniform() + p_min;
+    double y = (1. - p_min)*(ran_gen_ptr_->rand_uniform()) + p_min;
     // compute the corresponding sampled mass
     double mass_sampled = mass + width/2.*tan(M_PI*(y - 0.5));
     return(mass_sampled);

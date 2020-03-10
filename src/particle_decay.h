@@ -15,6 +15,7 @@ typedef struct {
     int decay_part[5];
 } decay_channel_info;
 
+
 typedef struct {
     int monval;     // Monte Carlo number according PDG
     std::string name;
@@ -33,10 +34,11 @@ typedef struct {
     int sign;                   // Bose-Einstein or Dirac-Fermi statistics
 } particle_decay_info;
 
+
 class particle_decay {
  private:
     std::vector<particle_decay_info*> resonance_table;
-    std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
+    std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
     int weak_flag_;
 
  public:
@@ -65,7 +67,7 @@ class particle_decay {
 
     //! This function returns the strange number of particle
     int get_particle_strange_number(int monval);
-    
+
     //! This function returns the particle mass for a given particle id
     double get_particle_mass(int POI_monval);
 

@@ -11,13 +11,12 @@
 #define CYAN    "\033[36m"      // Cyan
 #define WHITE   "\033[37m"      // White
 #define RESET   "\033[0m"       // reset
- 
+
 #ifndef PRETTY_OSTREAM_H_
 #define PRETTY_OSTREAM_H_
 
 #include <iostream>
 #include <sstream>
-#include <cstring>
 
 class pretty_ostream {
  private:

@@ -4,14 +4,17 @@
 #ifndef arsenal_h
 #define arsenal_h
 
-#include "stdlib.h"
 #include <vector>
 #include <string>
 
-double stringToDouble(std::string);
-std::vector<double> stringToDoubles(std::string);
-std::string toLower(std::string str);
-std::string trim(std::string str);
+namespace AfterburnerUtil {
+    const double hbarc = 0.19733;
+
+    double stringToDouble(std::string);
+    std::vector<double> stringToDoubles(std::string);
+    std::string toLower(std::string str);
+    std::string trim(std::string str);
+}
 
 #endif
 

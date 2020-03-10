@@ -9,8 +9,7 @@ Version 1.01 (09-20-2011) Zhi Qiu
 #include <vector>
 #include <string>
 
-class ParameterReader
-{
+class ParameterReader {
   private:
     // store all parameter names and values
     std::vector<std::string>* names; std::vector<double>* values; 
