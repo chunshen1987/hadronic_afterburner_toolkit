@@ -12,10 +12,10 @@
 
 class HBT_correlation {
  private:
-    ParameterReader *paraRdr;
-    std::string path;
+    const ParameterReader paraRdr_;
+    const std::string path_;
     particleSamples *particle_list;
-    
+
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
     pretty_ostream messager;
@@ -57,7 +57,7 @@ class HBT_correlation {
     double *****correl_3d_Kphi_diff_num_count;
 
  public:
-    HBT_correlation(ParameterReader* paraRdr_in, std::string path_in, 
+    HBT_correlation(ParameterReader &paraRdr, std::string path,
                     std::shared_ptr<RandomUtil::Random> ran_gen,
                     particleSamples *particle_list_in);
     ~HBT_correlation();

@@ -13,25 +13,24 @@
 
 using namespace std;
 
-particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
-                                 std::shared_ptr<RandomUtil::Random> ran_gen) {
-    paraRdr = paraRdr_in;
-    path = path_in;
+particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
+                                 std::shared_ptr<RandomUtil::Random> ran_gen) :
+        paraRdr_(paraRdr), path_(path) {
 
-    echo_level        = paraRdr->getVal("echo_level");
-    event_buffer_size = paraRdr->getVal("event_buffer_size");
-    read_in_mode      = paraRdr->getVal("read_in_mode");
-    run_mode          = paraRdr->getVal("run_mode");
+    echo_level_       = paraRdr_.getVal("echo_level");
+    event_buffer_size = paraRdr_.getVal("event_buffer_size");
+    read_in_mode_      = paraRdr_.getVal("read_in_mode");
+    run_mode_          = paraRdr_.getVal("run_mode");
 
     read_mixed_events = false;
-    if (run_mode == 1 || run_mode == 3) {
+    if (run_mode_ == 1 || run_mode_ == 3) {
         read_mixed_events = true;
     }
 
-    rap_type = paraRdr->getVal("rap_type");
+    rap_type_ = paraRdr_.getVal("rap_type");
 
-    if (run_mode == 2) {
-        net_particle_flag = paraRdr->getVal("net_particle_flag");
+    if (run_mode_ == 2) {
+        net_particle_flag = paraRdr_.getVal("net_particle_flag");
         if (net_particle_flag == 1) {
             anti_particle_list = new vector< vector<particle_info>* >;
         }
@@ -40,13 +39,13 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     }
 
     // read in particle Monte-Carlo number
-    particle_monval = paraRdr->getVal("particle_monval");
-    flag_isospin    = paraRdr->getVal("distinguish_isospin");
+    particle_monval = paraRdr_.getVal("particle_monval");
+    flag_isospin    = paraRdr_.getVal("distinguish_isospin");
 
-    if (run_mode == 3) {
-        particle_monval_a    = paraRdr->getVal("particle_alpha");
+    if (run_mode_ == 3) {
+        particle_monval_a    = paraRdr_.getVal("particle_alpha");
         particle_monval_abar = -particle_monval_a;
-        particle_monval_b    = paraRdr->getVal("particle_beta");
+        particle_monval_b    = paraRdr_.getVal("particle_beta");
         particle_monval_bbar = -particle_monval_b;
         balance_function_particle_a    = new vector< vector<particle_info>* >;
         balance_function_particle_abar = new vector< vector<particle_info>* >;
@@ -59,15 +58,15 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     }
 
     resonance_weak_feed_down_flag = (
-        paraRdr->getVal("resonance_weak_feed_down_flag"));
+        paraRdr_.getVal("resonance_weak_feed_down_flag"));
     decayer_ptr = new particle_decay(ran_gen, resonance_weak_feed_down_flag);
-    resonance_feed_down_flag = paraRdr->getVal("resonance_feed_down_flag");
+    resonance_feed_down_flag = paraRdr_.getVal("resonance_feed_down_flag");
     if (resonance_weak_feed_down_flag == 1) {
         resonance_feed_down_flag = 1;
     }
     select_resonances_flag = 0;
     if (resonance_feed_down_flag == 1) {
-        select_resonances_flag = paraRdr->getVal("select_resonances_flag");
+        select_resonances_flag = paraRdr_.getVal("select_resonances_flag");
         if (select_resonances_flag == 1) {
             initialize_selected_resonance_list();
         }
@@ -79,7 +78,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     particle_list_mixed_event      = new vector< vector<particle_info>* >;
     if (std::abs(particle_monval) == 3122) {
         // for Lambda and anti-Lambda
-        resonance_weak_feed_down_Sigma_to_Lambda_flag = paraRdr->getVal(
+        resonance_weak_feed_down_Sigma_to_Lambda_flag = paraRdr_.getVal(
                             "resonance_weak_feed_down_Sigma_to_Lambda_flag");
         if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1) {
             // include Sigma0 feed down to Lambda
@@ -100,7 +99,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
 
     flag_charge_dependence = 0;
     if (particle_monval == 9999) {
-        flag_charge_dependence = paraRdr->getVal("flag_charge_dependence");
+        flag_charge_dependence = paraRdr_.getVal("flag_charge_dependence");
         if (flag_charge_dependence == 1) {
             positive_charge_hadron_list = new vector< vector<particle_info>* >;
             negative_charge_hadron_list = new vector< vector<particle_info>* >;
@@ -109,20 +108,20 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
 
     ostringstream filename;
     ostringstream filename_mixed_event;
-    if (read_in_mode == 0) {
-        filename << path << "/OSCAR.DAT";
-        filename_mixed_event << path << "/OSCAR_mixed_event.DAT";
-    } else if (read_in_mode == 1 || read_in_mode == 2 || read_in_mode == 3
-               || read_in_mode == 4 || read_in_mode == 5
-               || read_in_mode == 7) {
-        filename << path << "/particle_list.dat";
-        filename_mixed_event << path << "/particle_list_mixed_event.dat";
-    } else if (read_in_mode == 10) {
-        filename << path << "/particle_samples.gz";
-        filename_mixed_event << path << "/particle_samples_mixed_event.gz";
+    if (read_in_mode_ == 0) {
+        filename << path_ << "/OSCAR.DAT";
+        filename_mixed_event << path_ << "/OSCAR_mixed_event.DAT";
+    } else if (read_in_mode_ == 1 || read_in_mode_ == 2 || read_in_mode_ == 3
+               || read_in_mode_ == 4 || read_in_mode_ == 5
+               || read_in_mode_ == 7) {
+        filename << path_ << "/particle_list.dat";
+        filename_mixed_event << path_ << "/particle_list_mixed_event.dat";
+    } else if (read_in_mode_ == 10) {
+        filename << path_ << "/particle_samples.gz";
+        filename_mixed_event << path_ << "/particle_samples_mixed_event.gz";
     }
 
-    if (read_in_mode != 2 && read_in_mode != 7 && read_in_mode != 10) {
+    if (read_in_mode_ != 2 && read_in_mode_ != 7 && read_in_mode_ != 10) {
         inputfile.open(filename.str().c_str());
         if (!inputfile.is_open()) {
             messager << "particleSamples:: Error: input file: "
@@ -161,7 +160,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
 
     // skip the header file for OSCAR
     string temp;
-    if (read_in_mode == 0) {
+    if (read_in_mode_ == 0) {
         getline(inputfile, temp);
         getline(inputfile, temp);
         getline(inputfile, temp);
@@ -173,7 +172,7 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
     }
 
     // skip the header in JAM
-    if (read_in_mode == 5) {
+    if (read_in_mode_ == 5) {
         getline(inputfile, temp);
         if (read_mixed_events) {
             getline(inputfile_mixed_event, temp);
@@ -184,13 +183,13 @@ particleSamples::particleSamples(ParameterReader* paraRdr_in, string path_in,
 }
 
 particleSamples::~particleSamples() {
-    if (read_in_mode != 2 && read_in_mode != 7 && read_in_mode != 10) {
+    if (read_in_mode_ != 2 && read_in_mode_ != 7 && read_in_mode_ != 10) {
         inputfile.close();
     } else {
         gzclose(inputfile_gz);
     }
     if (read_mixed_events) {
-        if (read_in_mode != 2 && read_in_mode !=7 && read_in_mode != 10) {
+        if (read_in_mode_ != 2 && read_in_mode_ !=7 && read_in_mode_ != 10) {
             inputfile_mixed_event.close();
         } else {
             gzclose(inputfile_mixed_event_gz);
@@ -237,7 +236,7 @@ particleSamples::~particleSamples() {
         delete negative_charge_hadron_list;
     }
 
-    if (run_mode == 3) {
+    if (run_mode_ == 3) {
         clear_out_previous_record(balance_function_particle_a);
         clear_out_previous_record(balance_function_particle_abar);
         clear_out_previous_record(balance_function_particle_b);
@@ -303,7 +302,7 @@ void particleSamples::initialize_selected_resonance_list() {
         reso_file >> temp_id;
     }
     reso_file.close();
-    if (select_resonances_flag == 1 && echo_level > 8) {
+    if (select_resonances_flag == 1 && echo_level_ > 8) {
         messager << "particleSamples::initialize_selected_resonance_list:"
                  << "selected resonance list: ";
         messager.flush("info");
@@ -323,23 +322,23 @@ int particleSamples::get_pdg_id(int urqmd_id, int urqmd_isospin) {
 
 
 int particleSamples::read_in_particle_samples() {
-    if (read_in_mode == 0) {
+    if (read_in_mode_ == 0) {
         read_in_particle_samples_OSCAR();
         resonance_weak_feed_down_flag = 0;
         reconst_flag = 0;
-    } else if (read_in_mode == 1) {
+    } else if (read_in_mode_ == 1) {
         read_in_particle_samples_UrQMD();
-    } else if (read_in_mode == 2) {
+    } else if (read_in_mode_ == 2) {
         read_in_particle_samples_UrQMD_zipped();
-    } else if (read_in_mode == 3) {
+    } else if (read_in_mode_ == 3) {
         read_in_particle_samples_Sangwook();
-    } else if (read_in_mode == 4) {
+    } else if (read_in_mode_ == 4) {
         read_in_particle_samples_UrQMD_3p3();
-    } else if (read_in_mode == 5) {
+    } else if (read_in_mode_ == 5) {
         read_in_particle_samples_JAM();
-    } else if (read_in_mode == 7) {
+    } else if (read_in_mode_ == 7) {
         read_in_particle_samples_SMASH_gzipped();
-    } else if (read_in_mode == 10) {
+    } else if (read_in_mode_ == 10) {
         read_in_particle_samples_gzipped();
         resonance_weak_feed_down_flag = 0;
         reconst_flag = 0;
@@ -349,7 +348,7 @@ int particleSamples::read_in_particle_samples() {
         for (auto &part_i: (*ev_i)) {
             part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
             part_i.phi_p = atan2(part_i.py, part_i.px);
-            if (rap_type == 1) {
+            if (rap_type_ == 1) {
                 part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
                                        /(part_i.E - part_i.pz));
             } else {
@@ -375,22 +374,22 @@ int particleSamples::read_in_particle_samples() {
 
 
 int particleSamples::read_in_particle_samples_mixed_event() {
-    if (read_in_mode == 0) {
+    if (read_in_mode_ == 0) {
         read_in_particle_samples_OSCAR_mixed_event();
         resonance_weak_feed_down_flag = 0;
-    } else if (read_in_mode == 1) {
+    } else if (read_in_mode_ == 1) {
         read_in_particle_samples_UrQMD_mixed_event();
-    } else if (read_in_mode == 2) {
+    } else if (read_in_mode_ == 2) {
         read_in_particle_samples_UrQMD_mixed_event_zipped();
-    } else if (read_in_mode == 3) {
+    } else if (read_in_mode_ == 3) {
         read_in_particle_samples_mixed_event_Sangwook();
-    } else if (read_in_mode == 4) {
+    } else if (read_in_mode_ == 4) {
         read_in_particle_samples_UrQMD_3p3_mixed_event();
-    } else if (read_in_mode == 5) {
+    } else if (read_in_mode_ == 5) {
         read_in_particle_samples_JAM_mixed_event();
-    } else if (read_in_mode == 7) {
+    } else if (read_in_mode_ == 7) {
         read_in_particle_samples_SMASH_mixed_event_gzipped();
-    } else if (read_in_mode == 10) {
+    } else if (read_in_mode_ == 10) {
         read_in_particle_samples_mixed_event_gzipped();
     }
 
@@ -398,7 +397,7 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         for (auto &part_i: (*ev_i)) {
             part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
             part_i.phi_p = atan2(part_i.py, part_i.px);
-            if (rap_type == 1) {
+            if (rap_type_ == 1) {
                 part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
                                        /(part_i.E - part_i.pz));
             } else {
@@ -414,7 +413,7 @@ int particleSamples::read_in_particle_samples_mixed_event() {
 
     filter_particles(particle_monval, full_particle_list_mixed_event,
                      particle_list_mixed_event);
-    if (run_mode == 3) {
+    if (run_mode_ == 3) {
         filter_particles(particle_monval_a, full_particle_list_mixed_event,
                          balance_function_particle_a_mixed_event);
         filter_particles(particle_monval_abar, full_particle_list_mixed_event,
@@ -983,7 +982,7 @@ void particleSamples::filter_particles_into_lists(
         clear_out_previous_record(negative_charge_hadron_list);
     }
 
-    if (run_mode == 3) {
+    if (run_mode_ == 3) {
         clear_out_previous_record(balance_function_particle_a);
         clear_out_previous_record(balance_function_particle_abar);
         clear_out_previous_record(balance_function_particle_b);
@@ -1011,7 +1010,7 @@ void particleSamples::filter_particles_into_lists(
                                             new vector<particle_info>);
         }
 
-        if (run_mode == 3) {
+        if (run_mode_ == 3) {
             balance_function_particle_a->push_back(
                                             new vector<particle_info>);
             balance_function_particle_abar->push_back(
@@ -1057,7 +1056,7 @@ void particleSamples::filter_particles_into_lists(
                     (*negative_charge_hadron_list)[iev]->push_back(part_i);
             }
 
-            if (run_mode == 3) {
+            if (run_mode_ == 3) {
                 if (decide_to_pick_OSCAR(particle_monval_a, part_i.monval))
                     (*balance_function_particle_a)[iev]->push_back(part_i);
                 if (decide_to_pick_OSCAR(particle_monval_abar, part_i.monval))

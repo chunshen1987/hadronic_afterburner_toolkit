@@ -12,26 +12,26 @@ using std::cout;
 using std::endl;
 
 BalanceFunction::BalanceFunction(
-    const ParameterReader *paraRdr_in, const std::string path_in,
+    const ParameterReader &paraRdr, const std::string path,
     std::shared_ptr<RandomUtil::Random> ran_gen,
     particleSamples *particle_list_in) :
-    paraRdr(paraRdr_in), path(path_in) {
+    paraRdr_(paraRdr), path_(path) {
 
     ran_gen_ptr = ran_gen;
 
     particle_list = particle_list_in;
-        
-    particle_monval_a = paraRdr->getVal("particle_alpha");
-    particle_monval_b = paraRdr->getVal("particle_beta");
+
+    particle_monval_a = paraRdr_.getVal("particle_alpha");
+    particle_monval_b = paraRdr_.getVal("particle_beta");
     if (particle_monval_a == - particle_monval_b)
         same_species = true;
     else
         same_species = false;
 
-    BpT_min  = paraRdr->getVal("BpT_min");
-    BpT_max  = paraRdr->getVal("BpT_max");
-    Bnpts    = paraRdr->getVal("Bnpts");
-    Brap_max = paraRdr->getVal("Brap_max");
+    BpT_min  = paraRdr_.getVal("BpT_min");
+    BpT_max  = paraRdr_.getVal("BpT_max");
+    Bnpts    = paraRdr_.getVal("Bnpts");
+    Brap_max = paraRdr_.getVal("Brap_max");
     Brap_min = -Brap_max;
     drap     = (Brap_max - Brap_min)/(Bnpts - 1);
     Bnphi    = 20;
@@ -261,7 +261,7 @@ void BalanceFunction::output_balance_function() {
     for (int i = 0; i < Bnpts; i++)
         Delta_y[i] = Brap_min + (i + 0.5)*drap;
     std::ostringstream filename;
-    filename << path << "/Balance_function_" << particle_monval_a << "_"
+    filename << path_ << "/Balance_function_" << particle_monval_a << "_"
              << particle_monval_b << "_Delta_y.dat";
     std::ofstream output(filename.str().c_str(), std::ios::out);
     output << "# DeltaY  Delta_C2  C2(OS)  rho2(OS)  rho1^2(OS)  "
@@ -283,7 +283,7 @@ void BalanceFunction::output_balance_function() {
     for (int j = 0; j < Bnphi; j++)
         Delta_phi[j] = Bphi_min + (j + 0.5)*dphi;
     std::ostringstream filename2;
-    filename2 << path << "/Balance_function_" << particle_monval_a << "_"
+    filename2 << path_ << "/Balance_function_" << particle_monval_a << "_"
               << particle_monval_b << "_Delta_phi.dat";
     std::ofstream output2(filename2.str().c_str(), std::ios::out);
     output2 << "# Delta_phi  Delta_C2  C2(OS)  rho2(OS)  rho1^2(OS)  "
@@ -304,7 +304,7 @@ void BalanceFunction::output_balance_function() {
 
     // output correlation functions as a function of \Delta Y and \Delta phi
     std::ostringstream filename5;
-    filename5 << path << "/Correlation_function_" << particle_monval_a << "_"
+    filename5 << path_ << "/Correlation_function_" << particle_monval_a << "_"
               << particle_monval_b << "_2D.dat";
     std::ofstream output3(filename5.str().c_str(), std::ios::out);
     output3 << "# DY  Dphi  C2(OS)  rho2(OS)  rho1^2(OS)  "

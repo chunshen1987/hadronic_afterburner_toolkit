@@ -9,21 +9,21 @@
 #include "parameters.h"
 #include "HBT_correlation.h"
 
-HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in,
-                                 std::string path_in, 
+HBT_correlation::HBT_correlation(ParameterReader &paraRdr,
+                                 std::string path,
                                  std::shared_ptr<RandomUtil::Random> ran_gen,
-                                 particleSamples *particle_list_in) {
-    paraRdr       = paraRdr_in;
-    path          = path_in;
+                                 particleSamples *particle_list_in) :
+        paraRdr_(paraRdr), path_(path) {
+
     particle_list = particle_list_in;
-    
+
     ran_gen_ptr = ran_gen;
 
-    qnpts   = paraRdr->getVal("qnpts");
-    q_min   = paraRdr->getVal("q_min");
-    q_max   = paraRdr->getVal("q_max");
+    qnpts   = paraRdr_.getVal("qnpts");
+    q_min   = paraRdr_.getVal("q_min");
+    q_max   = paraRdr_.getVal("q_max");
     delta_q = (q_max - q_min)/(qnpts - 1);
-    
+
     q_out = new double [qnpts];
     q_side = new double [qnpts];
     q_long = new double [qnpts];
@@ -33,18 +33,18 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in,
         q_long[i] = q_min + i*delta_q;
     }
 
-    needed_number_of_pairs = paraRdr->getVal("needed_number_of_pairs");
+    needed_number_of_pairs = paraRdr_.getVal("needed_number_of_pairs");
 
-    azimuthal_flag = paraRdr->getVal("azimuthal_flag");
-    invariant_radius_flag = paraRdr->getVal("invariant_radius_flag");
+    azimuthal_flag = paraRdr_.getVal("azimuthal_flag");
+    invariant_radius_flag = paraRdr_.getVal("invariant_radius_flag");
 
-    n_KT            = paraRdr->getVal("n_KT");
-    n_Kphi          = paraRdr->getVal("n_Kphi");
-    KT_min          = paraRdr->getVal("KT_min");
-    KT_max          = paraRdr->getVal("KT_max");
-    Krap_min        = paraRdr->getVal("Krap_min");
-    Krap_max        = paraRdr->getVal("Krap_max");
-    buffer_rapidity = paraRdr->getVal("buffer_rapidity");
+    n_KT            = paraRdr_.getVal("n_KT");
+    n_Kphi          = paraRdr_.getVal("n_Kphi");
+    KT_min          = paraRdr_.getVal("KT_min");
+    KT_max          = paraRdr_.getVal("KT_max");
+    Krap_min        = paraRdr_.getVal("Krap_min");
+    Krap_max        = paraRdr_.getVal("Krap_max");
+    buffer_rapidity = paraRdr_.getVal("buffer_rapidity");
 
     dKT   = (KT_max - KT_min)/(n_KT - 1);
     dKphi = 2*M_PI/n_Kphi;                  // does not need 0 and 2*pi
@@ -80,9 +80,9 @@ HBT_correlation::HBT_correlation(ParameterReader* paraRdr_in,
         }
     }
 
-    number_of_mixed_events = paraRdr->getVal("number_of_mixed_events");
+    number_of_mixed_events = paraRdr_.getVal("number_of_mixed_events");
     number_of_oversample_events = (
-                             paraRdr->getVal("number_of_oversample_events"));
+                             paraRdr_.getVal("number_of_oversample_events"));
     number_pairs_num = 0;
     number_pairs_denorm = 0;
     psi_ref = 0.;
@@ -844,7 +844,7 @@ void HBT_correlation::output_correlation_function_inv() {
                 static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
                 /static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
         std::ostringstream filename;
-        filename << path << "/HBT_correlation_function_inv_KT_" 
+        filename << path_ << "/HBT_correlation_function_inv_KT_" 
                  << KT_array[iK] << "_" << KT_array[iK+1] << ".dat";
         std::ofstream output(filename.str().c_str());
         for (int iqinv = 0; iqinv < qnpts; iqinv++) {
@@ -884,7 +884,7 @@ void HBT_correlation::output_correlation_function() {
                 static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
                 /static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
         std::ostringstream filename;
-        filename << path << "/HBT_correlation_function_KT_" 
+        filename << path_ << "/HBT_correlation_function_KT_" 
                  << KT_array[iK] << "_" << KT_array[iK+1] << ".dat";
         std::ofstream output(filename.str().c_str());
         for (int iqlong = 0; iqlong < qnpts; iqlong++) {
@@ -940,7 +940,7 @@ void HBT_correlation::output_correlation_function_Kphi_differential() {
                 static_cast<double>(number_of_pairs_numerator_KTKphidiff[iK][iKphi])
                 /static_cast<double>(number_of_pairs_denormenator_KTKphidiff[iK][iKphi]));
             std::ostringstream filename;
-            filename << path << "/HBT_correlation_function_KT_" 
+            filename << path_ << "/HBT_correlation_function_KT_" 
                      << KT_array[iK] << "_" << KT_array[iK+1] << "_Kphi_" 
                      << Kphi_array[iKphi] << ".dat";
             std::ofstream output(filename.str().c_str());

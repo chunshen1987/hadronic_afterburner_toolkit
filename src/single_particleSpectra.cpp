@@ -18,16 +18,14 @@ using std::scientific;
 using std::setprecision;
 
 singleParticleSpectra::singleParticleSpectra(
-        ParameterReader *paraRdr_in, std::string path_in, 
+        ParameterReader &paraRdr, std::string path,
         std::shared_ptr<RandomUtil::Random> ran_gen,
-        particleSamples *particle_list_in) {
-    paraRdr = paraRdr_in;
-    path = path_in;
+        particleSamples *particle_list_in) : paraRdr_(paraRdr), path_(path) {
     particle_list = particle_list_in;
 
     ran_gen_ptr = ran_gen;
 
-    particle_monval = paraRdr->getVal("particle_monval");
+    particle_monval = paraRdr_.getVal("particle_monval");
 
     if (particle_monval == 333) {
         // phi(1020) is reconstructed from (K^+, K^-) pairs
@@ -36,7 +34,7 @@ singleParticleSpectra::singleParticleSpectra(
         reconst_branching_ratio = 1.0;
     }
 
-    order_max = paraRdr->getVal("order_max");
+    order_max = paraRdr_.getVal("order_max");
     Qn_vector_real     = vector<double>(order_max, 0.);
     Qn_vector_imag     = vector<double>(order_max, 0.);
     Qn_vector_real_err = vector<double>(order_max, 0.);
@@ -46,9 +44,9 @@ singleParticleSpectra::singleParticleSpectra(
     Qn_diff_vector_real_err = new double* [order_max];
     Qn_diff_vector_imag_err = new double* [order_max];
 
-    npT = paraRdr->getVal("npT");
-    pT_min = paraRdr->getVal("pT_min");
-    pT_max = paraRdr->getVal("pT_max");
+    npT = paraRdr_.getVal("npT");
+    pT_min = paraRdr_.getVal("pT_min");
+    pT_max = paraRdr_.getVal("pT_max");
     dpT = (pT_max - pT_min)/(npT - 1 + 1e-15);
     pT_array          = vector<double>(npT, 0.);
     pT_mean_array     = vector<double>(npT, 0.);
@@ -70,26 +68,26 @@ singleParticleSpectra::singleParticleSpectra(
     }
     total_number_of_events = 0;
 
-    rap_type = paraRdr->getVal("rap_type");
-    rap_min  = paraRdr->getVal("rap_min");
-    rap_max  = paraRdr->getVal("rap_max");
+    rap_type = paraRdr_.getVal("rap_type");
+    rap_min  = paraRdr_.getVal("rap_min");
+    rap_max  = paraRdr_.getVal("rap_max");
 
     if (particle_monval == 9999)  // use pseudo-rapidity for all charged hadrons
         rap_type = 0;
 
-    rapidity_distribution_flag = paraRdr->getVal("rapidity_distribution");
+    rapidity_distribution_flag = paraRdr_.getVal("rapidity_distribution");
     if (rapidity_distribution_flag == 1) {
-        N_rap = paraRdr->getVal("n_rap");
-        rapidity_dis_min = paraRdr->getVal("rapidity_dis_min");
-        rapidity_dis_max = paraRdr->getVal("rapidity_dis_max");
+        N_rap = paraRdr_.getVal("n_rap");
+        rapidity_dis_min = paraRdr_.getVal("rapidity_dis_min");
+        rapidity_dis_max = paraRdr_.getVal("rapidity_dis_max");
         drap = (rapidity_dis_max - rapidity_dis_min)/(N_rap - 1.);
         rapidity_array = vector<double>(N_rap, 0.);
         dNdy_array     = vector<double>(N_rap, 0.);
         for (int i = 0; i < N_rap; i++)
             rapidity_array[i] = rapidity_dis_min + i*drap;
 
-        vn_rapidity_dis_pT_min = paraRdr->getVal("vn_rapidity_dis_pT_min");
-        vn_rapidity_dis_pT_max = paraRdr->getVal("vn_rapidity_dis_pT_max");
+        vn_rapidity_dis_pT_min = paraRdr_.getVal("vn_rapidity_dis_pT_min");
+        vn_rapidity_dis_pT_max = paraRdr_.getVal("vn_rapidity_dis_pT_max");
         vn_real_rapidity_dis_array     = new double* [N_rap];
         vn_imag_rapidity_dis_array     = new double* [N_rap];
         vn_real_rapidity_dis_array_err = new double* [N_rap];
@@ -109,10 +107,10 @@ singleParticleSpectra::singleParticleSpectra(
     }
 
     // check dN/dtau distribution
-    check_spatial_flag = paraRdr->getVal("check_spatial_dis");
+    check_spatial_flag = paraRdr_.getVal("check_spatial_dis");
     if (check_spatial_flag == 1) {
         // dN/dtau
-        intrinsic_dtau = paraRdr->getVal("intrinsic_dtau");
+        intrinsic_dtau = paraRdr_.getVal("intrinsic_dtau");
         N_tau = 50;
         tau_min = 0.6;
         tau_max = 15.0;
@@ -125,7 +123,7 @@ singleParticleSpectra::singleParticleSpectra(
         }
 
         // dN/dx
-        intrinsic_dx = paraRdr->getVal("intrinsic_dx");
+        intrinsic_dx = paraRdr_.getVal("intrinsic_dx");
         N_xpt = 50;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
@@ -161,7 +159,7 @@ singleParticleSpectra::singleParticleSpectra(
         }
 
         // dN/deta_s
-        intrinsic_detas = paraRdr->getVal("intrinsic_detas");
+        intrinsic_detas = paraRdr_.getVal("intrinsic_detas");
         N_eta_s = 40;
         eta_s_min = - 3.0;
         eta_s_max = 3.0;
@@ -174,7 +172,7 @@ singleParticleSpectra::singleParticleSpectra(
         }
     }
 
-    flag_correlation = paraRdr->getVal("compute_correlation");
+    flag_correlation = paraRdr_.getVal("compute_correlation");
     if (flag_correlation == 1) {
         Qn2_vector     = vector<double>(order_max, 0.);
         Qn2_vector_err = vector<double>(order_max, 0.);
@@ -210,7 +208,7 @@ singleParticleSpectra::singleParticleSpectra(
             C_nmk_eta12_err[i].resize(N_rap, 0.);
             C_nmk_eta13_err[i].resize(N_rap, 0.);
         }
-        flag_charge_dependence = paraRdr->getVal("flag_charge_dependence");
+        flag_charge_dependence = paraRdr_.getVal("flag_charge_dependence");
         if (particle_monval != 9999) flag_charge_dependence = 0;
         if (flag_charge_dependence == 1) {
             Cn2_ss     = vector<double> (order_max, 0.);
@@ -799,10 +797,10 @@ void singleParticleSpectra::output_Qn_vectors() {
     // pT-integrated flow
     ostringstream filename;
     if (rap_type == 0) {
-        filename << path << "/particle_" << particle_monval << "_vndata"
+        filename << path_ << "/particle_" << particle_monval << "_vndata"
                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
     } else {
-        filename << path << "/particle_" << particle_monval << "_vndata"
+        filename << path_ << "/particle_" << particle_monval << "_vndata"
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
@@ -854,11 +852,11 @@ void singleParticleSpectra::output_Qn_vectors() {
     // pT-differential flow
     ostringstream filename_diff;
     if (rap_type == 0) {
-        filename_diff << path 
+        filename_diff << path_ 
                       << "/particle_" << particle_monval << "_vndata_diff"
                       << "_eta_" << rap_min << "_" << rap_max << ".dat";
     } else {
-        filename_diff << path 
+        filename_diff << path_ 
                       << "/particle_" << particle_monval << "_vndata_diff"
                       << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
@@ -1151,10 +1149,10 @@ void singleParticleSpectra::calculate_two_particle_correlation_deltaeta_chdep_ba
 void singleParticleSpectra::output_two_particle_correlation() {
     ostringstream filename;
     if (rap_type == 0) {
-        filename << path << "/particle_" << particle_monval << "_vn2"
+        filename << path_ << "/particle_" << particle_monval << "_vn2"
                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
     } else {
-        filename << path << "/particle_" << particle_monval << "_vn2"
+        filename << path_ << "/particle_" << particle_monval << "_vn2"
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
@@ -1196,14 +1194,14 @@ void singleParticleSpectra::output_two_particle_correlation() {
         ostringstream filename_ss;
         ostringstream filename_os;
         if (rap_type == 0) {
-            filename_ss << path << "/particle_" << particle_monval << "_Cn2_ss"
+            filename_ss << path_ << "/particle_" << particle_monval << "_Cn2_ss"
                         << "_eta_" << rap_min << "_" << rap_max << ".dat";
-            filename_os << path << "/particle_" << particle_monval << "_Cn2_os"
+            filename_os << path_ << "/particle_" << particle_monval << "_Cn2_os"
                         << "_eta_" << rap_min << "_" << rap_max << ".dat";
         } else {
-            filename_ss << path << "/particle_" << particle_monval << "_Cn2_ss"
+            filename_ss << path_ << "/particle_" << particle_monval << "_Cn2_ss"
                         << "_y_" << rap_min << "_" << rap_max << ".dat";
-            filename_os << path << "/particle_" << particle_monval << "_Cn2_os"
+            filename_os << path_ << "/particle_" << particle_monval << "_Cn2_os"
                         << "_y_" << rap_min << "_" << rap_max << ".dat";
         }
         ofstream output_ss(filename_ss.str().c_str());
@@ -1288,7 +1286,7 @@ void singleParticleSpectra::output_two_particle_correlation() {
 //! delta eta between the two particles
 void singleParticleSpectra::output_two_particle_correlation_rap() {
     ostringstream filename;
-    filename << path << "/particle_" << particle_monval << "_vn2_eta12"
+    filename << path_ << "/particle_" << particle_monval << "_vn2_eta12"
              << "_pT_" << vn_rapidity_dis_pT_min << "_"
              << vn_rapidity_dis_pT_max << ".dat";
     ofstream output(filename.str().c_str());
@@ -1338,11 +1336,11 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
 
     if (flag_charge_dependence == 1) {
         ostringstream filename_ss, filename_os;
-        filename_ss << path << "/particle_" << particle_monval
+        filename_ss << path_ << "/particle_" << particle_monval
                     << "_vn2_eta12_ss"
                     << "_pT_" << vn_rapidity_dis_pT_min << "_"
                     << vn_rapidity_dis_pT_max << ".dat";
-        filename_os << path << "/particle_" << particle_monval
+        filename_os << path_ << "/particle_" << particle_monval
                     << "_vn2_eta12_os"
                     << "_pT_" << vn_rapidity_dis_pT_min << "_"
                     << vn_rapidity_dis_pT_max << ".dat";
@@ -1958,10 +1956,10 @@ void singleParticleSpectra::calculate_four_particle_correlation_SC(
 void singleParticleSpectra::output_three_particle_correlation() {
     ostringstream filename;
     if (rap_type == 0) {
-        filename << path << "/particle_" << particle_monval << "_Cmnk"
+        filename << path_ << "/particle_" << particle_monval << "_Cmnk"
                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
     } else {
-        filename << path << "/particle_" << particle_monval << "_Cmnk"
+        filename << path_ << "/particle_" << particle_monval << "_Cmnk"
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
@@ -1992,11 +1990,11 @@ void singleParticleSpectra::output_three_particle_correlation() {
     if (flag_charge_dependence == 1) {
         ostringstream filename_ss;
         if (rap_type == 0) {
-            filename_ss << path << "/particle_" << particle_monval
+            filename_ss << path_ << "/particle_" << particle_monval
                         << "_Cmnk_ss_eta_" << rap_min << "_"
                         << rap_max << ".dat";
         } else {
-            filename_ss << path << "/particle_" << particle_monval
+            filename_ss << path_ << "/particle_" << particle_monval
                         << "_Cmnk_ss_y_" << rap_min << "_"
                         << rap_max << ".dat";
         }
@@ -2053,11 +2051,11 @@ void singleParticleSpectra::output_three_particle_correlation() {
         }
         ostringstream filename_os;
         if (rap_type == 0) {
-            filename_os << path << "/particle_" << particle_monval
+            filename_os << path_ << "/particle_" << particle_monval
                         << "_Cmnk_os_eta_" << rap_min << "_"
                         << rap_max << ".dat";
         } else {
-            filename_os << path << "/particle_" << particle_monval
+            filename_os << path_ << "/particle_" << particle_monval
                         << "_Cmnk_os_y_" << rap_min << "_"
                         << rap_max << ".dat";
         }
@@ -2118,10 +2116,10 @@ void singleParticleSpectra::output_three_particle_correlation() {
 //! This function outputs the rapidity dependent three-particle correlation
 void singleParticleSpectra::output_three_particle_correlation_rap() {
     ostringstream filename1, filename2;
-    filename1 << path << "/particle_" << particle_monval << "_Cmnk_eta12"
+    filename1 << path_ << "/particle_" << particle_monval << "_Cmnk_eta12"
               << "_pT_" << vn_rapidity_dis_pT_min << "_"
               << vn_rapidity_dis_pT_max << ".dat";
-    filename2 << path << "/particle_" << particle_monval << "_Cmnk_eta13"
+    filename2 << path_ << "/particle_" << particle_monval << "_Cmnk_eta13"
               << "_pT_" << vn_rapidity_dis_pT_min << "_"
               << vn_rapidity_dis_pT_max << ".dat";
     ofstream output1(filename1.str().c_str());
@@ -2193,16 +2191,16 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
     if (flag_charge_dependence == 1) {
         ostringstream filename_ss1, filename_ss2;
         ostringstream filename_os1, filename_os2;
-        filename_ss1 << path << "/particle_" << particle_monval
+        filename_ss1 << path_ << "/particle_" << particle_monval
                      << "_Cmnk_eta12_ss_pT_" << vn_rapidity_dis_pT_min
                      << "_" << vn_rapidity_dis_pT_max << ".dat";
-        filename_os1 << path << "/particle_" << particle_monval
+        filename_os1 << path_ << "/particle_" << particle_monval
                      << "_Cmnk_eta12_os_pT_" << vn_rapidity_dis_pT_min
                      << "_" << vn_rapidity_dis_pT_max << ".dat";
-        filename_ss2 << path << "/particle_" << particle_monval
+        filename_ss2 << path_ << "/particle_" << particle_monval
                      << "_Cmnk_eta13_ss_pT_" << vn_rapidity_dis_pT_min
                      << "_" << vn_rapidity_dis_pT_max << ".dat";
-        filename_os2 << path << "/particle_" << particle_monval
+        filename_os2 << path_ << "/particle_" << particle_monval
                      << "_Cmnk_eta13_os_pT_" << vn_rapidity_dis_pT_min
                      << "_" << vn_rapidity_dis_pT_max << ".dat";
         ofstream output_ss1(filename_ss1.str().c_str());
@@ -2341,10 +2339,10 @@ void singleParticleSpectra::output_three_particle_correlation_rap() {
 void singleParticleSpectra::output_four_particle_Cn4_correlation() {
     ostringstream filename;
     if (rap_type == 0) {
-        filename << path << "/particle_" << particle_monval << "_Cn4"
+        filename << path_ << "/particle_" << particle_monval << "_Cn4"
                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
     } else {
-        filename << path << "/particle_" << particle_monval << "_Cn4"
+        filename << path_ << "/particle_" << particle_monval << "_Cn4"
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
@@ -2377,10 +2375,10 @@ void singleParticleSpectra::output_four_particle_Cn4_correlation() {
 void singleParticleSpectra::output_four_particle_SC_correlation() {
     ostringstream filename;
     if (rap_type == 0) {
-        filename << path << "/particle_" << particle_monval << "_SCmn"
+        filename << path_ << "/particle_" << particle_monval << "_SCmn"
                  << "_eta_" << rap_min << "_" << rap_max << ".dat";
     } else {
-        filename << path << "/particle_" << particle_monval << "_SCmn"
+        filename << path_ << "/particle_" << particle_monval << "_SCmn"
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
@@ -2511,11 +2509,11 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
 void singleParticleSpectra::output_rapidity_distribution() {
     ostringstream filename;
     if (rap_type == 0) {
-        filename << path << "/particle_" << particle_monval << "_dNdeta"
+        filename << path_ << "/particle_" << particle_monval << "_dNdeta"
                  << "_pT_" << vn_rapidity_dis_pT_min << "_"
                  << vn_rapidity_dis_pT_max << ".dat";
     } else {
-        filename << path << "/particle_" << particle_monval << "_dNdy"
+        filename << path_ << "/particle_" << particle_monval << "_dNdy"
                  << "_pT_" << vn_rapidity_dis_pT_min << "_"
                  << vn_rapidity_dis_pT_max << ".dat";
     }
@@ -2682,7 +2680,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
 void singleParticleSpectra::output_dNdSV() {
     // first dN/dtau
     ostringstream filename;
-    filename << path << "/check_" << particle_monval << "_dNdtau.dat";
+    filename << path_ << "/check_" << particle_monval << "_dNdtau.dat";
     ofstream output(filename.str().c_str());
     for (int i = 0; i < N_tau; i++) {
         tau_array[i] = tau_array[i]/(dNdtau_array[i] + 1.);
@@ -2700,7 +2698,7 @@ void singleParticleSpectra::output_dNdSV() {
 
     // second dN/dx
     ostringstream filename2;
-    filename2 << path << "/check_" << particle_monval << "_dNdx.dat";
+    filename2 << path_ << "/check_" << particle_monval << "_dNdx.dat";
     ofstream output2(filename2.str().c_str());
     output2 << "# x  dN/dx  y  dN/dy  r  dN/dr" << endl;
     for (int i = 0; i < N_xpt; i++) {
@@ -2733,8 +2731,8 @@ void singleParticleSpectra::output_dNdSV() {
 
     // dN/(dtau dx)
     ostringstream filename2_1, filename2_2;
-    filename2_1 << path << "/check_" << particle_monval << "_dNdtaudx1.dat";
-    filename2_2 << path << "/check_" << particle_monval << "_dNdtaudx2.dat";
+    filename2_1 << path_ << "/check_" << particle_monval << "_dNdtaudx1.dat";
+    filename2_2 << path_ << "/check_" << particle_monval << "_dNdtaudx2.dat";
     ofstream output2_1(filename2_1.str().c_str());
     ofstream output2_2(filename2_2.str().c_str());
     for (int i = 0; i < N_tau; i++) {
@@ -2762,7 +2760,7 @@ void singleParticleSpectra::output_dNdSV() {
 
     // third dN/detas
     ostringstream filename3;
-    filename3 << path << "/check_" << particle_monval << "_dNdetas.dat";
+    filename3 << path_ << "/check_" << particle_monval << "_dNdetas.dat";
     ofstream output3(filename3.str().c_str());
     for (int i = 0; i < N_eta_s; i++) {
         eta_s_array[i] = eta_s_array[i]/(dNdetas_array[i] + 1.);

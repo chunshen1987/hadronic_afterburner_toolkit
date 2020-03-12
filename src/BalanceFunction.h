@@ -15,8 +15,8 @@
 
 class BalanceFunction {
  private:
-    const ParameterReader *paraRdr;
-    const std::string path;
+    const ParameterReader paraRdr_;
+    const std::string path_;
     particleSamples *particle_list;
 
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
@@ -48,8 +48,8 @@ class BalanceFunction {
     std::vector<std::vector<double>> C_mixed_abarb;
 
  public:
-    BalanceFunction(const ParameterReader *paraRdr_in,
-                    const std::string path_in,
+    BalanceFunction(const ParameterReader &paraRdr,
+                    const std::string path,
                     std::shared_ptr<RandomUtil::Random> ran_gen,
                     particleSamples *particle_list_in);
     ~BalanceFunction() {};

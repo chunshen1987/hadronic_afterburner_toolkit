@@ -18,22 +18,24 @@
 
 class particleSamples {
  private:
-    ParameterReader *paraRdr;
+    const ParameterReader paraRdr_;
     pretty_ostream messager;
+
     //! path for results folder
-    std::string path;
+    const std::string path_;
+
     std::ifstream inputfile;
     std::ifstream inputfile_mixed_event;
     gzFile inputfile_gz;
     gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
 
-    int echo_level;
-    int read_in_mode;
-    int run_mode;
+    int echo_level_;
+    int read_in_mode_;
+    int run_mode_;
     bool read_mixed_events;
 
-    int rap_type;
+    int rap_type_;
 
     //! the monte-carlo number of the particle of interest
     int particle_monval;
@@ -117,7 +119,7 @@ class particleSamples {
     particle_decay *decayer_ptr;
 
  public:
-    particleSamples(ParameterReader* paraRdr_in, std::string path_in,
+    particleSamples(ParameterReader &paraRdr, std::string path,
                     std::shared_ptr<RandomUtil::Random> ran_gen);
     ~particleSamples();
 
@@ -165,14 +167,14 @@ class particleSamples {
 
     std::string gz_readline(gzFile gzfp);
     bool end_of_file() const {
-        if (read_in_mode == 2 || read_in_mode == 7 || read_in_mode == 10) {
+        if (read_in_mode_ == 2 || read_in_mode_ == 7 || read_in_mode_ == 10) {
             return(gzeof(inputfile_gz));
         } else {
             return(inputfile.eof());
         }
     }
     bool end_of_file_mixed_event() {
-        if (read_in_mode == 2 || read_in_mode == 7 || read_in_mode == 10) {
+        if (read_in_mode_ == 2 || read_in_mode_ == 7 || read_in_mode_ == 10) {
             return(gzeof(inputfile_mixed_event_gz));
         } else {
             return(inputfile_mixed_event.eof());

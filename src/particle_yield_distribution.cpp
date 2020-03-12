@@ -11,13 +11,13 @@
 using namespace std;
 
 particle_yield_distribution::particle_yield_distribution(
-                                ParameterReader *paraRdr_in, string path_in, 
-                                particleSamples *particle_list_in) {
-    paraRdr = paraRdr_in;
-    path = path_in;
+                                ParameterReader &paraRdr, std::string path,
+                                particleSamples *particle_list_in) :
+        paraRdr_(paraRdr), path_(path) {
+
     particle_list = particle_list_in;
 
-    particle_monval = paraRdr->getVal("particle_monval");
+    particle_monval = paraRdr_.getVal("particle_monval");
     if (particle_monval == 333) {
         // phi(1020) is reconstructed from (K^+, K^-) pairs
         reconst_branching_ratio = 0.489;
@@ -25,20 +25,20 @@ particle_yield_distribution::particle_yield_distribution(
         reconst_branching_ratio = 1.0;
     }
 
-    net_particle_flag = paraRdr->getVal("net_particle_flag");
+    net_particle_flag = paraRdr_.getVal("net_particle_flag");
     n_max = 6000;
     number_of_events = new int[n_max];
     for (int i = 0; i < n_max; i++)
         number_of_events[i] = 0;
 
-    pT_min = paraRdr->getVal("pT_min");
-    pT_max = paraRdr->getVal("pT_max");
+    pT_min = paraRdr_.getVal("pT_min");
+    pT_max = paraRdr_.getVal("pT_max");
 
     total_number_of_events = 0;
 
-    rap_type = paraRdr->getVal("rap_type");
-    rap_min = paraRdr->getVal("rap_min");
-    rap_max = paraRdr->getVal("rap_max");
+    rap_type = paraRdr_.getVal("rap_type");
+    rap_min = paraRdr_.getVal("rap_min");
+    rap_max = paraRdr_.getVal("rap_max");
 
     if (particle_monval == 9999)  // use pseudo-rapidity for all charged hadrons
         rap_type = 0;
@@ -137,17 +137,17 @@ void particle_yield_distribution::output_particle_yield_distribution() {
     ostringstream filename;
     if (net_particle_flag == 0) {
         if (rap_type == 0)
-          filename << path << "/particle_" << particle_monval
+          filename << path_ << "/particle_" << particle_monval
                    << "_yield_distribution_eta.dat";
         else
-          filename << path << "/particle_" << particle_monval
+          filename << path_ << "/particle_" << particle_monval
                    << "_yield_distribution_y.dat";
     } else {
         if (rap_type == 0)
-          filename << path << "/particle_0" << particle_monval
+          filename << path_ << "/particle_0" << particle_monval
                    << "_yield_distribution_eta.dat";
         else
-          filename << path << "/particle_0" << particle_monval
+          filename << path_ << "/particle_0" << particle_monval
                    << "_yield_distribution_y.dat";
     }
     ofstream output(filename.str().c_str());

@@ -41,26 +41,26 @@ int main(int argc, char *argv[]) {
          << "  Ver 1.0   ----- Chun Shen, 10/2014   " << endl;
     cout << endl << "*********************************************************"
          << endl;
-   
+
     // Read-in parameters
-    ParameterReader *paraRdr = new ParameterReader;
-    paraRdr->readFromFile("parameters.dat");
-    paraRdr->readFromArguments(argc, argv);
-    paraRdr->echo();
-  
-    int run_mode = paraRdr->getVal("run_mode");
-    
-    string path="results";
-    
+    ParameterReader paraRdr;
+    paraRdr.readFromFile("parameters.dat");
+    paraRdr.readFromArguments(argc, argv);
+    paraRdr.echo();
+
+    int run_mode = paraRdr.getVal("run_mode");
+
+    std::string path="results";
+
     Stopwatch sw;
     Stopwatch sw_total;
     sw_total.tic();
     sw.tic();
 
-    int randomSeed = paraRdr->getVal("randomSeed");
+    int randomSeed = paraRdr.getVal("randomSeed");
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
-    
+
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     if (run_mode == 0) {
         // collect single particle spectra and vn
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         cout << "Error: unrecognized run_mode: " << run_mode << endl;
         exit(1);
     }
-    
+
     sw_total.toc();
     cout << "Program totally finished in " << sw_total.takeTime() << " sec." 
          << endl;
