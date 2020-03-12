@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 3.0)
 project (hadronic_afterburner_toolkit LANGUAGES CXX)
 
+set(libname "hadronic_afterburner_tools")
+set(exename "hadronic_afterburner_tools.e")
+
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_HOME_DIRECTORY}")
 
 find_package ( ZLIB REQUIRED )
@@ -22,6 +25,7 @@ else ()
 endif ()
 
 add_subdirectory (src)
+include_directories (src)
 
 option(unit_tests "Build all unit tests." OFF)
 if (unit_tests)
