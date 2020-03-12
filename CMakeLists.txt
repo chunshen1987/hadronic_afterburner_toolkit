@@ -6,6 +6,9 @@ set(exename "hadronic_afterburner_tools.e")
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_HOME_DIRECTORY}")
 
+set(CMAKE_INSTALL_RPATH ${CMAKE_HOME_DIRECTORY})
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 find_package ( ZLIB REQUIRED )
 if ( ZIB_FOUND )
     include_directories( ${ZLIB_INCLUDE_DIRS} )

@@ -1,5 +1,4 @@
 set (SOURCES
-  main.cpp
   arsenal.cpp
   ParameterReader.cpp
   particleSamples.cpp
@@ -14,7 +13,7 @@ set (SOURCES
   )
 
 add_library(${libname} SHARED ${SOURCES})
-add_executable (${exename} ${SOURCES})
+add_executable (${exename} main.cpp ${SOURCES})
 if (APPLE)
     set_target_properties (${libname} PROPERTIES COMPILE_FLAGS "-DAPPLE")
     set_target_properties (${exename} PROPERTIES COMPILE_FLAGS "-DAPPLE")

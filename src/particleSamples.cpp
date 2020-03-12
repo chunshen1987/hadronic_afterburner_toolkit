@@ -19,8 +19,8 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
 
     echo_level_       = paraRdr_.getVal("echo_level");
     event_buffer_size = paraRdr_.getVal("event_buffer_size");
-    read_in_mode_      = paraRdr_.getVal("read_in_mode");
-    run_mode_          = paraRdr_.getVal("run_mode");
+    read_in_mode_     = paraRdr_.getVal("read_in_mode");
+    run_mode_         = paraRdr_.getVal("run_mode");
 
     read_mixed_events = false;
     if (run_mode_ == 1 || run_mode_ == 3) {

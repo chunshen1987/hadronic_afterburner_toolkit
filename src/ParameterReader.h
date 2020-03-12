@@ -12,7 +12,8 @@ Version 1.01 (09-20-2011) Zhi Qiu
 class ParameterReader {
   private:
     // store all parameter names and values
-    std::vector<std::string>* names; std::vector<double>* values; 
+    std::vector<std::string> names;
+    std::vector<double> values;
 
     // all substd::string after "symbol" in "str" will be removed
     std::string removeComments(std::string str, std::string commentSymbol); 

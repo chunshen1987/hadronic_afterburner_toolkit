@@ -19,19 +19,11 @@ using AfterburnerUtil::trim;
 using AfterburnerUtil::toLower;
 
 //----------------------------------------------------------------------
-ParameterReader::ParameterReader() {
-    names = new vector<string>;
-    values = new vector<double>;
-}
+ParameterReader::ParameterReader() {}
 
 
 //----------------------------------------------------------------------
-ParameterReader::~ParameterReader() {
-    // in principle garbage collection for vector should be automatic
-    // just to be safe
-    delete names;
-    delete values;
-}
+ParameterReader::~ParameterReader() {}
 
 
 //----------------------------------------------------------------------
@@ -71,8 +63,8 @@ long ParameterReader::find(string name) const {
   Check if the parameter with "name" already exists in the internal 
   "names" list. If yes, it returns its
 */
-    for (unsigned int ii = 0; ii < names->size(); ii++) {
-        if ((*names)[ii].compare(toLower(trim(name))) == 0) {
+    for (unsigned int ii = 0; ii < names.size(); ii++) {
+        if (names[ii].compare(toLower(trim(name))) == 0) {
             return ii;
         }
     }
@@ -144,9 +136,9 @@ void ParameterReader::setVal(string name, double value) {
 */
     long idx = find(name);
     if (idx==-1) {
-          names->push_back(toLower(trim(name))); values->push_back(value);
+          names.push_back(toLower(trim(name))); values.push_back(value);
     } else {
-          (*names)[idx]=toLower(trim(name)); (*values)[idx]=value;
+          names[idx]=toLower(trim(name)); values[idx]=value;
     }
 }
 
@@ -158,7 +150,7 @@ double ParameterReader::getVal(string name) const {
 */
     long idx = find(name);
     if (idx!=-1) {
-        return (*values)[idx];
+        return values[idx];
     } else {
         cout << "ParameterReader::getVal error: parameter with name " 
              << name << " not found." << endl;
@@ -170,10 +162,10 @@ double ParameterReader::getVal(string name) const {
 //----------------------------------------------------------------------
 void ParameterReader::echo() {
     // Print out all stored parameters to screen.
-    if (names->size() == 0) 
+    if (names.size() == 0) 
         return;
-    for (unsigned int ii = 0; ii < names->size(); ii++) {
-        cout << (*names)[ii] << "=" << (*values)[ii] << "  ";
+    for (unsigned int ii = 0; ii < names.size(); ii++) {
+        cout << names[ii] << "=" << values[ii] << "  ";
     }
     cout << endl;
 }
