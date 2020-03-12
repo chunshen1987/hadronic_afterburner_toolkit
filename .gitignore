@@ -32,3 +32,4 @@
 
 build/*
 unit_tests/test_gzip_reader/HBT_correlation_function_*
+results/*
