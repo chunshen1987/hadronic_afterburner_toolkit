@@ -18,13 +18,11 @@ using std::scientific;
 using std::setprecision;
 
 singleParticleSpectra::singleParticleSpectra(
-            ParameterReader &paraRdr, std::string path,
-            std::shared_ptr<RandomUtil::Random> ran_gen) :
-        paraRdr_(paraRdr), path_(path) {
-
+            const ParameterReader &paraRdr, std::string path,
+            std::shared_ptr<RandomUtil::Random> ran_gen) : path_(path) {
     ran_gen_ptr = ran_gen;
 
-    particle_monval = paraRdr_.getVal("particle_monval");
+    particle_monval = paraRdr.getVal("particle_monval");
 
     if (particle_monval == 333) {
         // phi(1020) is reconstructed from (K^+, K^-) pairs
@@ -33,7 +31,7 @@ singleParticleSpectra::singleParticleSpectra(
         reconst_branching_ratio = 1.0;
     }
 
-    order_max = paraRdr_.getVal("order_max");
+    order_max = paraRdr.getVal("order_max");
     Qn_vector_real     = vector<double>(order_max, 0.);
     Qn_vector_imag     = vector<double>(order_max, 0.);
     Qn_vector_real_err = vector<double>(order_max, 0.);
@@ -43,9 +41,9 @@ singleParticleSpectra::singleParticleSpectra(
     Qn_diff_vector_real_err = new double* [order_max];
     Qn_diff_vector_imag_err = new double* [order_max];
 
-    npT = paraRdr_.getVal("npT");
-    pT_min = paraRdr_.getVal("pT_min");
-    pT_max = paraRdr_.getVal("pT_max");
+    npT = paraRdr.getVal("npT");
+    pT_min = paraRdr.getVal("pT_min");
+    pT_max = paraRdr.getVal("pT_max");
     dpT = (pT_max - pT_min)/(npT - 1 + 1e-15);
     pT_array          = vector<double>(npT, 0.);
     pT_mean_array     = vector<double>(npT, 0.);
@@ -67,26 +65,26 @@ singleParticleSpectra::singleParticleSpectra(
     }
     total_number_of_events = 0;
 
-    rap_type = paraRdr_.getVal("rap_type");
-    rap_min  = paraRdr_.getVal("rap_min");
-    rap_max  = paraRdr_.getVal("rap_max");
+    rap_type = paraRdr.getVal("rap_type");
+    rap_min  = paraRdr.getVal("rap_min");
+    rap_max  = paraRdr.getVal("rap_max");
 
     if (particle_monval == 9999)  // use pseudo-rapidity for all charged hadrons
         rap_type = 0;
 
-    rapidity_distribution_flag = paraRdr_.getVal("rapidity_distribution");
+    rapidity_distribution_flag = paraRdr.getVal("rapidity_distribution");
     if (rapidity_distribution_flag == 1) {
-        N_rap = paraRdr_.getVal("n_rap");
-        rapidity_dis_min = paraRdr_.getVal("rapidity_dis_min");
-        rapidity_dis_max = paraRdr_.getVal("rapidity_dis_max");
+        N_rap = paraRdr.getVal("n_rap");
+        rapidity_dis_min = paraRdr.getVal("rapidity_dis_min");
+        rapidity_dis_max = paraRdr.getVal("rapidity_dis_max");
         drap = (rapidity_dis_max - rapidity_dis_min)/(N_rap - 1.);
         rapidity_array = vector<double>(N_rap, 0.);
         dNdy_array     = vector<double>(N_rap, 0.);
         for (int i = 0; i < N_rap; i++)
             rapidity_array[i] = rapidity_dis_min + i*drap;
 
-        vn_rapidity_dis_pT_min = paraRdr_.getVal("vn_rapidity_dis_pT_min");
-        vn_rapidity_dis_pT_max = paraRdr_.getVal("vn_rapidity_dis_pT_max");
+        vn_rapidity_dis_pT_min = paraRdr.getVal("vn_rapidity_dis_pT_min");
+        vn_rapidity_dis_pT_max = paraRdr.getVal("vn_rapidity_dis_pT_max");
         vn_real_rapidity_dis_array     = new double* [N_rap];
         vn_imag_rapidity_dis_array     = new double* [N_rap];
         vn_real_rapidity_dis_array_err = new double* [N_rap];
@@ -106,10 +104,10 @@ singleParticleSpectra::singleParticleSpectra(
     }
 
     // check dN/dtau distribution
-    check_spatial_flag = paraRdr_.getVal("check_spatial_dis");
+    check_spatial_flag = paraRdr.getVal("check_spatial_dis");
     if (check_spatial_flag == 1) {
         // dN/dtau
-        intrinsic_dtau = paraRdr_.getVal("intrinsic_dtau");
+        intrinsic_dtau = paraRdr.getVal("intrinsic_dtau");
         N_tau = 50;
         tau_min = 0.6;
         tau_max = 15.0;
@@ -122,7 +120,7 @@ singleParticleSpectra::singleParticleSpectra(
         }
 
         // dN/dx
-        intrinsic_dx = paraRdr_.getVal("intrinsic_dx");
+        intrinsic_dx = paraRdr.getVal("intrinsic_dx");
         N_xpt = 50;
         spatial_x_min = -10.0;
         spatial_x_max = 10.0;
@@ -158,7 +156,7 @@ singleParticleSpectra::singleParticleSpectra(
         }
 
         // dN/deta_s
-        intrinsic_detas = paraRdr_.getVal("intrinsic_detas");
+        intrinsic_detas = paraRdr.getVal("intrinsic_detas");
         N_eta_s = 40;
         eta_s_min = - 3.0;
         eta_s_max = 3.0;
@@ -171,7 +169,7 @@ singleParticleSpectra::singleParticleSpectra(
         }
     }
 
-    flag_correlation = paraRdr_.getVal("compute_correlation");
+    flag_correlation = paraRdr.getVal("compute_correlation");
     if (flag_correlation == 1) {
         Qn2_vector     = vector<double>(order_max, 0.);
         Qn2_vector_err = vector<double>(order_max, 0.);
@@ -207,7 +205,7 @@ singleParticleSpectra::singleParticleSpectra(
             C_nmk_eta12_err[i].resize(N_rap, 0.);
             C_nmk_eta13_err[i].resize(N_rap, 0.);
         }
-        flag_charge_dependence = paraRdr_.getVal("flag_charge_dependence");
+        flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
         if (particle_monval != 9999) flag_charge_dependence = 0;
         if (flag_charge_dependence == 1) {
             Cn2_ss     = vector<double> (order_max, 0.);

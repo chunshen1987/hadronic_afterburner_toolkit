@@ -57,8 +57,16 @@ void Analysis::PerformAnalysis() {
 
 
 void Analysis::FlowAnalysis() {
+    int compute_correlation = paraRdr_.getVal("compute_correlation");
+    if (compute_correlation == 1)
+        paraRdr_.setVal("compute_correlation", 0);
+    int flag_charge_dependence = paraRdr_.getVal("flag_charge_dependence");
+    if (flag_charge_dependence == 1)
+        paraRdr_.setVal("flag_charge_dependence", 0);
+
     // first define all the analysis sets
     std::vector<singleParticleSpectra*> spvn;
+
     // charged hadron first
     paraRdr_.setVal("particle_monval", 9999);
     paraRdr_.setVal("rap_type", 0);
@@ -116,6 +124,23 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", 333);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+
+    // lastly, if we want to compute multi-particle correlations within
+    // the same UrQMD events
+    if (compute_correlation == 1) {
+        paraRdr_.setVal("compute_correlation", 1);
+        paraRdr_.setVal("flag_charge_dependence", flag_charge_dependence);
+        paraRdr_.setVal("particle_monval", 9999);
+        paraRdr_.setVal("rap_type", 0);
+        paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.2);
+        paraRdr_.setVal("vn_rapidity_dis_pT_max", 2.0);
+        paraRdr_.setVal("rap_min", -1.0); paraRdr_.setVal("rap_max", 1.0);
+        spvn.push_back(
+                new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+        paraRdr_.setVal("rap_min", -2.0); paraRdr_.setVal("rap_max", 2.0);
+        spvn.push_back(
+                new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    }
 
     // start the loop
     int event_id = 0;

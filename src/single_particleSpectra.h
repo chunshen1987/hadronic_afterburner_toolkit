@@ -12,7 +12,6 @@
 
 class singleParticleSpectra {
  private:
-    const ParameterReader paraRdr_;
     const std::string path_;
     std::shared_ptr<particleSamples> particle_list;
 
@@ -126,7 +125,7 @@ class singleParticleSpectra {
     double *eta_s_array, *dNdetas_array;
 
  public:
-    singleParticleSpectra(ParameterReader &paraRdr, std::string path,
+    singleParticleSpectra(const ParameterReader &paraRdr, std::string path,
                           std::shared_ptr<RandomUtil::Random> ran_gen);
     ~singleParticleSpectra();
 
