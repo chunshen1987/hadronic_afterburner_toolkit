@@ -24,6 +24,40 @@ TEST(particleSamples, DefaultConstructor) {
     EXPECT_EQ(0, 0);
 }
 
+
+TEST(particleSamples, filter_particles_from_events) {
+    ParameterReader paraRdr;
+    paraRdr.readFromFile("parameters.dat");
+    paraRdr.setVal("run_mode", 0);
+    paraRdr.setVal("read_in_mode", 0);
+    paraRdr.setVal("particle_monval", 321);
+    string path="test_reader_files";
+    int randomSeed = 0;
+    std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
+                                    new RandomUtil::Random(randomSeed));
+    particleSamples particle_list(paraRdr, path, ran_gen_ptr);
+    particle_list.read_in_particle_samples();
+    particle_list.filter_particles_from_events(321);
+    int nev = particle_list.get_number_of_events();
+    EXPECT_EQ(nev, 2);
+
+    int n_particles = particle_list.get_number_of_particles(0);
+    EXPECT_EQ(n_particles, 11);
+    n_particles = particle_list.get_number_of_particles(1);
+    EXPECT_EQ(n_particles, 14);
+
+    paraRdr.setVal("particle_monval", 2212);
+    particle_list.filter_particles_from_events(2212);
+    nev = particle_list.get_number_of_events();
+    EXPECT_EQ(nev, 2);
+
+    n_particles = particle_list.get_number_of_particles(0);
+    EXPECT_EQ(n_particles, 1);
+    n_particles = particle_list.get_number_of_particles(1);
+    EXPECT_EQ(n_particles, 3);
+}
+
+
 TEST(particleSamples, read_in_particle_samples_OSCAR) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
@@ -35,7 +69,7 @@ TEST(particleSamples, read_in_particle_samples_OSCAR) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
-    particle_list.read_in_particle_samples();
+    particle_list.read_in_particle_samples_and_filter();
     int nev = particle_list.get_number_of_events();
     EXPECT_EQ(nev, 2);
 
@@ -44,6 +78,7 @@ TEST(particleSamples, read_in_particle_samples_OSCAR) {
     n_particles = particle_list.get_number_of_particles(1);
     EXPECT_EQ(n_particles, 27);
 }
+
 
 TEST(particleSamples, read_in_particle_samples_OSCAR_mixed_event) {
     ParameterReader paraRdr;
@@ -56,7 +91,7 @@ TEST(particleSamples, read_in_particle_samples_OSCAR_mixed_event) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
-    particle_list.read_in_particle_samples_mixed_event();
+    particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
     EXPECT_EQ(nev, 2);
 
@@ -65,6 +100,7 @@ TEST(particleSamples, read_in_particle_samples_OSCAR_mixed_event) {
     n_particles = particle_list.get_number_of_particles_mixed_event(1);
     EXPECT_EQ(n_particles, 27);
 }
+
 
 TEST(particleSamples, read_in_particle_samples_UrQMD) {
     ParameterReader paraRdr;
@@ -78,6 +114,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD) {
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples();
+    particle_list.filter_particles_from_events(211);
     int nev = particle_list.get_number_of_events();
     EXPECT_EQ(nev, 2);
 
@@ -86,6 +123,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD) {
     n_particles = particle_list.get_number_of_particles(1);
     EXPECT_EQ(n_particles, 97);
 }
+
 
 TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event) {
     ParameterReader paraRdr;
@@ -98,7 +136,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
-    particle_list.read_in_particle_samples_mixed_event();
+    particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
     EXPECT_EQ(nev, 2);
 
@@ -107,6 +145,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event) {
     n_particles = particle_list.get_number_of_particles_mixed_event(1);
     EXPECT_EQ(n_particles, 97);
 }
+
 
 TEST(particleSamples, read_in_particle_samples_UrQMD_zipped) {
     ParameterReader paraRdr;
@@ -120,6 +159,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_zipped) {
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples();
+    particle_list.filter_particles_from_events(211);
     int nev = particle_list.get_number_of_events();
     EXPECT_EQ(nev, 2);
 
@@ -128,6 +168,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_zipped) {
     n_particles = particle_list.get_number_of_particles(1);
     EXPECT_EQ(n_particles, 97);
 }
+
 
 TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event_zipped) {
     ParameterReader paraRdr;
@@ -140,7 +181,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event_zipped) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
-    particle_list.read_in_particle_samples_mixed_event();
+    particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
     EXPECT_EQ(nev, 2);
 
@@ -149,6 +190,7 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event_zipped) {
     n_particles = particle_list.get_number_of_particles_mixed_event(1);
     EXPECT_EQ(n_particles, 97);
 }
+
 
 TEST(particleSamples, read_in_particle_samples_gzipped) {
     ParameterReader paraRdr;
@@ -161,7 +203,7 @@ TEST(particleSamples, read_in_particle_samples_gzipped) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
-    particle_list.read_in_particle_samples();
+    particle_list.read_in_particle_samples_and_filter();
     int nev = particle_list.get_number_of_events();
     EXPECT_EQ(nev, 2);
 
@@ -170,6 +212,7 @@ TEST(particleSamples, read_in_particle_samples_gzipped) {
     n_particles = particle_list.get_number_of_particles(1);
     EXPECT_EQ(n_particles, 635);
 }
+
 
 TEST(particleSamples, read_in_particle_samples_mixed_event_gzipped) {
     ParameterReader paraRdr;
@@ -182,7 +225,7 @@ TEST(particleSamples, read_in_particle_samples_mixed_event_gzipped) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
-    particle_list.read_in_particle_samples_mixed_event();
+    particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
     EXPECT_EQ(nev, 2);
 
@@ -205,7 +248,7 @@ TEST(particleSamples, perform_resonance_feed_down) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
-    particle_list.read_in_particle_samples();
+    particle_list.read_in_particle_samples_and_filter();
     int nev = particle_list.get_number_of_events();
     EXPECT_EQ(nev, 2);
 
@@ -214,6 +257,7 @@ TEST(particleSamples, perform_resonance_feed_down) {
     n_particles = particle_list.get_number_of_particles(1);
     EXPECT_EQ(n_particles, 780);
 }
+
 
 TEST(particleSamples, map_urqmd_to_pdg) {
     ParameterReader paraRdr;
