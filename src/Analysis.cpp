@@ -8,6 +8,7 @@
 #include "single_particleSpectra.h"
 #include "HBT_correlation.h"
 #include "particle_yield_distribution.h"
+#include "BalanceFunction.h"
 
 using std::vector;
 
@@ -44,6 +45,13 @@ void Analysis::PerformAnalysis() {
         FlowAnalysis();
     } else if (run_mode_ == 1) {
         HBTAnalysis();
+    } else if (run_mode_ == 2) {
+        ParticleYieldDistributionAnalysis();
+    } else if (run_mode_ == 3) {
+        BalanceFunctionAnalysis();
+    } else {
+        messager << "Error: unrecognized run_mode: " << run_mode_;
+        messager.flush("error");
     }
 }
 
@@ -167,4 +175,25 @@ void Analysis::ParticleYieldDistributionAnalysis() {
         event_id += nev;
     }
     partN_dis.output_particle_yield_distribution();
+}
+
+
+void Analysis::BalanceFunctionAnalysis() {
+    BalanceFunction BF_analysis(paraRdr_, path_, ran_gen_ptr_);
+    // start the loop
+    int event_id = 0;
+    while (!particle_list_->end_of_file()) {
+        messager << "Reading event: " << event_id + 1 << " ... ";
+        messager.flush("info");
+        particle_list_->read_in_particle_samples_and_filter();
+        particle_list_->read_in_particle_samples_mixed_event_and_filter();
+        int nev = particle_list_->get_number_of_events();
+        messager << "nev = " << nev;
+        messager.flush("info");
+        messager.info(" processing ...");
+        BF_analysis.calculate_balance_function(particle_list_);
+        messager.info("done!");
+        event_id += nev;
+    }
+    BF_analysis.output_balance_function();
 }

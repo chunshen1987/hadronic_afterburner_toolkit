@@ -13,13 +13,10 @@ using std::endl;
 
 BalanceFunction::BalanceFunction(
         const ParameterReader &paraRdr, const std::string path,
-        std::shared_ptr<RandomUtil::Random> ran_gen,
-        std::shared_ptr<particleSamples> particle_list_in) :
+        std::shared_ptr<RandomUtil::Random> ran_gen) :
     paraRdr_(paraRdr), path_(path) {
 
     ran_gen_ptr = ran_gen;
-
-    particle_list = particle_list_in;
 
     particle_monval_a = paraRdr_.getVal("particle_alpha");
     particle_monval_b = paraRdr_.getVal("particle_beta");
@@ -62,56 +59,39 @@ BalanceFunction::BalanceFunction(
 }
 
 
-void BalanceFunction::calculate_balance_function() {
-    int event_id = 0;
+void BalanceFunction::calculate_balance_function(
+                std::shared_ptr<particleSamples> particle_list_in) {
+    set_particle_list(particle_list_in);
+    auto plist_a    = particle_list->get_balance_function_particle_list_a();
+    auto plist_b    = particle_list->get_balance_function_particle_list_b();
+    auto plist_abar = particle_list->get_balance_function_particle_list_abar();
+    auto plist_bbar = particle_list->get_balance_function_particle_list_bbar();
 
-    while (!particle_list->end_of_file()) {
-        cout << "Reading event: " << event_id + 1 << " ..." << std::flush;
+    N_b    += get_number_of_particles(plist_b);
+    N_bbar += get_number_of_particles(plist_bbar);
+    messager.info("calculating C_ab ... ");
+    combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
+    messager.info("calculating C_abarbbar ... ");
+    combine_and_bin_particle_pairs(C_abarbbar, plist_abar, plist_bbar);
+    messager.info("calculating C_abbar ... ");
+    combine_and_bin_particle_pairs(C_abbar, plist_a, plist_bbar);
+    messager.info("calculating C_abarb ... ");
+    combine_and_bin_particle_pairs(C_abarb, plist_abar, plist_b);
 
-        particle_list->read_in_particle_samples_and_filter();
-        particle_list->read_in_particle_samples_mixed_event_and_filter();
+    messager.info(
+        "calculating correlatoin function using mixed events ... ");
 
-        int nev = particle_list->get_number_of_events();
-        messager << "nev = " << nev;
-        messager.flush("info");
+    auto plist_b_mixed_event    = particle_list->get_balance_function_particle_list_b_mixed_event();
+    auto plist_bbar_mixed_event = particle_list->get_balance_function_particle_list_bbar_mixed_event();
 
-        messager.info(" processing ...");
-        auto plist_a    = particle_list->get_balance_function_particle_list_a();
-        auto plist_b    = particle_list->get_balance_function_particle_list_b();
-        auto plist_abar = particle_list->get_balance_function_particle_list_abar();
-        auto plist_bbar = particle_list->get_balance_function_particle_list_bbar();
-
-        N_b    += get_number_of_particles(plist_b);
-        N_bbar += get_number_of_particles(plist_bbar);
-        messager.info("calculating C_ab ... ");
-        combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
-        messager.info("calculating C_abarbbar ... ");
-        combine_and_bin_particle_pairs(C_abarbbar, plist_abar, plist_bbar);
-        messager.info("calculating C_abbar ... ");
-        combine_and_bin_particle_pairs(C_abbar, plist_a, plist_bbar);
-        messager.info("calculating C_abarb ... ");
-        combine_and_bin_particle_pairs(C_abarb, plist_abar, plist_b);
-
-        messager.info(
-            "calculating correlatoin function using mixed events ... ");
-
-        auto plist_a_mixed_event    = particle_list->get_balance_function_particle_list_a_mixed_event();
-        auto plist_b_mixed_event    = particle_list->get_balance_function_particle_list_b_mixed_event();
-        auto plist_abar_mixed_event = particle_list->get_balance_function_particle_list_abar_mixed_event();
-        auto plist_bbar_mixed_event = particle_list->get_balance_function_particle_list_bbar_mixed_event();
-
-        combine_and_bin_mixed_particle_pairs(
-                        C_mixed_ab, plist_a, plist_b_mixed_event);
-        combine_and_bin_mixed_particle_pairs(
-                        C_mixed_abarbbar, plist_abar, plist_bbar_mixed_event);
-        combine_and_bin_mixed_particle_pairs(
-                        C_mixed_abbar, plist_a, plist_bbar_mixed_event);
-        combine_and_bin_mixed_particle_pairs(
-                        C_mixed_abbar, plist_abar, plist_b_mixed_event);
-
-        event_id += nev;
-    }
-    output_balance_function();
+    combine_and_bin_mixed_particle_pairs(
+                    C_mixed_ab, plist_a, plist_b_mixed_event);
+    combine_and_bin_mixed_particle_pairs(
+                    C_mixed_abarbbar, plist_abar, plist_bbar_mixed_event);
+    combine_and_bin_mixed_particle_pairs(
+                    C_mixed_abbar, plist_a, plist_bbar_mixed_event);
+    combine_and_bin_mixed_particle_pairs(
+                    C_mixed_abbar, plist_abar, plist_b_mixed_event);
 }
 
 

@@ -50,13 +50,16 @@ class BalanceFunction {
  public:
     BalanceFunction(const ParameterReader &paraRdr,
                     const std::string path,
-                    std::shared_ptr<RandomUtil::Random> ran_gen,
-                    std::shared_ptr<particleSamples> particle_list_in);
+                    std::shared_ptr<RandomUtil::Random> ran_gen);
     ~BalanceFunction() {};
 
+    void set_particle_list(std::shared_ptr<particleSamples> particle_list_in) {
+        particle_list = particle_list_in;
+    }
     bool check_same_particle(const particle_info &lhs,
                              const particle_info &rhs);
-    void calculate_balance_function();
+    void calculate_balance_function(
+                std::shared_ptr<particleSamples> particle_list_in);
     void combine_and_bin_particle_pairs(
                 std::vector<std::vector<double>> &hist,
                 const std::vector< std::vector<particle_info>* >* plist_a,
