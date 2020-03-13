@@ -40,6 +40,8 @@ void Analysis::FlowAnalysis() {
     // start the loop
     int event_id = 0;
     singleParticleSpectra pion_p(paraRdr_, path_, ran_gen_ptr_);
+    paraRdr_.setVal("particle_monval", 321);
+    singleParticleSpectra kaon_p(paraRdr_, path_, ran_gen_ptr_);
     while (!particle_list_->end_of_file()) {
         messager << "Reading event: " << event_id + 1 << " ... ";
         messager.flush("info");
@@ -50,6 +52,10 @@ void Analysis::FlowAnalysis() {
         int particle_monval = 211;
         particle_list_->filter_particles_from_events(particle_monval);
         pion_p.calculate_Qn_vector_shell(particle_list_);
+        particle_monval = 321;
+        particle_list_->filter_particles_from_events(particle_monval);
+        kaon_p.calculate_Qn_vector_shell(particle_list_);
     }
     pion_p.output_spectra_and_Qn_results();
+    kaon_p.output_spectra_and_Qn_results();
 }
