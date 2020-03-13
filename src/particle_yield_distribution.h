@@ -30,12 +30,14 @@ class particle_yield_distribution {
     int *number_of_events;
 
  public:
-    particle_yield_distribution(
-            ParameterReader &paraRdr, std::string path,
-            std::shared_ptr<particleSamples> particle_list_in);
+    particle_yield_distribution(ParameterReader &paraRdr, std::string path);
     ~particle_yield_distribution();
 
-    void collect_particle_yield_distribution();
+    void set_particle_list(std::shared_ptr<particleSamples> particle_list_in) {
+        particle_list = particle_list_in;
+    }
+    void collect_particle_yield_distribution(
+                        std::shared_ptr<particleSamples> particle_list_in);
     void collect_particle_yield(int event_id);
     void output_particle_yield_distribution();
 };

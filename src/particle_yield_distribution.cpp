@@ -11,12 +11,8 @@
 using namespace std;
 
 particle_yield_distribution::particle_yield_distribution(
-                ParameterReader &paraRdr, std::string path,
-                std::shared_ptr<particleSamples> particle_list_in) :
+                ParameterReader &paraRdr, std::string path) :
         paraRdr_(paraRdr), path_(path) {
-
-    particle_list = particle_list_in;
-
     particle_monval = paraRdr_.getVal("particle_monval");
     if (particle_monval == 333) {
         // phi(1020) is reconstructed from (K^+, K^-) pairs
@@ -48,23 +44,14 @@ particle_yield_distribution::~particle_yield_distribution() {
     delete [] number_of_events;
 }
 
-void particle_yield_distribution::collect_particle_yield_distribution() {
-    int event_id = 0;
-    while (!particle_list->end_of_file()) {
-        cout << "Reading event: " << event_id + 1 << " ... " << flush;
-        particle_list->read_in_particle_samples_and_filter();
-        int nev = particle_list->get_number_of_events();
-        messager << "nev = " << nev;
-        messager.flush("info");
-        messager.info(" processing ...");
-        for (int iev = 0; iev < nev; iev++) {
-            event_id++;
-            collect_particle_yield(iev);
-        }
-        messager.info("done!");
+void particle_yield_distribution::collect_particle_yield_distribution(
+                        std::shared_ptr<particleSamples> particle_list_in) {
+    set_particle_list(particle_list_in);
+    int nev = particle_list->get_number_of_events();
+    for (int iev = 0; iev < nev; iev++) {
+        collect_particle_yield(iev);
     }
-    total_number_of_events = event_id;
-    output_particle_yield_distribution();
+    total_number_of_events += nev;
 }
 
 void particle_yield_distribution::collect_particle_yield(int event_id) {

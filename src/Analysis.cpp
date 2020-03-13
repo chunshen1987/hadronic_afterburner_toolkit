@@ -7,6 +7,7 @@
 #include "Analysis.h"
 #include "single_particleSpectra.h"
 #include "HBT_correlation.h"
+#include "particle_yield_distribution.h"
 
 using std::vector;
 
@@ -41,6 +42,8 @@ void Analysis::PerformAnalysis() {
     if (run_mode_ == 0) {
         // collect single particle spectra and vn
         FlowAnalysis();
+    } else if (run_mode_ == 1) {
+        HBTAnalysis();
     }
 }
 
@@ -125,6 +128,7 @@ void Analysis::FlowAnalysis() {
         ipart->output_spectra_and_Qn_results();
 }
 
+
 void Analysis::HBTAnalysis() {
     HBT_correlation HBT_analysis(paraRdr_, path_, ran_gen_ptr_);
     // start the loop
@@ -143,4 +147,24 @@ void Analysis::HBTAnalysis() {
         event_id += nev;
     }
     HBT_analysis.output_HBTcorrelation();
+}
+
+
+void Analysis::ParticleYieldDistributionAnalysis() {
+    particle_yield_distribution partN_dis(paraRdr_, path_);
+    // start the loop
+    int event_id = 0;
+    while (!particle_list_->end_of_file()) {
+        messager << "Reading event: " << event_id + 1 << " ... ";
+        messager.flush("info");
+        particle_list_->read_in_particle_samples_and_filter();
+        int nev = particle_list_->get_number_of_events();
+        messager << "nev = " << nev;
+        messager.flush("info");
+        messager.info(" processing ...");
+        partN_dis.collect_particle_yield_distribution(particle_list_);
+        messager.info("done!");
+        event_id += nev;
+    }
+    partN_dis.output_particle_yield_distribution();
 }

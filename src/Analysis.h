@@ -30,6 +30,7 @@ class Analysis {
     void PerformAnalysis();
     void FlowAnalysis();
     void HBTAnalysis();
+    void ParticleYieldDistributionAnalysis();
 };
 
 #endif  // SRC_analysis_h_
