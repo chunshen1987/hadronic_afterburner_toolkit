@@ -308,63 +308,48 @@ HBT_correlation::~HBT_correlation() {
 void HBT_correlation::calculate_HBT_correlation_function(
                 std::shared_ptr<particleSamples> particle_list_in) {
     set_particle_list(particle_list_in);
-    //int event_id = 0;
-    //while (!particle_list->end_of_file()) {
-    //    messager << "Reading event: " << event_id + 1 << " ... ";
-    //    messager.flush("info");
+    int nev = particle_list->get_number_of_events();
+    if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
+        calculate_flow_event_plane_angle(2);
+    }
 
-    //    particle_list->read_in_particle_samples_and_filter();
-    //    particle_list->read_in_particle_samples_mixed_event_and_filter();
-    //    int nev = particle_list->get_number_of_events();
-    //    messager << "nev = " << nev;
-    //    messager.flush("info");
-
-    //    messager.info(" processing ...");
-
-        int nev = particle_list->get_number_of_events();
-        if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
-            calculate_flow_event_plane_angle(2);
-        }
-
-        // first pairs from the same event
-        number_of_oversample_events = std::min(nev,
-                                               number_of_oversample_events);
-        int n_skip_ev = static_cast<int>(nev/number_of_oversample_events);
-        messager.info("Compute pairs from the same event ...");
-        for (int iev = 0; iev < n_skip_ev; iev++) {
-            messager << "progess: " << iev << "/" << n_skip_ev;
-            messager.flush("info");
-
-            std::vector<int> event_list(number_of_oversample_events, 0);
-            for (int isample = 0; isample < number_of_oversample_events;
-                    isample++) {
-                event_list[isample] = iev + isample*n_skip_ev;
-            }
-            combine_and_bin_particle_pairs(event_list);
-        }
-
-        // then pairs from mixed events
-        int mixed_nev = particle_list->get_number_of_mixed_events();
-        messager << "nev_mixed = " << mixed_nev;
+    // first pairs from the same event
+    number_of_oversample_events = std::min(nev,
+                                           number_of_oversample_events);
+    int n_skip_ev = static_cast<int>(nev/number_of_oversample_events);
+    messager.info("Compute pairs from the same event ...");
+    for (int iev = 0; iev < n_skip_ev; iev++) {
+        messager << "progess: " << iev << "/" << n_skip_ev;
         messager.flush("info");
-        number_of_mixed_events = std::min(number_of_mixed_events, mixed_nev);
-        messager.info("Compute pairs from the mixed event ...");
-        for (int iev = 0; iev < nev; iev++) {
-            messager << "progess: " << iev << "/" << nev;
-            messager.flush("info");
 
-            std::vector<int> mixed_event_list(number_of_mixed_events, 0);
-            int count = 0;
-            while (count < number_of_mixed_events) {
-                int mixed_event_id = (
-                        ran_gen_ptr.lock()->rand_int_uniform() % mixed_nev);
-                mixed_event_list[count] = mixed_event_id;
-                count++;
-            }
-            combine_and_bin_particle_pairs_mixed_events(iev, mixed_event_list);
-            //event_id++;
+        std::vector<int> event_list(number_of_oversample_events, 0);
+        for (int isample = 0; isample < number_of_oversample_events;
+                isample++) {
+            event_list[isample] = iev + isample*n_skip_ev;
         }
-    //}
+        combine_and_bin_particle_pairs(event_list);
+    }
+
+    // then pairs from mixed events
+    int mixed_nev = particle_list->get_number_of_mixed_events();
+    messager << "nev_mixed = " << mixed_nev;
+    messager.flush("info");
+    number_of_mixed_events = std::min(number_of_mixed_events, mixed_nev);
+    messager.info("Compute pairs from the mixed event ...");
+    for (int iev = 0; iev < nev; iev++) {
+        messager << "progess: " << iev << "/" << nev;
+        messager.flush("info");
+
+        std::vector<int> mixed_event_list(number_of_mixed_events, 0);
+        int count = 0;
+        while (count < number_of_mixed_events) {
+            int mixed_event_id = (
+                    ran_gen_ptr.lock()->rand_int_uniform() % mixed_nev);
+            mixed_event_list[count] = mixed_event_id;
+            count++;
+        }
+        combine_and_bin_particle_pairs_mixed_events(iev, mixed_event_list);
+    }
 }
 
 void HBT_correlation::output_HBTcorrelation() {
