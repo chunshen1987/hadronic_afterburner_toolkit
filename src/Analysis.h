@@ -27,6 +27,7 @@ class Analysis {
                              int argc, char *argv[]);
 
     void InitializeAnalysis();
+    void PerformAnalysis();
     void FlowAnalysis();
 };
 

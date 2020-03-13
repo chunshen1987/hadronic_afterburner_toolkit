@@ -555,7 +555,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
         if (check_spatial_flag == 1)
             check_dNdSV(iev);
     }
-    messager.info("done!");
+    //messager.info("done!");
     //}
 
     total_number_of_events += nev;

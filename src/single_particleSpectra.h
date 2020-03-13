@@ -134,6 +134,8 @@ class singleParticleSpectra {
     void calculate_Qn_vector_shell(
                           std::shared_ptr<particleSamples> particle_list_in);
 
+    int get_monval() const {return(particle_monval);}
+
     //! this function computes the pT-integrated and pT-differential Qn vector
     //! within a given rapidity region in one event
     void calculate_Qn_vector(int event_id,
