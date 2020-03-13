@@ -139,7 +139,10 @@ class particleSamples {
     void perform_particle_reconstruction();
 
     int read_in_particle_samples();
+    void read_in_particle_samples_and_filter();
     int read_in_particle_samples_mixed_event();
+    void read_in_particle_samples_mixed_event_and_filter();
+
     int read_in_particle_samples_OSCAR();
     int read_in_particle_samples_OSCAR_mixed_event();
     int read_in_particle_samples_JAM();
@@ -158,10 +161,12 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_gzipped();
     void clear_out_previous_record(
                     std::vector< std::vector<particle_info>* >* plist);
-    void filter_particles(
-                    int PoI_monval,
-                    std::vector< std::vector<particle_info>* >* full_list,
-                    std::vector< std::vector<particle_info>* >* filted_list);
+
+    void filter_particles_from_events(const int PoI_monval);
+
+    void filter_particles(const int PoI_monval,
+            std::vector< std::vector<particle_info>* >* full_list,
+            std::vector< std::vector<particle_info>* >* filted_list);
     void filter_particles_into_lists(
                     std::vector< std::vector<particle_info>* >* full_list);
 

@@ -61,23 +61,34 @@ int main(int argc, char *argv[]) {
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
                                     new RandomUtil::Random(randomSeed));
 
-    particleSamples particle_list(paraRdr, path, ran_gen_ptr);
+    auto particle_list = std::make_shared<particleSamples> (paraRdr, path,
+                                                            ran_gen_ptr);
     if (run_mode == 0) {
         // collect single particle spectra and vn
-        singleParticleSpectra testSP(paraRdr, path, ran_gen_ptr,
-                                     &particle_list);
-        testSP.calculate_Qn_vector_shell();
+        singleParticleSpectra testSP(paraRdr, path, ran_gen_ptr);
+        int event_id = 0;
+        while (!particle_list->end_of_file()) {
+            std::cout << "Reading event: " << event_id + 1 << " ... "
+                      << std::endl;
+            int nev = particle_list->read_in_particle_samples();
+            std::cout << "nev = " << nev << std::endl;
+            std::cout << " processing ..." << std::endl;
+            int monval = paraRdr.getVal("particle_monval");
+            particle_list->filter_particles_from_events(monval);
+            testSP.calculate_Qn_vector_shell(particle_list);
+        }
+        testSP.output_spectra_and_Qn_results();
     } else if (run_mode == 1) {
         // compute HBT correlation function and HBT radii
-        HBT_correlation test(paraRdr, path, ran_gen_ptr, &particle_list);
+        HBT_correlation test(paraRdr, path, ran_gen_ptr, particle_list);
         test.calculate_HBT_correlation_function();
     } else if (run_mode == 2) {
         // collect event-by-event particle yield distribution
-        particle_yield_distribution test_dis(paraRdr, path, &particle_list);
+        particle_yield_distribution test_dis(paraRdr, path, particle_list);
         test_dis.collect_particle_yield_distribution();
     } else if (run_mode == 3) {
         // compute balance function
-        BalanceFunction test(paraRdr, path, ran_gen_ptr, &particle_list);
+        BalanceFunction test(paraRdr, path, ran_gen_ptr, particle_list);
         test.calculate_balance_function();
     } else {
         cout << "Error: unrecognized run_mode: " << run_mode << endl;

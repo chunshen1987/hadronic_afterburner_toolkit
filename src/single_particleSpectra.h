@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "ParameterReader.h"
 #include "particleSamples.h"
@@ -13,9 +14,9 @@ class singleParticleSpectra {
  private:
     const ParameterReader paraRdr_;
     const std::string path_;
-    particleSamples *particle_list;
+    std::shared_ptr<particleSamples> particle_list;
 
-    std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
+    std::shared_ptr<RandomUtil::Random> ran_gen_ptr;
 
     pretty_ostream messager;
 
@@ -126,12 +127,12 @@ class singleParticleSpectra {
 
  public:
     singleParticleSpectra(ParameterReader &paraRdr, std::string path,
-                          std::shared_ptr<RandomUtil::Random> ran_gen,
-                          particleSamples *particle_list_in);
+                          std::shared_ptr<RandomUtil::Random> ran_gen);
     ~singleParticleSpectra();
 
     //! This is a driver function to compute the Qn flow vector
-    void calculate_Qn_vector_shell();
+    void calculate_Qn_vector_shell(
+                          std::shared_ptr<particleSamples> particle_list_in);
 
     //! this function computes the pT-integrated and pT-differential Qn vector
     //! within a given rapidity region in one event
@@ -164,6 +165,8 @@ class singleParticleSpectra {
         std::vector<std::vector<double>> &event_Qn_diff_real_err,
         std::vector<std::vector<double>> &event_Qn_diff_imag,
         std::vector<std::vector<double>> &event_Qn_diff_imag_err);
+
+    void output_spectra_and_Qn_results();
 
     //! This function outputs the event averaged particle pT-spectra
     //! and flow coefficients

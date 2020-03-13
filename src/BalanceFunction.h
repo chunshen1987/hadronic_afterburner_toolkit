@@ -17,7 +17,7 @@ class BalanceFunction {
  private:
     const ParameterReader paraRdr_;
     const std::string path_;
-    particleSamples *particle_list;
+    std::shared_ptr<particleSamples> particle_list;
 
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
@@ -51,7 +51,7 @@ class BalanceFunction {
     BalanceFunction(const ParameterReader &paraRdr,
                     const std::string path,
                     std::shared_ptr<RandomUtil::Random> ran_gen,
-                    particleSamples *particle_list_in);
+                    std::shared_ptr<particleSamples> particle_list_in);
     ~BalanceFunction() {};
 
     bool check_same_particle(const particle_info &lhs,

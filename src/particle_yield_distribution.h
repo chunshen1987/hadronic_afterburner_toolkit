@@ -11,7 +11,7 @@ class particle_yield_distribution {
  private:
     const ParameterReader paraRdr_;
     const std::string path_;
-    particleSamples *particle_list;
+    std::shared_ptr<particleSamples> particle_list;
 
     pretty_ostream messager;
 
@@ -30,8 +30,9 @@ class particle_yield_distribution {
     int *number_of_events;
 
  public:
-    particle_yield_distribution(ParameterReader &paraRdr, std::string path,
-                                particleSamples *particle_list_in);
+    particle_yield_distribution(
+            ParameterReader &paraRdr, std::string path,
+            std::shared_ptr<particleSamples> particle_list_in);
     ~particle_yield_distribution();
 
     void collect_particle_yield_distribution();

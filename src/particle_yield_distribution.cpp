@@ -11,8 +11,8 @@
 using namespace std;
 
 particle_yield_distribution::particle_yield_distribution(
-                                ParameterReader &paraRdr, std::string path,
-                                particleSamples *particle_list_in) :
+                ParameterReader &paraRdr, std::string path,
+                std::shared_ptr<particleSamples> particle_list_in) :
         paraRdr_(paraRdr), path_(path) {
 
     particle_list = particle_list_in;
@@ -52,7 +52,7 @@ void particle_yield_distribution::collect_particle_yield_distribution() {
     int event_id = 0;
     while (!particle_list->end_of_file()) {
         cout << "Reading event: " << event_id + 1 << " ... " << flush;
-        particle_list->read_in_particle_samples();
+        particle_list->read_in_particle_samples_and_filter();
         int nev = particle_list->get_number_of_events();
         messager << "nev = " << nev;
         messager.flush("info");

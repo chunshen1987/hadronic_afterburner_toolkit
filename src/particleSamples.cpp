@@ -361,15 +361,19 @@ int particleSamples::read_in_particle_samples() {
 
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list);
+    return(full_particle_list->size());
+}
 
-    filter_particles_into_lists(full_particle_list);
 
-    // reconst phi(1020) from K^+ and K^- pair
-    if (reconst_flag == 1)
-        perform_particle_reconstruction();
+void particleSamples::read_in_particle_samples_and_filter() {
+    read_in_particle_samples();
 
-    clear_out_previous_record(full_particle_list);
-    return(0);
+    filter_particles_from_events(particle_monval);
+    //filter_particles_into_lists(full_particle_list);
+
+    //// reconst phi(1020) from K^+ and K^- pair
+    //if (reconst_flag == 1)
+    //    perform_particle_reconstruction();
 }
 
 
@@ -411,6 +415,13 @@ int particleSamples::read_in_particle_samples_mixed_event() {
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list_mixed_event);
 
+    return(full_particle_list_mixed_event->size());
+}
+
+
+void particleSamples::read_in_particle_samples_mixed_event_and_filter() {
+    read_in_particle_samples_mixed_event();
+
     filter_particles(particle_monval, full_particle_list_mixed_event,
                      particle_list_mixed_event);
     if (run_mode_ == 3) {
@@ -423,8 +434,6 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         filter_particles(particle_monval_bbar, full_particle_list_mixed_event,
                          balance_function_particle_bbar_mixed_event);
     }
-
-    return(0);
 }
 
 
@@ -930,10 +939,51 @@ int particleSamples::read_in_particle_samples_gzipped() {
 }
 
 
+void particleSamples::filter_particles_from_events(const int PoI_monval) {
+    filter_particles(PoI_monval, full_particle_list, particle_list);
+
+    if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1) {
+        if (PoI_monval == 3122) {
+            filter_particles(3212, full_particle_list, resonance_list_Sigma0);
+        } else if (PoI_monval == -3122) {
+            filter_particles(-3212, full_particle_list, resonance_list_Sigma0);
+        }
+    }
+
+    if (net_particle_flag == 1) {
+        filter_particles(-PoI_monval, full_particle_list, anti_particle_list);
+    }
+
+    if (reconst_flag == 1 && PoI_monval == 333) {
+        filter_particles(321, full_particle_list, reconst_list_1);
+        filter_particles(-321, full_particle_list, reconst_list_2);
+        perform_particle_reconstruction();
+    }
+
+    if (flag_charge_dependence == 1) {
+        filter_particles(9998, full_particle_list,
+                         positive_charge_hadron_list);
+        filter_particles(-9998, full_particle_list,
+                         negative_charge_hadron_list);
+    }
+
+    if (run_mode_ == 3) {
+        filter_particles(particle_monval_a, full_particle_list,
+                         balance_function_particle_a);
+        filter_particles(particle_monval_abar, full_particle_list,
+                         balance_function_particle_abar);
+        filter_particles(particle_monval_b, full_particle_list,
+                         balance_function_particle_b);
+        filter_particles(particle_monval_bbar, full_particle_list,
+                         balance_function_particle_bbar);
+    }
+}
+
+
 void particleSamples::filter_particles(
-                    int PoI_monval,
-                    std::vector< vector<particle_info>* >* full_list,
-                    std::vector< vector<particle_info>* >* filted_list) {
+                    const int PoI_monval,
+                    vector< vector<particle_info>* >* full_list,
+                    vector< vector<particle_info>* >* filted_list) {
     // clean out the previous record
     clear_out_previous_record(filted_list);
 

@@ -9,10 +9,10 @@
 #include "parameters.h"
 #include "HBT_correlation.h"
 
-HBT_correlation::HBT_correlation(ParameterReader &paraRdr,
-                                 std::string path,
-                                 std::shared_ptr<RandomUtil::Random> ran_gen,
-                                 particleSamples *particle_list_in) :
+HBT_correlation::HBT_correlation(
+            ParameterReader &paraRdr, std::string path,
+            std::shared_ptr<RandomUtil::Random> ran_gen,
+            std::shared_ptr<particleSamples> particle_list_in) :
         paraRdr_(paraRdr), path_(path) {
 
     particle_list = particle_list_in;
@@ -313,8 +313,8 @@ void HBT_correlation::calculate_HBT_correlation_function() {
         messager << "Reading event: " << event_id + 1 << " ... ";
         messager.flush("info");
 
-        particle_list->read_in_particle_samples();
-        particle_list->read_in_particle_samples_mixed_event();
+        particle_list->read_in_particle_samples_and_filter();
+        particle_list->read_in_particle_samples_mixed_event_and_filter();
         int nev = particle_list->get_number_of_events();
         messager << "nev = " << nev;
         messager.flush("info");

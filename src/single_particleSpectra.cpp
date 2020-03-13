@@ -18,10 +18,9 @@ using std::scientific;
 using std::setprecision;
 
 singleParticleSpectra::singleParticleSpectra(
-        ParameterReader &paraRdr, std::string path,
-        std::shared_ptr<RandomUtil::Random> ran_gen,
-        particleSamples *particle_list_in) : paraRdr_(paraRdr), path_(path) {
-    particle_list = particle_list_in;
+            ParameterReader &paraRdr, std::string path,
+            std::shared_ptr<RandomUtil::Random> ran_gen) :
+        paraRdr_(paraRdr), path_(path) {
 
     ran_gen_ptr = ran_gen;
 
@@ -323,8 +322,9 @@ singleParticleSpectra::~singleParticleSpectra() {
 }
 
 //! This is a driver function to compute the Qn flow vector
-void singleParticleSpectra::calculate_Qn_vector_shell() {
-    int event_id = 0;
+void singleParticleSpectra::calculate_Qn_vector_shell(
+                        std::shared_ptr<particleSamples> particle_list_in) {
+    particle_list = particle_list_in;
     // initialize some temp arrays
     vector<double> event_pT_mean    (npT, 0.);
     vector<double> event_pT_mean_err(npT, 0.);
@@ -407,157 +407,162 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
     }
 
     // start the loop
-    while (!particle_list->end_of_file()) {
-        messager << "Reading event: " << event_id + 1 << " ... ";
-        messager.flush("info");
-        particle_list->read_in_particle_samples();
-        int nev = particle_list->get_number_of_events();
-        messager << "nev = " << nev;
-        messager.flush("info");
-        messager.info(" processing ...");
-        for (int iev = 0; iev < nev; iev++) {
-            event_id++;
-            calculate_Qn_vector(iev,
-                                pT_min, pT_max,
-                                event_pT_mean, event_pT_mean_err,
-                                event_Qn_real, event_Qn_real_err,
-                                event_Qn_imag, event_Qn_imag_err,
-                                event_Qn_diff_real, event_Qn_diff_real_err,
-                                event_Qn_diff_imag, event_Qn_diff_imag_err);
-            for (int i = 0; i < npT; i++) {
-                pT_mean_array[i]     += event_pT_mean[i];
-                pT_mean_array_err[i] += event_pT_mean_err[i];
-            }
-            for (int i = 0; i < order_max; i++) {
-                Qn_vector_real[i]     += event_Qn_real[i];
-                Qn_vector_real_err[i] += event_Qn_real_err[i];
-                Qn_vector_imag[i]     += event_Qn_imag[i];
-                Qn_vector_imag_err[i] += event_Qn_imag_err[i];
-                for (int j = 0; j < npT; j++) {
-                    Qn_diff_vector_real[i][j] += event_Qn_diff_real[i][j];
-                    Qn_diff_vector_real_err[i][j] += (
-                                                 event_Qn_diff_real_err[i][j]);
-                    Qn_diff_vector_imag[i][j] += event_Qn_diff_imag[i][j];
-                    Qn_diff_vector_imag_err[i][j] += (
-                                                 event_Qn_diff_imag_err[i][j]);
-                }
-            }
-
-
-            if (flag_correlation == 1) {
-                calculate_Qn_vector(
-                        iev, vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
-                        event_pT_mean, event_pT_mean_err,
-                        event_Qn_real, event_Qn_real_err,
-                        event_Qn_imag, event_Qn_imag_err,
-                        event_Qn_diff_real, event_Qn_diff_real_err,
-                        event_Qn_diff_imag, event_Qn_diff_imag_err);
-                calculate_two_particle_correlation(
-                        event_Qn_real, event_Qn_imag,
-                        event_Qn_diff_real, event_Qn_diff_imag);
-                calculate_three_particle_correlation(
-                        event_Qn_real, event_Qn_imag,
-                        event_Qn_real, event_Qn_imag,
-                        event_Qn_real, event_Qn_imag, 0, C_nmk, C_nmk_err);
-                calculate_four_particle_correlation_SC(
-                        event_Qn_real, event_Qn_imag,
-                        event_Qn_real, event_Qn_imag,
-                        event_Qn_real, event_Qn_imag,
-                        event_Qn_real, event_Qn_imag, 0, SC_mn, SC_mn_err);
-                calculate_four_particle_correlation_Cn4(
-                        event_Qn_real, event_Qn_imag, Cn4, Cn4_err);
-                if (flag_charge_dependence == 1) {
-                    calculate_Qn_vector_positive_charge(iev,
-                        event_Qn_p_real, event_Qn_p_real_err,
-                        event_Qn_p_imag, event_Qn_p_imag_err,
-                        event_Qn_p_diff_real, event_Qn_p_diff_real_err,
-                        event_Qn_p_diff_imag, event_Qn_p_diff_imag_err);
-                    calculate_Qn_vector_negative_charge(iev,
-                        event_Qn_m_real, event_Qn_m_real_err,
-                        event_Qn_m_imag, event_Qn_m_imag_err,
-                        event_Qn_m_diff_real, event_Qn_m_diff_real_err,
-                        event_Qn_m_diff_imag, event_Qn_m_diff_imag_err);
-
-                    calculate_two_particle_correlation_charge_dep(
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_m_real, event_Qn_m_imag,
-                            Cn2_ss, Cn2_ss_err, Cn2_os, Cn2_os_err);
-
-                    calculate_three_particle_correlation_charge_dep(
-                            event_Qn_p_real, event_Qn_p_imag,
-                            event_Qn_m_real, event_Qn_m_imag,
-                            event_Qn_real, event_Qn_imag,
-                            C_nmk_ss, C_nmk_ss_err,
-                            C_nmk_os, C_nmk_os_err,
-                            C_nmk_ss_13, C_nmk_ss_13_err,
-                            C_nmk_os_13, C_nmk_os_13_err);
-                }
-            }
-
-            if (rapidity_distribution_flag == 1) {
-                calculate_rapidity_distribution(iev,
-                        event_Qn_rap_real, event_Qn_rap_real_err,
-                        event_Qn_rap_imag, event_Qn_rap_imag_err, 0);
-                for (int i = 0; i < N_rap; i++) {
-                    for (int j = 0; j < order_max; j++) {
-                        vn_real_rapidity_dis_array[i][j] += (
-                                                event_Qn_rap_real[i][j]);
-                        vn_real_rapidity_dis_array_err[i][j] += (
-                                                event_Qn_rap_real_err[i][j]);
-                        vn_imag_rapidity_dis_array[i][j] += (
-                                                event_Qn_rap_imag[i][j]);
-                        vn_imag_rapidity_dis_array_err[i][j] += (
-                                                event_Qn_rap_imag_err[i][j]);
-                    }
-                }
-                if (flag_correlation == 1) {
-                    calculate_two_particle_correlation_deltaeta(
-                            event_Qn_rap_real, event_Qn_rap_imag);
-                    calculate_three_particle_correlation_deltaeta(
-                            event_Qn_rap_real, event_Qn_rap_imag,
-                            event_Qn_rap_real, event_Qn_rap_imag,
-                            event_Qn_rap_real, event_Qn_rap_imag, 1, 1,
-                            C_nmk_eta12, C_nmk_eta12_err);
-                    calculate_three_particle_correlation_deltaeta(
-                            event_Qn_rap_real, event_Qn_rap_imag,
-                            event_Qn_rap_real, event_Qn_rap_imag,
-                            event_Qn_rap_real, event_Qn_rap_imag, 2, 1,
-                            C_nmk_eta13, C_nmk_eta13_err);
-                    if (flag_charge_dependence == 1) {
-                        calculate_rapidity_distribution(iev,
-                                event_Qn_p_rap_real, event_Qn_p_rap_real_err,
-                                event_Qn_p_rap_imag, event_Qn_p_rap_imag_err,
-                                1);
-                        calculate_rapidity_distribution(iev,
-                                event_Qn_m_rap_real, event_Qn_m_rap_real_err,
-                                event_Qn_m_rap_imag, event_Qn_m_rap_imag_err,
-                                2);
-
-                        calculate_two_particle_correlation_deltaeta_chdep(
-                                event_Qn_p_rap_real, event_Qn_p_rap_imag,
-                                event_Qn_m_rap_real, event_Qn_m_rap_imag,
-                                Cn2_ss_eta12, Cn2_ss_eta12_err,
-                                Cn2_os_eta12, Cn2_os_eta12_err);
-
-                        calculate_three_particle_correlation_deltaeta_chdep(
-                                event_Qn_p_rap_real, event_Qn_p_rap_imag,
-                                event_Qn_m_rap_real, event_Qn_m_rap_imag,
-                                event_Qn_rap_real, event_Qn_rap_imag,
-                                C_nmk_eta12_ss, C_nmk_eta12_ss_err,
-                                C_nmk_eta12_os, C_nmk_eta12_os_err,
-                                C_nmk_eta13_ss, C_nmk_eta13_ss_err,
-                                C_nmk_eta13_os, C_nmk_eta13_os_err);
-
-                    }
-                }
-            }
-
-            if (check_spatial_flag == 1)
-                check_dNdSV(iev);
+    //while (!particle_list->end_of_file()) {
+    //    messager << "Reading event: " << event_id + 1 << " ... ";
+    //    messager.flush("info");
+    //    particle_list->read_in_particle_samples_and_filter();
+    //    int nev = particle_list->get_number_of_events();
+    //    messager << "nev = " << nev;
+    //    messager.flush("info");
+    //    messager.info(" processing ...");
+    int nev = particle_list->get_number_of_events();
+    for (int iev = 0; iev < nev; iev++) {
+        calculate_Qn_vector(iev,
+                            pT_min, pT_max,
+                            event_pT_mean, event_pT_mean_err,
+                            event_Qn_real, event_Qn_real_err,
+                            event_Qn_imag, event_Qn_imag_err,
+                            event_Qn_diff_real, event_Qn_diff_real_err,
+                            event_Qn_diff_imag, event_Qn_diff_imag_err);
+        for (int i = 0; i < npT; i++) {
+            pT_mean_array[i]     += event_pT_mean[i];
+            pT_mean_array_err[i] += event_pT_mean_err[i];
         }
-        messager.info("done!");
+        for (int i = 0; i < order_max; i++) {
+            Qn_vector_real[i]     += event_Qn_real[i];
+            Qn_vector_real_err[i] += event_Qn_real_err[i];
+            Qn_vector_imag[i]     += event_Qn_imag[i];
+            Qn_vector_imag_err[i] += event_Qn_imag_err[i];
+            for (int j = 0; j < npT; j++) {
+                Qn_diff_vector_real[i][j] += event_Qn_diff_real[i][j];
+                Qn_diff_vector_real_err[i][j] += (
+                                             event_Qn_diff_real_err[i][j]);
+                Qn_diff_vector_imag[i][j] += event_Qn_diff_imag[i][j];
+                Qn_diff_vector_imag_err[i][j] += (
+                                             event_Qn_diff_imag_err[i][j]);
+            }
+        }
+
+
+        if (flag_correlation == 1) {
+            calculate_Qn_vector(
+                    iev, vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
+                    event_pT_mean, event_pT_mean_err,
+                    event_Qn_real, event_Qn_real_err,
+                    event_Qn_imag, event_Qn_imag_err,
+                    event_Qn_diff_real, event_Qn_diff_real_err,
+                    event_Qn_diff_imag, event_Qn_diff_imag_err);
+            calculate_two_particle_correlation(
+                    event_Qn_real, event_Qn_imag,
+                    event_Qn_diff_real, event_Qn_diff_imag);
+            calculate_three_particle_correlation(
+                    event_Qn_real, event_Qn_imag,
+                    event_Qn_real, event_Qn_imag,
+                    event_Qn_real, event_Qn_imag, 0, C_nmk, C_nmk_err);
+            calculate_four_particle_correlation_SC(
+                    event_Qn_real, event_Qn_imag,
+                    event_Qn_real, event_Qn_imag,
+                    event_Qn_real, event_Qn_imag,
+                    event_Qn_real, event_Qn_imag, 0, SC_mn, SC_mn_err);
+            calculate_four_particle_correlation_Cn4(
+                    event_Qn_real, event_Qn_imag, Cn4, Cn4_err);
+            if (flag_charge_dependence == 1) {
+                calculate_Qn_vector_positive_charge(iev,
+                    event_Qn_p_real, event_Qn_p_real_err,
+                    event_Qn_p_imag, event_Qn_p_imag_err,
+                    event_Qn_p_diff_real, event_Qn_p_diff_real_err,
+                    event_Qn_p_diff_imag, event_Qn_p_diff_imag_err);
+                calculate_Qn_vector_negative_charge(iev,
+                    event_Qn_m_real, event_Qn_m_real_err,
+                    event_Qn_m_imag, event_Qn_m_imag_err,
+                    event_Qn_m_diff_real, event_Qn_m_diff_real_err,
+                    event_Qn_m_diff_imag, event_Qn_m_diff_imag_err);
+
+                calculate_two_particle_correlation_charge_dep(
+                        event_Qn_p_real, event_Qn_p_imag,
+                        event_Qn_m_real, event_Qn_m_imag,
+                        Cn2_ss, Cn2_ss_err, Cn2_os, Cn2_os_err);
+
+                calculate_three_particle_correlation_charge_dep(
+                        event_Qn_p_real, event_Qn_p_imag,
+                        event_Qn_m_real, event_Qn_m_imag,
+                        event_Qn_real, event_Qn_imag,
+                        C_nmk_ss, C_nmk_ss_err,
+                        C_nmk_os, C_nmk_os_err,
+                        C_nmk_ss_13, C_nmk_ss_13_err,
+                        C_nmk_os_13, C_nmk_os_13_err);
+            }
+        }
+
+        if (rapidity_distribution_flag == 1) {
+            calculate_rapidity_distribution(iev,
+                    event_Qn_rap_real, event_Qn_rap_real_err,
+                    event_Qn_rap_imag, event_Qn_rap_imag_err, 0);
+            for (int i = 0; i < N_rap; i++) {
+                for (int j = 0; j < order_max; j++) {
+                    vn_real_rapidity_dis_array[i][j] += (
+                                            event_Qn_rap_real[i][j]);
+                    vn_real_rapidity_dis_array_err[i][j] += (
+                                            event_Qn_rap_real_err[i][j]);
+                    vn_imag_rapidity_dis_array[i][j] += (
+                                            event_Qn_rap_imag[i][j]);
+                    vn_imag_rapidity_dis_array_err[i][j] += (
+                                            event_Qn_rap_imag_err[i][j]);
+                }
+            }
+            if (flag_correlation == 1) {
+                calculate_two_particle_correlation_deltaeta(
+                        event_Qn_rap_real, event_Qn_rap_imag);
+                calculate_three_particle_correlation_deltaeta(
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag, 1, 1,
+                        C_nmk_eta12, C_nmk_eta12_err);
+                calculate_three_particle_correlation_deltaeta(
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag,
+                        event_Qn_rap_real, event_Qn_rap_imag, 2, 1,
+                        C_nmk_eta13, C_nmk_eta13_err);
+                if (flag_charge_dependence == 1) {
+                    calculate_rapidity_distribution(iev,
+                            event_Qn_p_rap_real, event_Qn_p_rap_real_err,
+                            event_Qn_p_rap_imag, event_Qn_p_rap_imag_err,
+                            1);
+                    calculate_rapidity_distribution(iev,
+                            event_Qn_m_rap_real, event_Qn_m_rap_real_err,
+                            event_Qn_m_rap_imag, event_Qn_m_rap_imag_err,
+                            2);
+
+                    calculate_two_particle_correlation_deltaeta_chdep(
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            Cn2_ss_eta12, Cn2_ss_eta12_err,
+                            Cn2_os_eta12, Cn2_os_eta12_err);
+
+                    calculate_three_particle_correlation_deltaeta_chdep(
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag,
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag,
+                            event_Qn_rap_real, event_Qn_rap_imag,
+                            C_nmk_eta12_ss, C_nmk_eta12_ss_err,
+                            C_nmk_eta12_os, C_nmk_eta12_os_err,
+                            C_nmk_eta13_ss, C_nmk_eta13_ss_err,
+                            C_nmk_eta13_os, C_nmk_eta13_os_err);
+
+                }
+            }
+        }
+
+        if (check_spatial_flag == 1)
+            check_dNdSV(iev);
     }
-    total_number_of_events = event_id;
+    messager.info("done!");
+    //}
+
+    total_number_of_events += nev;
+}
+
+
+void singleParticleSpectra::output_spectra_and_Qn_results() {
     output_Qn_vectors();
     if (rapidity_distribution_flag == 1) {
         output_rapidity_distribution();
@@ -575,6 +580,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell() {
         output_four_particle_SC_correlation();
     }
 }
+
 
 //! this function computes the pT-integrated and pT-differential Qn vector
 //! within a given rapidity region in one event
@@ -2599,7 +2605,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             double z_local = particle_list->get_particle(event_id, i).z;
             double tau_local = sqrt(t_local*t_local - z_local*z_local);
             if (tau_local > tau_min && tau_local < tau_max) {
-                double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dtau;
+                double random = ran_gen_ptr->rand_uniform()*intrinsic_dtau;
                 int idx = (int)((tau_local + random - tau_min)/dtau);
                 tau_array[idx] += tau_local;
                 dNdtau_array[idx]++;
@@ -2611,7 +2617,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             double r_local = sqrt(x_local*x_local + y_local*y_local);
             if (fabs(y_local) < 0.5) {
                 if (x_local > spatial_x_min && x_local < spatial_x_max) {
-                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
+                    double random = ran_gen_ptr->rand_uniform()*intrinsic_dx;
                     int idx = (int)((x_local + random - spatial_x_min)
                                     /dspatial_x);
                     xpt_array[idx] += x_local;
@@ -2620,7 +2626,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             }
             if (fabs(x_local) < 0.5) {
                 if (y_local > spatial_x_min && y_local < spatial_x_max) {
-                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
+                    double random = ran_gen_ptr->rand_uniform()*intrinsic_dx;
                     int idx = (int)((y_local + random - spatial_x_min)
                                     /dspatial_x);
                     ypt_array[idx] += y_local;
@@ -2628,7 +2634,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                 }
             }
             if (r_local > spatial_r_min && r_local < spatial_r_max) {
-                double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
+                double random = ran_gen_ptr->rand_uniform()*intrinsic_dx;
                 int idx = static_cast<int>((r_local + random - spatial_r_min)
                                            /dspatial_r);
                 if (idx >= 0 && idx < N_xpt) {
@@ -2640,10 +2646,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             // dN/(dtau dx)
             if (fabs(y_local) < 0.5) {
                 if (tau_local > tau_min && tau_local < tau_max) {
-                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dtau;
+                    double random = ran_gen_ptr->rand_uniform()*intrinsic_dtau;
                     int idx_tau = (int)((tau_local + random - tau_min)/dtau);
                     if (x_local > spatial_x_min && x_local < spatial_x_max) {
-                        double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
+                        double random = ran_gen_ptr->rand_uniform()*intrinsic_dx;
                         int idx_x = (int)((x_local + random - spatial_x_min)
                                           /dspatial_x);
                         dNdtaudx1_array[idx_tau][idx_x]++;
@@ -2652,10 +2658,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             }
             if (fabs(x_local) < 0.5) {
                 if (tau_local > tau_min && tau_local < tau_max) {
-                    double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dtau;
+                    double random = ran_gen_ptr->rand_uniform()*intrinsic_dtau;
                     int idx_tau = (int)((tau_local + random - tau_min)/dtau);
                     if (y_local > spatial_x_min && y_local < spatial_x_max) {
-                        double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_dx;
+                        double random = ran_gen_ptr->rand_uniform()*intrinsic_dx;
                         int idx_x = (int)((y_local + random - spatial_x_min)
                                           /dspatial_x);
                         dNdtaudx2_array[idx_tau][idx_x]++;
@@ -2668,7 +2674,7 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                                          /(t_local - z_local)));
             double y_minus_etas = rap_local - etas_local;
             if (y_minus_etas > eta_s_min && y_minus_etas < eta_s_max) {
-                double random = ran_gen_ptr.lock()->rand_uniform()*intrinsic_detas;
+                double random = ran_gen_ptr->rand_uniform()*intrinsic_detas;
                 int idx = (int)((y_minus_etas + random - eta_s_min)/deta_s);
                 eta_s_array[idx] += y_minus_etas;
                 dNdetas_array[idx]++;

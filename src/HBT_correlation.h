@@ -14,7 +14,7 @@ class HBT_correlation {
  private:
     const ParameterReader paraRdr_;
     const std::string path_;
-    particleSamples *particle_list;
+    std::shared_ptr<particleSamples> particle_list;
 
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
 
@@ -59,7 +59,7 @@ class HBT_correlation {
  public:
     HBT_correlation(ParameterReader &paraRdr, std::string path,
                     std::shared_ptr<RandomUtil::Random> ran_gen,
-                    particleSamples *particle_list_in);
+                    std::shared_ptr<particleSamples> particle_list_in);
     ~HBT_correlation();
 
     double get_psi_ref() {return(psi_ref);};
