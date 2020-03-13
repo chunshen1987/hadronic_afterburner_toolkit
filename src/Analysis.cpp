@@ -6,6 +6,7 @@
 #include <map>
 #include "Analysis.h"
 #include "single_particleSpectra.h"
+#include "HBT_correlation.h"
 
 using std::vector;
 
@@ -118,7 +119,28 @@ void Analysis::FlowAnalysis() {
             ipart->calculate_Qn_vector_shell(particle_list_);
         }
         messager.info("done!");
+        event_id += nev;
     }
     for (auto &ipart : spvn)
         ipart->output_spectra_and_Qn_results();
+}
+
+void Analysis::HBTAnalysis() {
+    HBT_correlation HBT_analysis(paraRdr_, path_, ran_gen_ptr_);
+    // start the loop
+    int event_id = 0;
+    while (!particle_list_->end_of_file()) {
+        messager << "Reading event: " << event_id + 1 << " ... ";
+        messager.flush("info");
+        particle_list_->read_in_particle_samples_and_filter();
+        particle_list_->read_in_particle_samples_mixed_event_and_filter();
+        int nev = particle_list_->get_number_of_events();
+        messager << "nev = " << nev;
+        messager.flush("info");
+        messager.info(" processing ...");
+        HBT_analysis.calculate_HBT_correlation_function(particle_list_);
+        messager.info("done!");
+        event_id += nev;
+    }
+    HBT_analysis.output_HBTcorrelation();
 }

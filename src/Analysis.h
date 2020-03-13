@@ -29,6 +29,7 @@ class Analysis {
     void InitializeAnalysis();
     void PerformAnalysis();
     void FlowAnalysis();
+    void HBTAnalysis();
 };
 
 #endif  // SRC_analysis_h_

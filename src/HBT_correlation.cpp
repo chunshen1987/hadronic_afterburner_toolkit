@@ -11,11 +11,8 @@
 
 HBT_correlation::HBT_correlation(
             ParameterReader &paraRdr, std::string path,
-            std::shared_ptr<RandomUtil::Random> ran_gen,
-            std::shared_ptr<particleSamples> particle_list_in) :
+            std::shared_ptr<RandomUtil::Random> ran_gen) :
         paraRdr_(paraRdr), path_(path) {
-
-    particle_list = particle_list_in;
 
     ran_gen_ptr = ran_gen;
 
@@ -307,20 +304,24 @@ HBT_correlation::~HBT_correlation() {
     delete[] number_of_pairs_denormenator_KTdiff;
 }
 
-void HBT_correlation::calculate_HBT_correlation_function() {
-    int event_id = 0;
-    while (!particle_list->end_of_file()) {
-        messager << "Reading event: " << event_id + 1 << " ... ";
-        messager.flush("info");
 
-        particle_list->read_in_particle_samples_and_filter();
-        particle_list->read_in_particle_samples_mixed_event_and_filter();
+void HBT_correlation::calculate_HBT_correlation_function(
+                std::shared_ptr<particleSamples> particle_list_in) {
+    set_particle_list(particle_list_in);
+    //int event_id = 0;
+    //while (!particle_list->end_of_file()) {
+    //    messager << "Reading event: " << event_id + 1 << " ... ";
+    //    messager.flush("info");
+
+    //    particle_list->read_in_particle_samples_and_filter();
+    //    particle_list->read_in_particle_samples_mixed_event_and_filter();
+    //    int nev = particle_list->get_number_of_events();
+    //    messager << "nev = " << nev;
+    //    messager.flush("info");
+
+    //    messager.info(" processing ...");
+
         int nev = particle_list->get_number_of_events();
-        messager << "nev = " << nev;
-        messager.flush("info");
-
-        messager.info(" processing ...");
-
         if (invariant_radius_flag == 0 && azimuthal_flag == 1) {
             calculate_flow_event_plane_angle(2);
         }
@@ -361,9 +362,12 @@ void HBT_correlation::calculate_HBT_correlation_function() {
                 count++;
             }
             combine_and_bin_particle_pairs_mixed_events(iev, mixed_event_list);
-            event_id++;
+            //event_id++;
         }
-    }
+    //}
+}
+
+void HBT_correlation::output_HBTcorrelation() {
     if (invariant_radius_flag == 1) {
         output_correlation_function_inv();
     }

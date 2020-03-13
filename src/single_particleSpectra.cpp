@@ -407,14 +407,6 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
     }
 
     // start the loop
-    //while (!particle_list->end_of_file()) {
-    //    messager << "Reading event: " << event_id + 1 << " ... ";
-    //    messager.flush("info");
-    //    particle_list->read_in_particle_samples_and_filter();
-    //    int nev = particle_list->get_number_of_events();
-    //    messager << "nev = " << nev;
-    //    messager.flush("info");
-    //    messager.info(" processing ...");
     int nev = particle_list->get_number_of_events();
     for (int iev = 0; iev < nev; iev++) {
         calculate_Qn_vector(iev,
@@ -555,8 +547,6 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
         if (check_spatial_flag == 1)
             check_dNdSV(iev);
     }
-    //messager.info("done!");
-    //}
 
     total_number_of_events += nev;
 }
