@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 #include "particle_info.h"
 #include "Random.h"
@@ -30,14 +31,14 @@ typedef struct {
     int charge;
     int decays;     // amount of decays listed for this resonance
     int stable;     // defines whether this particle is considered as stable
-    std::vector<decay_channel_info*> decay_channels;
+    std::vector<decay_channel_info> decay_channels;
     int sign;                   // Bose-Einstein or Dirac-Fermi statistics
 } particle_decay_info;
 
 
 class particle_decay {
  private:
-    std::vector<particle_decay_info*> resonance_table;
+    std::map<int, particle_decay_info> resonance_table_;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
     int weak_flag_;
 
@@ -54,7 +55,7 @@ class particle_decay {
     void check_resonance_table();
 
     //! This function returns particle width in GeV
-    double get_particle_width(particle_info *part);
+    double get_particle_width(const particle_info part);
 
     //! This function checks whether the particle is stable
     int check_particle_stable(particle_info *part);
@@ -72,20 +73,20 @@ class particle_decay {
     double get_particle_mass(int POI_monval);
 
     //! This is a shell function to perform resonance decays
-    void perform_decays(particle_info *mother,
-                        std::vector<particle_info>* daughter_list);
+    void perform_decays(particle_info &mother,
+                        std::vector<particle_info> &daughter_list);
 
 
     //! This function perform two body decay
-    void perform_two_body_decay(particle_info *mother,
-                                particle_info *daughter1,
-                                particle_info *daughter2);
+    void perform_two_body_decay(particle_info &mother,
+                                particle_info &daughter1,
+                                particle_info &daughter2);
 
     //! This function perform 3 body decays
-    void perform_three_body_decay(particle_info *mother,
-                                  particle_info *daughter1,
-                                  particle_info *daughter2,
-                                  particle_info *daughter3);
+    void perform_three_body_decay(particle_info &mother,
+                                  particle_info &daughter1,
+                                  particle_info &daughter2,
+                                  particle_info &daughter3);
 
     //! This function sample mother particle mass according to breit-wigner
     //! distribution

@@ -1,5 +1,5 @@
 echo_level = 9                # control the mount of print messages
-read_in_mode = 7              # mode for reading in particle information
+read_in_mode = 2              # mode for reading in particle information
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from zipped UrQMD outputs
@@ -23,7 +23,7 @@ particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
-resonance_feed_down_flag = 0  # perform resonance feed down
+resonance_feed_down_flag = 1  # perform resonance feed down
                               # (will read in all hadrons and filter particle
                               #  after decays are performed)
 resonance_weak_feed_down_Sigma_to_Lambda_flag = 0  # include weak feed down contribution

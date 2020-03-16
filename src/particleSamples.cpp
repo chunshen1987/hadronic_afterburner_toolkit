@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <vector>
+#include <list>
 
 #include "zlib.h"
 #include "particleSamples.h"
@@ -1559,30 +1560,31 @@ void particleSamples::perform_resonance_feed_down(
     int ievent = 0;
     for (auto &ev_i: (*input_particle_list)) {
         // create a temporary particle list
-        vector<particle_info> temp_list;
+        std::list<particle_info> current_ev_list;
 
         // copy all particles into the temp list
         for (auto &part_i: (*ev_i)) {
-            temp_list.push_back(part_i);
+            current_ev_list.push_back(part_i);
         }
 
         (*input_particle_list)[ievent]->clear();
 
         // perform resonance decays
-        for (auto &part_i: temp_list) {
-            vector<particle_info> *daughter_list = new vector<particle_info>;
-            decayer_ptr->perform_decays(&part_i, daughter_list);
-            for (auto &daughter_i: (*daughter_list)) {
+        while (current_ev_list.size() > 0) {
+            auto part_i = current_ev_list.front();
+            current_ev_list.pop_front();
+            vector<particle_info> daughter_list;
+            decayer_ptr->perform_decays(part_i, daughter_list);
+            for (auto &daughter_i: daughter_list) {
                 if (decayer_ptr->check_particle_stable(&daughter_i) == 1) {
                     (*input_particle_list)[ievent]->push_back(daughter_i);
                 } else {
-                    temp_list.push_back(daughter_i);
+                    current_ev_list.push_back(daughter_i);
                 }
             }
-            daughter_list->clear();
-            delete daughter_list;
+            daughter_list.clear();
         }
-        temp_list.clear();
+        current_ev_list.clear();
         ievent++;
     }
 }
@@ -1595,16 +1597,14 @@ void particleSamples::perform_weak_resonance_feed_down_Sigma_to_Lambda() {
              iev++) {
             for (unsigned int i = 0;
                  i < (*resonance_list_Sigma0)[iev]->size(); i++) {
-                particle_info *daughter1 = new particle_info;
-                particle_info *daughter2 = new particle_info;
-                daughter1->mass = 1.116;  // mass of Lambda
-                daughter2->mass = 0.0;    // mass of photon
+                particle_info daughter1;
+                particle_info daughter2;
+                daughter1.mass = 1.116;  // mass of Lambda
+                daughter2.mass = 0.0;    // mass of photon
                 decayer_ptr->perform_two_body_decay(
-                        &(*(*resonance_list_Sigma0)[iev])[i],
+                        (*(*resonance_list_Sigma0)[iev])[i],
                         daughter1, daughter2);
-                (*particle_list)[iev]->push_back(*daughter1);
-                delete daughter1;
-                delete daughter2;
+                (*particle_list)[iev]->push_back(daughter1);
             }
         }
     }
