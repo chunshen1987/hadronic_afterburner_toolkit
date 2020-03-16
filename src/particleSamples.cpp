@@ -1576,7 +1576,7 @@ void particleSamples::perform_resonance_feed_down(
             vector<particle_info> daughter_list;
             decayer_ptr->perform_decays(part_i, daughter_list);
             for (auto &daughter_i: daughter_list) {
-                if (decayer_ptr->check_particle_stable(&daughter_i) == 1) {
+                if (decayer_ptr->check_particle_stable(daughter_i) == 1) {
                     (*input_particle_list)[ievent]->push_back(daughter_i);
                 } else {
                     current_ev_list.push_back(daughter_i);

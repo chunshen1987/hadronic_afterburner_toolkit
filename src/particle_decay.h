@@ -45,32 +45,32 @@ class particle_decay {
  public:
     particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen,
                    int weak_flag);
-    ~particle_decay();
+    ~particle_decay() {};
 
     //! This function reads in resonance decay table
     int read_resonances_list();
 
     //! This is a test function to check whether the resonance table is
     //! read in correctly
-    void check_resonance_table();
+    void check_resonance_table() const;
 
     //! This function returns particle width in GeV
-    double get_particle_width(const particle_info part);
+    double get_particle_width(const particle_info part) const;
 
     //! This function checks whether the particle is stable
-    int check_particle_stable(particle_info *part);
+    int check_particle_stable(const particle_info part) const;
 
     //! This function returns the electric charge of particle
-    int get_particle_charge(int monval);
+    int get_particle_charge(const int monval) const;
 
     //! This function returns the baryon number of particle
-    int get_particle_baryon_number(int monval);
+    int get_particle_baryon_number(const int monval) const;
 
     //! This function returns the strange number of particle
-    int get_particle_strange_number(int monval);
+    int get_particle_strange_number(const int monval) const;
 
     //! This function returns the particle mass for a given particle id
-    double get_particle_mass(int POI_monval);
+    double get_particle_mass(const int POI_monval) const;
 
     //! This is a shell function to perform resonance decays
     void perform_decays(particle_info &mother,
@@ -90,7 +90,8 @@ class particle_decay {
 
     //! This function sample mother particle mass according to breit-wigner
     //! distribution
-    double sample_breit_wigner(double mass, double width, double M_min);
+    double sample_breit_wigner(const double mass, const double width,
+                               const double M_min) const;
 };
 
 #endif  // SRC_particle_decay_h_

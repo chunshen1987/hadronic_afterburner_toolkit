@@ -19,7 +19,6 @@ particle_decay::particle_decay(std::shared_ptr<RandomUtil::Random> ran_gen,
     read_resonances_list();
 }
 
-particle_decay::~particle_decay() {}
 
 //! This function reads in resonance decay table
 int particle_decay::read_resonances_list() {
@@ -142,7 +141,7 @@ int particle_decay::read_resonances_list() {
 
 //! This is a test function to check whether the resonance table is read in
 //! correctly
-void particle_decay::check_resonance_table() {
+void particle_decay::check_resonance_table() const {
     for (auto itr_reso = resonance_table_.begin();
             itr_reso != resonance_table_.end(); itr_reso++) {
         auto ireso = itr_reso->second;
@@ -166,33 +165,33 @@ void particle_decay::check_resonance_table() {
 }
 
 //! This function returns particle width in GeV
-double particle_decay::get_particle_width(const particle_info part) {
-    double width = resonance_table_[part.monval].width;
+double particle_decay::get_particle_width(const particle_info part) const {
+    double width = resonance_table_.at(part.monval).width;
     return(width);
 }
 
 //! This function checks whether the particle is stable
-int particle_decay::check_particle_stable(particle_info *part) {
-    int stable = resonance_table_[part->monval].stable;
+int particle_decay::check_particle_stable(const particle_info part) const {
+    int stable = resonance_table_.at(part.monval).stable;
     return(stable);
 }
 
 
 //! This function returns the electric charge of particle
-int particle_decay::get_particle_charge(int monval) {
-    int charge = resonance_table_[monval].charge;
+int particle_decay::get_particle_charge(const int monval) const {
+    int charge = resonance_table_.at(monval).charge;
     return(charge);
 }
 
 //! This function returns the baryon number of particle
-int particle_decay::get_particle_baryon_number(int monval) {
-    int baryon = resonance_table_[monval].baryon;
+int particle_decay::get_particle_baryon_number(const int monval) const {
+    int baryon = resonance_table_.at(monval).baryon;
     return(baryon);
 }
 
 //! This function returns the strange number of particle
-int particle_decay::get_particle_strange_number(int monval) {
-    int strange = resonance_table_[monval].strange;
+int particle_decay::get_particle_strange_number(const int monval) const {
+    int strange = resonance_table_.at(monval).strange;
     return(strange);
 }
 
@@ -254,8 +253,8 @@ void particle_decay::perform_decays(
 }
 
 //! This function returns the particle mass for a given particle id
-double particle_decay::get_particle_mass(int POI_monval) {
-    double mass = resonance_table_[POI_monval].mass;
+double particle_decay::get_particle_mass(const int POI_monval) const {
+    double mass = resonance_table_.at(POI_monval).mass;
     return(mass);
 }
 
@@ -463,8 +462,8 @@ void particle_decay::perform_three_body_decay(particle_info &mother,
 
 //! This function sample mother particle mass according to breit-wigner
 //! distribution
-double particle_decay::sample_breit_wigner(double mass, double width,
-                                           double M_min) {
+double particle_decay::sample_breit_wigner(
+        const double mass, const double width, const double M_min) const {
     // this function sample the Breit Wigner distribution for the mass
     // particle mass sampled is >= M_min
     // From Wiki: https://en.wikipedia.org/wiki/Cauchy_distribution
