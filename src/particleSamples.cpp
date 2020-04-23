@@ -129,7 +129,7 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     if (read_in_mode_ == 8) {
         inputfile.open(filename.str().c_str(), ios::binary | ios::in);
         if (!inputfile.is_open()) {
-          throw std::runtime_error("Can't open file " + filename.str());
+            throw std::runtime_error("Can't open file " + filename.str());
         }
 
         // Read header
@@ -137,19 +137,23 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
         uint16_t format_variant;
         uint32_t len;
         inputfile.read(&magic_number[0], 4 * sizeof(char));
-        inputfile.read(reinterpret_cast<char *>(&smash_format_version_), sizeof(std::uint16_t));
-        inputfile.read(reinterpret_cast<char *>(&format_variant), sizeof(std::uint16_t));
+        inputfile.read(reinterpret_cast<char *>(&smash_format_version_),
+                       sizeof(std::uint16_t));
+        inputfile.read(reinterpret_cast<char *>(&format_variant),
+                       sizeof(std::uint16_t));
         inputfile.read(reinterpret_cast<char *>(&len), sizeof(std::uint32_t));
         inputfile.read(&smash_version[0], sizeof(char) * len);
 
         if (strcmp(magic_number, "SMSH") != 0) {
-          throw std::runtime_error(filename.str() + " is likely not a SMASH binary:" +
-                                   " magic number does not match ");
+            throw std::runtime_error(
+                filename.str() + " is likely not a SMASH binary:" +
+                " magic number does not match. magic_number = "
+                + magic_number);
         }
 
         if (format_variant != 1) {
-          throw std::runtime_error(filename.str() + " is not a file of" +
-                                   " extended SMASH binary format.");
+            throw std::runtime_error(filename.str() + " is not a file of" +
+                                     " extended SMASH binary format.");
         }
 
         std::cout << magic_number << " " << smash_format_version_ << " "
