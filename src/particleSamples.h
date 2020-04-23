@@ -26,6 +26,7 @@ class particleSamples {
 
     std::ifstream inputfile;
     std::ifstream inputfile_mixed_event;
+    uint16_t smash_format_version_;
     gzFile inputfile_gz;
     gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
@@ -154,6 +155,7 @@ class particleSamples {
     int read_in_particle_samples_UrQMD_3p3();
     int read_in_particle_samples_UrQMD_3p3_mixed_event();
     int read_in_particle_samples_Sangwook();
+    int read_in_particle_samples_SMASH_binary();
     int read_in_particle_samples_mixed_event_Sangwook();
     int read_in_particle_samples_SMASH_gzipped();
     int read_in_particle_samples_SMASH_mixed_event_gzipped();
