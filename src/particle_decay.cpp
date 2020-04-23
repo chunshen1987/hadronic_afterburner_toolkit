@@ -199,7 +199,14 @@ int particle_decay::get_particle_strange_number(const int monval) const {
 //! This is a shell function to perform resonance decays
 void particle_decay::perform_decays(
             particle_info &mother, std::vector<particle_info> &daughter_list) {
-    particle_decay_info mother_decay_info = resonance_table_[mother.monval];
+    particle_decay_info mother_decay_info;
+    if (resonance_table_.find(mother.monval) == resonance_table_.end()) {
+        std::cout << "Warning: pdg " << mother.monval
+                  << " not found, might be some table inconsistency" << std::endl;
+        return;
+    } else {
+        mother_decay_info = resonance_table_[mother.monval];
+    }
     if (mother_decay_info.stable == 1) {
         // the particle is a stable particle
         daughter_list.push_back(mother);
