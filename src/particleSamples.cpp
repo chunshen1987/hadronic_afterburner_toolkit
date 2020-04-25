@@ -99,13 +99,10 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
         reconst_flag = 0;
     }
 
-    flag_charge_dependence = 0;
-    if (particle_monval == 9999) {
-        flag_charge_dependence = paraRdr_.getVal("flag_charge_dependence");
-        if (flag_charge_dependence == 1) {
-            positive_charge_hadron_list = new vector< vector<particle_info>* >;
-            negative_charge_hadron_list = new vector< vector<particle_info>* >;
-        }
+    flag_charge_dependence = paraRdr_.getVal("flag_charge_dependence");
+    if (flag_charge_dependence == 1) {
+        positive_charge_hadron_list = new vector< vector<particle_info>* >;
+        negative_charge_hadron_list = new vector< vector<particle_info>* >;
     }
 
     ostringstream filename;
