@@ -1086,7 +1086,7 @@ void particleSamples::filter_particles_from_events(const int PoI_monval) {
         perform_particle_reconstruction();
     }
 
-    if (flag_charge_dependence == 1) {
+    if (flag_charge_dependence == 1 && PoI_monval == 9999) {
         filter_particles(9998, full_particle_list,
                          positive_charge_hadron_list);
         filter_particles(-9998, full_particle_list,
