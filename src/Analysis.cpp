@@ -70,6 +70,7 @@ void Analysis::FlowAnalysis() {
     // charged hadron first
     paraRdr_.setVal("particle_monval", 9999);
     paraRdr_.setVal("rap_type", 0);
+    paraRdr_.setVal("rapidity_distribution", 1);
     paraRdr_.setVal("rap_min", -0.5); paraRdr_.setVal("rap_max", 0.5);
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.15);
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 2.0);
@@ -96,6 +97,7 @@ void Analysis::FlowAnalysis() {
 
     // now identified particle
     paraRdr_.setVal("rap_type", 1);
+    paraRdr_.setVal("rapidity_distribution", 1);
     paraRdr_.setVal("rap_min", -0.5); paraRdr_.setVal("rap_max", 0.5);
     paraRdr_.setVal("particle_monval", 211);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
@@ -132,6 +134,16 @@ void Analysis::FlowAnalysis() {
         paraRdr_.setVal("flag_charge_dependence", flag_charge_dependence);
         paraRdr_.setVal("particle_monval", 9999);
         paraRdr_.setVal("rap_type", 0);
+        if (paraRdr_.getVal("compute_corr_rap_dep") == 1) {
+            // turn on flag to compute the rapidity dependent muti-particle
+            // correlations
+            paraRdr_.setVal("rapidity_distribution", 1);
+            paraRdr_.setVal("rapidity_dis_min", -2.0);
+            paraRdr_.setVal("rapidity_dis_max", 2.0);
+            paraRdr_.setVal("n_rap", 41);
+        } else {
+            paraRdr_.setVal("rapidity_distribution", 0);
+        }
         paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.2);
         paraRdr_.setVal("vn_rapidity_dis_pT_max", 2.0);
         paraRdr_.setVal("rap_min", -1.0); paraRdr_.setVal("rap_max", 1.0);
