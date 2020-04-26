@@ -1284,15 +1284,16 @@ def calculate_meanpT_fluc(dN_array, pT_array, pT_min=0.0, pT_max=3.0):
 
 hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
-dN_dy_mb = []
-for ifolder, event_name in enumerate(event_list):
-    file_name   = "particle_9999_vndata_eta_-0.5_0.5.dat"
-    event_group = hf.get(event_name)
-    temp_data   = event_group.get(file_name)
-    temp_data   = nan_to_num(temp_data)
-    dN_dy_mb.append(-temp_data[0, 1])
-dN_dy_mb = -sort(array(dN_dy_mb))
-print("total number of events: {}".format(len(dN_dy_mb)))
+print("total number of events: {}".format(len(event_list)))
+dN_dy_mb = zeros(len(event_list))
+if Centrality_flag == 1:
+    for ifolder, event_name in enumerate(event_list):
+        file_name   = "particle_9999_vndata_eta_-0.5_0.5.dat"
+        event_group = hf.get(event_name)
+        temp_data   = event_group.get(file_name)
+        temp_data   = nan_to_num(temp_data)
+        dN_dy_mb[ifolder] = -temp_data[0, 1]
+    dN_dy_mb = -sort(dN_dy_mb)
 
 for icen in range(len(centrality_cut_list) - 1):
     if centrality_cut_list[icen+1] < centrality_cut_list[icen]: continue
@@ -1301,13 +1302,6 @@ for icen in range(len(centrality_cut_list) - 1):
             centrality_cut_list[icen], centrality_cut_list[icen+1])
     )
     mkdir(avg_folder)
-
-    dN_dy_cut_high = (
-        dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)])
-    dN_dy_cut_low  = dN_dy_mb[
-        min(len(dN_dy_mb)-1,
-            int(len(dN_dy_mb)*centrality_cut_list[icen+1]/100.))
-    ]
 
     selected_events_list = []
     for ifolder, event_name in enumerate(event_list):
@@ -1319,6 +1313,12 @@ for icen in range(len(centrality_cut_list) - 1):
             if cen_label in event_name:
                 selected_events_list.append(event_name)
         elif Centrality_flag == 1:
+            dN_dy_cut_high = (
+                dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)])
+            dN_dy_cut_low  = dN_dy_mb[
+                min(len(dN_dy_mb)-1,
+                    int(len(dN_dy_mb)*centrality_cut_list[icen+1]/100.))
+            ]
             file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
             event_group = hf.get(event_name)
             temp_data   = event_group.get(file_name)
