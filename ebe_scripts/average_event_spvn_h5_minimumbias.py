@@ -39,8 +39,7 @@ PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 centrality_cut_list = (Reg_centrality_cut_list + PHOBOS_cen_list
                        + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
-centrality_cut_list = [20, 30]
-Centrality_flag = 0
+Centrality_flag = 1
 
 try:
     data_path = path.abspath(argv[1])
@@ -2146,11 +2145,9 @@ for icen in range(len(centrality_cut_list) - 1):
         output_filename = ("%s_differential_observables_4particle_PHENIX.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{4}  vn{4}_err\n")
+        f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            f.write("%.10e  " % (pT_spectra[ipT]))
             for iorder in range(1, 4):
                 f.write("%.10e  %.10e  " % (vn4_diff_phenix[2*iorder-2][ipT],
                                             vn4_diff_phenix[2*iorder-1][ipT]))
@@ -2161,11 +2158,9 @@ for icen in range(len(centrality_cut_list) - 1):
         output_filename = ("%s_differential_observables_4particle_STAR.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{4}  vn{4}_err\n")
+        f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            f.write("%.10e  " % (pT_spectra[ipT]))
             for iorder in range(1, 4):
                 f.write("%.10e  %.10e  " % (vn4_diff_star[2*iorder-2][ipT],
                                             vn4_diff_star[2*iorder-1][ipT]))
@@ -2176,11 +2171,9 @@ for icen in range(len(centrality_cut_list) - 1):
         output_filename = ("%s_differential_observables_4particle_ALICE.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{4}  vn{4}_err\n")
+        f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            f.write("%.10e  " % (pT_spectra[ipT]))
             for iorder in range(1, 4):
                 f.write("%.10e  %.10e  " % (vn4_diff_alice[2*iorder-2][ipT],
                                             vn4_diff_alice[2*iorder-1][ipT]))
@@ -2191,11 +2184,9 @@ for icen in range(len(centrality_cut_list) - 1):
         output_filename = ("%s_differential_observables_4particle_CMS.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{4}  vn{4}_err\n")
+        f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            f.write("%.10e  " % (pT_spectra[ipT]))
             for iorder in range(1, 4):
                 f.write("%.10e  %.10e  " % (vn4_diff_cms[2*iorder-2][ipT],
                                             vn4_diff_cms[2*iorder-1][ipT]))
@@ -2206,11 +2197,9 @@ for icen in range(len(centrality_cut_list) - 1):
         output_filename = ("%s_differential_observables_4particle_ATLAS.dat"
                            % particle_name_list[ipart])
         f = open(output_filename, 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{4}  vn{4}_err\n")
+        f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            f.write("%.10e  " % (pT_spectra[ipT]))
             for iorder in range(1, 4):
                 f.write("%.10e  %.10e  " % (vn4_diff_atlas[2*iorder-2][ipT],
                                             vn4_diff_atlas[2*iorder-1][ipT]))
