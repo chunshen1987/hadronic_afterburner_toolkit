@@ -526,7 +526,11 @@ def calcualte_vn_2(vn_data_array):
 
 
 def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
-    """This function computes pT differential vn for a single event"""
+    """
+        This function computes pT differential vn for a single event
+        It returns [Re{Qn(pT)*conj(Qn_ref)}, Im{Qn(pT)*conj(Qn_ref)},
+                    N(pT)*N_ref, Qn_ref*conj(Qn_ref) - N_ref, N_ref*(N_ref-1)]
+    """
     npT = 50
     pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
@@ -535,10 +539,11 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     pT_ref_event = data_ref[:, 0]
     dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
                                log(dN_ref_event + 1e-30)))
-    dN_ref = sum(dN_ref_interp)*dpT
+    dN_ref = sum(dN_ref_interp)*dpT/0.1
     temp_vn_real_array = []
     temp_vn_imag_array = []
-    temp_vn_denorm_array1 = []
+    Npairs_POI = dN_event*dN_ref
+    Npairs_ref = dN_ref*(dN_ref - 1.)
     temp_vn_denorm_array2 = []
     for iorder in range(1, n_order):
         vn_real_event = data[:, 4*iorder]
@@ -557,14 +562,12 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
         vn_pt = vn_real_event + 1j*vn_imag_event
         numerator_real = real(dN_event*vn_pt*dN_ref*conj(vn_ref))
         numerator_imag = imag(dN_event*vn_pt*dN_ref*conj(vn_ref))
-        denorm1 = dN_event
-        denorm2 = real(dN_ref*vn_ref*dN_ref*conj(vn_ref))
+        denorm2 = real(dN_ref*vn_ref*dN_ref*conj(vn_ref)) - dN_ref
         temp_vn_real_array.append(numerator_real)
         temp_vn_imag_array.append(numerator_imag)
         temp_vn_denorm_array2.append(denorm2)
-    temp_vn_denorm_array1.append(denorm1)
     return(temp_vn_real_array, temp_vn_imag_array,
-           temp_vn_denorm_array1, temp_vn_denorm_array2)
+           Npairs_POI, temp_vn_denorm_array2, Npairs_ref)
 
 
 def get_vn_diff_2PC_from_single_event(data):
@@ -587,7 +590,7 @@ def get_vn_diff_2PC_from_single_event(data):
 
 
 def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag,
-                         vn_diff_denorm1, vn_diff_denorm2):
+                         Npairs_POI, Cn2_ref, Npairs_ref):
     """
         this funciton calculates the scalar-product vn
         assumption: no overlap between particles of interest
@@ -595,24 +598,27 @@ def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag,
     """
     vn_diff_real = array(vn_diff_real)
     vn_diff_imag = array(vn_diff_imag)
-    vn_diff_denorm1 = array(vn_diff_denorm1) + 1e-30
-    vn_diff_denorm2 = array(vn_diff_denorm2)
-    nev = len(vn_diff_denorm1[:, 0])
+    Npairs_POI = array(Npairs_POI) + 1e-30
+    Cn2_ref = array(Cn2_ref)
+    Npairs_ref = array(Npairs_ref) + 1e-30
+    nev = len(Npairs_POI[:, 0])
 
-    #vn_denorm = vn_2.reshape(len(vn_2), 1)
-    #vn_denorm_err = vn_2_err.reshape(len(vn_2_err), 1)
-    dn_diff_denorm = mean(vn_diff_denorm1, 0)
-    dn_diff_denorm_err = std(vn_diff_denorm1, 0)/sqrt(nev)
-    vn_denorm = sqrt(mean(vn_diff_denorm2, 0))
-    vn_denorm_err = (std(vn_diff_denorm2, 0)/sqrt(nev)/2./vn_denorm)
-    vn_denorm = vn_denorm.reshape(len(vn_denorm), 1)
-    vn_denorm_err = vn_denorm_err.reshape(len(vn_denorm), 1)
+    Npairs_POI_mean = mean(Npairs_POI, 0)
+    Npairs_POI_err  = std(Npairs_POI, 0)/sqrt(nev)
+    Npairs_ref_mean = mean(Npairs_ref, 0)
+    Cn2_ref_mean = sqrt(mean(Cn2_ref, 0))/sqrt(Npairs_ref_mean)
+    Cn2_ref_mean = nan_to_num(Cn2_ref_mean) + 1e-30
+    Cn2_ref_err  = (std(Cn2_ref, 0)/sqrt(nev)/2./sqrt(mean(Cn2_ref, 0))
+                    /sqrt(Npairs_ref_mean))
+    Cn2_ref_err = nan_to_num(Cn2_ref_err)
+    Cn2_ref_mean = Cn2_ref_mean.reshape(len(Cn2_ref_mean), 1)
+    Cn2_ref_err = Cn2_ref_err.reshape(len(Cn2_ref_err), 1)
 
-    vn_diff_SP = mean(vn_diff_real, 0)/dn_diff_denorm/vn_denorm
+    vn_diff_SP = mean(vn_diff_real, 0)/Npairs_POI_mean/Cn2_ref_mean
     vn_diff_SP_err = sqrt(
-        (std(vn_diff_real, 0)/sqrt(nev)/dn_diff_denorm/vn_denorm)**2.
-        + (vn_diff_SP*dn_diff_denorm_err/dn_diff_denorm)**2.
-        + (vn_diff_SP*vn_denorm_err/vn_denorm)**2.)
+        (std(vn_diff_real, 0)/sqrt(nev)/Npairs_POI_mean/Cn2_ref_mean)**2.
+        + (vn_diff_SP*Npairs_POI_err/Npairs_POI_mean)**2.
+        + (vn_diff_SP*Cn2_ref_err/Cn2_ref_mean)**2.)
     return(vn_diff_SP, vn_diff_SP_err)
 
 
@@ -1377,16 +1383,22 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_cms_arrays_for_rn = []
         vn_atlas_array = []
         vn_diff_phenix_real = []; vn_diff_phenix_imag = [];
-        vn_diff_phenix_denorm1 = []; vn_diff_phenix_denorm2 = []
+        vn_diff_phenix_NpairsPOI = []; vn_diff_phenix_Cn2 = [];
+        vn_diff_phenix_NpairsRef = []
         vn_diff_star_real = []; vn_diff_star_imag = [];
-        vn_diff_star_denorm1 = []; vn_diff_star_denorm2 = []
+        vn_diff_star_NpairsPOI = []; vn_diff_star_Cn2 = [];
+        vn_diff_star_NpairsRef = []
         vn_diff_alice_real = []; vn_diff_alice_imag = [];
-        vn_diff_alice_denorm1 = []; vn_diff_alice_denorm2 = []
+        vn_diff_alice_NpairsPOI = []; vn_diff_alice_Cn2 = [];
+        vn_diff_alice_NpairsRef = []
         vn_diff_2PC_real = []; vn_diff_2PC_imag = []; vn_diff_2PC_denorm = []
         vn_diff_cms_real = []; vn_diff_cms_imag = [];
+        vn_diff_cms_NpairsPOI = []; vn_diff_cms_Cn2 = [];
+        vn_diff_cms_NpairsRef = []
         vn_diff_cms_denorm1 = []; vn_diff_cms_denorm2 = []
         vn_diff_atlas_real = []; vn_diff_atlas_imag = [];
-        vn_diff_atlas_denorm1 = []; vn_diff_atlas_denorm2 = []
+        vn_diff_atlas_NpairsPOI = []; vn_diff_atlas_Cn2 = [];
+        vn_diff_atlas_NpairsRef = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
@@ -1440,49 +1452,49 @@ for icen in range(len(centrality_cut_list) - 1):
 
             # pT-differential vn using scalar-product method
             # vn{SP}(pT) with PHENIX pT cut
-            temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
-                            calculate_diff_vn_single_event(0.2, 2.0, temp_data,
-                                                           temp_data_ref))
-            vn_diff_phenix_real.append(temp_vn_diff_real);
-            vn_diff_phenix_imag.append(temp_vn_diff_imag);
-            vn_diff_phenix_denorm1.append(temp_dn_diff);
-            vn_diff_phenix_denorm2.append(temp_vn2);
+            temp_arr = calculate_diff_vn_single_event(0.2, 2.0, temp_data,
+                                                      temp_data_ref)
+            vn_diff_phenix_real.append(temp_arr[0]);
+            vn_diff_phenix_imag.append(temp_arr[1]);
+            vn_diff_phenix_NpairsPOI.append(temp_arr[2]);
+            vn_diff_phenix_Cn2.append(temp_arr[3]);
+            vn_diff_phenix_NpairsRef.append(temp_arr[4]);
 
             # vn{SP}(pT) with STAR pT cut
-            temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
-                            calculate_diff_vn_single_event(0.15, 2.0, temp_data,
-                                                           temp_data_ref))
-            vn_diff_star_real.append(temp_vn_diff_real);
-            vn_diff_star_imag.append(temp_vn_diff_imag);
-            vn_diff_star_denorm1.append(temp_dn_diff);
-            vn_diff_star_denorm2.append(temp_vn2);
+            temp_arr = calculate_diff_vn_single_event(0.15, 2.0, temp_data,
+                                                      temp_data_ref)
+            vn_diff_star_real.append(temp_arr[0]);
+            vn_diff_star_imag.append(temp_arr[1]);
+            vn_diff_star_NpairsPOI.append(temp_arr[2]);
+            vn_diff_star_Cn2.append(temp_arr[3]);
+            vn_diff_star_NpairsRef.append(temp_arr[4]);
 
             # vn{SP}(pT) with ALICE pT cut
-            temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
-                            calculate_diff_vn_single_event(0.2, 3.0, temp_data,
-                                                           temp_data_ref))
-            vn_diff_alice_real.append(temp_vn_diff_real);
-            vn_diff_alice_imag.append(temp_vn_diff_imag);
-            vn_diff_alice_denorm1.append(temp_dn_diff);
-            vn_diff_alice_denorm2.append(temp_vn2);
+            temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
+                                                      temp_data_ref)
+            vn_diff_alice_real.append(temp_arr[0]);
+            vn_diff_alice_imag.append(temp_arr[1]);
+            vn_diff_alice_NpairsPOI.append(temp_arr[2]);
+            vn_diff_alice_Cn2.append(temp_arr[3]);
+            vn_diff_alice_NpairsRef.append(temp_arr[4]);
 
             # vn{SP}(pT) with CMS pT cut
-            temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
-                            calculate_diff_vn_single_event(0.3, 3.0, temp_data,
-                                                           temp_data_ref))
-            vn_diff_cms_real.append(temp_vn_diff_real);
-            vn_diff_cms_imag.append(temp_vn_diff_imag);
-            vn_diff_cms_denorm1.append(temp_dn_diff);
-            vn_diff_cms_denorm2.append(temp_vn2);
+            temp_arr = calculate_diff_vn_single_event(0.30, 3.0, temp_data,
+                                                      temp_data_ref)
+            vn_diff_cms_real.append(temp_arr[0]);
+            vn_diff_cms_imag.append(temp_arr[1]);
+            vn_diff_cms_NpairsPOI.append(temp_arr[2]);
+            vn_diff_cms_Cn2.append(temp_arr[3]);
+            vn_diff_cms_NpairsRef.append(temp_arr[4]);
 
             # vn{SP}(pT) with ATLAS pT cut
-            temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff, temp_vn2 = (
-                            calculate_diff_vn_single_event(0.5, 3.0, temp_data,
-                                                           temp_data_ref))
-            vn_diff_atlas_real.append(temp_vn_diff_real);
-            vn_diff_atlas_imag.append(temp_vn_diff_imag);
-            vn_diff_atlas_denorm1.append(temp_dn_diff);
-            vn_diff_atlas_denorm2.append(temp_vn2);
+            temp_arr = calculate_diff_vn_single_event(0.50, 3.0, temp_data,
+                                                      temp_data_ref)
+            vn_diff_atlas_real.append(temp_arr[0]);
+            vn_diff_atlas_imag.append(temp_arr[1]);
+            vn_diff_atlas_NpairsPOI.append(temp_arr[2]);
+            vn_diff_atlas_Cn2.append(temp_arr[3]);
+            vn_diff_atlas_NpairsRef.append(temp_arr[4]);
 
             # pT-differential vn using 2PC method
             # vn[2](pT)
@@ -1654,23 +1666,28 @@ for icen in range(len(centrality_cut_list) - 1):
         # calcualte vn{SP}(pT)
         vn_diff_SP_phenix, vn_diff_SP_phenix_err = calculate_vn_diff_SP(
                 vn_diff_phenix_real, vn_diff_phenix_imag,
-                vn_diff_phenix_denorm1, vn_diff_phenix_denorm2)
+                vn_diff_phenix_NpairsPOI, vn_diff_phenix_Cn2,
+                vn_diff_phenix_NpairsRef)
 
         vn_diff_SP_star, vn_diff_SP_star_err = calculate_vn_diff_SP(
                 vn_diff_star_real, vn_diff_star_imag,
-                vn_diff_star_denorm1, vn_diff_star_denorm2)
+                vn_diff_star_NpairsPOI, vn_diff_star_Cn2,
+                vn_diff_star_NpairsRef)
 
         vn_diff_SP_alice, vn_diff_SP_alice_err = calculate_vn_diff_SP(
                 vn_diff_alice_real, vn_diff_alice_imag,
-                vn_diff_alice_denorm1, vn_diff_alice_denorm2)
+                vn_diff_alice_NpairsPOI, vn_diff_alice_Cn2,
+                vn_diff_alice_NpairsRef)
 
         vn_diff_SP_cms, vn_diff_SP_cms_err = calculate_vn_diff_SP(
                 vn_diff_cms_real, vn_diff_cms_imag,
-                vn_diff_cms_denorm1, vn_diff_cms_denorm2)
+                vn_diff_cms_NpairsPOI, vn_diff_cms_Cn2,
+                vn_diff_cms_NpairsRef)
 
         vn_diff_SP_atlas, vn_diff_SP_atlas_err = calculate_vn_diff_SP(
                 vn_diff_atlas_real, vn_diff_atlas_imag,
-                vn_diff_atlas_denorm1, vn_diff_atlas_denorm2)
+                vn_diff_atlas_NpairsPOI, vn_diff_atlas_Cn2,
+                vn_diff_atlas_NpairsRef)
 
         # calcualte vn[2](pT)
         vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
