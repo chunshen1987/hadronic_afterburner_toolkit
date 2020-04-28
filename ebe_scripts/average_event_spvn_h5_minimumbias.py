@@ -706,11 +706,11 @@ def calculate_vn4_diff(QnpT_diff, Qnref):
             Nref = Nref.reshape(len(Nref), 1)
             QnRef_tmp = QnRef_tmp.reshape(len(QnRef_tmp), 1)
             Q2nRef_tmp = Q2nRef_tmp.reshape(len(Q2nRef_tmp), 1)
-            N4POIPairs = NpTPOI*(Nref - 1.)*(Nref - 2.)*(Nref - 3.)
+            N4POIPairs = NpTPOI*(Nref - 1.)*(Nref - 2.)*(Nref - 3.) + 1e-30
             n4pT = real(QnpT_tmp*QnRef_tmp*conj(QnRef_tmp)*conj(QnRef_tmp)
                         - 2.*(Nref - 1)*QnpT_tmp*conj(QnRef_tmp)
                         - QnpT_tmp*QnRef_tmp*conj(Q2nRef_tmp))
-            N2POIPairs = NpTPOI*Nref
+            N2POIPairs = NpTPOI*Nref + 1e-30
             n2pT = real(QnpT_tmp*conj(QnRef_tmp))
 
             # calcualte observables with Jackknife resampling method
