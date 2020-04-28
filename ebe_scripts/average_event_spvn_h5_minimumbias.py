@@ -589,6 +589,42 @@ def get_vn_diff_2PC_from_single_event(data):
     return(temp_vn_real_array, temp_vn_imag_array, temp_vn_denorm_array)
 
 
+def calculate_diff_vn4_single_event(pT_ref_low, pT_ref_high, data, data_ref):
+    """
+        This function computes pT differential vn{4} for a single event
+        It returns [Qn_pT_arr, Qn_ref_arr]
+    """
+    npT = 50
+    pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
+    dpT = pT_inte_array[1] - pT_inte_array[0]
+    dN_event = data[:, -1]
+    dN_ref_event = data_ref[:, -1]
+    pT_ref_event = data_ref[:, 0]
+    dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
+                               log(dN_ref_event + 1e-30)))
+    dN_ref = sum(dN_ref_interp)*dpT/0.1
+    temp_Qn_pT_array = [dN_event,]
+    temp_Qn_ref_array = [dN_ref]
+    for iorder in range(1, n_order):
+        vn_real_event = data[:, 4*iorder]
+        vn_imag_event = data[:, 4*iorder+2]
+        vn_ref_real_event = data_ref[:, 4*iorder]
+        vn_ref_imag_event = data_ref[:, 4*iorder+2]
+        vn_ref_real_interp = interp(pT_inte_array, pT_ref_event,
+                                    vn_ref_real_event)
+        vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
+                                    vn_ref_imag_event)
+        vn_ref_real_inte = (
+            sum(vn_ref_real_interp*dN_ref_interp)/sum(dN_ref_interp))
+        vn_ref_imag_inte = (
+            sum(vn_ref_imag_interp*dN_ref_interp)/sum(dN_ref_interp))
+        Qn_ref = dN_ref*(vn_ref_real_inte + 1j*vn_ref_imag_inte)
+        Qn_pt = dN_event*(vn_real_event + 1j*vn_imag_event)
+        temp_Qn_pT_array.append(Qn_pt)
+        temp_Qn_ref_array.append(Qn_ref)
+    return(temp_Qn_pT_array, temp_Qn_ref_array)
+
+
 def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag,
                          Npairs_POI, Cn2_ref, Npairs_ref):
     """
@@ -636,6 +672,95 @@ def calculate_vn_diff_2PC(vn_diff_real, vn_diff_imag, vn_diff_denorm):
             /(vn_diff_denorm**2. - vn_diff_denorm + 1e-15), 0)
         /sqrt(nev)/(2.*vn_diff_2PC + 1e-15))
     return(nan_to_num(vn_diff_2PC), nan_to_num(vn_diff_2PC_err))
+
+
+def calculate_vn4_diff(QnpT_diff, Qnref):
+    """
+        this funciton calculates the 4-particle vn(pT)
+        assumption: no overlap between particles of interest
+                    and reference flow Qn vectors
+        inputs: QnpT_diff[nev, norder, npT], Qnref[nev, norder]
+        return: [v1{4}pT, v1{4}pT_err, v2{4}pT, v2{4}pT_err,
+                 v3{4}pT, v3{4}pT_err]
+    """
+    QnpT_diff = array(QnpT_diff)
+    Qnref = array(Qnref)
+    nev, norder, npT = QnpT_diff.shape
+
+    vn4pT_arr = []
+    for iorder in range(1, 4):
+        # compute Cn^ref{4}
+        Nref = real(Qnref[:, 0])
+        QnRef_tmp = Qnref[:, iorder]
+        Q2nRef_tmp = Qnref[:, 2*iorder]
+        N4refPairs = Nref*(Nref - 1.)*(Nref - 2.)*(Nref - 3.)
+        n4ref = (abs(QnRef_tmp)**4.
+                 - 2.*real(Q2nRef_tmp*conj(QnRef_tmp)*conj(QnRef_tmp))
+                 - 4.*(Nref - 2)*abs(QnRef_tmp)**2. + abs(Q2nRef_tmp)**2.
+                 + 2.*Nref*(Nref - 3))
+        N2refPairs = Nref*(Nref - 1.)
+        n2ref = abs(QnRef_tmp)**2. - Nref
+
+        # calcualte observables with Jackknife resampling method
+        Cn2ref_arr = zeros(nev)
+        Cn4ref_arr = zeros(nev)
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            Cn2ref_arr[iev] = (
+                    mean(n2ref[array_idx])/mean(N2refPairs[array_idx]))
+            Cn4ref_arr[iev] = (
+                mean(n4ref[array_idx])/mean(N4refPairs[array_idx])
+                - 2.*(Cn2ref_arr[iev])**2.)
+        Cn2ref_mean = mean(Cn2ref_arr)
+        Cn2ref_err  = sqrt((nev - 1.)/nev*sum((Cn2ref_arr - Cn2ref_mean)**2.))
+        Cn4ref_mean = mean(Cn4ref_arr)
+        Cn4ref_err  = sqrt((nev - 1.)/nev*sum((Cn4ref_arr - Cn4ref_mean)**2.))
+
+        if Cn4ref_mean < 0:
+            # compute dn{4}(pT)
+            NpTPOI = real(QnpT_diff[:, 0, :])
+            QnpT_tmp = QnpT_diff[:, iorder, :]
+            Nref = Nref.reshape(len(Nref), 1)
+            QnRef_tmp = QnRef_tmp.reshape(len(QnRef_tmp), 1)
+            Q2nRef_tmp = Q2nRef_tmp.reshape(len(Q2nRef_tmp), 1)
+            N4POIPairs = NpTPOI*(Nref - 1.)*(Nref - 2.)*(Nref - 3.)
+            n4pT = real(QnpT_tmp*QnRef_tmp*conj(QnRef_tmp)*conj(QnRef_tmp)
+                        - 2.*(Nref - 1)*QnpT_tmp*conj(QnRef_tmp)
+                        - QnpT_tmp*QnRef_tmp*conj(Q2nRef_tmp))
+            N2POIPairs = NpTPOI*Nref
+            n2pT = real(QnpT_tmp*conj(QnRef_tmp))
+
+            # calcualte observables with Jackknife resampling method
+            dn4pT_arr = zeros([nev, npT])
+            for iev in range(nev):
+                array_idx = [True]*nev
+                array_idx[iev] = False
+                array_idx = array(array_idx)
+                dn4pT_arr[iev, :] = (
+                      mean(n4pT[array_idx, :], 0)
+                      /mean(N4POIPairs[array_idx, :], 0)
+                    - 2.*mean(n2pT[array_idx, :], 0)
+                        /mean(N2POIPairs[array_idx, :], 0)
+                        *Cn2ref_arr[iev]
+                )
+
+            dn4pT_mean = mean(dn4pT_arr, 0)
+            dn4pT_err  = sqrt((nev - 1.)/nev
+                              *sum((dn4pT_arr - dn4pT_mean)**2., 0))
+
+            vn4pT = -dn4pT_mean/(-Cn4ref_mean)**(0.75)
+            vn4pT_err = vn4pT*sqrt((dn4pT_err/dn4pT_mean)**2.
+                                   + (3./4.*Cn4ref_err/Cn4ref_mean)**2.)
+        else:
+            vn4pT = zeros(npT)
+            vn4pT_err = zeros(npT)
+        vn4pT_arr.append(vn4pT)
+        vn4pT_arr.append(vn4pT_err)
+    return(vn4pT_arr)
+
 
 
 def calculate_vn_distribution(vn_array):
@@ -1391,6 +1516,7 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_diff_alice_real = []; vn_diff_alice_imag = [];
         vn_diff_alice_NpairsPOI = []; vn_diff_alice_Cn2 = [];
         vn_diff_alice_NpairsRef = []
+        QnpT_diff_alice = []; Qnref_alice = []
         vn_diff_2PC_real = []; vn_diff_2PC_imag = []; vn_diff_2PC_denorm = []
         vn_diff_cms_real = []; vn_diff_cms_imag = [];
         vn_diff_cms_NpairsPOI = []; vn_diff_cms_Cn2 = [];
@@ -1454,47 +1580,53 @@ for icen in range(len(centrality_cut_list) - 1):
             # vn{SP}(pT) with PHENIX pT cut
             temp_arr = calculate_diff_vn_single_event(0.2, 2.0, temp_data,
                                                       temp_data_ref)
-            vn_diff_phenix_real.append(temp_arr[0]);
-            vn_diff_phenix_imag.append(temp_arr[1]);
-            vn_diff_phenix_NpairsPOI.append(temp_arr[2]);
-            vn_diff_phenix_Cn2.append(temp_arr[3]);
-            vn_diff_phenix_NpairsRef.append(temp_arr[4]);
+            vn_diff_phenix_real.append(temp_arr[0])
+            vn_diff_phenix_imag.append(temp_arr[1])
+            vn_diff_phenix_NpairsPOI.append(temp_arr[2])
+            vn_diff_phenix_Cn2.append(temp_arr[3])
+            vn_diff_phenix_NpairsRef.append(temp_arr[4])
 
             # vn{SP}(pT) with STAR pT cut
             temp_arr = calculate_diff_vn_single_event(0.15, 2.0, temp_data,
                                                       temp_data_ref)
-            vn_diff_star_real.append(temp_arr[0]);
-            vn_diff_star_imag.append(temp_arr[1]);
-            vn_diff_star_NpairsPOI.append(temp_arr[2]);
-            vn_diff_star_Cn2.append(temp_arr[3]);
-            vn_diff_star_NpairsRef.append(temp_arr[4]);
+            vn_diff_star_real.append(temp_arr[0])
+            vn_diff_star_imag.append(temp_arr[1])
+            vn_diff_star_NpairsPOI.append(temp_arr[2])
+            vn_diff_star_Cn2.append(temp_arr[3])
+            vn_diff_star_NpairsRef.append(temp_arr[4])
 
             # vn{SP}(pT) with ALICE pT cut
             temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
                                                       temp_data_ref)
-            vn_diff_alice_real.append(temp_arr[0]);
-            vn_diff_alice_imag.append(temp_arr[1]);
-            vn_diff_alice_NpairsPOI.append(temp_arr[2]);
-            vn_diff_alice_Cn2.append(temp_arr[3]);
-            vn_diff_alice_NpairsRef.append(temp_arr[4]);
+            vn_diff_alice_real.append(temp_arr[0])
+            vn_diff_alice_imag.append(temp_arr[1])
+            vn_diff_alice_NpairsPOI.append(temp_arr[2])
+            vn_diff_alice_Cn2.append(temp_arr[3])
+            vn_diff_alice_NpairsRef.append(temp_arr[4])
+
+            # vn{4}(pT) with ALICE pT cut
+            temp_arr = calculate_diff_vn4_single_event(0.20, 3.0, temp_data,
+                                                       temp_data_ref)
+            QnpT_diff_alice.append(temp_arr[0])
+            Qnref_alice.append(temp_arr[1])
 
             # vn{SP}(pT) with CMS pT cut
             temp_arr = calculate_diff_vn_single_event(0.30, 3.0, temp_data,
                                                       temp_data_ref)
-            vn_diff_cms_real.append(temp_arr[0]);
-            vn_diff_cms_imag.append(temp_arr[1]);
-            vn_diff_cms_NpairsPOI.append(temp_arr[2]);
-            vn_diff_cms_Cn2.append(temp_arr[3]);
-            vn_diff_cms_NpairsRef.append(temp_arr[4]);
+            vn_diff_cms_real.append(temp_arr[0])
+            vn_diff_cms_imag.append(temp_arr[1])
+            vn_diff_cms_NpairsPOI.append(temp_arr[2])
+            vn_diff_cms_Cn2.append(temp_arr[3])
+            vn_diff_cms_NpairsRef.append(temp_arr[4])
 
             # vn{SP}(pT) with ATLAS pT cut
             temp_arr = calculate_diff_vn_single_event(0.50, 3.0, temp_data,
                                                       temp_data_ref)
-            vn_diff_atlas_real.append(temp_arr[0]);
-            vn_diff_atlas_imag.append(temp_arr[1]);
-            vn_diff_atlas_NpairsPOI.append(temp_arr[2]);
-            vn_diff_atlas_Cn2.append(temp_arr[3]);
-            vn_diff_atlas_NpairsRef.append(temp_arr[4]);
+            vn_diff_atlas_real.append(temp_arr[0])
+            vn_diff_atlas_imag.append(temp_arr[1])
+            vn_diff_atlas_NpairsPOI.append(temp_arr[2])
+            vn_diff_atlas_Cn2.append(temp_arr[3])
+            vn_diff_atlas_NpairsRef.append(temp_arr[4])
 
             # pT-differential vn using 2PC method
             # vn[2](pT)
@@ -1678,6 +1810,7 @@ for icen in range(len(centrality_cut_list) - 1):
                 vn_diff_alice_real, vn_diff_alice_imag,
                 vn_diff_alice_NpairsPOI, vn_diff_alice_Cn2,
                 vn_diff_alice_NpairsRef)
+        vn4_diff_alice_arr = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
 
         vn_diff_SP_cms, vn_diff_SP_cms_err = calculate_vn_diff_SP(
                 vn_diff_cms_real, vn_diff_cms_imag,
@@ -2024,6 +2157,21 @@ for icen in range(len(centrality_cut_list) - 1):
             for iorder in range(1, n_order):
                 f.write("%.10e  %.10e  " % (vn_diff_SP_alice[iorder-1, ipT], 
                                             vn_diff_SP_alice_err[iorder-1, ipT]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
+        output_filename = ("%s_differential_observables_4particle_ALICE.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                "vn{4}  vn{4}_err\n")
+        for ipT in range(len(pT_spectra)):
+            f.write("%.10e  %.10e  %.10e  "
+                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            for iorder in range(1, 4):
+                f.write("%.10e  %.10e  " % (vn4_diff_alice_arr[2*iorder-2][ipT],
+                                            vn4_diff_alice_arr[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
