@@ -930,55 +930,55 @@ def calculate_vn4(vn_data_array):
              - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
              + 2*dN*(dN - 3.))
 
-    # C_n{4}
-    C_1_4 = mean(Q1_4)/mean(N4_weight) - 2.*((mean(Q1_2)/mean(N2_weight))**2.)
-    stat_err_1 = sqrt((std(Q1_4)/mean(N4_weight))**2.
-                      + (mean(Q1_4)*std(N4_weight)/(mean(N4_weight)**2.))**2.
-                     )/sqrt(nev)
-    stat_err_2 = sqrt((std(Q1_2)/mean(N2_weight))**2.
-                      + (mean(Q1_2)*std(N2_weight)/(mean(N2_weight)**2.))**2.
-                     )/sqrt(nev)
-    C_1_4_err = sqrt(stat_err_1**2.
-                     + (4.*(mean(Q1_2)/mean(N2_weight))*stat_err_2)**2.)
+    # calcualte observables with Jackknife resampling method
+    C1_4_array = zeros(nev)
+    C2_4_array = zeros(nev)
+    C3_4_array = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+        array_idx = array(array_idx)
+
+        # C_1{4}
+        C1_4_array[iev] = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
+                           - 2.*((mean(Q1_2[array_idx])
+                                 /mean(N2_weight[array_idx]))**2.))
+        # C_2{4}
+        C2_4_array[iev] = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
+                           - 2.*((mean(Q2_2[array_idx])
+                                 /mean(N2_weight[array_idx]))**2.))
+        # C_3{4}
+        C3_4_array[iev] = (mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
+                           - 2.*((mean(Q3_2[array_idx])
+                                 /mean(N2_weight[array_idx]))**2.))
+    C1_4_mean = mean(C1_4_array)
+    C1_4_err  = sqrt((nev - 1.)/nev*sum((C1_4_array - C1_4_mean)**2.))
+    C2_4_mean = mean(C2_4_array)
+    C2_4_err  = sqrt((nev - 1.)/nev*sum((C2_4_array - C2_4_mean)**2.))
+    C3_4_mean = mean(C3_4_array)
+    C3_4_err  = sqrt((nev - 1.)/nev*sum((C3_4_array - C3_4_mean)**2.))
+
     v1_4 = 0.0
     v1_4_err = 0.0
-    if C_1_4 < 0:
-        v1_4 = (-C_1_4)**0.25
-        v1_4_err = 0.25*((-C_1_4)**(-0.75))*C_1_4_err
+    if C1_4_mean < 0:
+        v1_4 = (-C1_4_mean)**0.25
+        v1_4_err = 0.25*((-C1_4_mean)**(-0.75))*C1_4_err
 
-    C_2_4 = mean(Q2_4)/mean(N4_weight) - 2.*((mean(Q2_2)/mean(N2_weight))**2.)
-    stat_err_1 = sqrt((std(Q2_4)/mean(N4_weight))**2.
-                      + (mean(Q2_4)*std(N4_weight)/(mean(N4_weight)**2.))**2.
-                     )/sqrt(nev)
-    stat_err_2 = sqrt((std(Q2_2)/mean(N2_weight))**2.
-                      + (mean(Q2_2)*std(N2_weight)/(mean(N2_weight)**2.))**2.
-                     )/sqrt(nev)
-    C_2_4_err = sqrt(stat_err_1**2.
-                     + (4.*(mean(Q2_2)/mean(N2_weight))*stat_err_2)**2.)
     v2_4 = 0.0
     v2_4_err = 0.0
-    if C_2_4 < 0:
-        v2_4 = (-C_2_4)**0.25
-        v2_4_err = 0.25*((-C_2_4)**(-0.75))*C_2_4_err
+    if C2_4_mean < 0:
+        v2_4 = (-C2_4_mean)**0.25
+        v2_4_err = 0.25*((-C2_4_mean)**(-0.75))*C2_4_err
 
-    C_3_4 = mean(Q3_4)/mean(N4_weight) - 2.*((mean(Q3_2)/mean(N2_weight))**2.)
-    stat_err_1 = sqrt((std(Q3_4)/mean(N4_weight))**2.
-                      + (mean(Q3_4)*std(N4_weight)/(mean(N4_weight)**2.))**2.
-                     )/sqrt(nev)
-    stat_err_2 = sqrt((std(Q3_2)/mean(N2_weight))**2.
-                      + (mean(Q3_2)*std(N2_weight)/(mean(N2_weight)**2.))**2.
-                     )/sqrt(nev)
-    C_3_4_err = sqrt(stat_err_1**2.
-                     + (4.*(mean(Q3_2)/mean(N2_weight))*stat_err_2)**2.)
     v3_4 = 0.0
     v3_4_err = 0.0
-    if C_3_4 < 0:
-        v3_4 = (-C_3_4)**0.25
-        v3_4_err = 0.25*((-C_3_4)**(-0.75))*C_3_4_err
+    if C3_4_mean < 0:
+        v3_4 = (-C3_4_mean)**0.25
+        v3_4_err = 0.25*((-C3_4_mean)**(-0.75))*C3_4_err
 
-    results = [v1_4, v1_4_err, C_1_4, C_1_4_err,
-               v2_4, v2_4_err, C_2_4, C_2_4_err,
-               v3_4, v3_4_err, C_3_4, C_3_4_err,]
+    results = [v1_4, v1_4_err, C1_4_mean, C1_4_err,
+               v2_4, v2_4_err, C2_4_mean, C2_4_err,
+               v3_4, v3_4_err, C3_4_mean, C3_4_err,]
     return(results)
 
 
