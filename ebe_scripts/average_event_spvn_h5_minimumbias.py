@@ -39,7 +39,8 @@ PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 centrality_cut_list = (Reg_centrality_cut_list + PHOBOS_cen_list
                        + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
-Centrality_flag = 1
+centrality_cut_list = [20, 30]
+Centrality_flag = 0
 
 try:
     data_path = path.abspath(argv[1])
@@ -525,51 +526,6 @@ def calcualte_vn_2(vn_data_array):
     return(nan_to_num(vn_2), nan_to_num(vn_2_err))
 
 
-def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
-    """
-        This function computes pT differential vn for a single event
-        It returns [Re{Qn(pT)*conj(Qn_ref)}, Im{Qn(pT)*conj(Qn_ref)},
-                    N(pT)*N_ref, Qn_ref*conj(Qn_ref) - N_ref, N_ref*(N_ref-1)]
-    """
-    npT = 50
-    pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
-    dpT = pT_inte_array[1] - pT_inte_array[0]
-    dN_event = data[:, -1]
-    dN_ref_event = data_ref[:, -1]
-    pT_ref_event = data_ref[:, 0]
-    dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
-                               log(dN_ref_event + 1e-30)))
-    dN_ref = sum(dN_ref_interp)*dpT/0.1
-    temp_vn_real_array = []
-    temp_vn_imag_array = []
-    Npairs_POI = dN_event*dN_ref
-    Npairs_ref = dN_ref*(dN_ref - 1.)
-    temp_vn_denorm_array2 = []
-    for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
-        vn_ref_real_event = data_ref[:, 4*iorder]
-        vn_ref_imag_event = data_ref[:, 4*iorder+2]
-        vn_ref_real_interp = interp(pT_inte_array, pT_ref_event,
-                                    vn_ref_real_event)
-        vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
-                                    vn_ref_imag_event)
-        vn_ref_real_inte = (
-            sum(vn_ref_real_interp*dN_ref_interp)/sum(dN_ref_interp))
-        vn_ref_imag_inte = (
-            sum(vn_ref_imag_interp*dN_ref_interp)/sum(dN_ref_interp))
-        vn_ref = vn_ref_real_inte + 1j*vn_ref_imag_inte
-        vn_pt = vn_real_event + 1j*vn_imag_event
-        numerator_real = real(dN_event*vn_pt*dN_ref*conj(vn_ref))
-        numerator_imag = imag(dN_event*vn_pt*dN_ref*conj(vn_ref))
-        denorm2 = real(dN_ref*vn_ref*dN_ref*conj(vn_ref)) - dN_ref
-        temp_vn_real_array.append(numerator_real)
-        temp_vn_imag_array.append(numerator_imag)
-        temp_vn_denorm_array2.append(denorm2)
-    return(temp_vn_real_array, temp_vn_imag_array,
-           Npairs_POI, temp_vn_denorm_array2, Npairs_ref)
-
-
 def get_vn_diff_2PC_from_single_event(data):
     """This function computes the 2PC vn for a single event"""
     dN_event = data[:, -1]
@@ -589,7 +545,7 @@ def get_vn_diff_2PC_from_single_event(data):
     return(temp_vn_real_array, temp_vn_imag_array, temp_vn_denorm_array)
 
 
-def calculate_diff_vn4_single_event(pT_ref_low, pT_ref_high, data, data_ref):
+def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     """
         This function computes pT differential vn{4} for a single event
         It returns [Qn_pT_arr, Qn_ref_arr]
@@ -625,37 +581,62 @@ def calculate_diff_vn4_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     return(temp_Qn_pT_array, temp_Qn_ref_array)
 
 
-def calculate_vn_diff_SP(vn_diff_real, vn_diff_imag,
-                         Npairs_POI, Cn2_ref, Npairs_ref):
+def calculate_vn_diff_SP(QnpT_diff, Qnref):
     """
         this funciton calculates the scalar-product vn
         assumption: no overlap between particles of interest
                     and reference flow Qn vectors
+        inputs: QnpT_diff[nev, norder, npT], Qnref[nev, norder]
+        return: [vn{SP}(pT), vn{SP}(pT)_err]
     """
-    vn_diff_real = array(vn_diff_real)
-    vn_diff_imag = array(vn_diff_imag)
-    Npairs_POI = array(Npairs_POI) + 1e-30
-    Cn2_ref = array(Cn2_ref)
-    Npairs_ref = array(Npairs_ref) + 1e-30
-    nev = len(Npairs_POI[:, 0])
+    QnpT_diff = array(QnpT_diff)
+    Qnref = array(Qnref)
+    nev, norder, npT = QnpT_diff.shape
 
-    Npairs_POI_mean = mean(Npairs_POI, 0)
-    Npairs_POI_err  = std(Npairs_POI, 0)/sqrt(nev)
-    Npairs_ref_mean = mean(Npairs_ref, 0)
-    Cn2_ref_mean = sqrt(mean(Cn2_ref, 0))/sqrt(Npairs_ref_mean)
-    Cn2_ref_mean = nan_to_num(Cn2_ref_mean) + 1e-30
-    Cn2_ref_err  = (std(Cn2_ref, 0)/sqrt(nev)/2./sqrt(mean(Cn2_ref, 0))
-                    /sqrt(Npairs_ref_mean))
-    Cn2_ref_err = nan_to_num(Cn2_ref_err)
-    Cn2_ref_mean = Cn2_ref_mean.reshape(len(Cn2_ref_mean), 1)
-    Cn2_ref_err = Cn2_ref_err.reshape(len(Cn2_ref_err), 1)
 
-    vn_diff_SP = mean(vn_diff_real, 0)/Npairs_POI_mean/Cn2_ref_mean
-    vn_diff_SP_err = sqrt(
-        (std(vn_diff_real, 0)/sqrt(nev)/Npairs_POI_mean/Cn2_ref_mean)**2.
-        + (vn_diff_SP*Npairs_POI_err/Npairs_POI_mean)**2.
-        + (vn_diff_SP*Cn2_ref_err/Cn2_ref_mean)**2.)
-    return(vn_diff_SP, vn_diff_SP_err)
+    vn_diff_SP = []
+    Nref = real(Qnref[:, 0])
+    N2refPairs = Nref*(Nref - 1.)
+    for iorder in range(1, norder):
+        # compute Cn^ref{2}
+        QnRef_tmp = Qnref[:, iorder]
+        n2ref = abs(QnRef_tmp)**2. - Nref
+
+        # calcualte observables with Jackknife resampling method
+        Cn2ref_arr = zeros(nev)
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            Cn2ref_arr[iev] = (
+                    mean(n2ref[array_idx])/mean(N2refPairs[array_idx]))
+        Cn2ref_mean = mean(Cn2ref_arr)
+        Cn2ref_err  = sqrt((nev - 1.)/nev*sum((Cn2ref_arr - Cn2ref_mean)**2.))
+
+        # compute vn{SP}(pT)
+        NpTPOI = real(QnpT_diff[:, 0, :])
+        QnpT_tmp = QnpT_diff[:, iorder, :]
+        Nref = Nref.reshape(nev, 1)
+        QnRef_tmp = QnRef_tmp.reshape(nev, 1)
+        N2POIPairs = NpTPOI*Nref
+        n2pT = real(QnpT_tmp*conj(QnRef_tmp))
+
+        # calcualte observables with Jackknife resampling method
+        vnSPpT_arr = zeros([nev, npT])
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            vnSPpT_arr[iev, :] = (mean(n2pT[array_idx], 0)
+                    /mean(N2POIPairs[array_idx], 0)/sqrt(Cn2ref_arr[iev]))
+        vnSPpT_mean = mean(vnSPpT_arr, 0)
+        vnSPpT_err  = sqrt((nev - 1.)/nev
+                           *sum((vnSPpT_arr - vnSPpT_mean)**2., 0))
+        vn_diff_SP.append(vnSPpT_mean)
+        vn_diff_SP.append(vnSPpT_err)
+    return vn_diff_SP
 
 
 def calculate_vn_diff_2PC(vn_diff_real, vn_diff_imag, vn_diff_denorm):
@@ -1507,24 +1488,12 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_cms_array = []
         vn_cms_arrays_for_rn = []
         vn_atlas_array = []
-        vn_diff_phenix_real = []; vn_diff_phenix_imag = [];
-        vn_diff_phenix_NpairsPOI = []; vn_diff_phenix_Cn2 = [];
-        vn_diff_phenix_NpairsRef = []
-        vn_diff_star_real = []; vn_diff_star_imag = [];
-        vn_diff_star_NpairsPOI = []; vn_diff_star_Cn2 = [];
-        vn_diff_star_NpairsRef = []
-        vn_diff_alice_real = []; vn_diff_alice_imag = [];
-        vn_diff_alice_NpairsPOI = []; vn_diff_alice_Cn2 = [];
-        vn_diff_alice_NpairsRef = []
+        QnpT_diff_phenix = []; Qnref_phenix = []
+        QnpT_diff_star = []; Qnref_star = []
         QnpT_diff_alice = []; Qnref_alice = []
+        QnpT_diff_cms = []; Qnref_cms = []
+        QnpT_diff_atlas = []; Qnref_atlas = []
         vn_diff_2PC_real = []; vn_diff_2PC_imag = []; vn_diff_2PC_denorm = []
-        vn_diff_cms_real = []; vn_diff_cms_imag = [];
-        vn_diff_cms_NpairsPOI = []; vn_diff_cms_Cn2 = [];
-        vn_diff_cms_NpairsRef = []
-        vn_diff_cms_denorm1 = []; vn_diff_cms_denorm2 = []
-        vn_diff_atlas_real = []; vn_diff_atlas_imag = [];
-        vn_diff_atlas_NpairsPOI = []; vn_diff_atlas_Cn2 = [];
-        vn_diff_atlas_NpairsRef = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
@@ -1580,53 +1549,32 @@ for icen in range(len(centrality_cut_list) - 1):
             # vn{SP}(pT) with PHENIX pT cut
             temp_arr = calculate_diff_vn_single_event(0.2, 2.0, temp_data,
                                                       temp_data_ref)
-            vn_diff_phenix_real.append(temp_arr[0])
-            vn_diff_phenix_imag.append(temp_arr[1])
-            vn_diff_phenix_NpairsPOI.append(temp_arr[2])
-            vn_diff_phenix_Cn2.append(temp_arr[3])
-            vn_diff_phenix_NpairsRef.append(temp_arr[4])
+            QnpT_diff_phenix.append(temp_arr[0])
+            Qnref_phenix.append(temp_arr[1])
 
             # vn{SP}(pT) with STAR pT cut
             temp_arr = calculate_diff_vn_single_event(0.15, 2.0, temp_data,
                                                       temp_data_ref)
-            vn_diff_star_real.append(temp_arr[0])
-            vn_diff_star_imag.append(temp_arr[1])
-            vn_diff_star_NpairsPOI.append(temp_arr[2])
-            vn_diff_star_Cn2.append(temp_arr[3])
-            vn_diff_star_NpairsRef.append(temp_arr[4])
-
-            # vn{SP}(pT) with ALICE pT cut
-            temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
-                                                      temp_data_ref)
-            vn_diff_alice_real.append(temp_arr[0])
-            vn_diff_alice_imag.append(temp_arr[1])
-            vn_diff_alice_NpairsPOI.append(temp_arr[2])
-            vn_diff_alice_Cn2.append(temp_arr[3])
-            vn_diff_alice_NpairsRef.append(temp_arr[4])
+            QnpT_diff_star.append(temp_arr[0])
+            Qnref_star.append(temp_arr[1])
 
             # vn{4}(pT) with ALICE pT cut
-            temp_arr = calculate_diff_vn4_single_event(0.20, 3.0, temp_data,
-                                                       temp_data_ref)
+            temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
+                                                      temp_data_ref)
             QnpT_diff_alice.append(temp_arr[0])
             Qnref_alice.append(temp_arr[1])
 
             # vn{SP}(pT) with CMS pT cut
             temp_arr = calculate_diff_vn_single_event(0.30, 3.0, temp_data,
-                                                      temp_data_ref)
-            vn_diff_cms_real.append(temp_arr[0])
-            vn_diff_cms_imag.append(temp_arr[1])
-            vn_diff_cms_NpairsPOI.append(temp_arr[2])
-            vn_diff_cms_Cn2.append(temp_arr[3])
-            vn_diff_cms_NpairsRef.append(temp_arr[4])
+                                                     temp_data_ref)
+            QnpT_diff_cms.append(temp_arr[0])
+            Qnref_cms.append(temp_arr[1])
 
             # vn{SP}(pT) with ATLAS pT cut
             temp_arr = calculate_diff_vn_single_event(0.50, 3.0, temp_data,
-                                                      temp_data_ref)
-            vn_diff_atlas_real.append(temp_arr[0])
-            vn_diff_atlas_imag.append(temp_arr[1])
-            vn_diff_atlas_NpairsPOI.append(temp_arr[2])
-            vn_diff_atlas_Cn2.append(temp_arr[3])
-            vn_diff_atlas_NpairsRef.append(temp_arr[4])
+                                                     temp_data_ref)
+            QnpT_diff_atlas.append(temp_arr[0])
+            Qnref_atlas.append(temp_arr[1])
 
             # pT-differential vn using 2PC method
             # vn[2](pT)
@@ -1796,31 +1744,19 @@ for icen in range(len(centrality_cut_list) - 1):
                     calcualte_event_plane_correlations(vn_atlas_array))
 
         # calcualte vn{SP}(pT)
-        vn_diff_SP_phenix, vn_diff_SP_phenix_err = calculate_vn_diff_SP(
-                vn_diff_phenix_real, vn_diff_phenix_imag,
-                vn_diff_phenix_NpairsPOI, vn_diff_phenix_Cn2,
-                vn_diff_phenix_NpairsRef)
+        vn_diff_SP_phenix = calculate_vn_diff_SP(QnpT_diff_phenix,
+                                                  Qnref_phenix)
+        vn4_diff_phenix = calculate_vn4_diff(QnpT_diff_phenix, Qnref_phenix)
+        vn_diff_SP_star = calculate_vn_diff_SP(QnpT_diff_star, Qnref_star)
+        vn4_diff_star = calculate_vn4_diff(QnpT_diff_star, Qnref_star)
 
-        vn_diff_SP_star, vn_diff_SP_star_err = calculate_vn_diff_SP(
-                vn_diff_star_real, vn_diff_star_imag,
-                vn_diff_star_NpairsPOI, vn_diff_star_Cn2,
-                vn_diff_star_NpairsRef)
+        vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice, Qnref_alice)
+        vn4_diff_alice = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
 
-        vn_diff_SP_alice, vn_diff_SP_alice_err = calculate_vn_diff_SP(
-                vn_diff_alice_real, vn_diff_alice_imag,
-                vn_diff_alice_NpairsPOI, vn_diff_alice_Cn2,
-                vn_diff_alice_NpairsRef)
-        vn4_diff_alice_arr = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
-
-        vn_diff_SP_cms, vn_diff_SP_cms_err = calculate_vn_diff_SP(
-                vn_diff_cms_real, vn_diff_cms_imag,
-                vn_diff_cms_NpairsPOI, vn_diff_cms_Cn2,
-                vn_diff_cms_NpairsRef)
-
-        vn_diff_SP_atlas, vn_diff_SP_atlas_err = calculate_vn_diff_SP(
-                vn_diff_atlas_real, vn_diff_atlas_imag,
-                vn_diff_atlas_NpairsPOI, vn_diff_atlas_Cn2,
-                vn_diff_atlas_NpairsRef)
+        vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_star)
+        vn4_diff_cms = calculate_vn4_diff(QnpT_diff_cms, Qnref_cms)
+        vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_star)
+        vn4_diff_atlas = calculate_vn4_diff(QnpT_diff_atlas, Qnref_atlas)
 
         # calcualte vn[2](pT)
         vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
@@ -2125,8 +2061,8 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("%.10e  %.10e  %.10e  "
                     % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
             for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_phenix[iorder-1, ipT], 
-                                            vn_diff_SP_phenix_err[iorder-1, ipT]))
+                f.write("%.10e  %.10e  " % (vn_diff_SP_phenix[2*iorder-2][ipT],
+                                            vn_diff_SP_phenix[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
@@ -2140,8 +2076,8 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("%.10e  %.10e  %.10e  "
                     % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
             for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_star[iorder-1, ipT], 
-                                            vn_diff_SP_star_err[iorder-1, ipT]))
+                f.write("%.10e  %.10e  " % (vn_diff_SP_star[2*iorder-2][ipT],
+                                            vn_diff_SP_star[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
@@ -2155,23 +2091,8 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("%.10e  %.10e  %.10e  "
                     % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
             for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_alice[iorder-1, ipT], 
-                                            vn_diff_SP_alice_err[iorder-1, ipT]))
-            f.write("\n")
-        f.close()
-        shutil.move(output_filename, avg_folder)
-
-        output_filename = ("%s_differential_observables_4particle_ALICE.dat"
-                           % particle_name_list[ipart])
-        f = open(output_filename, 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{4}  vn{4}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, 4):
-                f.write("%.10e  %.10e  " % (vn4_diff_alice_arr[2*iorder-2][ipT],
-                                            vn4_diff_alice_arr[2*iorder-1][ipT]))
+                f.write("%.10e  %.10e  " % (vn_diff_SP_alice[2*iorder-2][ipT],
+                                            vn_diff_SP_alice[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
@@ -2185,7 +2106,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("%.10e  %.10e  %.10e  "
                     % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
             for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_2PC[iorder-1, ipT], 
+                f.write("%.10e  %.10e  " % (vn_diff_2PC[iorder-1, ipT],
                                             vn_diff_2PC_err[iorder-1, ipT]))
             f.write("\n")
         f.close()
@@ -2200,8 +2121,8 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("%.10e  %.10e  %.10e  "
                     % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
             for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_cms[iorder-1, ipT], 
-                                            vn_diff_SP_cms_err[iorder-1, ipT]))
+                f.write("%.10e  %.10e  " % (vn_diff_SP_cms[2*iorder-2][ipT],
+                                            vn_diff_SP_cms[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
@@ -2215,11 +2136,88 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("%.10e  %.10e  %.10e  "
                     % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
             for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_atlas[iorder-1, ipT], 
-                                            vn_diff_SP_atlas_err[iorder-1, ipT]))
+                f.write("%.10e  %.10e  " % (vn_diff_SP_atlas[2*iorder-2][ipT],
+                                            vn_diff_SP_atlas[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
         shutil.move(output_filename, avg_folder)
+
+        # output vn{4}(pT)
+        output_filename = ("%s_differential_observables_4particle_PHENIX.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                "vn{4}  vn{4}_err\n")
+        for ipT in range(len(pT_spectra)):
+            f.write("%.10e  %.10e  %.10e  "
+                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            for iorder in range(1, 4):
+                f.write("%.10e  %.10e  " % (vn4_diff_phenix[2*iorder-2][ipT],
+                                            vn4_diff_phenix[2*iorder-1][ipT]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
+        output_filename = ("%s_differential_observables_4particle_STAR.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                "vn{4}  vn{4}_err\n")
+        for ipT in range(len(pT_spectra)):
+            f.write("%.10e  %.10e  %.10e  "
+                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            for iorder in range(1, 4):
+                f.write("%.10e  %.10e  " % (vn4_diff_star[2*iorder-2][ipT],
+                                            vn4_diff_star[2*iorder-1][ipT]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
+        output_filename = ("%s_differential_observables_4particle_ALICE.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                "vn{4}  vn{4}_err\n")
+        for ipT in range(len(pT_spectra)):
+            f.write("%.10e  %.10e  %.10e  "
+                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            for iorder in range(1, 4):
+                f.write("%.10e  %.10e  " % (vn4_diff_alice[2*iorder-2][ipT],
+                                            vn4_diff_alice[2*iorder-1][ipT]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
+        output_filename = ("%s_differential_observables_4particle_CMS.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                "vn{4}  vn{4}_err\n")
+        for ipT in range(len(pT_spectra)):
+            f.write("%.10e  %.10e  %.10e  "
+                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            for iorder in range(1, 4):
+                f.write("%.10e  %.10e  " % (vn4_diff_cms[2*iorder-2][ipT],
+                                            vn4_diff_cms[2*iorder-1][ipT]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
+        output_filename = ("%s_differential_observables_4particle_ATLAS.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                "vn{4}  vn{4}_err\n")
+        for ipT in range(len(pT_spectra)):
+            f.write("%.10e  %.10e  %.10e  "
+                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+            for iorder in range(1, 4):
+                f.write("%.10e  %.10e  " % (vn4_diff_atlas[2*iorder-2][ipT],
+                                            vn4_diff_atlas[2*iorder-1][ipT]))
+            f.write("\n")
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
 
         output_filename = ("%s_rapidity_distribution.dat"
                            % particle_name_list[ipart])
