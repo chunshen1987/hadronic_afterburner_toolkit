@@ -1618,13 +1618,19 @@ for icen in range(len(centrality_cut_list) - 1):
             SC_alice = calculate_symmetric_cumulant(vn_alice_array)
 
             # calculate vn{4}
+            vn4_phenix = calculate_vn4(vn_phenix_array)
+            vn4_star = calculate_vn4(vn_star_array)
             vn4_alice = calculate_vn4(vn_alice_array)
             vn4_cms = calculate_vn4(vn_cms_array)
             vn4_atlas = calculate_vn4(vn_atlas_array)
             # calculate vn{4}/vn{2} and vn{6}/vn{4}
+            vn4_over_vn2_phenix = calculate_vn4_over_vn2(vn_phenix_array)
+            vn4_over_vn2_star = calculate_vn4_over_vn2(vn_star_array)
             vn4_over_vn2_alice = calculate_vn4_over_vn2(vn_alice_array)
             vn4_over_vn2_cms = calculate_vn4_over_vn2(vn_cms_array)
             vn4_over_vn2_atlas = calculate_vn4_over_vn2(vn_atlas_array)
+            vn6_over_vn4_phenix = calculate_vn6_over_vn4(vn_phenix_array)
+            vn6_over_vn4_star = calculate_vn6_over_vn4(vn_star_array)
             vn6_over_vn4_alice = calculate_vn6_over_vn4(vn_alice_array)
             vn6_over_vn4_cms = calculate_vn6_over_vn4(vn_cms_array)
             vn6_over_vn4_atlas = calculate_vn6_over_vn4(vn_atlas_array)
@@ -1761,6 +1767,28 @@ for icen in range(len(centrality_cut_list) - 1):
             f.close()
             shutil.move(output_filename, avg_folder)
 
+            # output vn4 for PHENIX pt cut
+            output_filename = ("charged_hadron_vn4_PHENIX.dat")
+            f = open(output_filename, 'w')
+            f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
+            for i in range(1, 4):
+                f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                        % (i, vn4_phenix[4*i-4], vn4_phenix[4*i-3],
+                           vn4_phenix[4*i-2], vn4_phenix[4*i-1]))
+            f.close()
+            shutil.move(output_filename, avg_folder)
+
+            # output vn4 for STAR pt cut
+            output_filename = ("charged_hadron_vn4_STAR.dat")
+            f = open(output_filename, 'w')
+            f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
+            for i in range(1, 4):
+                f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                        % (i, vn4_star[4*i-4], vn4_star[4*i-3],
+                           vn4_star[4*i-2], vn4_star[4*i-1]))
+            f.close()
+            shutil.move(output_filename, avg_folder)
+
             # output vn4 for ALICE pt cut
             output_filename = ("charged_hadron_vn4_ALICE.dat")
             f = open(output_filename, 'w')
@@ -1794,46 +1822,100 @@ for icen in range(len(centrality_cut_list) - 1):
             f.close()
             shutil.move(output_filename, avg_folder)
 
+            # output vn4/vn2 ratio for PHENIX pt cut
+            output_filename = ("charged_hadron_vn4_over_vn2_PHENIX.dat")
+            f = open(output_filename, 'w')
+            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
+            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
+            for i in range(1, 4):
+                f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                        % (i, vn4_over_vn2_phenix[4*i - 4],
+                           vn4_over_vn2_phenix[4*i - 3],
+                           vn4_over_vn2_phenix[4*i - 2],
+                           vn4_over_vn2_phenix[4*i-1]))
+            f.close()
+            shutil.move(output_filename, avg_folder)
+
+            # output vn4/vn2 ratio for STAR pt cut
+            output_filename = ("charged_hadron_vn4_over_vn2_STAR.dat")
+            f = open(output_filename, 'w')
+            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
+            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
+            for i in range(1, 4):
+                f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                        % (i, vn4_over_vn2_star[4*i - 4],
+                           vn4_over_vn2_star[4*i - 3],
+                           vn4_over_vn2_star[4*i - 2],
+                           vn4_over_vn2_star[4*i-1]))
+            f.close()
+            shutil.move(output_filename, avg_folder)
+
             # output vn4/vn2 ratio for ALICE pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_ALICE.dat")
             f = open(output_filename, 'w')
-            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err \n")
-            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2)) \n")
+            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
+            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
-                        % (i, vn4_over_vn2_alice[4*i-4], vn4_over_vn2_alice[4*i-3],
-                           vn4_over_vn2_alice[4*i-2], vn4_over_vn2_alice[4*i-1]))
+                        % (i, vn4_over_vn2_alice[4*i - 4],
+                           vn4_over_vn2_alice[4*i - 3],
+                           vn4_over_vn2_alice[4*i - 2],
+                           vn4_over_vn2_alice[4*i - 1]))
             f.close()
             shutil.move(output_filename, avg_folder)
 
             # output vn4/vn2 ratio for CMS pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_CMS.dat")
             f = open(output_filename, 'w')
-            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err \n")
-            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2)) \n")
+            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
+            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
-                        % (i, vn4_over_vn2_cms[4*i-4], vn4_over_vn2_cms[4*i-3],
-                           vn4_over_vn2_cms[4*i-2], vn4_over_vn2_cms[4*i-1]))
+                        % (i, vn4_over_vn2_cms[4*i - 4],
+                           vn4_over_vn2_cms[4*i - 3],
+                           vn4_over_vn2_cms[4*i - 2],
+                           vn4_over_vn2_cms[4*i - 1]))
             f.close()
             shutil.move(output_filename, avg_folder)
 
             # output vn4/vn2 ratio for ATLAS pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_ATLAS.dat")
             f = open(output_filename, 'w')
-            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err \n")
-            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2)) \n")
+            f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
+            f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
-                        % (i, vn4_over_vn2_atlas[4*i-4], vn4_over_vn2_atlas[4*i-3],
-                           vn4_over_vn2_atlas[4*i-2], vn4_over_vn2_atlas[4*i-1]))
+                        % (i, vn4_over_vn2_atlas[4*i - 4],
+                           vn4_over_vn2_atlas[4*i - 3],
+                           vn4_over_vn2_atlas[4*i - 2],
+                           vn4_over_vn2_atlas[4*i - 1]))
+            f.close()
+            shutil.move(output_filename, avg_folder)
+
+            # output vn6/vn4 ratio for PHENIX pt cut
+            output_filename = ("charged_hadron_vn6_over_vn4_PHENIX.dat")
+            f = open(output_filename, 'w')
+            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (2, vn6_over_vn4_phenix[0], vn6_over_vn4_phenix[1],
+                       vn6_over_vn4_phenix[2], vn6_over_vn4_phenix[3]))
+            f.close()
+            shutil.move(output_filename, avg_folder)
+
+            # output vn6/vn4 ratio for STAR pt cut
+            output_filename = ("charged_hadron_vn6_over_vn4_STAR.dat")
+            f = open(output_filename, 'w')
+            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
+            f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
+                    % (2, vn6_over_vn4_star[0], vn6_over_vn4_star[1],
+                       vn6_over_vn4_star[2], vn6_over_vn4_star[3]))
             f.close()
             shutil.move(output_filename, avg_folder)
 
             # output vn6/vn4 ratio for ALICE pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ALICE.dat")
             f = open(output_filename, 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err \n")
+            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_alice[0], vn6_over_vn4_alice[1],
                        vn6_over_vn4_alice[2], vn6_over_vn4_alice[3]))
@@ -1843,7 +1925,7 @@ for icen in range(len(centrality_cut_list) - 1):
             # output vn6/vn4 ratio for CMS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_CMS.dat")
             f = open(output_filename, 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err \n")
+            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_cms[0], vn6_over_vn4_cms[1],
                        vn6_over_vn4_cms[2], vn6_over_vn4_cms[3]))
@@ -1853,7 +1935,7 @@ for icen in range(len(centrality_cut_list) - 1):
             # output vn6/vn4 ratio for ATLAS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ATLAS.dat")
             f = open(output_filename, 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err \n")
+            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_atlas[0], vn6_over_vn4_atlas[1],
                        vn6_over_vn4_atlas[2], vn6_over_vn4_atlas[3]))
