@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-#folder=$1
-#exp="ALICE"
-exp="phenix"
+folder=$1
+exp=$2
 
 filename="charged_hadron_C2{4}_$exp.dat"
 filename1="charged_hadron_v2{2}_$exp.dat"
@@ -20,7 +19,7 @@ filename53="symmetric_cumulants_$exp.dat"
 idx=0
 centrality=(2.5 7.5 15 25 35 45 55 65 75 85 95)
 (
-    #cd $folder
+    cd $folder
     # first print header
     echo "# cen dN/deta(ch)  C2{4} C2{4}_err" > $filename
     echo "# cen dN/deta(ch)  v2{2} v2{2}_err" > $filename1
@@ -29,7 +28,7 @@ centrality=(2.5 7.5 15 25 35 45 55 65 75 85 95)
     echo "# cen dN/deta(ch)  v5{2} v5{2}_err" > $filename15
     echo "# cen dN/deta(ch)  v2{4} v2{4}_err" > $filename2
     echo "# cen dN/deta(ch)  dN/deta(ch)_err  dN/dy dN/dy_err(pi^+, pi^-, K^+, K^-, p, pbar)" > $filename3
-    echo "# cen dN/deta(ch)  dN/deta(ch)_err <pT>  <pT>_err (charged, pi^+, K^+, p)" > $filename4
+    echo "# cen dN/deta(ch)  <pT>  <pT>_err (charged, pi^+, K^+, p)" > $filename4
     echo "# cen dN/deta(ch)  v2{4}/v2{2}(ch) v2{4}/v2{2}_err(ch) F(v2) F(v2)_err" > $filename5
     echo "# cen dN/deta(ch)  v3{4}/v3{2}(ch) v3{4}/v3{2}_err(ch) F(v3) F(v3)_err" > $filename51
     echo "# cen dN/deta(ch)  v2{6}/v2{4}(ch) v2{6}/v2{4}_err(ch) gamma1 gamma1_err" > $filename52
@@ -49,13 +48,13 @@ centrality=(2.5 7.5 15 25 35 45 55 65 75 85 95)
         then
              dNdyCut=`cat ./$icen/charged_hadron_integrated_observables.dat | grep "dN/dy(pT>0.4,|eta|<2.5)=" | cut -f 2,4 -d " "`  
         else
-            dNdyCut=$dNdy
+            dNdyCut=`echo $dNdy | cut -f 1 -d " "`
         fi
         C24=`cat ./$icen/charged_hadron_vn4_ALICE.dat | head -n 3 | tail -n 1 | awk {'print $4, $5'}`
-        v22=`cat ./$icen/charged_hadron_integrated_observables.dat | grep "$exp" | grep "v_2" | awk {'print $2, $4'}`
-        v32=`cat ./$icen/charged_hadron_integrated_observables.dat | grep "$exp" | grep "v_3" | awk {'print $2, $4'}`
-        v42=`cat ./$icen/charged_hadron_integrated_observables.dat | grep "$exp" | grep "v_4" | awk {'print $2, $4'}`
-        v52=`cat ./$icen/charged_hadron_integrated_observables.dat | grep "$exp" | grep "v_5" | awk {'print $2, $4'}`
+        v22=`cat ./$icen/charged_hadron_integrated_observables.dat | sed 's/phenix/PHENIX/g' | grep "$exp" | grep "v_2" | awk {'print $2, $4'}`
+        v32=`cat ./$icen/charged_hadron_integrated_observables.dat | sed 's/phenix/PHENIX/g' | grep "$exp" | grep "v_3" | awk {'print $2, $4'}`
+        v42=`cat ./$icen/charged_hadron_integrated_observables.dat | sed 's/phenix/PHENIX/g' | grep "$exp" | grep "v_4" | awk {'print $2, $4'}`
+        v52=`cat ./$icen/charged_hadron_integrated_observables.dat | sed 's/phenix/PHENIX/g' | grep "$exp" | grep "v_5" | awk {'print $2, $4'}`
         v24=`cat ./$icen/charged_hadron_vn4_ALICE.dat | head -n 3 | tail -n 1 | awk {'print $2, $3'}`
         echo ${centrality[idx]} $dNdyCut $C24 >> $filename
         echo ${centrality[idx]} $dNdyCut $v22 >> $filename1
