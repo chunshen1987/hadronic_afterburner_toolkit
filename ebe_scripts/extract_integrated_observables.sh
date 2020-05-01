@@ -90,7 +90,7 @@ centrality=(2.5 7.5 15 25 35 45 55 65 75 85 95)
         kaon_m=`cat ./$icen/kaon_m_integrated_observables.dat | grep -m 1 "<pT>" | cut -f 2,4 -d " "`
         proton=`cat ./$icen/proton_integrated_observables.dat | grep -m 1 "<pT>" | cut -f 2,4 -d " "`
         pbar=`cat ./$icen/anti_proton_integrated_observables.dat | grep -m 1 "<pT>" | cut -f 2,4 -d " "`
-        echo ${centrality[idx]} $dNdyCut $charged $pion_p $kaon_p $proton >> $filename4
+        echo ${centrality[idx]} $dNdyCut $charged $pion_p $pion_m $kaon_p $kaon_m $proton $pbar >> $filename4
 
         # pid dN/dy
         pion_p=`cat ./$icen/pion_p_integrated_observables.dat | grep "dN/dy" | cut -f 2,4 -d " "`
