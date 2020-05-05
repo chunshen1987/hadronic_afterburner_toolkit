@@ -37,9 +37,14 @@ PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
 SPS_cen_list    = [5., 12.5, 23.5, 33.5, 43.5]       # SPS PbPb
 PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
-centrality_cut_list = (Reg_centrality_cut_list + PHOBOS_cen_list
-                       + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
-Centrality_flag = 1
+#centrality_cut_list = (Reg_centrality_cut_list + PHOBOS_cen_list
+#                       + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
+centrality_cut_list = Reg_centrality_cut_list
+
+Centrality_flag = 2  # 0: use pre-generated centrality label in the database
+                     # 1: sort dNch/deta and cut centrality
+                     # 2: assume uneven number of events in pre-generated
+                     #    centrality, remove the bias and cut on dNch/deta
 
 try:
     data_path = path.abspath(argv[1])
@@ -1396,8 +1401,44 @@ def calculate_meanpT_fluc(dN_array, pT_array, pT_min=0.0, pT_max=3.0):
 hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
 print("total number of events: {}".format(len(event_list)))
-dN_dy_mb = zeros(len(event_list))
-if Centrality_flag == 1:
+if Centrality_flag == 2:
+    event_list_1 = []
+    nev_min = 1e10
+    nev_centrality = []
+    for icen in range(len(centrality_cut_list) - 1):
+        cen_bin_width = (
+            (centrality_cut_list[icen+1] - centrality_cut_list[icen])/100.)
+        cen_label = ("C{0:d}-{1:d}_".format(
+            int(centrality_cut_list[icen]),
+            int(centrality_cut_list[icen+1]))
+        )
+        selected_events_list = []
+        for ifolder, event_name in enumerate(event_list):
+            if cen_label in event_name:
+                selected_events_list.append(event_name)
+        nev_i = len(selected_events_list)
+        nev_centrality.append(nev_i)
+        if nev_i/cen_bin_width < nev_min:
+            nev_min = int(nev_i/cen_bin_width)
+    print("Removing the centrality bias, using nev = {}".format(nev_min))
+    for icen in range(len(centrality_cut_list) - 1):
+        cen_bin_width = (
+            (centrality_cut_list[icen+1] - centrality_cut_list[icen])/100.)
+        cen_label = ("C{0:d}-{1:d}_".format(
+            int(centrality_cut_list[icen]),
+            int(centrality_cut_list[icen+1]))
+        )
+        iev = 0
+        for ifolder, event_name in enumerate(event_list):
+            if (cen_label in event_name
+                and iev < int(nev_min*cen_bin_width)):
+                event_list_1.append(event_name)
+                iev += 1
+    event_list = event_list_1
+
+dN_dy_mb = []
+if Centrality_flag > 0:
+    dN_dy_mb = zeros(len(event_list))
     for ifolder, event_name in enumerate(event_list):
         file_name   = "particle_9999_vndata_eta_-0.5_0.5.dat"
         event_group = hf.get(event_name)
@@ -1405,6 +1446,7 @@ if Centrality_flag == 1:
         temp_data   = nan_to_num(temp_data)
         dN_dy_mb[ifolder] = -temp_data[0, 1]
     dN_dy_mb = -sort(dN_dy_mb)
+
 
 for icen in range(len(centrality_cut_list) - 1):
     if centrality_cut_list[icen+1] < centrality_cut_list[icen]: continue
@@ -1423,7 +1465,7 @@ for icen in range(len(centrality_cut_list) - 1):
             )
             if cen_label in event_name:
                 selected_events_list.append(event_name)
-        elif Centrality_flag == 1:
+        elif Centrality_flag > 0:
             dN_dy_cut_high = (
                 dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)])
             dN_dy_cut_low  = dN_dy_mb[
