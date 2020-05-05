@@ -124,40 +124,10 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     }
 
     if (read_in_mode_ == 8) {
-        inputfile.open(filename.str().c_str(), ios::binary | ios::in);
-        if (!inputfile.is_open()) {
-            throw std::runtime_error("Can't open file " + filename.str());
-        }
-
-        // Read header
-        char magic_number[5], smash_version[20];
-        uint16_t format_variant;
-        uint32_t len;
-        inputfile.read(&magic_number[0], 4 * sizeof(char));
-        inputfile.read(reinterpret_cast<char *>(&smash_format_version_),
-                       sizeof(std::uint16_t));
-        inputfile.read(reinterpret_cast<char *>(&format_variant),
-                       sizeof(std::uint16_t));
-        inputfile.read(reinterpret_cast<char *>(&len), sizeof(std::uint32_t));
-        inputfile.read(&smash_version[0], sizeof(char) * len);
-
-        if (strcmp(magic_number, "SMSH") != 0) {
-            throw std::runtime_error(
-                filename.str() + " is likely not a SMASH binary:" +
-                " magic number does not match. magic_number = "
-                + magic_number);
-        }
-
-        if (format_variant != 1) {
-            throw std::runtime_error(filename.str() + " is not a file of" +
-                                     " extended SMASH binary format.");
-        }
-
-        std::cout << magic_number << " " << smash_format_version_ << " "
-                  << format_variant << " " << smash_version << std::endl;
-        if (read_mixed_events) {
-          // todo
-        }
+       open_SMASH_binary(filename.str(), inputfile);
+       if (read_mixed_events) {
+           open_SMASH_binary(filename_mixed_event.str(), inputfile_mixed_event);
+       }
     } else if (read_in_mode_ != 2 && read_in_mode_ != 7 && read_in_mode_ != 10) {
         inputfile.open(filename.str().c_str());
         if (!inputfile.is_open()) {
@@ -285,6 +255,41 @@ particleSamples::~particleSamples() {
     }
 }
 
+void particleSamples::open_SMASH_binary(const std::string &SMASH_filename,
+                                        std::ifstream &SMASH_inputfile) {
+   SMASH_inputfile.open(SMASH_filename.c_str(), ios::binary | ios::in);
+   if (!SMASH_inputfile.is_open()) {
+       throw std::runtime_error("Can't open file " + SMASH_filename);
+   }
+
+   // Read header
+   char magic_number[5], smash_version[20];
+   uint16_t format_variant;
+   uint32_t len;
+   SMASH_inputfile.read(&magic_number[0], 4 * sizeof(char));
+   SMASH_inputfile.read(reinterpret_cast<char *>(&smash_format_version_),
+                  sizeof(std::uint16_t));
+   SMASH_inputfile.read(reinterpret_cast<char *>(&format_variant),
+                  sizeof(std::uint16_t));
+   SMASH_inputfile.read(reinterpret_cast<char *>(&len), sizeof(std::uint32_t));
+   SMASH_inputfile.read(&smash_version[0], sizeof(char) * len);
+
+   if (strcmp(magic_number, "SMSH") != 0) {
+       throw std::runtime_error(
+           SMASH_filename + " is likely not a SMASH binary:" +
+           " magic number does not match. magic_number = "
+           + magic_number);
+   }
+
+   if (format_variant != 1) {
+       throw std::runtime_error(SMASH_filename + " is not a file of" +
+                                " extended SMASH binary format.");
+   }
+
+   std::cout << magic_number << " " << smash_format_version_ << " "
+             << format_variant << " " << smash_version << std::endl;
+ 
+}
 
 void particleSamples::build_map_urqmd_to_pdg_id() {
     // mesorns
@@ -376,7 +381,7 @@ int particleSamples::read_in_particle_samples() {
     } else if (read_in_mode_ == 7) {
         read_in_particle_samples_SMASH_gzipped();
     } else if (read_in_mode_ == 8) {
-        read_in_particle_samples_SMASH_binary();
+        read_in_particle_samples_SMASH_binary(inputfile, full_particle_list);
     } else if (read_in_mode_ == 10) {
         read_in_particle_samples_gzipped();
         resonance_weak_feed_down_flag = 0;
@@ -433,7 +438,8 @@ int particleSamples::read_in_particle_samples_mixed_event() {
     } else if (read_in_mode_ == 7) {
         read_in_particle_samples_SMASH_mixed_event_gzipped();
     } else if (read_in_mode_ == 8) {
-        // todo: read_in_particle_samples_SMASH_binary_mixed_event();
+        read_in_particle_samples_SMASH_binary(inputfile_mixed_event,
+                                              full_particle_list_mixed_event);
     } else if (read_in_mode_ == 10) {
         read_in_particle_samples_mixed_event_gzipped();
     }
@@ -933,24 +939,26 @@ int particleSamples::read_in_particle_samples_SMASH_gzipped() {
     return(0);
 }
 
-int particleSamples::read_in_particle_samples_SMASH_binary() {
+int particleSamples::read_in_particle_samples_SMASH_binary(
+    std::ifstream &SMASH_inputfile,
+    std::vector< std::vector<particle_info>* >* resulting_particle_list) {
     // clean out the previous record
-    clear_out_previous_record(full_particle_list);
+    clear_out_previous_record(resulting_particle_list);
     int ievent = 0, num_particles = 0;
     while (num_particles < event_buffer_size) {
       char block_type;
-      inputfile.read(&block_type, sizeof(char));
-      if (!inputfile) {
+      SMASH_inputfile.read(&block_type, sizeof(char));
+      if (!SMASH_inputfile) {
         break;
       }
       if (block_type == 'f') {
         uint32_t ev;
         double impact_parameter;
         char empty;
-        inputfile.read(reinterpret_cast<char *>(&ev), sizeof(std::uint32_t));
-        inputfile.read(reinterpret_cast<char *>(&impact_parameter), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&ev), sizeof(std::uint32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&impact_parameter), sizeof(double));
         if (smash_format_version_ > 6) {
-          inputfile.read(&empty, sizeof(char));
+          SMASH_inputfile.read(&empty, sizeof(char));
         }
         ievent++;
         continue;
@@ -958,35 +966,35 @@ int particleSamples::read_in_particle_samples_SMASH_binary() {
       if (block_type != 'p') {
         break;
       }
-      full_particle_list->push_back(new vector<particle_info> );
+      resulting_particle_list->push_back(new vector<particle_info> );
 
       uint32_t n_part_lines;
-      inputfile.read(reinterpret_cast<char *>(&n_part_lines), sizeof(std::uint32_t));
+      SMASH_inputfile.read(reinterpret_cast<char *>(&n_part_lines), sizeof(std::uint32_t));
       for (size_t i = 0; i < n_part_lines; i++) {
         double t, x, y, z, m, p0, px, py, pz,
                form_time, xsecfac, time_last_coll;
         int32_t pdg, id, charge, ncoll, proc_id_origin,
                 proc_type_origin, pdg_mother1, pdg_mother2;
-        inputfile.read(reinterpret_cast<char *>(&t), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&x), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&y), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&z), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&m), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&p0), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&px), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&py), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&pz), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&pdg), sizeof(std::int32_t));
-        inputfile.read(reinterpret_cast<char *>(&id),  sizeof(std::int32_t));
-        inputfile.read(reinterpret_cast<char *>(&charge), sizeof(std::int32_t));
-        inputfile.read(reinterpret_cast<char *>(&ncoll),  sizeof(std::int32_t));
-        inputfile.read(reinterpret_cast<char *>(&form_time), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&xsecfac), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&proc_id_origin), sizeof(std::int32_t));
-        inputfile.read(reinterpret_cast<char *>(&proc_type_origin), sizeof(std::int32_t));
-        inputfile.read(reinterpret_cast<char *>(&time_last_coll), sizeof(double));
-        inputfile.read(reinterpret_cast<char *>(&pdg_mother1), sizeof(std::int32_t));
-        inputfile.read(reinterpret_cast<char *>(&pdg_mother2), sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&t), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&x), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&y), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&z), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&m), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&p0), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&px), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&py), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&pz), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&pdg), sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&id),  sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&charge), sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&ncoll),  sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&form_time), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&xsecfac), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&proc_id_origin), sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&proc_type_origin), sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&time_last_coll), sizeof(double));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&pdg_mother1), sizeof(std::int32_t));
+        SMASH_inputfile.read(reinterpret_cast<char *>(&pdg_mother2), sizeof(std::int32_t));
 
         double origin_t = time_last_coll;
         double vx = px/p0, vy = py/p0, vz = pz/p0;
@@ -1007,7 +1015,7 @@ int particleSamples::read_in_particle_samples_SMASH_binary() {
         temp_particle_info.py = py;
         temp_particle_info.pz = pz;
 
-        (*full_particle_list)[ievent]->push_back(temp_particle_info);
+        (*resulting_particle_list)[ievent]->push_back(temp_particle_info);
       }
       num_particles += n_part_lines;
       std::cout << "Read in " << n_part_lines << " particles" << std::endl;

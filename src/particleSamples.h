@@ -124,6 +124,9 @@ class particleSamples {
                     std::shared_ptr<RandomUtil::Random> ran_gen);
     ~particleSamples();
 
+    void open_SMASH_binary(const std::string &SMASH_filename,
+                           std::ifstream &SMASH_inputfile);
+
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
     void build_map_urqmd_to_pdg_id();
 
@@ -155,7 +158,9 @@ class particleSamples {
     int read_in_particle_samples_UrQMD_3p3();
     int read_in_particle_samples_UrQMD_3p3_mixed_event();
     int read_in_particle_samples_Sangwook();
-    int read_in_particle_samples_SMASH_binary();
+    int read_in_particle_samples_SMASH_binary(
+        std::ifstream &SMASH_inputfile,
+        std::vector< std::vector<particle_info>* >* resulting_particle_list);
     int read_in_particle_samples_mixed_event_Sangwook();
     int read_in_particle_samples_SMASH_gzipped();
     int read_in_particle_samples_SMASH_mixed_event_gzipped();
