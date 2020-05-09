@@ -22,16 +22,35 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     echo_level_       = paraRdr_.getVal("echo_level");
     event_buffer_size = paraRdr_.getVal("event_buffer_size");
     read_in_mode_     = paraRdr_.getVal("read_in_mode");
-    run_mode_         = paraRdr_.getVal("run_mode");
+
+    if (paraRdr_.getVal("analyze_flow") == 1)
+        analyze_flow = true;
+    else
+        analyze_flow = false;
+
+    if (paraRdr_.getVal("analyze_HBT") == 1)
+        analyze_HBT = true;
+    else
+        analyze_HBT = false;
+
+    if (paraRdr_.getVal("analyze_balance_function") == 1)
+        analyze_BF = true;
+    else
+        analyze_BF = false;
+
+    if (paraRdr_.getVal("analyze_ebe_yield") == 1)
+        analyze_ebedis = true;
+    else
+        analyze_ebedis = false;
 
     read_mixed_events = false;
-    if (run_mode_ == 1 || run_mode_ == 3) {
+    if (analyze_HBT || analyze_BF) {
         read_mixed_events = true;
     }
 
     rap_type_ = paraRdr_.getVal("rap_type");
 
-    if (run_mode_ == 2) {
+    if (analyze_ebedis) {
         net_particle_flag = paraRdr_.getVal("net_particle_flag");
         if (net_particle_flag == 1) {
             anti_particle_list = new vector< vector<particle_info>* >;
@@ -44,7 +63,7 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     particle_monval = paraRdr_.getVal("particle_monval");
     flag_isospin    = paraRdr_.getVal("distinguish_isospin");
 
-    if (run_mode_ == 3) {
+    if (analyze_BF) {
         particle_monval_a    = paraRdr_.getVal("particle_alpha");
         particle_monval_abar = -particle_monval_a;
         particle_monval_b    = paraRdr_.getVal("particle_beta");
@@ -273,7 +292,7 @@ particleSamples::~particleSamples() {
         delete negative_charge_hadron_list;
     }
 
-    if (run_mode_ == 3) {
+    if (analyze_BF) {
         clear_out_previous_record(balance_function_particle_a);
         clear_out_previous_record(balance_function_particle_abar);
         clear_out_previous_record(balance_function_particle_b);
@@ -465,7 +484,7 @@ void particleSamples::read_in_particle_samples_mixed_event_and_filter() {
 
     filter_particles(particle_monval, full_particle_list_mixed_event,
                      particle_list_mixed_event);
-    if (run_mode_ == 3) {
+    if (analyze_BF) {
         filter_particles(particle_monval_a, full_particle_list_mixed_event,
                          balance_function_particle_a_mixed_event);
         filter_particles(particle_monval_abar, full_particle_list_mixed_event,
@@ -1090,7 +1109,7 @@ void particleSamples::filter_particles_from_events(const int PoI_monval) {
                          negative_charge_hadron_list);
     }
 
-    if (run_mode_ == 3) {
+    if (analyze_BF) {
         filter_particles(particle_monval_a, full_particle_list,
                          balance_function_particle_a);
         filter_particles(particle_monval_abar, full_particle_list,
@@ -1155,7 +1174,7 @@ void particleSamples::filter_particles_into_lists(
         clear_out_previous_record(negative_charge_hadron_list);
     }
 
-    if (run_mode_ == 3) {
+    if (analyze_BF) {
         clear_out_previous_record(balance_function_particle_a);
         clear_out_previous_record(balance_function_particle_abar);
         clear_out_previous_record(balance_function_particle_b);
@@ -1183,7 +1202,7 @@ void particleSamples::filter_particles_into_lists(
                                             new vector<particle_info>);
         }
 
-        if (run_mode_ == 3) {
+        if (analyze_BF) {
             balance_function_particle_a->push_back(
                                             new vector<particle_info>);
             balance_function_particle_abar->push_back(
@@ -1229,7 +1248,7 @@ void particleSamples::filter_particles_into_lists(
                     (*negative_charge_hadron_list)[iev]->push_back(part_i);
             }
 
-            if (run_mode_ == 3) {
+            if (analyze_BF) {
                 if (decide_to_pick_OSCAR(particle_monval_a, part_i.monval))
                     (*balance_function_particle_a)[iev]->push_back(part_i);
                 if (decide_to_pick_OSCAR(particle_monval_abar, part_i.monval))

@@ -16,8 +16,6 @@ class Analysis {
     std::shared_ptr<particleSamples> particle_list_;
     pretty_ostream messager;
 
-    int run_mode_;
-
  public:
     Analysis(std::string path);
     ~Analysis() {};

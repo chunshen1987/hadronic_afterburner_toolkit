@@ -8,6 +8,7 @@
 #include "ParameterReader.h"
 #include "particleSamples.h"
 #include "Random.h"
+#include "arsenal.h"
 #include "pretty_ostream.h"
 
 class HBT_correlation {
@@ -16,30 +17,30 @@ class HBT_correlation {
     const std::string path_;
     std::shared_ptr<particleSamples> particle_list;
 
-    std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
+    std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
 
     pretty_ostream messager;
 
     int qnpts;
     double q_min, q_max, delta_q;
 
-    int azimuthal_flag;
-    int invariant_radius_flag;
+    int azimuthal_flag_;
+    int invariant_radius_flag_;
     double psi_ref;
     int n_KT, n_Kphi;
     double dKT, dKphi;
     double KT_min, KT_max;
     double Krap_min, Krap_max;
     double buffer_rapidity;
-    double *KT_array, *Kphi_array;
+    std::vector<double> KT_array_, Kphi_array_;
 
-    double *q_out, *q_side, *q_long;
-    int number_of_mixed_events;
-    int number_of_oversample_events;
+    std::vector<double> q_out, q_side, q_long;
+    int number_of_mixed_events_;
+    int number_of_oversample_events_;
     unsigned long long int needed_number_of_pairs;
     unsigned long long int number_pairs_num, number_pairs_denorm;
-    unsigned long long int *number_of_pairs_numerator_KTdiff;
-    unsigned long long int *number_of_pairs_denormenator_KTdiff;
+    std::vector<unsigned long long int> number_of_pairs_numerator_KTdiff;
+    std::vector<unsigned long long int> number_of_pairs_denormenator_KTdiff;
     unsigned long long int **number_of_pairs_numerator_KTKphidiff;
     unsigned long long int **number_of_pairs_denormenator_KTKphidiff;
 
@@ -78,6 +79,24 @@ class HBT_correlation {
     void output_correlation_function_inv();
     void output_correlation_function();
     void output_correlation_function_Kphi_differential();
+
+    template <typename T>
+    void create_a_2D_array(T **&arr2D, int nx, int ny);
+    template <typename T>
+    void create_a_3D_array(T ***&arr3D, int nx, int ny, int nz);
+    template <typename T>
+    void create_a_4D_array(T ****&arr4D, int n1, int n2, int n3, int n4);
+    template <typename T>
+    void create_a_5D_array(T *****&arr5D,
+                           int n1, int n2, int n3, int n4, int n5);
+    template <typename T>
+    void delete_a_2D_array(T **&arr2D, int nx);
+    template <typename T>
+    void delete_a_3D_array(T ***&arr3D, int nx, int ny);
+    template <typename T>
+    void delete_a_4D_array(T ****&arr4D, int n1, int n2, int n3);
+    template <typename T>
+    void delete_a_5D_array(T *****&arr5D, int n1, int n2, int n3, int n4);
 };
 
 #endif

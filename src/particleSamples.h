@@ -33,8 +33,12 @@ class particleSamples {
 
     int echo_level_;
     int read_in_mode_;
-    int run_mode_;
     bool read_mixed_events;
+
+    bool analyze_flow;
+    bool analyze_HBT;
+    bool analyze_BF;
+    bool analyze_ebedis;
 
     int rap_type_;
 
