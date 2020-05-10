@@ -32,8 +32,6 @@ void Analysis::UpdateParameterDict(std::string param_filename,
 void Analysis::InitializeAnalysis() {
     int randomSeed = paraRdr_.getVal("randomSeed");
     ran_gen_ptr_   = std::make_shared<RandomUtil::Random> (randomSeed);
-    particle_list_ = std::make_shared<particleSamples> (paraRdr_, path_,
-                                                        ran_gen_ptr_);
 }
 
 
@@ -41,19 +39,31 @@ void Analysis::PerformAnalysis() {
     InitializeAnalysis();
     if (paraRdr_.getVal("analyze_flow") == 1) {
         messager.info("Analyze flow observables ...");
+        particle_list_ = std::make_shared<particleSamples> (
+                                                paraRdr_, path_, ran_gen_ptr_);
         FlowAnalysis();
+        particle_list_.reset();
     }
     if (paraRdr_.getVal("analyze_HBT") == 1) {
         messager.info("Analyze HBT ...");
+        particle_list_ = std::make_shared<particleSamples> (
+                                                paraRdr_, path_, ran_gen_ptr_);
         HBTAnalysis();
+        particle_list_.reset();
     }
     if (paraRdr_.getVal("analyze_balance_function") == 1) {
         messager.info("Analyze balance functions ...");
+        particle_list_ = std::make_shared<particleSamples> (
+                                                paraRdr_, path_, ran_gen_ptr_);
         BalanceFunctionAnalysis();
+        particle_list_.reset();
     }
     if (paraRdr_.getVal("analyze_ebe_yield") == 1) {
         messager.info("Analyze event-by-event particle yield distriution ...");
+        particle_list_ = std::make_shared<particleSamples> (
+                                                paraRdr_, path_, ran_gen_ptr_);
         ParticleYieldDistributionAnalysis();
+        particle_list_.reset();
     }
 }
 
@@ -175,6 +185,7 @@ void Analysis::FlowAnalysis() {
     }
     for (auto &ipart : spvn)
         ipart->output_spectra_and_Qn_results();
+    spvn.clear();
 }
 
 

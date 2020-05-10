@@ -10,7 +10,7 @@ read_in_mode = 2              # mode for reading in particle information
                               # 8: read outputs from SMASH binary format
                               # 10: reads outputs from gzip outputs
 
-analyze_flow = 1              # 0/1: flag to perform flow analysis
+analyze_flow = 0              # 0/1: flag to perform flow analysis
 analyze_HBT = 1               # 0/1: flag to perform HBT analysis
 analyze_balance_function = 0  # 0/1: flag to analyze Balance function
 analyze_ebe_yield = 0         # 0/1: flag to analyze ebe dis. of particle yield
