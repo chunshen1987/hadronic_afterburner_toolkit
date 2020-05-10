@@ -253,15 +253,15 @@ particleSamples::~particleSamples() {
 
     clear_out_previous_record(full_particle_list);
     delete full_particle_list;
-
-    clear_out_previous_record(full_particle_list_mixed_event);
-    delete full_particle_list_mixed_event;
-
     clear_out_previous_record(particle_list);
     delete particle_list;
 
-    clear_out_previous_record(particle_list_mixed_event);
-    delete particle_list_mixed_event;
+    if (read_mixed_events) {
+        clear_out_previous_record(full_particle_list_mixed_event);
+        delete full_particle_list_mixed_event;
+        clear_out_previous_record(particle_list_mixed_event);
+        delete particle_list_mixed_event;
+    }
 
     if (net_particle_flag == 1) {
         clear_out_previous_record(anti_particle_list);
