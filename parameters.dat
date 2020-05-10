@@ -16,6 +16,7 @@ analyze_balance_function = 0  # 0/1: flag to analyze Balance function
 analyze_ebe_yield = 0         # 0/1: flag to analyze ebe dis. of particle yield
 
 randomSeed = -1
+read_in_real_mixed_events = 0 # 0/1: flag to read in real mixed events
 particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
@@ -30,7 +31,7 @@ select_resonances_flag = 0    # perform resonance decays only for selected
                               # particle species
 net_particle_flag = 0         # flag to collect net particle yield distribution
 
-event_buffer_size = 5000000    # the number of particles read in at once
+event_buffer_size = 100000    # the number of particles read in at once
 
 
 # Parameters for single particle spectra and vn

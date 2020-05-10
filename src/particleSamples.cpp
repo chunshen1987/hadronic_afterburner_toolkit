@@ -44,9 +44,8 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
         analyze_ebedis = false;
 
     read_mixed_events = false;
-    if (analyze_HBT || analyze_BF) {
+    if (paraRdr_.getVal("read_in_real_mixed_events") == 1)
         read_mixed_events = true;
-    }
 
     rap_type_ = paraRdr_.getVal("rap_type");
 
@@ -480,10 +479,15 @@ int particleSamples::read_in_particle_samples_mixed_event() {
 
 
 void particleSamples::read_in_particle_samples_mixed_event_and_filter() {
-    read_in_particle_samples_mixed_event();
+    if (!read_mixed_events) {
+        full_particle_list_mixed_event = full_particle_list;
+        particle_list_mixed_event = particle_list;
+    } else {
+        read_in_particle_samples_mixed_event();
 
-    filter_particles(particle_monval, full_particle_list_mixed_event,
-                     particle_list_mixed_event);
+        filter_particles(particle_monval, full_particle_list_mixed_event,
+                         particle_list_mixed_event);
+    }
     if (analyze_BF) {
         filter_particles(particle_monval_a, full_particle_list_mixed_event,
                          balance_function_particle_a_mixed_event);
