@@ -686,9 +686,24 @@ def calculate_vn4_diff(QnpT_diff, Qnref):
         N2refPairs = Nref*(Nref - 1.)
         n2ref = abs(QnRef_tmp)**2. - Nref
 
+        # compute dn{4}(pT)
+        NpTPOI = real(QnpT_diff[:, 0, :])
+        QnpT_tmp = QnpT_diff[:, iorder, :]
+        Nref = Nref.reshape(len(Nref), 1)
+        QnRef_tmp = QnRef_tmp.reshape(len(QnRef_tmp), 1)
+        Q2nRef_tmp = Q2nRef_tmp.reshape(len(Q2nRef_tmp), 1)
+        N4POIPairs = NpTPOI*(Nref - 1.)*(Nref - 2.)*(Nref - 3.) + 1e-30
+        n4pT = real(QnpT_tmp*QnRef_tmp*conj(QnRef_tmp)*conj(QnRef_tmp)
+                    - 2.*(Nref - 1)*QnpT_tmp*conj(QnRef_tmp)
+                    - QnpT_tmp*QnRef_tmp*conj(Q2nRef_tmp))
+        N2POIPairs = NpTPOI*Nref + 1e-30
+        n2pT = real(QnpT_tmp*conj(QnRef_tmp))
+
         # calcualte observables with Jackknife resampling method
         Cn2ref_arr = zeros(nev)
         Cn4ref_arr = zeros(nev)
+        dn4pT_arr = zeros(npT)
+        vn4pT4_arr = zeros([nev, npT])
         for iev in range(nev):
             array_idx = [True]*nev
             array_idx[iev] = False
@@ -699,49 +714,25 @@ def calculate_vn4_diff(QnpT_diff, Qnref):
             Cn4ref_arr[iev] = (
                 mean(n4ref[array_idx])/mean(N4refPairs[array_idx])
                 - 2.*(Cn2ref_arr[iev])**2.)
-        Cn2ref_mean = mean(Cn2ref_arr)
-        Cn2ref_err  = sqrt((nev - 1.)/nev*sum((Cn2ref_arr - Cn2ref_mean)**2.))
-        Cn4ref_mean = mean(Cn4ref_arr)
-        Cn4ref_err  = sqrt((nev - 1.)/nev*sum((Cn4ref_arr - Cn4ref_mean)**2.))
 
-        if Cn4ref_mean < 0:
-            # compute dn{4}(pT)
-            NpTPOI = real(QnpT_diff[:, 0, :])
-            QnpT_tmp = QnpT_diff[:, iorder, :]
-            Nref = Nref.reshape(len(Nref), 1)
-            QnRef_tmp = QnRef_tmp.reshape(len(QnRef_tmp), 1)
-            Q2nRef_tmp = Q2nRef_tmp.reshape(len(Q2nRef_tmp), 1)
-            N4POIPairs = NpTPOI*(Nref - 1.)*(Nref - 2.)*(Nref - 3.) + 1e-30
-            n4pT = real(QnpT_tmp*QnRef_tmp*conj(QnRef_tmp)*conj(QnRef_tmp)
-                        - 2.*(Nref - 1)*QnpT_tmp*conj(QnRef_tmp)
-                        - QnpT_tmp*QnRef_tmp*conj(Q2nRef_tmp))
-            N2POIPairs = NpTPOI*Nref + 1e-30
-            n2pT = real(QnpT_tmp*conj(QnRef_tmp))
+            dn4pT_arr = (
+                mean(n4pT[array_idx, :], 0)/mean(N4POIPairs[array_idx, :], 0)
+                - 2.*mean(n2pT[array_idx, :], 0)
+                    /mean(N2POIPairs[array_idx, :], 0)
+                    *Cn2ref_arr[iev]
+            )
 
-            # calcualte observables with Jackknife resampling method
-            dn4pT_arr = zeros([nev, npT])
-            for iev in range(nev):
-                array_idx = [True]*nev
-                array_idx[iev] = False
-                array_idx = array(array_idx)
-                dn4pT_arr[iev, :] = (
-                      mean(n4pT[array_idx, :], 0)
-                      /mean(N4POIPairs[array_idx, :], 0)
-                    - 2.*mean(n2pT[array_idx, :], 0)
-                        /mean(N2POIPairs[array_idx, :], 0)
-                        *Cn2ref_arr[iev]
-                )
+            vn4pT4_arr[iev, :] = (-dn4pT_arr)**4./((-Cn4ref_arr[iev])**3.)
 
-            dn4pT_mean = mean(dn4pT_arr, 0)
-            dn4pT_err  = sqrt((nev - 1.)/nev
-                              *sum((dn4pT_arr - dn4pT_mean)**2., 0))
+        vn4pT4_mean = mean(vn4pT4_arr, axis=0)
+        vn4pT4_err  = sqrt((nev - 1.)/nev
+                            *sum((vn4pT4_arr - vn4pT4_mean)**2., axis=0))
 
-            vn4pT = -dn4pT_mean/(-Cn4ref_mean)**(0.75)
-            vn4pT_err = vn4pT*sqrt((dn4pT_err/dn4pT_mean)**2.
-                                   + (3./4.*Cn4ref_err/Cn4ref_mean)**2.)
-        else:
-            vn4pT = zeros(npT)
-            vn4pT_err = zeros(npT)
+        vn4pT     = zeros(npT)
+        vn4pT_err = zeros(npT)
+        idx = vn4pT4_mean > 0
+        vn4pT[idx] = vn4pT4_mean[idx]**(0.25)
+        vn4pT_err[idx] = vn4pT4_err[idx]/(4.*vn4pT4_mean[idx]**(0.75))
         vn4pT_arr.append(vn4pT)
         vn4pT_arr.append(vn4pT_err)
     return(vn4pT_arr)
@@ -1405,12 +1396,12 @@ if Centrality_flag == 2:
     event_list_1 = []
     nev_min = 1e10
     nev_centrality = []
-    for icen in range(len(centrality_cut_list) - 1):
-        cen_bin_width = (
-            (centrality_cut_list[icen+1] - centrality_cut_list[icen])/100.)
+    for icen in range(len(Reg_centrality_cut_list) - 1):
+        cen_bin_width = ((  Reg_centrality_cut_list[icen+1]
+                          - Reg_centrality_cut_list[icen])/100.)
         cen_label = ("C{0:d}-{1:d}_".format(
-            int(centrality_cut_list[icen]),
-            int(centrality_cut_list[icen+1]))
+            int(Reg_centrality_cut_list[icen]),
+            int(Reg_centrality_cut_list[icen+1]))
         )
         selected_events_list = []
         for ifolder, event_name in enumerate(event_list):
@@ -1421,12 +1412,12 @@ if Centrality_flag == 2:
         if nev_i/cen_bin_width < nev_min:
             nev_min = int(nev_i/cen_bin_width)
     print("Removing the centrality bias, using nev = {}".format(nev_min))
-    for icen in range(len(centrality_cut_list) - 1):
-        cen_bin_width = (
-            (centrality_cut_list[icen+1] - centrality_cut_list[icen])/100.)
+    for icen in range(len(Reg_centrality_cut_list) - 1):
+        cen_bin_width = ((  Reg_centrality_cut_list[icen+1]
+                          - Reg_centrality_cut_list[icen])/100.)
         cen_label = ("C{0:d}-{1:d}_".format(
-            int(centrality_cut_list[icen]),
-            int(centrality_cut_list[icen+1]))
+            int(Reg_centrality_cut_list[icen]),
+            int(Reg_centrality_cut_list[icen+1]))
         )
         iev = 0
         for ifolder, event_name in enumerate(event_list):
