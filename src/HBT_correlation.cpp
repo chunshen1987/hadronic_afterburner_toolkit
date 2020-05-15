@@ -202,7 +202,7 @@ void HBT_correlation::calculate_HBT_correlation_function(
         while (count < number_of_mixed_events_) {
             int mixed_event_id = (
                     ran_gen_ptr_->rand_int_uniform() % mixed_nev);
-            while (iev == mixed_event_id) {
+            while (iev == mixed_event_id && mixed_nev != 1) {
                 mixed_event_id = (
                     ran_gen_ptr_->rand_int_uniform() % mixed_nev);
             }
