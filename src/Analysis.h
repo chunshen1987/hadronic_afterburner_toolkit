@@ -27,6 +27,7 @@ class Analysis {
     void InitializeAnalysis();
     void PerformAnalysis();
     void FlowAnalysis();
+    void FlowAnalysis_multistrange_particles();
     void HBTAnalysis();
     void ParticleYieldDistributionAnalysis();
     void BalanceFunctionAnalysis();

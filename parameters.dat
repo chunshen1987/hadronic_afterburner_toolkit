@@ -10,8 +10,8 @@ read_in_mode = 2              # mode for reading in particle information
                               # 8: read outputs from SMASH binary format
                               # 10: reads outputs from gzip outputs
 
-analyze_flow = 0              # 0/1: flag to perform flow analysis
-analyze_HBT = 1               # 0/1: flag to perform HBT analysis
+analyze_flow = 1              # 0/1: flag to perform flow analysis
+analyze_HBT = 0               # 0/1: flag to perform HBT analysis
 analyze_balance_function = 0  # 0/1: flag to analyze Balance function
 analyze_ebe_yield = 0         # 0/1: flag to analyze ebe dis. of particle yield
 
@@ -20,7 +20,7 @@ read_in_real_mixed_events = 0 # 0/1: flag to read in real mixed events
 particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
-resonance_weak_feed_down_flag = 0    # include weak feed down contribution
+resonance_weak_feed_down_flag = 1    # include weak feed down contribution
 resonance_feed_down_flag = 0  # perform resonance feed down
                               # (will read in all hadrons and filter particle
                               #  after decays are performed)
@@ -31,7 +31,7 @@ select_resonances_flag = 0    # perform resonance decays only for selected
                               # particle species
 net_particle_flag = 0         # flag to collect net particle yield distribution
 
-event_buffer_size = 100000    # the number of particles read in at once
+event_buffer_size = 1000000   # the number of particles read in at once
 
 
 # Parameters for single particle spectra and vn

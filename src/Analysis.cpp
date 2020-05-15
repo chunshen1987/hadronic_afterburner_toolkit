@@ -43,6 +43,13 @@ void Analysis::PerformAnalysis() {
                                                 paraRdr_, path_, ran_gen_ptr_);
         FlowAnalysis();
         particle_list_.reset();
+
+        // analysis multi-strange particles
+        paraRdr_.setVal("resonance_weak_feed_down_flag", 0);
+        particle_list_ = std::make_shared<particleSamples> (
+                                                paraRdr_, path_, ran_gen_ptr_);
+        FlowAnalysis_multistrange_particles();
+        particle_list_.reset();
     }
     if (paraRdr_.getVal("analyze_HBT") == 1) {
         messager.info("Analyze HBT ...");
@@ -123,21 +130,6 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", -2212);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("resonance_weak_feed_down_flag", 0);
-    paraRdr_.setVal("particle_monval", 3122);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("particle_monval", -3122);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("particle_monval", 3312);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("particle_monval", -3312);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("particle_monval", 3334);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("particle_monval", -3334);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("particle_monval", 333);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
 
     // lastly, if we want to compute multi-particle correlations within
     // the same UrQMD events
@@ -165,6 +157,53 @@ void Analysis::FlowAnalysis() {
         spvn.push_back(
                 new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     }
+
+    // start the loop
+    int event_id = 0;
+    while (!particle_list_->end_of_file()) {
+        messager << "Reading event: " << event_id + 1 << " ... ";
+        messager.flush("info");
+        int nev = particle_list_->read_in_particle_samples();
+        messager << "nev = " << nev;
+        messager.flush("info");
+        messager.info(" processing ...");
+        for (auto &ipart : spvn) {
+            int particle_monval = ipart->get_monval();
+            particle_list_->filter_particles_from_events(particle_monval);
+            ipart->calculate_Qn_vector_shell(particle_list_);
+        }
+        messager.info("done!");
+        event_id += nev;
+    }
+    for (auto &ipart : spvn)
+        ipart->output_spectra_and_Qn_results();
+    spvn.clear();
+}
+
+
+void Analysis::FlowAnalysis_multistrange_particles() {
+    paraRdr_.setVal("compute_correlation", 0);
+    paraRdr_.setVal("flag_charge_dependence", 0);
+    paraRdr_.setVal("rap_type", 1);
+    paraRdr_.setVal("rapidity_distribution", 1);
+    paraRdr_.setVal("rap_min", -0.5); paraRdr_.setVal("rap_max", 0.5);
+
+    // first define all the analysis sets
+    std::vector<singleParticleSpectra*> spvn;
+    paraRdr_.setVal("particle_monval", 3122);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("particle_monval", -3122);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("particle_monval", 3312);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("particle_monval", -3312);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("particle_monval", 3334);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("particle_monval", -3334);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("particle_monval", 333);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
 
     // start the loop
     int event_id = 0;
