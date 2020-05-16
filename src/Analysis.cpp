@@ -44,12 +44,14 @@ void Analysis::PerformAnalysis() {
         FlowAnalysis();
         particle_list_.reset();
 
-        // analysis multi-strange particles
-        paraRdr_.setVal("resonance_weak_feed_down_flag", 0);
-        particle_list_ = std::make_shared<particleSamples> (
+        if (paraRdr_.getVal("resonance_weak_feed_down_flag") == 1) {
+            // analysis multi-strange particles
+            paraRdr_.setVal("resonance_weak_feed_down_flag", 0);
+            particle_list_ = std::make_shared<particleSamples> (
                                                 paraRdr_, path_, ran_gen_ptr_);
-        FlowAnalysis_multistrange_particles();
-        particle_list_.reset();
+            FlowAnalysis_multistrange_particles();
+            particle_list_.reset();
+        }
     }
     if (paraRdr_.getVal("analyze_HBT") == 1) {
         messager.info("Analyze HBT ...");
@@ -130,6 +132,29 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", -2212);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    if (paraRdr_.getVal("resonance_weak_feed_down_flag") == 0) {
+        paraRdr_.setVal("particle_monval", 3122);
+        spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
+                                                 ran_gen_ptr_));
+        paraRdr_.setVal("particle_monval", -3122);
+        spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
+                                                 ran_gen_ptr_));
+        paraRdr_.setVal("particle_monval", 3312);
+        spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
+                                                 ran_gen_ptr_));
+        paraRdr_.setVal("particle_monval", -3312);
+        spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
+                                                 ran_gen_ptr_));
+        paraRdr_.setVal("particle_monval", 3334);
+        spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
+                                                 ran_gen_ptr_));
+        paraRdr_.setVal("particle_monval", -3334);
+        spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
+                                                 ran_gen_ptr_));
+        paraRdr_.setVal("particle_monval", 333);
+        spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
+                                                 ran_gen_ptr_));
+    }
 
     // lastly, if we want to compute multi-particle correlations within
     // the same UrQMD events
