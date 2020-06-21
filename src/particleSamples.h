@@ -163,6 +163,7 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_Sangwook();
     int read_in_particle_samples_SMASH_gzipped();
     int read_in_particle_samples_SMASH_mixed_event_gzipped();
+    int read_in_particle_samples_binary();
     int read_in_particle_samples_gzipped();
     int read_in_particle_samples_mixed_event_gzipped();
     void clear_out_previous_record(
