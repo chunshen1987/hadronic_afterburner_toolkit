@@ -155,6 +155,7 @@ class particleSamples {
     int read_in_particle_samples_UrQMD();
     int read_in_particle_samples_UrQMD_mixed_event();
     int read_in_particle_samples_UrQMD_zipped();
+    int read_in_particle_samples_UrQMD_binary();
     int read_in_particle_samples_UrQMD_mixed_event_zipped();
     int read_in_particle_samples_UrQMD_3p3();
     int read_in_particle_samples_UrQMD_3p3_mixed_event();

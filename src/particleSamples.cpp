@@ -140,6 +140,9 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     } else if (read_in_mode_ == 9) {
         filename << path_ << "/particle_samples.bin";
         filename_mixed_event << path_ << "/particle_samples_mixed_event.bin";
+    } else if (read_in_mode_ == 21) {
+        filename << path_ << "/particle_list.bin";
+        filename_mixed_event << path_ << "/particle_list_mixed_event.bin";
     } else if (read_in_mode_ == 8) {
         filename << path_ << "/particles_binary.bin";
         filename_mixed_event << path_ << "/particles_binary_mixed_event.bin";
@@ -182,6 +185,12 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
           // todo
         }
     } else if (read_in_mode_ == 9) {
+        inputfile.open(filename.str().c_str(),
+                       std::ios::binary | std::ios::in);
+        if (!inputfile.is_open()) {
+            throw std::runtime_error("Can't open file " + filename.str());
+        }
+    } else if (read_in_mode_ == 21) {
         inputfile.open(filename.str().c_str(),
                        std::ios::binary | std::ios::in);
         if (!inputfile.is_open()) {
@@ -398,6 +407,8 @@ int particleSamples::read_in_particle_samples() {
         read_in_particle_samples_UrQMD();
     } else if (read_in_mode_ == 2) {
         read_in_particle_samples_UrQMD_zipped();
+    } else if (read_in_mode_ == 21) {
+        read_in_particle_samples_UrQMD_binary();
     } else if (read_in_mode_ == 3) {
         read_in_particle_samples_Sangwook();
     } else if (read_in_mode_ == 4) {
@@ -921,6 +932,66 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                   >> temp_particle_info.py
                   >> temp_particle_info.pz;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
+            (*full_particle_list)[ievent]->push_back(temp_particle_info);
+        }
+        num_particles += n_particle;
+        ievent++;
+    }
+    return(0);
+}
+
+
+int particleSamples::read_in_particle_samples_UrQMD_binary() {
+    // clean out the previous record
+    clear_out_previous_record(full_particle_list);
+
+    std::string temp_string;
+    int n_particle = 0;
+    int ievent = 0;
+    int urqmd_pid, urqmd_iso3;
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
+        inputfile.read(reinterpret_cast<char *>(&n_particle), sizeof(int));
+        if (inputfile.eof()) break;
+
+        full_particle_list->push_back(new vector<particle_info> );
+
+        // then get one useless line
+        for (int i = 0; i < 8; i++) {
+            int idummy = 0;
+            inputfile.read(reinterpret_cast<char *>(&idummy), sizeof(int));
+        }
+
+        //std::cout << "n_particle = " << n_particle << std::endl;
+        for (int ipart = 0; ipart < n_particle; ipart++) {
+            int info_array[6];
+            for (int i = 0; i < 6; i++) {
+                int temp;
+                inputfile.read(reinterpret_cast<char *>(&temp), sizeof(int));
+                info_array[i] = temp;
+            }
+            urqmd_pid = info_array[0];
+            urqmd_iso3 = info_array[1];
+
+            float particle_array[9];
+            for (int i = 0; i < 9; i++) {
+                float temp;
+                inputfile.read(reinterpret_cast<char *>(&temp), sizeof(float));
+                particle_array[i] = temp;
+            }
+
+            particle_info temp_particle_info;
+            temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
+            temp_particle_info.mass = particle_array[0];
+            temp_particle_info.t = particle_array[1];
+            temp_particle_info.x = particle_array[2];
+            temp_particle_info.y = particle_array[3];
+            temp_particle_info.z = particle_array[4];
+            temp_particle_info.E = particle_array[5];
+            temp_particle_info.px = particle_array[6];
+            temp_particle_info.py = particle_array[7];
+            temp_particle_info.pz = particle_array[8];
+
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
         num_particles += n_particle;
