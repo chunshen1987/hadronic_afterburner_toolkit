@@ -184,17 +184,20 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
         if (read_mixed_events) {
           // todo
         }
-    } else if (read_in_mode_ == 9) {
+    } else if (read_in_mode_ == 9 || read_in_mode_ == 21) {
         inputfile.open(filename.str().c_str(),
                        std::ios::binary | std::ios::in);
         if (!inputfile.is_open()) {
             throw std::runtime_error("Can't open file " + filename.str());
         }
-    } else if (read_in_mode_ == 21) {
-        inputfile.open(filename.str().c_str(),
-                       std::ios::binary | std::ios::in);
-        if (!inputfile.is_open()) {
-            throw std::runtime_error("Can't open file " + filename.str());
+        if (read_mixed_events) {
+            inputfile_mixed_event.open(filename_mixed_event.str().c_str());
+            if (!inputfile_mixed_event.is_open()) {
+                messager << "particleSamples:: Error: input file: " 
+                         << filename_mixed_event.str() << " can not open!";
+                messager.flush("error");
+                exit(1);
+            }
         }
     } else if (read_in_mode_ != 2 && read_in_mode_ != 7
                && read_in_mode_ != 10) {
@@ -470,6 +473,8 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         read_in_particle_samples_UrQMD_mixed_event();
     } else if (read_in_mode_ == 2) {
         read_in_particle_samples_UrQMD_mixed_event_zipped();
+    } else if (read_in_mode_ == 21) {
+        read_in_particle_samples_UrQMD_mixed_event_binary();
     } else if (read_in_mode_ == 3) {
         read_in_particle_samples_mixed_event_Sangwook();
     } else if (read_in_mode_ == 4) {
@@ -480,6 +485,8 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         read_in_particle_samples_SMASH_mixed_event_gzipped();
     } else if (read_in_mode_ == 8) {
         // todo: read_in_particle_samples_SMASH_binary_mixed_event();
+    } else if (read_in_mode_ == 9) {
+        read_in_particle_samples_mixed_event_binary();
     } else if (read_in_mode_ == 10) {
         read_in_particle_samples_mixed_event_gzipped();
     }
@@ -1532,6 +1539,71 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
 }
 
 
+int particleSamples::read_in_particle_samples_UrQMD_mixed_event_binary() {
+    // clean out the previous record
+    clear_out_previous_record(full_particle_list_mixed_event);
+
+    std::string temp_string;
+    int n_particle = 0;
+    int ievent = 0;
+    int urqmd_pid, urqmd_iso3;
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
+        inputfile_mixed_event.read(reinterpret_cast<char *>(&n_particle),
+                                   sizeof(int));
+        if (inputfile_mixed_event.eof()) break;
+
+        full_particle_list_mixed_event->push_back(
+                                            new vector<particle_info> );
+
+        // then get one useless line
+        for (int i = 0; i < 8; i++) {
+            int idummy = 0;
+            inputfile_mixed_event.read(reinterpret_cast<char *>(&idummy),
+                                       sizeof(int));
+        }
+
+        for (int ipart = 0; ipart < n_particle; ipart++) {
+            int info_array[6];
+            for (int i = 0; i < 6; i++) {
+                int temp;
+                inputfile_mixed_event.read(reinterpret_cast<char *>(&temp),
+                                           sizeof(int));
+                info_array[i] = temp;
+            }
+            urqmd_pid = info_array[0];
+            urqmd_iso3 = info_array[1];
+
+            float particle_array[9];
+            for (int i = 0; i < 9; i++) {
+                float temp;
+                inputfile_mixed_event.read(reinterpret_cast<char *>(&temp),
+                                           sizeof(float));
+                particle_array[i] = temp;
+            }
+
+            particle_info temp_particle_info;
+            temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
+            temp_particle_info.mass = particle_array[0];
+            temp_particle_info.t = particle_array[1];
+            temp_particle_info.x = particle_array[2];
+            temp_particle_info.y = particle_array[3];
+            temp_particle_info.z = particle_array[4];
+            temp_particle_info.E = particle_array[5];
+            temp_particle_info.px = particle_array[6];
+            temp_particle_info.py = particle_array[7];
+            temp_particle_info.pz = particle_array[8];
+
+            (*full_particle_list_mixed_event)[ievent]->push_back(
+                                                    temp_particle_info);
+        }
+        num_particles += n_particle;
+        ievent++;
+    }
+    return(0);
+}
+
+
 int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
     // clean out the previous record
     clear_out_previous_record(full_particle_list_mixed_event);
@@ -1555,7 +1627,7 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
         std::stringstream temp1(temp_string);
         temp1 >> n_particle;
         // then get one useless line
-        temp_string = gz_readline(inputfile_mixed_event_gz);  
+        temp_string = gz_readline(inputfile_mixed_event_gz);
 
         for (int ipart = 0; ipart < n_particle; ipart++) {
             temp_string = gz_readline(inputfile_mixed_event_gz);
@@ -1629,6 +1701,55 @@ int particleSamples::read_in_particle_samples_SMASH_mixed_event_gzipped() {
         }
         num_particles += n_particle;
         ievent++;
+    }
+    return(0);
+}
+
+
+int particleSamples::read_in_particle_samples_mixed_event_binary() {
+    // clean out the previous record
+    clear_out_previous_record(full_particle_list_mixed_event);
+    int ievent = 0;
+    int num_particles = 0;
+    while (num_particles < event_buffer_size) {
+        int n_particle = 0;
+        inputfile_mixed_event.read(reinterpret_cast<char *>(&n_particle),
+                                      sizeof(int));
+
+        if (inputfile_mixed_event.eof()) break;
+
+        // create one event
+        full_particle_list_mixed_event->push_back(new vector<particle_info> );
+
+        //std::cout << "Read in " << n_particle << " particles" << std::endl;
+        for (int ipart = 0; ipart < n_particle; ipart++) {
+            int pdg = 0;
+            inputfile_mixed_event.read(reinterpret_cast<char *>(&pdg),
+                                          sizeof(int));
+            float array[9];
+            for (int i = 0; i < 9; i++) {
+                float temp = 0.;
+                inputfile_mixed_event.read(reinterpret_cast<char *>(&temp),
+                                              sizeof(float));
+                array[i] = temp;
+            }
+
+            particle_info temp_particle_info;
+            temp_particle_info.monval = pdg;
+            temp_particle_info.mass = array[0];
+            temp_particle_info.t = array[1];
+            temp_particle_info.x = array[2];
+            temp_particle_info.y = array[3];
+            temp_particle_info.z = array[4];
+            temp_particle_info.E  = array[5];
+            temp_particle_info.px = array[6];
+            temp_particle_info.py = array[7];
+            temp_particle_info.pz = array[8];
+
+            (*full_particle_list_mixed_event)[ievent]->push_back(
+                                                        temp_particle_info);
+        }
+        num_particles += n_particle;
     }
     return(0);
 }
