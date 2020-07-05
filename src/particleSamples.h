@@ -156,6 +156,8 @@ class particleSamples {
     int read_in_particle_samples_UrQMD_mixed_event();
     int read_in_particle_samples_UrQMD_zipped();
     int read_in_particle_samples_UrQMD_mixed_event_zipped();
+    int read_in_particle_samples_UrQMD_binary();
+    int read_in_particle_samples_UrQMD_mixed_event_binary();
     int read_in_particle_samples_UrQMD_3p3();
     int read_in_particle_samples_UrQMD_3p3_mixed_event();
     int read_in_particle_samples_Sangwook();
@@ -163,6 +165,8 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_Sangwook();
     int read_in_particle_samples_SMASH_gzipped();
     int read_in_particle_samples_SMASH_mixed_event_gzipped();
+    int read_in_particle_samples_binary();
+    int read_in_particle_samples_mixed_event_binary();
     int read_in_particle_samples_gzipped();
     int read_in_particle_samples_mixed_event_gzipped();
     void clear_out_previous_record(
