@@ -1912,7 +1912,7 @@ for icen in range(len(centrality_cut_list) - 1):
         if (particle_id =='9999'):
             # output non-linear response coefficients chi_n for CMS pt cut
             output_filename = ("non_linear_response_coefficients_CMS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# type  value  stat. err\n")
             for i in range(len(nonlinear_reponse_correlator_name_list)):
                 f.write("%s  %.10e  %.10e\n"
@@ -1920,11 +1920,10 @@ for icen in range(len(centrality_cut_list) - 1):
                            nonlinear_response_cms[2*i],
                            nonlinear_response_cms[2*i+1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output non-linear response coefficients chi_n for ALICE pt cut
             output_filename = ("non_linear_response_coefficients_ALICE.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# type  value  stat. err\n")
             for i in range(len(nonlinear_reponse_correlator_name_list)):
                 f.write("%s  %.10e  %.10e\n"
@@ -1932,11 +1931,10 @@ for icen in range(len(centrality_cut_list) - 1):
                            nonlinear_response_alice[2*i],
                            nonlinear_response_alice[2*i+1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output non-linear response coefficients chi_n for ATLAS pt cut
             output_filename = ("non_linear_response_coefficients_ATLAS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# type  value  stat. err\n")
             for i in range(len(nonlinear_reponse_correlator_name_list)):
                 f.write("%s  %.10e  %.10e\n"
@@ -1944,77 +1942,70 @@ for icen in range(len(centrality_cut_list) - 1):
                            nonlinear_response_atlas[2*i],
                            nonlinear_response_atlas[2*i+1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output symmetric cumulants for ALICE pt cut
             output_filename = ("symmetric_cumulant_ALICE.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# type  value  stat. err\n")
             for i in range(len(symmetric_cumulant_name_list)):
                 f.write("%s  %.10e  %.10e\n"
                         % (symmetric_cumulant_name_list[i],
                            SC_alice[2*i], SC_alice[2*i+1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4 for PHENIX pt cut
             output_filename = ("charged_hadron_vn4_PHENIX.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                         % (i, vn4_phenix[4*i-4], vn4_phenix[4*i-3],
                            vn4_phenix[4*i-2], vn4_phenix[4*i-1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4 for STAR pt cut
             output_filename = ("charged_hadron_vn4_STAR.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                         % (i, vn4_star[4*i-4], vn4_star[4*i-3],
                            vn4_star[4*i-2], vn4_star[4*i-1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4 for ALICE pt cut
             output_filename = ("charged_hadron_vn4_ALICE.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                         % (i, vn4_alice[4*i-4], vn4_alice[4*i-3],
                            vn4_alice[4*i-2], vn4_alice[4*i-1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4 for CMS pt cut
             output_filename = ("charged_hadron_vn4_CMS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                         % (i, vn4_cms[4*i-4], vn4_cms[4*i-3],
                            vn4_cms[4*i-2], vn4_cms[4*i-1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4 for ATLAS pt cut
             output_filename = ("charged_hadron_vn4_ATLAS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
             for i in range(1, 4):
                 f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                         % (i, vn4_atlas[4*i-4], vn4_atlas[4*i-3],
                            vn4_atlas[4*i-2], vn4_atlas[4*i-1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4/vn2 ratio for PHENIX pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_PHENIX.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
             f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
@@ -2024,11 +2015,10 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_phenix[4*i - 2],
                            vn4_over_vn2_phenix[4*i-1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4/vn2 ratio for STAR pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_STAR.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
             f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
@@ -2038,11 +2028,10 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_star[4*i - 2],
                            vn4_over_vn2_star[4*i-1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4/vn2 ratio for ALICE pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_ALICE.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
             f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
@@ -2052,11 +2041,10 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_alice[4*i - 2],
                            vn4_over_vn2_alice[4*i - 1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4/vn2 ratio for CMS pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_CMS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
             f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
@@ -2066,11 +2054,10 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_cms[4*i - 2],
                            vn4_over_vn2_cms[4*i - 1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn4/vn2 ratio for ATLAS pt cut
             output_filename = ("charged_hadron_vn4_over_vn2_ATLAS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
             f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
             for i in range(1, 4):
@@ -2080,61 +2067,55 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn4_over_vn2_atlas[4*i - 2],
                            vn4_over_vn2_atlas[4*i - 1]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn6/vn4 ratio for PHENIX pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_PHENIX.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_phenix[0], vn6_over_vn4_phenix[1],
                        vn6_over_vn4_phenix[2], vn6_over_vn4_phenix[3]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn6/vn4 ratio for STAR pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_STAR.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_star[0], vn6_over_vn4_star[1],
                        vn6_over_vn4_star[2], vn6_over_vn4_star[3]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn6/vn4 ratio for ALICE pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ALICE.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_alice[0], vn6_over_vn4_alice[1],
                        vn6_over_vn4_alice[2], vn6_over_vn4_alice[3]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn6/vn4 ratio for CMS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_CMS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_cms[0], vn6_over_vn4_cms[1],
                        vn6_over_vn4_cms[2], vn6_over_vn4_cms[3]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output vn6/vn4 ratio for ATLAS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ATLAS.dat")
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_atlas[0], vn6_over_vn4_atlas[1],
                        vn6_over_vn4_atlas[2], vn6_over_vn4_atlas[3]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_integrated_observables.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("dN/dy= %.5e +/- %.5e\n" % (dN_dy_avg, dN_dy_avg_err))
         if particle_id == "9999":
             f.write("dN/dy(pT>0.2,|eta|<0.8)= %.5e \n" % (dNch_ALICE))
@@ -2155,11 +2136,10 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
                     % (iorder, vn_atlas_2[iorder-1], vn_atlas_2_err[iorder-1]))
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_integrated_observables_with_rapidity_gap.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("dN/dy= %.5e +/- %.5e\n" % (dN_dy_avg, dN_dy_avg_err))
         if particle_id == "9999":
             f.write("dN/dy(pT>0.2,|eta|<0.8)= %.5e \n" % (dNch_ALICE))
@@ -2185,11 +2165,10 @@ for icen in range(len(centrality_cut_list) - 1):
                     % (iorder, vn_atlas_2_gap[iorder-1],
                        vn_atlas_2_gap_err[iorder-1]))
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_PHENIX.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
                 "vn{SP}  vn{SP}_err\n")
         for ipT in range(len(pT_spectra)):
@@ -2200,11 +2179,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn_diff_SP_phenix[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_STAR.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
                 "vn{SP}  vn{SP}_err\n")
         for ipT in range(len(pT_spectra)):
@@ -2215,11 +2193,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn_diff_SP_star[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_ALICE.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
                 "vn{SP}  vn{SP}_err\n")
         for ipT in range(len(pT_spectra)):
@@ -2230,11 +2207,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn_diff_SP_alice[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_2PC.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
                 "vn[2]  vn[2]_err\n")
         for ipT in range(len(pT_spectra)):
@@ -2245,11 +2221,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn_diff_2PC_err[iorder-1, ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_CMS.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
                 "vn{SP}  vn{SP}_err\n")
         for ipT in range(len(pT_spectra)):
@@ -2260,11 +2235,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn_diff_SP_cms[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_ATLAS.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
                 "vn{SP}  vn{SP}_err\n")
         for ipT in range(len(pT_spectra)):
@@ -2275,12 +2249,11 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn_diff_SP_atlas[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         # output vn{4}(pT)
         output_filename = ("%s_differential_observables_4particle_PHENIX.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
             f.write("%.10e  " % (pT_spectra[ipT]))
@@ -2289,11 +2262,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn4_diff_phenix[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_4particle_STAR.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
             f.write("%.10e  " % (pT_spectra[ipT]))
@@ -2302,11 +2274,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn4_diff_star[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_4particle_ALICE.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
             f.write("%.10e  " % (pT_spectra[ipT]))
@@ -2315,11 +2286,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn4_diff_alice[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_4particle_CMS.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
             f.write("%.10e  " % (pT_spectra[ipT]))
@@ -2328,11 +2298,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn4_diff_cms[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         output_filename = ("%s_differential_observables_4particle_ATLAS.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         f.write("#pT  vn{4}  vn{4}_err\n")
         for ipT in range(len(pT_spectra)):
             f.write("%.10e  " % (pT_spectra[ipT]))
@@ -2341,12 +2310,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                             vn4_diff_atlas[2*iorder-1][ipT]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
-
 
         output_filename = ("%s_rapidity_distribution.dat"
                            % particle_name_list[ipart])
-        f = open(output_filename, 'w')
+        f = open(path.join(avg_folder, output_filename), 'w')
         if(particle_id == '9999'):
             f.write("#eta  dN/deta  dN/deta_err  vn{2}(eta)  vn{2}(eta)_err\n")
         else:
@@ -2362,12 +2329,11 @@ for icen in range(len(centrality_cut_list) - 1):
                            vn_eta_real_err[iorder-1, ieta]))
             f.write("\n")
         f.close()
-        shutil.move(output_filename, avg_folder)
 
         if (particle_id == '9999'):
             output_filename = ("%s_vn_distribution_PHENIX.dat"
                                % particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
             for ipT in range(len(vn_phenix_dis[:, 0])):
                 for iorder in range(1, n_order):
@@ -2377,11 +2343,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                vn_phenix_dis[ipT, 3*(iorder-1)+2]))
                 f.write("\n")
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             output_filename = ("%s_vn_distribution_STAR.dat"
                                % particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
             for ipT in range(len(vn_star_dis[:, 0])):
                 for iorder in range(1, n_order):
@@ -2391,11 +2356,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                vn_star_dis[ipT, 3*(iorder-1)+2]))
                 f.write("\n")
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             output_filename = ("%s_vn_distribution_ALICE.dat"
                                % particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
             for ipT in range(len(vn_alice_dis[:, 0])):
                 for iorder in range(1, n_order):
@@ -2405,11 +2369,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                vn_alice_dis[ipT, 3*(iorder-1)+2]))
                 f.write("\n")
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             output_filename = ("%s_vn_distribution_CMS.dat"
                                % particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
             for ipT in range(len(vn_cms_dis[:, 0])):
                 for iorder in range(1, n_order):
@@ -2419,11 +2382,10 @@ for icen in range(len(centrality_cut_list) - 1):
                                vn_cms_dis[ipT, 3*(iorder-1)+2]))
                 f.write("\n")
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             output_filename = ("%s_vn_distribution_ATLAS.dat"
                                % particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#vn  dP(vn)/dvn  dP(vn)/dvn_err\n")
             for ipT in range(len(vn_atlas_dis[:, 0])):
                 for iorder in range(1, n_order):
@@ -2433,7 +2395,6 @@ for icen in range(len(centrality_cut_list) - 1):
                                vn_atlas_dis[ipT, 3*(iorder-1)+2]))
                 f.write("\n")
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output rn ratios
             pT_trig = ['1.0', '1.5', '2.0', '2.5', '3.0']
@@ -2441,7 +2402,7 @@ for icen in range(len(centrality_cut_list) - 1):
             output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
                                % (particle_name_list[ipart],
                                   pT_trig[ipTtrig], pT_trig[ipTtrig+1]))
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
             for ipT in range(len(rn_cms[0, :, 0])):
                 for iorder in range(len(rn_cms[:, 0, 0])):
@@ -2452,19 +2413,18 @@ for icen in range(len(centrality_cut_list) - 1):
                 f.write("\n")
                 if rn_cms[0, ipT, 0] == 0.0:
                     f.close()
-                    shutil.move(output_filename, avg_folder)
                     ipTtrig += 1
                     if ipTtrig < (len(pT_trig) - 1):
                         output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
                                            % (particle_name_list[ipart],
                                               pT_trig[ipTtrig],
                                               pT_trig[ipTtrig+1]))
-                        f = open(output_filename, 'w')
+                        f = open(path.join(avg_folder, output_filename), 'w')
                         f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
 
             # output the longitudinal rn ratios
             output_filename = "{}_rn_eta.dat".format(particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#eta  rn(eta)  rn_err(eta)  rnn(eta)  rnn_err(eta)\n")
             for ieta in range(len(eta_point)-1):
                 f.write("%.10e  " % eta_point[ieta])
@@ -2476,12 +2436,11 @@ for icen in range(len(centrality_cut_list) - 1):
                                rnn_eta_err[iorder, ieta]))
                 f.write("\n")
             f.close()
-            shutil.move(output_filename, avg_folder)
 
             # output flow event-plane correlation
             output_filename = ("%s_event_plane_correlation_ALICE.dat"
                                % particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#correlator  value  value_err\n")
             f.write("4(24)  %.5e  %.5e\n"
                     % (vn_corr_alice[0], vn_corr_alice_err[0]))
@@ -2498,10 +2457,10 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("(234)  %.5e  %.5e\n"
                     % (vn_corr_alice[6], vn_corr_alice_err[6]))
             f.close()
-            shutil.move(output_filename, avg_folder)
+
             output_filename = ("%s_event_plane_correlation_ATLAS.dat"
                                % particle_name_list[ipart])
-            f = open(output_filename, 'w')
+            f = open(path.join(avg_folder, output_filename), 'w')
             f.write("#correlator  value  value_err\n")
             f.write("4(24)  %.5e  %.5e\n"
                     % (vn_corr_atlas[0], vn_corr_atlas_err[0]))
@@ -2518,7 +2477,6 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("(234)  %.5e  %.5e\n"
                     % (vn_corr_atlas[6], vn_corr_atlas_err[6]))
             f.close()
-            shutil.move(output_filename, avg_folder)
 
 print("Analysis is done.")
 
