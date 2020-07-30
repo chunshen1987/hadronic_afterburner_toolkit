@@ -1744,6 +1744,17 @@ for icen in range(len(centrality_cut_list) - 1):
             print("dNch(pT > 0.2 GeV, |eta| < 0.8) = {0:.4f}".format(
                                                                 dNch_ALICE))
 
+            # calculate dNch (pT > 0.15 |eta| < 0.8) for ALICE
+            pT_interp1 = linspace(0.15, 3.0, 30)
+            dpT1 = pT_interp1[1] - pT_interp1[0]
+            dN_interp1 = exp(interp(pT_interp1, pT_spectra_ALICE,
+                                    log(dN_spectra_ALICE + 1e-30)))
+            dN_interp1_err = interp(pT_interp1, pT_spectra_ALICE,
+                                    dN_spectra_ALICE_err)
+            dNch_ALICE2 = sum(pT_interp1*dN_interp1)*dpT1*2*pi*1.6
+            print("dNch(pT > 0.15 GeV, |eta| < 0.8) = {0:.4f}".format(
+                                                                dNch_ALICE2))
+
 
         # calculate mean pT from event-averaged particle spectrum
         pT_interp = linspace(0.05, 2.95, 30)
@@ -2127,6 +2138,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.write("dN/dy= %.5e +/- %.5e\n" % (dN_dy_avg, dN_dy_avg_err))
         if particle_id == "9999":
             f.write("dN/dy(pT>0.2,|eta|<0.8)= %.5e \n" % (dNch_ALICE))
+            f.write("dN/dy(pT>0.15,|eta|<0.8)= %.5e \n" % (dNch_ALICE2))
             f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
         f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
         f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
@@ -2151,6 +2163,7 @@ for icen in range(len(centrality_cut_list) - 1):
         f.write("dN/dy= %.5e +/- %.5e\n" % (dN_dy_avg, dN_dy_avg_err))
         if particle_id == "9999":
             f.write("dN/dy(pT>0.2,|eta|<0.8)= %.5e \n" % (dNch_ALICE))
+            f.write("dN/dy(pT>0.15,|eta|<0.8)= %.5e \n" % (dNch_ALICE2))
             f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
         f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
         f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
