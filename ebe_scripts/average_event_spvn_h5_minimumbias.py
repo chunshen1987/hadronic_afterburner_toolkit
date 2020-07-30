@@ -530,6 +530,27 @@ def calcualte_vn_2(vn_data_array):
     return(nan_to_num(vn_2), nan_to_num(vn_2_err))
 
 
+def calcualte_vn_2_with_gap(vn_data_array_sub1, vn_data_array_sub2):
+    """
+        this function computes vn{2} and its stat. err.
+        using two subevents with a eta gap
+    """
+    vn_data_array_sub1 = array(vn_data_array_sub1)
+    vn_data_array_sub2 = array(vn_data_array_sub2)
+    nev = len(vn_data_array_sub1[:, 0])
+    dN1 = real(vn_data_array_sub1[:, 0])
+    dN1 = dN1.reshape(len(dN1), 1)
+    dN2 = real(vn_data_array_sub2[:, 0])
+    dN2 = dN1.reshape(len(dN2), 1)
+    Qn_array1 = dN1*vn_data_array_sub1[:, 1:]
+    Qn_array2 = dN2*vn_data_array_sub2[:, 1:]
+
+    corr = (Qn_array1*conj(Qn_array2))/(dN1*dN2)
+    vn_2 = sqrt(real(mean(corr, 0))) + 1e-30
+    vn_2_err = std(real(corr), 0)/sqrt(nev)/2./vn_2
+    return(nan_to_num(vn_2), nan_to_num(vn_2_err))
+
+
 def get_vn_diff_2PC_from_single_event(data):
     """This function computes the 2PC vn for a single event"""
     dN_event = data[:, -1]
@@ -1504,7 +1525,8 @@ for icen in range(len(centrality_cut_list) - 1):
             file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
         else:
             file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
-        file_name_ref = 'particle_9999_vndata_diff_eta_0.5_2.dat'
+        file_name_ref1 = 'particle_9999_vndata_diff_eta_0.5_2.dat'
+        file_name_ref2 = 'particle_9999_vndata_diff_eta_-2_-0.5.dat'
         file_name_ALICE = 'particle_9999_vndata_diff_eta_-1_1.dat'
         file_name_ATLAS = 'particle_9999_vndata_diff_eta_-2_2.dat'
 
@@ -1515,11 +1537,16 @@ for icen in range(len(centrality_cut_list) - 1):
         pT_array_ATLAS = []
         dN_array_ATLAS = []
         vn_phenix_array = []
+        vn_phenix_array_sub1 = []; vn_phenix_array_sub2 = []
         vn_star_array = []
+        vn_star_array_sub1 = []; vn_star_array_sub2 = []
         vn_alice_array = []
+        vn_alice_array_sub1 = []; vn_alice_array_sub2 = []
         vn_cms_array = []
+        vn_cms_array_sub1 = []; vn_cms_array_sub2 = []
         vn_cms_arrays_for_rn = []
         vn_atlas_array = []
+        vn_atlas_array_sub1 = []; vn_atlas_array_sub2 = []
         QnpT_diff_phenix = []; Qnref_phenix = []
         QnpT_diff_star = []; Qnref_star = []
         QnpT_diff_alice = []; Qnref_alice = []
@@ -1530,8 +1557,10 @@ for icen in range(len(centrality_cut_list) - 1):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
             temp_data = nan_to_num(temp_data)
-            temp_data_ref = event_group.get(file_name_ref)
-            temp_data_ref = nan_to_num(temp_data_ref)
+            temp_data_ref1 = event_group.get(file_name_ref1)
+            temp_data_ref1 = nan_to_num(temp_data_ref1)
+            temp_data_ref2 = event_group.get(file_name_ref2)
+            temp_data_ref2 = nan_to_num(temp_data_ref2)
 
             dN_event = temp_data[:, 2]  # dN/(2pi dy pT dpT)
             pT_event = temp_data[:, 0]
@@ -1556,18 +1585,34 @@ for icen in range(len(centrality_cut_list) - 1):
             # vn with PHENIX pT cut
             temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data)
             vn_phenix_array.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_ref1)
+            vn_phenix_array_sub1.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_ref2)
+            vn_phenix_array_sub2.append(temp_vn_array)
 
             # vn with STAR pT cut
             temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data)
             vn_star_array.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_ref1)
+            vn_star_array_sub1.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_ref2)
+            vn_star_array_sub2.append(temp_vn_array)
 
             # vn with ALICE pT cut
             temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data)
             vn_alice_array.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data_ref1)
+            vn_alice_array_sub1.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data_ref2)
+            vn_alice_array_sub2.append(temp_vn_array)
 
             # vn with CMS pT cut
             temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data)
             vn_cms_array.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data_ref1)
+            vn_cms_array_sub1.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data_ref2)
+            vn_cms_array_sub2.append(temp_vn_array)
             if particle_id == "9999":
                 temp_vn_arrays = (
                         calculate_vn_arrays_for_rn_ratios(temp_data))
@@ -1576,35 +1621,39 @@ for icen in range(len(centrality_cut_list) - 1):
             # vn with ATLAS pT cut
             temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data)
             vn_atlas_array.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data_ref1)
+            vn_atlas_array_sub1.append(temp_vn_array)
+            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data_ref2)
+            vn_atlas_array_sub2.append(temp_vn_array)
 
             # pT-differential vn using scalar-product method
             # vn{SP}(pT) with PHENIX pT cut
             temp_arr = calculate_diff_vn_single_event(0.2, 2.0, temp_data,
-                                                      temp_data_ref)
+                                                      temp_data_ref1)
             QnpT_diff_phenix.append(temp_arr[0])
             Qnref_phenix.append(temp_arr[1])
 
             # vn{SP}(pT) with STAR pT cut
             temp_arr = calculate_diff_vn_single_event(0.15, 2.0, temp_data,
-                                                      temp_data_ref)
+                                                      temp_data_ref1)
             QnpT_diff_star.append(temp_arr[0])
             Qnref_star.append(temp_arr[1])
 
             # vn{4}(pT) with ALICE pT cut
             temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
-                                                      temp_data_ref)
+                                                      temp_data_ref1)
             QnpT_diff_alice.append(temp_arr[0])
             Qnref_alice.append(temp_arr[1])
 
             # vn{SP}(pT) with CMS pT cut
             temp_arr = calculate_diff_vn_single_event(0.30, 3.0, temp_data,
-                                                     temp_data_ref)
+                                                     temp_data_ref1)
             QnpT_diff_cms.append(temp_arr[0])
             Qnref_cms.append(temp_arr[1])
 
             # vn{SP}(pT) with ATLAS pT cut
             temp_arr = calculate_diff_vn_single_event(0.50, 3.0, temp_data,
-                                                     temp_data_ref)
+                                                     temp_data_ref1)
             QnpT_diff_atlas.append(temp_arr[0])
             Qnref_atlas.append(temp_arr[1])
 
@@ -1724,6 +1773,18 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_alice_2, vn_alice_2_err = calcualte_vn_2(vn_alice_array)
         vn_cms_2, vn_cms_2_err = calcualte_vn_2(vn_cms_array)
         vn_atlas_2, vn_atlas_2_err = calcualte_vn_2(vn_atlas_array)
+
+        # calcualte vn{2} with |\Delta \eta| > 1
+        vn_phenix_2_gap, vn_phenix_2_gap_err = calcualte_vn_2_with_gap(
+                                vn_phenix_array_sub1, vn_phenix_array_sub2)
+        vn_star_2_gap, vn_star_2_gap_err = calcualte_vn_2_with_gap(
+                                vn_star_array_sub1, vn_star_array_sub2)
+        vn_alice_2_gap, vn_alice_2_gap_err = calcualte_vn_2_with_gap(
+                                vn_alice_array_sub1, vn_alice_array_sub2)
+        vn_cms_2_gap, vn_cms_2_gap_err = calcualte_vn_2_with_gap(
+                                vn_cms_array_sub1, vn_cms_array_sub2)
+        vn_atlas_2_gap, vn_atlas_2_gap_err = calcualte_vn_2_with_gap(
+                                vn_atlas_array_sub1, vn_atlas_array_sub2)
 
         if (particle_id == '9999'):
             vn_alice_array2 = array(vn_alice_array)
@@ -2081,6 +2142,35 @@ for icen in range(len(centrality_cut_list) - 1):
                     % (iorder, vn_cms_2[iorder-1], vn_cms_2_err[iorder-1]))
             f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
                     % (iorder, vn_atlas_2[iorder-1], vn_atlas_2_err[iorder-1]))
+        f.close()
+        shutil.move(output_filename, avg_folder)
+
+        output_filename = ("%s_integrated_observables_with_rapidity_gap.dat"
+                           % particle_name_list[ipart])
+        f = open(output_filename, 'w')
+        f.write("dN/dy= %.5e +/- %.5e\n" % (dN_dy_avg, dN_dy_avg_err))
+        if particle_id == "9999":
+            f.write("dN/dy(pT>0.2,|eta|<0.8)= %.5e \n" % (dNch_ALICE))
+            f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
+        f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
+        f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
+        f.write("sigma_pT/<pT>= %.5e +/- %.5e\n"% (sigma_pT, sigma_pT_err))
+        for iorder in range(1, n_order):
+            f.write("v_%d{2}(phenix)= %.5e +/- %.5e\n"
+                    % (iorder, vn_phenix_2_gap[iorder-1],
+                       vn_phenix_2_gap_err[iorder-1]))
+            f.write("v_%d{2}(STAR)= %.5e +/- %.5e\n"
+                    % (iorder, vn_star_2_gap[iorder-1],
+                       vn_star_2_gap_err[iorder-1]))
+            f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
+                    % (iorder, vn_alice_2_gap[iorder-1],
+                       vn_alice_2_gap_err[iorder-1]))
+            f.write("v_%d{2}(CMS)= %.5e +/- %.5e\n"
+                    % (iorder, vn_cms_2_gap[iorder-1],
+                       vn_cms_2_gap_err[iorder-1]))
+            f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
+                    % (iorder, vn_atlas_2_gap[iorder-1],
+                       vn_atlas_2_gap_err[iorder-1]))
         f.close()
         shutil.move(output_filename, avg_folder)
 
