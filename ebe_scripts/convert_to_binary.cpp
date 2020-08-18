@@ -106,7 +106,15 @@ int main(int argc, char *argv[]) {
             } else if (output_mode == "binary") {
                 int info_array[] = {urqmd_id, urqmd_iso3, urqmd_charge,
                                     n_coll, parent_id, parent_proc_type};
-                float particle_array[] = {mass, t, x, y, z, E, px, py, pz};
+                float particle_array[] = {static_cast<float>(mass),
+                                          static_cast<float>(t),
+                                          static_cast<float>(x),
+                                          static_cast<float>(y),
+                                          static_cast<float>(z),
+                                          static_cast<float>(E),
+                                          static_cast<float>(px),
+                                          static_cast<float>(py),
+                                          static_cast<float>(pz)};
                 for (int ii = 0; ii < 6; ii++) {
                     outbin.write(reinterpret_cast<char *>(&(info_array[ii])),
                                  sizeof(int));
