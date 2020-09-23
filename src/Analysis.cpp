@@ -212,6 +212,8 @@ void Analysis::FlowAnalysis_multistrange_particles() {
     paraRdr_.setVal("rap_type", 1);
     paraRdr_.setVal("rapidity_distribution", 1);
     paraRdr_.setVal("rap_min", -0.5); paraRdr_.setVal("rap_max", 0.5);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.2);
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
 
     // first define all the analysis sets
     std::vector<singleParticleSpectra*> spvn;
