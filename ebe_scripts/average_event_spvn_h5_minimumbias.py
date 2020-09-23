@@ -2315,9 +2315,11 @@ for icen in range(len(centrality_cut_list) - 1):
                            % particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
         if(particle_id == '9999'):
-            f.write("#eta  dN/deta  dN/deta_err  vn{2}(eta)  vn{2}(eta)_err\n")
+            f.write("#eta  dN/deta  dN/deta_err  vn{2}(eta)  vn{2}(eta)_err"
+                    + "  Re{vn}(eta) Re{vn}(eta)_err\n")
         else:
-            f.write("#y  dN/dy  dN/dy_err  vn{2}(y)  vn{2}(y)_err\n")
+            f.write("#y  dN/dy  dN/dy_err  vn{2}(y)  vn{2}(y)_err  "
+                    + "Re{vn}(y)  Re{vn}(y)_err\n")
         for ieta in range(len(eta_point)):
             f.write("%.10e  %.10e  %.10e  "
                     % (eta_point[ieta], dNdeta[ieta], dNdeta_err[ieta]))
