@@ -795,6 +795,125 @@ def calculate_vn_distribution(vn_array):
     return(output.transpose())
 
 
+def calcualte_event_plane_correlations_3sub(vn_array, vn_array_sub1,
+                                            vn_array_sub2):
+    """
+        this function compute the three-particle correlations with Qn
+        vectors from three different sub-events
+    """
+    vn_array = array(vn_array)
+    vn_array_sub1 = array(vn_array_sub1)
+    vn_array_sub2 = array(vn_array_sub2)
+    nev = len(vn_array[:, 0])
+
+    dN = real(vn_array[:, 0].reshape(nev, 1))
+    dN_sub1 = real(vn_array_sub1[:, 0].reshape(nev, 1))
+    dN_sub2 = real(vn_array_sub2[:, 0].reshape(nev, 1))
+    Qn_array = dN*vn_array
+    Qn_array_sub1 = dN_sub1*vn_array_sub1
+    Qn_array_sub2 = dN_sub2*vn_array_sub2
+
+    corr_224_JK = zeros(nev)
+    corr_336_JK = zeros(nev)
+    corr_235_JK = zeros(nev)
+    corr_246_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+        array_idx = array(array_idx)
+
+        v2_2 = (mean(real(Qn_array_sub1[array_idx, 2]
+                          *conj(Qn_array_sub2[array_idx, 2])))
+                /mean(dN_sub1[array_idx]*dN_sub2[array_idx]))
+        v3_2 = (mean(real(Qn_array_sub1[array_idx, 3]
+                          *conj(Qn_array_sub2[array_idx, 3])))
+                /mean(dN_sub1[array_idx]*dN_sub2[array_idx]))
+        v4_2 = (mean(real(Qn_array_sub1[array_idx, 4]
+                          *conj(Qn_array_sub2[array_idx, 4])))
+                /mean(dN_sub1[array_idx]*dN_sub2[array_idx]))
+        v5_2 = (mean(real(Qn_array_sub1[array_idx, 5]
+                          *conj(Qn_array_sub2[array_idx, 5])))
+                /mean(dN_sub1[array_idx]*dN_sub2[array_idx]))
+        v6_2 = (mean(real(Qn_array_sub1[array_idx, 6]
+                          *conj(Qn_array_sub2[array_idx, 6])))
+                /mean(dN_sub1[array_idx]*dN_sub2[array_idx]))
+
+        # cos(4(Psi_2 - Psi_4))
+        corr_224_num = (
+            mean(real(  Qn_array[array_idx, 2]*Qn_array_sub1[array_idx, 2]
+                        *conj(Qn_array_sub2[array_idx, 4])
+                      + Qn_array[array_idx, 2]*Qn_array_sub2[array_idx, 2]
+                        *conj(Qn_array_sub1[array_idx, 4])
+                      + Qn_array_sub2[array_idx, 2]*Qn_array_sub1[array_idx, 2]
+                        *conj(Qn_array[array_idx, 4])))
+            /mean(3.*dN[array_idx]*dN_sub1[array_idx]*dN_sub2[array_idx])
+        )
+        corr_224_JK[iev] = corr_224_num/sqrt(v2_2*v2_2*v4_2)
+
+        # cos(6(Psi_3 - Psi_6))
+        corr_336_num = (
+            mean(real(  Qn_array[array_idx, 3]*Qn_array_sub1[array_idx, 3]
+                        *conj(Qn_array_sub2[array_idx, 6])
+                      + Qn_array[array_idx, 3]*Qn_array_sub2[array_idx, 3]
+                        *conj(Qn_array_sub1[array_idx, 6])
+                      + Qn_array_sub2[array_idx, 3]*Qn_array_sub1[array_idx, 3]
+                        *conj(Qn_array[array_idx, 6])))
+            /mean(3.*dN[array_idx]*dN_sub1[array_idx]*dN_sub2[array_idx])
+        )
+        corr_336_JK[iev] = corr_336_num/sqrt((v3_2**2.)*v6_2)
+
+        # cos(2Psi_2 + 3Psi_3 - 5Psi_5)
+        corr_235_num = (
+            mean(real(  Qn_array[array_idx, 2]*Qn_array_sub1[array_idx, 3]
+                        *conj(Qn_array_sub2[array_idx, 5])
+                      + Qn_array[array_idx, 3]*Qn_array_sub2[array_idx, 2]
+                        *conj(Qn_array_sub1[array_idx, 5])
+                      + Qn_array_sub1[array_idx, 2]*Qn_array_sub2[array_idx, 3]
+                        *conj(Qn_array[array_idx, 5])
+                      + Qn_array[array_idx, 2]*Qn_array_sub2[array_idx, 3]
+                        *conj(Qn_array_sub1[array_idx, 5])
+                      + Qn_array[array_idx, 3]*Qn_array_sub1[array_idx, 2]
+                        *conj(Qn_array_sub2[array_idx, 5])
+                      + Qn_array_sub1[array_idx, 3]*Qn_array_sub2[array_idx, 2]
+                        *conj(Qn_array[array_idx, 5])
+            ))
+            /mean(6.*dN[array_idx]*dN_sub1[array_idx]*dN_sub2[array_idx])
+        )
+        corr_235_JK[iev] = corr_235_num/sqrt(v2_2*v3_2*v5_2)
+
+        # cos(2Psi_2 + 4Psi_4 - 6Psi_6)
+        corr_246_num = (
+            mean(real(  Qn_array[array_idx, 2]*Qn_array_sub1[array_idx, 4]
+                        *conj(Qn_array_sub2[array_idx, 6])
+                      + Qn_array[array_idx, 4]*Qn_array_sub2[array_idx, 2]
+                        *conj(Qn_array_sub1[array_idx, 6])
+                      + Qn_array_sub1[array_idx, 2]*Qn_array_sub2[array_idx, 4]
+                        *conj(Qn_array[array_idx, 6])
+                      + Qn_array[array_idx, 2]*Qn_array_sub2[array_idx, 4]
+                        *conj(Qn_array_sub1[array_idx, 6])
+                      + Qn_array[array_idx, 4]*Qn_array_sub1[array_idx, 2]
+                        *conj(Qn_array_sub2[array_idx, 6])
+                      + Qn_array_sub1[array_idx, 4]*Qn_array_sub2[array_idx, 2]
+                        *conj(Qn_array[array_idx, 6])
+            ))
+            /mean(6.*dN[array_idx]*dN_sub1[array_idx]*dN_sub2[array_idx])
+        )
+        corr_246_JK[iev] = corr_246_num/sqrt(v2_2*v4_2*v6_2)
+
+    corr_224 = mean(corr_224_JK)
+    corr_224_err = sqrt((nev - 1.)/nev*sum((corr_224_JK - corr_224)**2.))
+    corr_336 = mean(corr_336_JK)
+    corr_336_err = sqrt((nev - 1.)/nev*sum((corr_336_JK - corr_336)**2.))
+    corr_235 = mean(corr_235_JK)
+    corr_235_err = sqrt((nev - 1.)/nev*sum((corr_235_JK - corr_235)**2.))
+    corr_246 = mean(corr_246_JK)
+    corr_246_err = sqrt((nev - 1.)/nev*sum((corr_246_JK - corr_246)**2.))
+
+    results = [corr_224, corr_336, corr_235, corr_246]
+    results_err = [corr_224_err, corr_336_err, corr_235_err, corr_246_err]
+    return(results, results_err)
+
+
 def calcualte_event_plane_correlations(vn_array):
     """
         this function compute the scalar-product event plane correlations
@@ -1847,6 +1966,24 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_corr_atlas, vn_corr_atlas_err = (
                     calcualte_event_plane_correlations(vn_atlas_array))
 
+            # calculate three-particle correlations
+            vn_3corr_alice, vn_3corr_alice_err = (
+                calcualte_event_plane_correlations_3sub(
+                    vn_alice_array, vn_alice_array_sub1, vn_alice_array_sub2))
+            vn_3corr_atlas, vn_3corr_atlas_err = (
+                calcualte_event_plane_correlations_3sub(
+                    vn_atlas_array, vn_atlas_array_sub1, vn_atlas_array_sub2))
+            vn_3corr_cms, vn_3corr_cms_err = (
+                calcualte_event_plane_correlations_3sub(
+                    vn_cms_array, vn_cms_array_sub1, vn_cms_array_sub2))
+            vn_3corr_phenix, vn_3corr_phenix_err = (
+                calcualte_event_plane_correlations_3sub(
+                    vn_phenix_array, vn_phenix_array_sub1,
+                    vn_phenix_array_sub2))
+            vn_3corr_star, vn_3corr_star_err = (
+                calcualte_event_plane_correlations_3sub(
+                    vn_star_array, vn_star_array_sub1, vn_star_array_sub2))
+
         # calcualte vn{SP}(pT)
         vn_diff_SP_phenix = calculate_vn_diff_SP(QnpT_diff_phenix,
                                                   Qnref_phenix)
@@ -2478,6 +2615,77 @@ for icen in range(len(centrality_cut_list) - 1):
                     % (vn_corr_atlas[5], vn_corr_atlas_err[5]))
             f.write("(234)  %.5e  %.5e\n"
                     % (vn_corr_atlas[6], vn_corr_atlas_err[6]))
+            f.close()
+
+            # output flow three-particle correlation
+            output_filename = ("%s_three_particle_correlation_ALICE.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#correlator  value  value_err\n")
+            f.write("224  %.5e  %.5e\n"
+                    % (vn_3corr_alice[0], vn_3corr_alice_err[0]))
+            f.write("336  %.5e  %.5e\n"
+                    % (vn_3corr_alice[1], vn_3corr_alice_err[1]))
+            f.write("235  %.5e  %.5e\n"
+                    % (vn_3corr_alice[2], vn_3corr_alice_err[2]))
+            f.write("246  %.5e  %.5e\n"
+                    % (vn_3corr_alice[3], vn_3corr_alice_err[3]))
+            f.close()
+
+            output_filename = ("%s_three_particle_correlation_CMS.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#correlator  value  value_err\n")
+            f.write("224  %.5e  %.5e\n"
+                    % (vn_3corr_cms[0], vn_3corr_cms_err[0]))
+            f.write("336  %.5e  %.5e\n"
+                    % (vn_3corr_cms[1], vn_3corr_cms_err[1]))
+            f.write("235  %.5e  %.5e\n"
+                    % (vn_3corr_cms[2], vn_3corr_cms_err[2]))
+            f.write("246  %.5e  %.5e\n"
+                    % (vn_3corr_cms[3], vn_3corr_cms_err[3]))
+            f.close()
+
+            output_filename = ("%s_three_particle_correlation_ATLAS.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#correlator  value  value_err\n")
+            f.write("224  %.5e  %.5e\n"
+                    % (vn_3corr_atlas[0], vn_3corr_atlas_err[0]))
+            f.write("336  %.5e  %.5e\n"
+                    % (vn_3corr_atlas[1], vn_3corr_atlas_err[1]))
+            f.write("235  %.5e  %.5e\n"
+                    % (vn_3corr_atlas[2], vn_3corr_atlas_err[2]))
+            f.write("246  %.5e  %.5e\n"
+                    % (vn_3corr_atlas[3], vn_3corr_atlas_err[3]))
+            f.close()
+
+            output_filename = ("%s_three_particle_correlation_PHENIX.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#correlator  value  value_err\n")
+            f.write("224  %.5e  %.5e\n"
+                    % (vn_3corr_phenix[0], vn_3corr_phenix_err[0]))
+            f.write("336  %.5e  %.5e\n"
+                    % (vn_3corr_phenix[1], vn_3corr_phenix_err[1]))
+            f.write("235  %.5e  %.5e\n"
+                    % (vn_3corr_phenix[2], vn_3corr_phenix_err[2]))
+            f.write("246  %.5e  %.5e\n"
+                    % (vn_3corr_phenix[3], vn_3corr_phenix_err[3]))
+            f.close()
+
+            output_filename = ("%s_three_particle_correlation_STAR.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#correlator  value  value_err\n")
+            f.write("224  %.5e  %.5e\n"
+                    % (vn_3corr_star[0], vn_3corr_star_err[0]))
+            f.write("336  %.5e  %.5e\n"
+                    % (vn_3corr_star[1], vn_3corr_star_err[1]))
+            f.write("235  %.5e  %.5e\n"
+                    % (vn_3corr_star[2], vn_3corr_star_err[2]))
+            f.write("246  %.5e  %.5e\n"
+                    % (vn_3corr_star[3], vn_3corr_star_err[3]))
             f.close()
 
 print("Analysis is done.")
