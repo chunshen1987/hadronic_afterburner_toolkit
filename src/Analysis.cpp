@@ -115,6 +115,26 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -2.0); paraRdr_.setVal("rap_max", -0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // ALICE V0A
+    paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -2.8);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 2.8); paraRdr_.setVal("rap_max", 5.1);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // ALICE V0C
+    paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 3.7);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", -3.7); paraRdr_.setVal("rap_max", -1.7);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // ATLAS forward
+    paraRdr_.setVal("rap_min", -4.9); paraRdr_.setVal("rap_max", -3.1);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 4.9);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // PHENIX BBC
+    paraRdr_.setVal("rap_min", -3.9); paraRdr_.setVal("rap_max", -3.1);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 3.9);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
 
     // now identified particle
     paraRdr_.setVal("rap_type", 1);
@@ -155,6 +175,11 @@ void Analysis::FlowAnalysis() {
         spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
                                                  ran_gen_ptr_));
     }
+    paraRdr_.setVal("rap_type", 0);
+    paraRdr_.setVal("particle_monval", 2212);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("particle_monval", -2212);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
 
     // lastly, if we want to compute multi-particle correlations within
     // the same UrQMD events
