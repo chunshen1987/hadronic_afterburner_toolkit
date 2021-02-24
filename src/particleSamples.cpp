@@ -396,7 +396,16 @@ void particleSamples::initialize_selected_resonance_list() {
 
 
 int particleSamples::get_pdg_id(int urqmd_id, int urqmd_isospin) {
-    int monval = urqmd_to_pdg[std::make_pair(urqmd_id, urqmd_isospin)];
+    int monval = 0;
+    try {
+        monval = urqmd_to_pdg.at(std::make_pair(urqmd_id, urqmd_isospin));
+    }
+    catch (const std::out_of_range& oor) {
+        messager << "get_pdg_id: out_of_range! "
+                 << "urqmd_id = " << urqmd_id
+                 << ", urqmd_isospin = " << urqmd_isospin;
+        messager.flush("error");
+    }
     return(monval);
 }
 
@@ -888,7 +897,27 @@ int particleSamples::read_in_particle_samples_UrQMD() {
                   >> temp_particle_info.pz;
             temp_particle_info.mass = temp_mass;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-            (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -939,7 +968,27 @@ int particleSamples::read_in_particle_samples_UrQMD_zipped() {
                   >> temp_particle_info.py
                   >> temp_particle_info.pz;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-            (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -998,8 +1047,27 @@ int particleSamples::read_in_particle_samples_UrQMD_binary() {
             temp_particle_info.px = particle_array[6];
             temp_particle_info.py = particle_array[7];
             temp_particle_info.pz = particle_array[8];
-
-            (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -1471,7 +1539,27 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3() {
                   >> temp_particle_info.pz;
             temp_particle_info.mass = temp_mass;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-            (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -1529,8 +1617,28 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event() {
                   >> temp_particle_info.pz;
             temp_particle_info.mass = temp_mass;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-            (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                    temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                        temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -1593,9 +1701,28 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_binary() {
             temp_particle_info.px = particle_array[6];
             temp_particle_info.py = particle_array[7];
             temp_particle_info.pz = particle_array[8];
-
-            (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                    temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                        temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -1645,10 +1772,29 @@ int particleSamples::read_in_particle_samples_UrQMD_mixed_event_zipped() {
                   >> temp_particle_info.px
                   >> temp_particle_info.py
                   >> temp_particle_info.pz;
-            temp_particle_info.monval = get_pdg_id(urqmd_pid,
-                                                    urqmd_iso3);
-            (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                    temp_particle_info);
+            temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                        temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -1851,8 +1997,28 @@ int particleSamples::read_in_particle_samples_UrQMD_3p3_mixed_event() {
                   >> temp_particle_info.pz;
             temp_particle_info.mass = temp_mass;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-            (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                    temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                        temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -1905,7 +2071,28 @@ int particleSamples::read_in_particle_samples_Sangwook() {
                   >> temp_particle_info.pz;
             temp_particle_info.mass = temp_mass;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-            (*full_particle_list)[ievent]->push_back(temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list)[ievent]->push_back(
+                        temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
@@ -1959,8 +2146,28 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
                   >> temp_particle_info.pz;
             temp_particle_info.mass = temp_mass;
             temp_particle_info.monval = get_pdg_id(urqmd_pid, urqmd_iso3);
-            (*full_particle_list_mixed_event)[ievent]->push_back(
-                                                    temp_particle_info);
+            if (temp_particle_info.monval == 0) {
+                messager << "nev = " << ievent;
+                messager.flush("error");
+                messager << "nparticles = " << n_particle
+                         << ", ipart = " << ipart;
+                messager.flush("error");
+                messager << "mass = " << temp_particle_info.mass
+                         << ", E = " << temp_particle_info.E
+                         << ", px = " << temp_particle_info.px
+                         << ", py = " << temp_particle_info.py
+                         << ", pz = " << temp_particle_info.pz
+                         << ", t = " << temp_particle_info.t
+                         << ", x = " << temp_particle_info.x
+                         << ", y = " << temp_particle_info.y
+                         << ", z = " << temp_particle_info.z;
+                messager.flush("error");
+                messager << "Ignore this particle!";
+                messager.flush("error");
+            } else {
+                (*full_particle_list_mixed_event)[ievent]->push_back(
+                        temp_particle_info);
+            }
         }
         num_particles += n_particle;
         ievent++;
