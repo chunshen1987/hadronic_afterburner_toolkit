@@ -41,7 +41,7 @@ STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 #                       + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
 centrality_cut_list = Reg_centrality_cut_list
 
-Centrality_flag = 2  # 0: use pre-generated centrality label in the database
+Centrality_flag = 1  # 0: use pre-generated centrality label in the database
                      # 1: sort dNch/deta and cut centrality
                      # 2: assume uneven number of events in pre-generated
                      #    centrality, remove the bias and cut on dNch/deta
