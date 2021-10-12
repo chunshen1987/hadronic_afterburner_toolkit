@@ -283,7 +283,8 @@ particleSamples::~particleSamples() {
 
 void particleSamples::open_SMASH_binary(const std::string &SMASH_filename,
                                         std::ifstream &SMASH_inputfile) {
-   SMASH_inputfile.open(SMASH_filename.c_str(), ios::binary | ios::in);
+   SMASH_inputfile.open(SMASH_filename.c_str(),
+                        std::ios::binary | std::ios::in);
    if (!SMASH_inputfile.is_open()) {
        throw std::runtime_error("Can't open file " + SMASH_filename);
    }
@@ -1193,6 +1194,7 @@ int particleSamples::read_in_particle_samples_SMASH_binary(
       num_particles += n_part_lines;
       std::cout << "Read in " << n_part_lines << " particles" << std::endl;
     }
+    return 0;
 }
 
 
