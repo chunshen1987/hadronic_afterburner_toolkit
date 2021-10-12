@@ -68,6 +68,7 @@ flag_charge_dependence = 1    # flag to compute charge dependence correlation
 compute_corr_rap_dep = 1      # flag to compute the rapidity dependent multi-particle correlation
 
 # Parameters for HBT correlation functions
+long_comoving_boost = 0       # whether boost the qz by the pair longitudinal velocity
 reject_decay_flag = 0         # reject particles from resonance decays
                               # 0: no rejection
                               # 1: reject particles from all decay channels

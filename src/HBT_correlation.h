@@ -21,6 +21,7 @@ class HBT_correlation {
 
     pretty_ostream messager;
 
+    bool long_comoving_boost;
     int qnpts;
     double q_min, q_max, delta_q;
 

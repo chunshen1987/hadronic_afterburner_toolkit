@@ -17,6 +17,10 @@ HBT_correlation::HBT_correlation(
 
     ran_gen_ptr_ = ran_gen;
 
+    long_comoving_boost = false;
+    if (paraRdr_.getVal("long_comoving_boost") == 1)
+        long_comoving_boost = true;
+
     qnpts   = paraRdr_.getVal("qnpts");
     q_min   = paraRdr_.getVal("q_min");
     q_max   = paraRdr_.getVal("q_max");
@@ -385,12 +389,15 @@ void HBT_correlation::combine_and_bin_particle_pairs(
                     (local_q_side - (q_min - delta_q/2.))/delta_q);
             if (qside_idx >= qnpts) continue;
 
-            // calcualte qlong in the lcms
-            double Mt = sqrt(K_E*K_E - K_z*K_z);
-            double boost_gamma = K_E/Mt;
-            double boost_beta = K_z_over_K_E;
-            // boost qz to lcms
-            double local_q_long = boost_gamma*(q_z - boost_beta*q_E);
+            double local_q_long = q_z;
+            if (long_comoving_boost) {
+                // calcualte qlong in the lcms
+                double Mt = sqrt(K_E*K_E - K_z*K_z);
+                double boost_gamma = K_E/Mt;
+                double boost_beta = K_z_over_K_E;
+                // boost qz to lcms
+                local_q_long = boost_gamma*(q_z - boost_beta*q_E);
+            }
 
             if (local_q_long < (q_min - delta_q/2. + 1e-8)
                 || local_q_long > (q_max + delta_q/2. - 1e-8)) {
@@ -618,12 +625,15 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                     (local_q_side - (q_min - delta_q/2.))/delta_q);
             if (qside_idx >= qnpts) continue;
 
-            // calcualte qlong in the lcms
-            double Mt = sqrt(K_E*K_E - K_z*K_z);
-            double boost_gamma = K_E/Mt;
-            double boost_beta = K_z_over_K_E;
-            // boost qz to lcms
-            double local_q_long = boost_gamma*(q_z - boost_beta*q_E);
+            double local_q_long = q_z;
+            if (long_comoving_boost) {
+                // calcualte qlong in the lcms
+                double Mt = sqrt(K_E*K_E - K_z*K_z);
+                double boost_gamma = K_E/Mt;
+                double boost_beta = K_z_over_K_E;
+                // boost qz to lcms
+                local_q_long = boost_gamma*(q_z - boost_beta*q_E);
+            }
 
             if (local_q_long < (q_min - delta_q/2. + 1e-8)
                 || local_q_long >= (q_max + delta_q/2. - 1e-8)) {
