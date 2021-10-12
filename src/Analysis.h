@@ -16,8 +16,6 @@ class Analysis {
     std::shared_ptr<particleSamples> particle_list_;
     pretty_ostream messager;
 
-    int run_mode_;
-
  public:
     Analysis(std::string path);
     ~Analysis() {};
@@ -29,6 +27,7 @@ class Analysis {
     void InitializeAnalysis();
     void PerformAnalysis();
     void FlowAnalysis();
+    void FlowAnalysis_multistrange_particles();
     void HBTAnalysis();
     void ParticleYieldDistributionAnalysis();
     void BalanceFunctionAnalysis();

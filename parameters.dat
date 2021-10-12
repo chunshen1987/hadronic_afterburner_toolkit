@@ -3,28 +3,27 @@ read_in_mode = 2              # mode for reading in particle information
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from zipped UrQMD outputs
+                              # 21: reads outputs from binary UrQMD outputs
                               # 3: reads outputs from Sangwook's UrQMD outputs 
                               #    (without header lines)
                               # 4: reads outputs from UrQMD 3.3p2 outputs
                               # 7: reads outputs from gzipped SMASH outputs
                               # 8: read outputs from SMASH binary format
-                              # 10: reads outputs from gzip outputs
+                              # 9: reads outputs from binary outputs (iSS)
+                              # 10: reads outputs from gzip outputs (iSS)
 
-run_mode = 0                  # running mode for the program
-                              # 0: collect single particle spectra and vn
-                              # 1: compute HBT correlation function
-                              # 2: collect event-by-event particle yield
-                              #    distribution (pT and rapdity cuts are
-                              #    specified by pT_min, pT_max, rap_min,
-                              #    and rap_max)
-                              # 3: compute balance function
+analyze_flow = 1              # 0/1: flag to perform flow analysis
+analyze_HBT = 0               # 0/1: flag to perform HBT analysis
+analyze_balance_function = 0  # 0/1: flag to analyze Balance function
+analyze_ebe_yield = 0         # 0/1: flag to analyze ebe dis. of particle yield
 
 randomSeed = -1
+read_in_real_mixed_events = 0 # 0/1: flag to read in real mixed events
 particle_monval = 211         # particle Monte-Carlo number
-distinguish_isospin = 0       # flag whether to distinguish the isospin of 
+distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
 resonance_weak_feed_down_flag = 0    # include weak feed down contribution
-resonance_feed_down_flag = 1  # perform resonance feed down
+resonance_feed_down_flag = 0  # perform resonance feed down
                               # (will read in all hadrons and filter particle
                               #  after decays are performed)
 resonance_weak_feed_down_Sigma_to_Lambda_flag = 0  # include weak feed down contribution
@@ -34,7 +33,7 @@ select_resonances_flag = 0    # perform resonance decays only for selected
                               # particle species
 net_particle_flag = 0         # flag to collect net particle yield distribution
 
-event_buffer_size = 1000000    # the number of particles read in at once
+event_buffer_size = 1000000   # the number of particles read in at once
 
 
 # Parameters for single particle spectra and vn
@@ -69,6 +68,7 @@ flag_charge_dependence = 1    # flag to compute charge dependence correlation
 compute_corr_rap_dep = 1      # flag to compute the rapidity dependent multi-particle correlation
 
 # Parameters for HBT correlation functions
+long_comoving_boost = 0       # whether boost the qz by the pair longitudinal velocity
 reject_decay_flag = 0         # reject particles from resonance decays
                               # 0: no rejection
                               # 1: reject particles from all decay channels
@@ -77,10 +77,6 @@ reject_decay_flag = 0         # reject particles from resonance decays
 tau_reject = 10.              # reject decay particle whose tau_f > tau_reject
                               # only effective when reject_decay_flag == 2
 needed_number_of_pairs = 30000000    # number of pairs for eack K point
-number_of_mixed_events = 250         # number of the mixed events in the 
-                                     # denorminator
-number_of_oversample_events = 500    # number of the combined events in the 
-                                     # numerator
 invariant_radius_flag = 0            # 0: compute 3D HBT correlation function
                                      # 1: compute 1D HBT correlation function
                                      #    for q_inv

@@ -15,7 +15,7 @@ class Random {
     std::unique_ptr<std::mt19937> ran_generator;
     std::uniform_real_distribution<double> rand_uniform_dist;
     std::uniform_int_distribution<int> rand_int_uniform_dist;
-    
+
  public:
     Random(int seed_in, double min = 0.0, double max = 1.0);
     double rand_uniform() {return(rand_uniform_dist(*ran_generator));}

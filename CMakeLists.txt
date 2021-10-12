@@ -27,6 +27,8 @@ else ()
     set (CMAKE_CXX_FLAGS "-g -O3 -Wall -pthread -Wextra")
 endif ()
 
+option (link_with_lib "Link executable with the libarary" ON)
+
 add_subdirectory (src)
 include_directories (src)
 
