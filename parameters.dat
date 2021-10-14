@@ -68,7 +68,7 @@ flag_charge_dependence = 1    # flag to compute charge dependence correlation
 compute_corr_rap_dep = 1      # flag to compute the rapidity dependent multi-particle correlation
 
 # Parameters for HBT correlation functions
-long_comoving_boost = 0       # whether boost the qz by the pair longitudinal velocity
+long_comoving_boost = 1       # whether boost the qz by the pair longitudinal velocity
 reject_decay_flag = 0         # reject particles from resonance decays
                               # 0: no rejection
                               # 1: reject particles from all decay channels
@@ -90,10 +90,10 @@ kT_differenitial_flag = 1            # 0: integrate the pair momentum k_T over
                                      #    function
                                      # 1: compute the correlation function at 
                                      #    each specifiec kT point
-n_KT = 6                             # number of the pair momentum k_T 
+n_KT = 5                             # number of the pair momentum k_T 
                                      # to calculate
-KT_min = 0.0                         # minimum value of the pair momentum k_T 
-KT_max = 1.0                         # maximum value of the pair momentum k_T 
+KT_min = 0.15                        # minimum value of the pair momentum k_T 
+KT_max = 0.55                        # maximum value of the pair momentum k_T 
 n_Kphi = 48                          # number of the azimuthal angles for the 
                                      # pair momentum k_T 
                                      # (range is assumed to be from 0 to 2*pi)
