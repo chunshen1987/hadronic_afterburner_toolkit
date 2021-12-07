@@ -48,20 +48,27 @@ void particle_yield_distribution::collect_particle_yield_distribution(
                         std::shared_ptr<particleSamples> particle_list_in) {
     set_particle_list(particle_list_in);
     int nev = particle_list->get_number_of_events();
+    double rap_shift = particle_list->get_rap_shift();
     for (int iev = 0; iev < nev; iev++) {
-        collect_particle_yield(iev);
+        collect_particle_yield(iev, rap_shift);
     }
     total_number_of_events += nev;
 }
 
-void particle_yield_distribution::collect_particle_yield(int event_id) {
+void particle_yield_distribution::collect_particle_yield(int event_id, double rap_shift) {
     int number_of_particles = particle_list->get_number_of_particles(event_id);
 
+    double gamma = cosh(rap_shift);
+    double gamma_times_beta = sinh(rap_shift);
     int count = 0;
     for (int i = 0; i < number_of_particles; i++) {
-        double pz_local = particle_list->get_particle(event_id, i).pz;
-        double E_local = particle_list->get_particle(event_id, i).E;
-
+        double pz_local_p = particle_list->get_particle(event_id, i).pz;
+        double E_local_p = particle_list->get_particle(event_id, i).E;
+        
+        // Do the rapidity shift
+        double pz_local = gamma * pz_local_p - gamma_times_beta * E_local_p;
+        double E_local = gamma * E_local_p - gamma_times_beta * pz_local_p;
+        
         double rap_local;
         if (rap_type == 0) {
             double mass = particle_list->get_particle(event_id, i).mass;
@@ -85,9 +92,12 @@ void particle_yield_distribution::collect_particle_yield(int event_id) {
         int number_of_anti_particles =
             particle_list->get_number_of_anti_particles(event_id);
         for (int i = 0; i < number_of_anti_particles; i++) {
-            double pz_local = particle_list->get_anti_particle(event_id, i).pz;
-            double E_local = particle_list->get_anti_particle(event_id, i).E;
-
+            double pz_local_p = particle_list->get_anti_particle(event_id, i).pz;
+            double E_local_p = particle_list->get_anti_particle(event_id, i).E;
+            // Do the rapidity shift
+            double pz_local = gamma * pz_local_p - gamma_times_beta * E_local_p;
+            double E_local = gamma * E_local_p - gamma_times_beta * pz_local_p;
+        
             double rap_local;
             if (rap_type == 0) {
                 double mass = particle_list->get_anti_particle(event_id, i).mass;

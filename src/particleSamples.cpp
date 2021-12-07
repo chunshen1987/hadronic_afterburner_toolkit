@@ -23,7 +23,8 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     echo_level_       = paraRdr_.getVal("echo_level");
     event_buffer_size = paraRdr_.getVal("event_buffer_size");
     read_in_mode_     = paraRdr_.getVal("read_in_mode");
-
+    rap_shift         = paraRdr_.getVal("rap_shift");
+    
     if (paraRdr_.getVal("analyze_flow") == 1)
         analyze_flow = true;
     else

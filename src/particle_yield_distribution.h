@@ -38,7 +38,7 @@ class particle_yield_distribution {
     }
     void collect_particle_yield_distribution(
                         std::shared_ptr<particleSamples> particle_list_in);
-    void collect_particle_yield(int event_id);
+    void collect_particle_yield(int event_id, double rap_shift);
     void output_particle_yield_distribution();
 };
 
