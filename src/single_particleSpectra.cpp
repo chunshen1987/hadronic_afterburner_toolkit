@@ -32,7 +32,7 @@ singleParticleSpectra::singleParticleSpectra(
     }
 
     order_max = paraRdr.getVal("order_max");
-    Qn_vector_real     = vector<double>(order_max, 0.);
+    Qn_vector_real     = vector<double>(order_max + 1, 0.);
     Qn_vector_imag     = vector<double>(order_max, 0.);
     Qn_vector_real_err = vector<double>(order_max, 0.);
     Qn_vector_imag_err = vector<double>(order_max, 0.);
@@ -326,7 +326,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
     // initialize some temp arrays
     vector<double> event_pT_mean    (npT, 0.);
     vector<double> event_pT_mean_err(npT, 0.);
-    vector<double> event_Qn_real    (order_max, 0.);
+    vector<double> event_Qn_real    (order_max + 1, 0.);
     vector<double> event_Qn_real_err(order_max, 0.);
     vector<double> event_Qn_imag    (order_max, 0.);
     vector<double> event_Qn_imag_err(order_max, 0.);
@@ -432,6 +432,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
                                              event_Qn_diff_imag_err[i][j]);
             }
         }
+        Qn_vector_real[order_max] += event_Qn_real[order_max];
 
 
         if (flag_correlation == 1) {
@@ -599,15 +600,15 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
             event_Qn_diff_imag_err[i][j] = 0.0;
         }
     }
-
+    event_Qn_real[order_max] = 0.0;
     int number_of_particles = particle_list->get_number_of_particles(event_id);
     for (int i = 0; i < number_of_particles; i++) {
         double pz_local = particle_list->get_particle(event_id, i).pz;
         double E_local = particle_list->get_particle(event_id, i).E;
 
         double rap_local;
+        double mass = particle_list->get_particle(event_id, i).mass;
         if (rap_type == 0) {
-            double mass = particle_list->get_particle(event_id, i).mass;
             double pmag = sqrt(E_local*E_local - mass*mass);
             rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
         } else {
@@ -628,6 +629,9 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                     event_Qn_real_err[iorder] += cos_nphi*cos_nphi;
                     event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
                 }
+                // the ET
+                event_Qn_real[order_max] += sqrt( mass * mass + p_perp * p_perp );
+                
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 if (p_idx < 0 || p_idx >= npT) continue;
                 event_pT_mean[p_idx]     += p_perp;
@@ -799,8 +803,15 @@ void singleParticleSpectra::output_Qn_vectors() {
     }
     ofstream output(filename.str().c_str());
 
-    double total_N       = Qn_vector_real[0];
-    double dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
+    //ATLAS use the ET to cut the centrality bins
+    double total_N, dN_ev_avg;
+    if ( (rap_min == -4.9 && rap_max == -3.1) || (rap_min == 3.1 && rap_max == 4.9)) {
+        total_N       = Qn_vector_real[order_max];
+        dN_ev_avg     = Qn_vector_real[order_max]/total_number_of_events/drapidity;
+    } else {
+        total_N       = Qn_vector_real[0];
+        dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
+    }
     double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
