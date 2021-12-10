@@ -30,8 +30,7 @@ class particleSamples {
     gzFile inputfile_gz;
     gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
-    double rap_shift;
-    
+
     int echo_level_;
     int read_in_mode_;
     bool read_mixed_events;
@@ -203,9 +202,7 @@ class particleSamples {
     }
 
     int get_event_buffer_size() const {return(event_buffer_size);}
-    
-    double get_rap_shift() const {return(rap_shift);}
-    
+
     int get_number_of_events() const {return(particle_list->size());}
     int get_number_of_events_anti_particle() {
         return(anti_particle_list->size());
