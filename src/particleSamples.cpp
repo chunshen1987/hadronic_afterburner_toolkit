@@ -23,7 +23,8 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     echo_level_       = paraRdr_.getVal("echo_level");
     event_buffer_size = paraRdr_.getVal("event_buffer_size");
     read_in_mode_     = paraRdr_.getVal("read_in_mode");
-
+    rap_shift         = paraRdr_.getVal("rap_shift");
+    
     if (paraRdr_.getVal("analyze_flow") == 1)
         analyze_flow = true;
     else
@@ -434,6 +435,14 @@ int particleSamples::read_in_particle_samples() {
         for (auto &part_i: (*ev_i)) {
             part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
             part_i.phi_p = atan2(part_i.py, part_i.px);
+            /* the booost with the Delta y = rap_shift for tht ATLAS UPC */
+            double E_shifted     = part_i.E  * cosh( rap_shift ) + 
+                                   part_i.pz * sinh( rap_shift );
+            double pz_shifted    = part_i.pz * cosh( rap_shift ) +
+                                   part_i.E  * sinh( rap_shift );
+            part_i.E  = E_shifted;
+            part_i.pz = pz_shifted;
+            
             if (rap_type_ == 1) {
                 part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
                                        /(part_i.E - part_i.pz));
@@ -494,6 +503,14 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         for (auto &part_i: (*ev_i)) {
             part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
             part_i.phi_p = atan2(part_i.py, part_i.px);
+            /* the booost with the Delta y = rap_shift for tht ATLAS UPC */
+            double E_shifted     = part_i.E  * cosh( rap_shift ) + 
+                                   part_i.pz * sinh( rap_shift );
+            double pz_shifted    = part_i.pz * cosh( rap_shift ) +
+                                   part_i.E  * sinh( rap_shift );
+            part_i.E  = E_shifted;
+            part_i.pz = pz_shifted;
+            
             if (rap_type_ == 1) {
                 part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
                                        /(part_i.E - part_i.pz));
