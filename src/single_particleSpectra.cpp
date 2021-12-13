@@ -805,24 +805,27 @@ void singleParticleSpectra::output_Qn_vectors() {
 
     //ATLAS use the ET to cut the centrality bins
     double total_N, dN_ev_avg;
-    if ( (rap_min == -4.9 && rap_max == -3.1) || (rap_min == 3.1 && rap_max == 4.9)) {
-        total_N       = Qn_vector_real[order_max];
-        dN_ev_avg     = Qn_vector_real[order_max]/total_number_of_events/drapidity;
-    } else {
-        total_N       = Qn_vector_real[0];
-        dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
-    }
-    double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
+    double total_ET, dET_ev_avg;
+    total_ET      = Qn_vector_real[order_max];
+    dET_ev_avg    = Qn_vector_real[order_max]/total_number_of_events/drapidity;
+    total_N       = Qn_vector_real[0];
+    dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
+    double dN_ev_avg_err  = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
+    double dET_ev_avg_err = sqrt(dET_ev_avg/total_number_of_events)/drapidity;
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
         // reconstruction branching ratio
         total_N = total_N/reconst_branching_ratio;
         dN_ev_avg = dN_ev_avg/reconst_branching_ratio;
         dN_ev_avg_err = dN_ev_avg_err/reconst_branching_ratio;
+        
+        total_ET = total_ET/reconst_branching_ratio;
+        dET_ev_avg = dET_ev_avg/reconst_branching_ratio;
+        dET_ev_avg_err = dET_ev_avg_err/reconst_branching_ratio;
     }
     output << scientific << setw(18) << setprecision(8) 
            << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   " 
-           << 0.0 << "   " << 0.0 << endl;
+           << dET_ev_avg << "   " << dET_ev_avg_err << endl;
     for (int iorder = 1; iorder < order_max; iorder++) {
         double vn_evavg_real = 0.0;
         double vn_evavg_imag = 0.0;
@@ -851,7 +854,7 @@ void singleParticleSpectra::output_Qn_vectors() {
     // output total number of particles in the last row
     // this quantities is useful when one wants to reconst the Qn vectors
     output << scientific << setw(18) << setprecision(8) << 99 << "   "
-           << total_N << "   " << 0.0 << "   " << 0.0 << "   " << 0.0 << endl;
+           << total_N << "   " << total_ET << "   " << 0.0 << "   " << 0.0 << endl;
     output.close();
 
     // pT-differential flow
