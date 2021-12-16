@@ -1994,9 +1994,9 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice, Qnref_alice)
         vn4_diff_alice = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
 
-        vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_star)
+        vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_cms)
         vn4_diff_cms = calculate_vn4_diff(QnpT_diff_cms, Qnref_cms)
-        vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_star)
+        vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_atlas)
         vn4_diff_atlas = calculate_vn4_diff(QnpT_diff_atlas, Qnref_atlas)
 
         # calcualte vn[2](pT)
