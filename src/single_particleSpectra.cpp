@@ -6,8 +6,9 @@
 #include <stdlib.h>
 #include <vector>
 #include <iomanip>
-#include "./parameters.h"
-#include "./single_particleSpectra.h"
+#include "parameters.h"
+#include "single_particleSpectra.h"
+#include "arsenal.h"
 
 using std::vector;
 using std::endl;
@@ -16,6 +17,7 @@ using std::ostringstream;
 using std::setw;
 using std::scientific;
 using std::setprecision;
+using AfterburnerUtil::resize2DVector;
 
 singleParticleSpectra::singleParticleSpectra(
             const ParameterReader &paraRdr, std::string path,
@@ -36,10 +38,6 @@ singleParticleSpectra::singleParticleSpectra(
     Qn_vector_imag     = vector<double>(order_max, 0.);
     Qn_vector_real_err = vector<double>(order_max, 0.);
     Qn_vector_imag_err = vector<double>(order_max, 0.);
-    Qn_diff_vector_real = new double* [order_max];
-    Qn_diff_vector_imag = new double* [order_max];
-    Qn_diff_vector_real_err = new double* [order_max];
-    Qn_diff_vector_imag_err = new double* [order_max];
 
     npT = paraRdr.getVal("npT");
     pT_min = paraRdr.getVal("pT_min");
@@ -51,18 +49,11 @@ singleParticleSpectra::singleParticleSpectra(
     for (int i = 0; i < npT; i++)
         pT_array[i] = pT_min + dpT*i;
 
-    for (int i = 0; i < order_max; i++) {
-        Qn_diff_vector_real[i] = new double[npT];
-        Qn_diff_vector_imag[i] = new double[npT];
-        Qn_diff_vector_real_err[i] = new double[npT];
-        Qn_diff_vector_imag_err[i] = new double[npT];
-        for (int j = 0; j < npT; j++) {
-            Qn_diff_vector_real[i][j] = 0.0;
-            Qn_diff_vector_imag[i][j] = 0.0;
-            Qn_diff_vector_real_err[i][j] = 0.0;
-            Qn_diff_vector_imag_err[i][j] = 0.0;
-        }
-    }
+    resize2DVector(Qn_diff_vector_real, order_max, npT, 0);
+    resize2DVector(Qn_diff_vector_imag, order_max, npT, 0);
+    resize2DVector(Qn_diff_vector_real_err, order_max, npT, 0);
+    resize2DVector(Qn_diff_vector_imag_err, order_max, npT, 0);
+
     total_number_of_events = 0;
 
     rap_type = paraRdr.getVal("rap_type");
@@ -173,38 +164,19 @@ singleParticleSpectra::singleParticleSpectra(
     if (flag_correlation == 1) {
         Qn2_vector     = vector<double>(order_max, 0.);
         Qn2_vector_err = vector<double>(order_max, 0.);
-        QnSP_diff_vector = new double* [order_max];
-        QnSP_diff_vector_err = new double* [order_max];
-        QnSP_eta12 = new double* [order_max];
-        QnSP_eta12_err = new double* [order_max];
-        for (int i = 0; i < order_max; i++) {
-            QnSP_diff_vector[i] = new double[npT];
-            QnSP_diff_vector_err[i] = new double[npT];
-            for (int j = 0; j < npT; j++) {
-                QnSP_diff_vector[i][j] = 0.0;
-                QnSP_diff_vector_err[i][j] = 0.0;
-            }
-            QnSP_eta12[i] = new double[N_rap];
-            QnSP_eta12_err[i] = new double[N_rap];
-            for (int j = 0; j < N_rap; j++) {
-                QnSP_eta12[i][j] = 0.0;
-                QnSP_eta12_err[i][j] = 0.0;
-            }
-        }
+        resize2DVector(QnSP_diff_vector, order_max, npT, 0.);
+        resize2DVector(QnSP_diff_vector_err, order_max, npT, 0.);
+        resize2DVector(QnSP_eta12, order_max, N_rap, 0.);
+        resize2DVector(QnSP_eta12_err, order_max, N_rap, 0.);
 
         num_corr = 9;
         C_nmk     = vector<double>(num_corr, 0.);
         C_nmk_err = vector<double>(num_corr, 0.);
-        C_nmk_eta12.resize(num_corr);
-        C_nmk_eta13.resize(num_corr);
-        C_nmk_eta12_err.resize(num_corr);
-        C_nmk_eta13_err.resize(num_corr);
-        for (int i = 0; i < num_corr; i++) {
-            C_nmk_eta12[i].resize(N_rap, 0.);
-            C_nmk_eta13[i].resize(N_rap, 0.);
-            C_nmk_eta12_err[i].resize(N_rap, 0.);
-            C_nmk_eta13_err[i].resize(N_rap, 0.);
-        }
+        resize2DVector(C_nmk_eta12, num_corr, N_rap, 0.);
+        resize2DVector(C_nmk_eta13, num_corr, N_rap, 0.);
+        resize2DVector(C_nmk_eta12_err, num_corr, N_rap, 0.);
+        resize2DVector(C_nmk_eta13_err, num_corr, N_rap, 0.);
+
         flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
         if (particle_monval != 9999) flag_charge_dependence = 0;
         if (flag_charge_dependence == 1) {
@@ -213,16 +185,10 @@ singleParticleSpectra::singleParticleSpectra(
             Cn2_os     = vector<double> (order_max, 0.);
             Cn2_os_err = vector<double> (order_max, 0.);
 
-            Cn2_ss_eta12.resize(order_max);
-            Cn2_ss_eta12_err.resize(order_max);
-            Cn2_os_eta12.resize(order_max);
-            Cn2_os_eta12_err.resize(order_max);
-            for (int i = 0; i < order_max; i++) {
-                Cn2_ss_eta12[i].resize(N_rap, 0.);
-                Cn2_ss_eta12_err[i].resize(N_rap, 0.);
-                Cn2_os_eta12[i].resize(N_rap, 0.);
-                Cn2_os_eta12_err[i].resize(N_rap, 0.);
-            }
+            resize2DVector(Cn2_ss_eta12, order_max, N_rap, 0.);
+            resize2DVector(Cn2_ss_eta12_err, order_max, N_rap, 0.);
+            resize2DVector(Cn2_os_eta12, order_max, N_rap, 0.);
+            resize2DVector(Cn2_os_eta12_err, order_max, N_rap, 0.);
 
             C_nmk_ss        = vector<double>(num_corr, 0.);
             C_nmk_ss_err    = vector<double>(num_corr, 0.);
@@ -232,24 +198,14 @@ singleParticleSpectra::singleParticleSpectra(
             C_nmk_ss_13_err = vector<double>(num_corr, 0.);
             C_nmk_os_13     = vector<double>(num_corr, 0.);
             C_nmk_os_13_err = vector<double>(num_corr, 0.);
-            C_nmk_eta12_ss.resize(num_corr);
-            C_nmk_eta12_os.resize(num_corr);
-            C_nmk_eta13_ss.resize(num_corr);
-            C_nmk_eta13_os.resize(num_corr);
-            C_nmk_eta12_ss_err.resize(num_corr);
-            C_nmk_eta12_os_err.resize(num_corr);
-            C_nmk_eta13_ss_err.resize(num_corr);
-            C_nmk_eta13_os_err.resize(num_corr);
-            for (int i = 0; i < num_corr; i++) {
-                C_nmk_eta12_ss[i].resize(N_rap, 0.);
-                C_nmk_eta12_os[i].resize(N_rap, 0.);
-                C_nmk_eta13_ss[i].resize(N_rap, 0.);
-                C_nmk_eta13_os[i].resize(N_rap, 0.);
-                C_nmk_eta12_ss_err[i].resize(N_rap, 0.);
-                C_nmk_eta12_os_err[i].resize(N_rap, 0.);
-                C_nmk_eta13_ss_err[i].resize(N_rap, 0.);
-                C_nmk_eta13_os_err[i].resize(N_rap, 0.);
-            }
+            resize2DVector(C_nmk_eta12_ss, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta12_os, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta13_ss, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta13_os, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta12_ss_err, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta12_os_err, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta13_ss_err, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta13_os_err, num_corr, N_rap, 0.);
         }
         SC_num_corr = 6;
         SC_mn     = vector<double>(SC_num_corr, 0.);
@@ -262,17 +218,6 @@ singleParticleSpectra::singleParticleSpectra(
 }
 
 singleParticleSpectra::~singleParticleSpectra() {
-    for (int i = 0; i < order_max; i++) {
-        delete [] Qn_diff_vector_real[i];
-        delete [] Qn_diff_vector_imag[i];
-        delete [] Qn_diff_vector_real_err[i];
-        delete [] Qn_diff_vector_imag_err[i];
-    }
-    delete [] Qn_diff_vector_real;
-    delete [] Qn_diff_vector_imag;
-    delete [] Qn_diff_vector_real_err;
-    delete [] Qn_diff_vector_imag_err;
-
     if (rapidity_distribution_flag == 1) {
         for (int i = 0; i < N_rap; i++) {
             delete [] vn_real_rapidity_dis_array[i];
@@ -303,19 +248,6 @@ singleParticleSpectra::~singleParticleSpectra() {
         }
         delete [] dNdtaudx1_array;
         delete [] dNdtaudx2_array;
-    }
-
-    if (flag_correlation == 1) {
-        for (int i = 0; i < order_max; i++) {
-            delete[] QnSP_diff_vector[i];
-            delete[] QnSP_diff_vector_err[i];
-            delete[] QnSP_eta12[i];
-            delete[] QnSP_eta12_err[i];
-        }
-        delete[] QnSP_diff_vector;
-        delete[] QnSP_diff_vector_err;
-        delete[] QnSP_eta12;
-        delete[] QnSP_eta12_err;
     }
 }
 

@@ -14,6 +14,8 @@ namespace AfterburnerUtil {
     std::vector<double> stringToDoubles(std::string);
     std::string toLower(std::string str);
     std::string trim(std::string str);
+    void resize2DVector(std::vector<std::vector<double>> &vec2D,
+                        const int nx, const int ny, const double val);
 }
 
 #endif

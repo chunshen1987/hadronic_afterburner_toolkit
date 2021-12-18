@@ -49,14 +49,18 @@ class singleParticleSpectra {
     std::vector<double> Qn_vector_imag;
     std::vector<double> Qn_vector_real_err;
     std::vector<double> Qn_vector_imag_err;
-    double **Qn_diff_vector_real, **Qn_diff_vector_imag;
-    double **Qn_diff_vector_real_err, **Qn_diff_vector_imag_err;
+    std::vector<std::vector<double>> Qn_diff_vector_real;
+    std::vector<std::vector<double>> Qn_diff_vector_imag;
+    std::vector<std::vector<double>> Qn_diff_vector_real_err;
+    std::vector<std::vector<double>> Qn_diff_vector_imag_err;
 
     int flag_correlation;
     std::vector<double> Qn2_vector;
     std::vector<double> Qn2_vector_err;
-    double **QnSP_diff_vector, **QnSP_diff_vector_err;
-    double **QnSP_eta12, **QnSP_eta12_err;
+    std::vector<std::vector<double>> QnSP_diff_vector;
+    std::vector<std::vector<double>> QnSP_diff_vector_err;
+    std::vector<std::vector<double>> QnSP_eta12;
+    std::vector<std::vector<double>> QnSP_eta12_err;
 
     // charge dependent two-particle correlation
     std::vector<double> Cn2_ss;

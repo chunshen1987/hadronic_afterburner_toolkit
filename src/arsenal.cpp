@@ -70,4 +70,17 @@ std::string trim(std::string str) {
     return tmp;
 }
 
+
+void resize2DVector(std::vector<std::vector<double>> &vec2D,
+                    const int nx, const int ny, const double val) {
+    for (unsigned int i = 0; i < vec2D.size(); i++) {
+        vec2D[i].clear();
+    }
+    vec2D.clear();
+    for (int ix = 0; ix < nx; ix++) {
+        std::vector<double> tmp(ny, val);
+        vec2D.push_back(tmp);
+    }
+}
+
 }
