@@ -263,16 +263,12 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
     vector<double> event_Qn_imag    (order_max, 0.);
     vector<double> event_Qn_imag_err(order_max, 0.);
 
-    vector<vector<double>> event_Qn_diff_real(order_max);
-    vector<vector<double>> event_Qn_diff_real_err(order_max);
-    vector<vector<double>> event_Qn_diff_imag(order_max);
-    vector<vector<double>> event_Qn_diff_imag_err(order_max);
-    for (int i = 0; i < order_max; i++) {
-        event_Qn_diff_real[i].resize(npT, 0.);
-        event_Qn_diff_real_err[i].resize(npT, 0.);
-        event_Qn_diff_imag[i].resize(npT, 0.);
-        event_Qn_diff_imag_err[i].resize(npT, 0.);
-    }
+    vector<vector<double>> event_Qn_diff_real, event_Qn_diff_real_err;
+    vector<vector<double>> event_Qn_diff_imag, event_Qn_diff_imag_err;
+    resize2DVector(event_Qn_diff_real, order_max, npT, 0.);
+    resize2DVector(event_Qn_diff_real_err, order_max, npT, 0.);
+    resize2DVector(event_Qn_diff_imag, order_max, npT, 0.);
+    resize2DVector(event_Qn_diff_imag_err, order_max, npT, 0.);
 
     vector<double> event_Qn_p_real(order_max, 0.);
     vector<double> event_Qn_p_real_err(order_max, 0.);
@@ -283,57 +279,41 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
     vector<double> event_Qn_m_imag(order_max, 0.);
     vector<double> event_Qn_m_imag_err(order_max, 0.);
 
-    vector<vector<double>> event_Qn_p_diff_real(order_max);
-    vector<vector<double>> event_Qn_p_diff_real_err(order_max);
-    vector<vector<double>> event_Qn_p_diff_imag(order_max);
-    vector<vector<double>> event_Qn_p_diff_imag_err(order_max);
-    vector<vector<double>> event_Qn_m_diff_real(order_max);
-    vector<vector<double>> event_Qn_m_diff_real_err(order_max);
-    vector<vector<double>> event_Qn_m_diff_imag(order_max);
-    vector<vector<double>> event_Qn_m_diff_imag_err(order_max);
+    vector<vector<double>> event_Qn_p_diff_real, event_Qn_p_diff_real_err;
+    vector<vector<double>> event_Qn_p_diff_imag, event_Qn_p_diff_imag_err;
+    vector<vector<double>> event_Qn_m_diff_real, event_Qn_m_diff_real_err;
+    vector<vector<double>> event_Qn_m_diff_imag, event_Qn_m_diff_imag_err;
     if (flag_charge_dependence == 1) {
-        for (int i = 0; i < order_max; i++) {
-            event_Qn_p_diff_real[i].resize(npT, 0.);
-            event_Qn_p_diff_real_err[i].resize(npT, 0.);
-            event_Qn_p_diff_imag[i].resize(npT, 0.);
-            event_Qn_p_diff_imag_err[i].resize(npT, 0.);
-            event_Qn_m_diff_real[i].resize(npT, 0.);
-            event_Qn_m_diff_real_err[i].resize(npT, 0.);
-            event_Qn_m_diff_imag[i].resize(npT, 0.);
-            event_Qn_m_diff_imag_err[i].resize(npT, 0.);
-        }
+        resize2DVector(event_Qn_p_diff_real, order_max, npT, 0.);
+        resize2DVector(event_Qn_p_diff_real_err, order_max, npT, 0.);
+        resize2DVector(event_Qn_p_diff_imag, order_max, npT, 0.);
+        resize2DVector(event_Qn_p_diff_imag_err, order_max, npT, 0.);
+        resize2DVector(event_Qn_m_diff_real, order_max, npT, 0.);
+        resize2DVector(event_Qn_m_diff_real_err, order_max, npT, 0.);
+        resize2DVector(event_Qn_m_diff_imag, order_max, npT, 0.);
+        resize2DVector(event_Qn_m_diff_imag_err, order_max, npT, 0.);
     }
 
-    vector<vector<double>> event_Qn_rap_real(N_rap);
-    vector<vector<double>> event_Qn_rap_real_err(N_rap);
-    vector<vector<double>> event_Qn_rap_imag(N_rap);
-    vector<vector<double>> event_Qn_rap_imag_err(N_rap);
-    for (int i = 0; i < N_rap; i++) {
-        event_Qn_rap_real[i].resize(order_max, 0.);
-        event_Qn_rap_real_err[i].resize(order_max, 0.);
-        event_Qn_rap_imag[i].resize(order_max, 0.);
-        event_Qn_rap_imag_err[i].resize(order_max, 0.);
-    }
+    vector<vector<double>> event_Qn_rap_real, event_Qn_rap_real_err;
+    vector<vector<double>> event_Qn_rap_imag, event_Qn_rap_imag_err;
+    resize2DVector(event_Qn_rap_real, N_rap, order_max, 0.);
+    resize2DVector(event_Qn_rap_real_err, N_rap, order_max, 0.);
+    resize2DVector(event_Qn_rap_imag, N_rap, order_max, 0.);
+    resize2DVector(event_Qn_rap_imag_err, N_rap, order_max, 0.);
 
-    vector<vector<double>> event_Qn_p_rap_real(N_rap);
-    vector<vector<double>> event_Qn_p_rap_real_err(N_rap);
-    vector<vector<double>> event_Qn_p_rap_imag(N_rap);
-    vector<vector<double>> event_Qn_p_rap_imag_err(N_rap);
-    vector<vector<double>> event_Qn_m_rap_real(N_rap);
-    vector<vector<double>> event_Qn_m_rap_real_err(N_rap);
-    vector<vector<double>> event_Qn_m_rap_imag(N_rap);
-    vector<vector<double>> event_Qn_m_rap_imag_err(N_rap);
+    vector<vector<double>> event_Qn_p_rap_real, event_Qn_p_rap_real_err;
+    vector<vector<double>> event_Qn_p_rap_imag, event_Qn_p_rap_imag_err;
+    vector<vector<double>> event_Qn_m_rap_real, event_Qn_m_rap_real_err;
+    vector<vector<double>> event_Qn_m_rap_imag, event_Qn_m_rap_imag_err;
     if (flag_charge_dependence == 1) {
-        for (int i = 0; i < N_rap; i++) {
-            event_Qn_p_rap_real[i].resize(order_max, 0.);
-            event_Qn_p_rap_real_err[i].resize(order_max, 0.);
-            event_Qn_p_rap_imag[i].resize(order_max, 0.);
-            event_Qn_p_rap_imag_err[i].resize(order_max, 0.);
-            event_Qn_m_rap_real[i].resize(order_max, 0.);
-            event_Qn_m_rap_real_err[i].resize(order_max, 0.);
-            event_Qn_m_rap_imag[i].resize(order_max, 0.);
-            event_Qn_m_rap_imag_err[i].resize(order_max, 0.);
-        }
+        resize2DVector(event_Qn_p_rap_real, N_rap, order_max, 0.);
+        resize2DVector(event_Qn_p_rap_real_err, N_rap, order_max, 0.);
+        resize2DVector(event_Qn_p_rap_imag, N_rap, order_max, 0.);
+        resize2DVector(event_Qn_p_rap_imag_err, N_rap, order_max, 0.);
+        resize2DVector(event_Qn_m_rap_real, N_rap, order_max, 0.);
+        resize2DVector(event_Qn_m_rap_real_err, N_rap, order_max, 0.);
+        resize2DVector(event_Qn_m_rap_imag, N_rap, order_max, 0.);
+        resize2DVector(event_Qn_m_rap_imag_err, N_rap, order_max, 0.);
     }
 
     // start the loop
@@ -536,10 +516,10 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
     for (int i = 0; i < number_of_particles; i++) {
         double pz_local = particle_list->get_particle(event_id, i).pz;
         double E_local = particle_list->get_particle(event_id, i).E;
+        double mass = particle_list->get_particle(event_id, i).mass;
 
         double rap_local;
         if (rap_type == 0) {
-            double mass = particle_list->get_particle(event_id, i).mass;
             double pmag = sqrt(E_local*E_local - mass*mass);
             rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
         } else {
