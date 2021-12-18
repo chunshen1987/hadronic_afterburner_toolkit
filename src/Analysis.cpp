@@ -99,23 +99,43 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // STAR rapidity cut
     paraRdr_.setVal("rap_min", -1.0); paraRdr_.setVal("rap_max", -0.1);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 0.1); paraRdr_.setVal("rap_max", 1.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -1.0); paraRdr_.setVal("rap_max", 1.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", -2.0); paraRdr_.setVal("rap_max", 2.0);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // ALICE rapidity cut
     paraRdr_.setVal("rap_min", -0.8); paraRdr_.setVal("rap_max", 0.8);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // CMS default cut
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.3);
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     paraRdr_.setVal("rap_min", -2.4); paraRdr_.setVal("rap_max", 2.4);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", 0.5); paraRdr_.setVal("rap_max", 2.0);
+    // ATLAS UPC cut
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4);
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 2.0);
+    paraRdr_.setVal("rap_min", -2.5); paraRdr_.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", -2.0); paraRdr_.setVal("rap_max", -0.5);
+    // ATLAS default cut
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.5);
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    paraRdr_.setVal("rap_min", -2.5); paraRdr_.setVal("rap_max", 2.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 0.5); paraRdr_.setVal("rap_max", 2.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", -2.5); paraRdr_.setVal("rap_max", -0.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // ATLAS forward
+    paraRdr_.setVal("rap_min", -4.9); paraRdr_.setVal("rap_max", -3.1);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 4.9);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     // ALICE V0A
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.2);
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -2.8);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 2.8); paraRdr_.setVal("rap_max", 5.1);
@@ -124,11 +144,6 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 3.7);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -3.7); paraRdr_.setVal("rap_max", -1.7);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    // ATLAS forward
-    paraRdr_.setVal("rap_min", -4.9); paraRdr_.setVal("rap_max", -3.1);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 4.9);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     // PHENIX BBC
     paraRdr_.setVal("rap_min", -3.9); paraRdr_.setVal("rap_max", -3.1);
