@@ -34,6 +34,7 @@ select_resonances_flag = 0    # perform resonance decays only for selected
 net_particle_flag = 0         # flag to collect net particle yield distribution
 
 event_buffer_size = 1000000   # the number of particles read in at once
+rapidity_shift = 0.
 
 
 # Parameters for single particle spectra and vn
