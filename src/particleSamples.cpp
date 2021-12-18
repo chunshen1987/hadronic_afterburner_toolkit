@@ -23,8 +23,8 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     echo_level_       = paraRdr_.getVal("echo_level");
     event_buffer_size = paraRdr_.getVal("event_buffer_size");
     read_in_mode_     = paraRdr_.getVal("read_in_mode");
-    rap_shift         = paraRdr_.getVal("rap_shift");
-    
+    rap_shift_        = paraRdr_.getVal("rap_shift", 0);
+
     if (paraRdr_.getVal("analyze_flow") == 1)
         analyze_flow = true;
     else
@@ -48,8 +48,6 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     read_mixed_events = false;
     if (paraRdr_.getVal("read_in_real_mixed_events") == 1)
         read_mixed_events = true;
-
-    rap_type_ = paraRdr_.getVal("rap_type");
 
     if (analyze_ebedis) {
         net_particle_flag = paraRdr_.getVal("net_particle_flag");
@@ -431,32 +429,34 @@ int particleSamples::read_in_particle_samples() {
         reconst_flag = 0;
     }
 
-    for (auto &ev_i: (*full_particle_list)) {
-        for (auto &part_i: (*ev_i)) {
-            part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
-            part_i.phi_p = atan2(part_i.py, part_i.px);
-            /* the booost with the Delta y = rap_shift for tht ATLAS UPC */
-            double E_shifted     = part_i.E  * cosh( rap_shift ) + 
-                                   part_i.pz * sinh( rap_shift );
-            double pz_shifted    = part_i.pz * cosh( rap_shift ) +
-                                   part_i.E  * sinh( rap_shift );
-            part_i.E  = E_shifted;
-            part_i.pz = pz_shifted;
-            
-            if (rap_type_ == 1) {
-                part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
-                                       /(part_i.E - part_i.pz));
-            } else {
-                double p_mag = sqrt(part_i.pT*part_i.pT + part_i.pz*part_i.pz);
-                part_i.rap_y = 0.5*log((p_mag + part_i.pz)
-                                       /(p_mag - part_i.pz));
-            }
-        }
-    }
+    boostParticles(full_particle_list, rap_shift_);
 
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list);
     return(full_particle_list->size());
+}
+
+
+void particleSamples::boostParticles(
+        vector< vector<particle_info>* >* input_particle_list,
+        const double rap_shift) {
+    for (auto &ev_i: (*input_particle_list)) {
+        for (auto &part_i: (*ev_i)) {
+            part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
+            part_i.phi_p = atan2(part_i.py, part_i.px);
+            double E_shifted  = (part_i.E*cosh(rap_shift)
+                                 + part_i.pz*sinh(rap_shift));
+            double pz_shifted = (part_i.pz*cosh(rap_shift)
+                                 + part_i.E*sinh(rap_shift));
+            part_i.E  = E_shifted;
+            part_i.pz = pz_shifted;
+
+            part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
+                                   /(part_i.E - part_i.pz));
+            double p_mag = sqrt(part_i.pT*part_i.pT + part_i.pz*part_i.pz);
+            part_i.rap_eta = 0.5*log((p_mag + part_i.pz)/(p_mag - part_i.pz));
+        }
+    }
 }
 
 
@@ -499,28 +499,7 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         read_in_particle_samples_mixed_event_gzipped();
     }
 
-    for (auto &ev_i: (*full_particle_list_mixed_event)) {
-        for (auto &part_i: (*ev_i)) {
-            part_i.pT    = sqrt(part_i.px*part_i.px + part_i.py*part_i.py);
-            part_i.phi_p = atan2(part_i.py, part_i.px);
-            /* the booost with the Delta y = rap_shift for tht ATLAS UPC */
-            double E_shifted     = part_i.E  * cosh( rap_shift ) + 
-                                   part_i.pz * sinh( rap_shift );
-            double pz_shifted    = part_i.pz * cosh( rap_shift ) +
-                                   part_i.E  * sinh( rap_shift );
-            part_i.E  = E_shifted;
-            part_i.pz = pz_shifted;
-            
-            if (rap_type_ == 1) {
-                part_i.rap_y = 0.5*log((part_i.E + part_i.pz)
-                                       /(part_i.E - part_i.pz));
-            } else {
-                double p_mag = sqrt(part_i.pT*part_i.pT + part_i.pz*part_i.pz);
-                part_i.rap_y = 0.5*log((p_mag + part_i.pz)
-                                       /(p_mag - part_i.pz));
-            }
-        }
-    }
+    boostParticles(full_particle_list_mixed_event, rap_shift_);
 
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list_mixed_event);

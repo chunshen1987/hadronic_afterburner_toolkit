@@ -29,8 +29,9 @@ class BalanceFunction {
 
     long int N_b, N_bbar;
 
+    int rap_type_;
     int Bnpts;
-    int Bnphi; 
+    int Bnphi;
     double dphi;
     double Bphi_min;
     double Brap_min;

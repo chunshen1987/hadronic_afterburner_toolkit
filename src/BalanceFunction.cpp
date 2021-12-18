@@ -35,6 +35,8 @@ BalanceFunction::BalanceFunction(
     dphi     = 2.*M_PI/Bnphi;
     Bphi_min = -M_PI/2.;
 
+    rap_type_ = paraRdr_.getVal("rap_type");
+
     C_ab.resize(Bnpts);
     C_abarbbar.resize(Bnpts);
     C_abarb.resize(Bnpts);
@@ -140,6 +142,8 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                 if (phi_idx < 0) phi_idx += Bnphi;
 
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
+                if (rap_type_ == 0)
+                    delta_y_local = part_a.rap_eta - part_b.rap_eta;
                 if (delta_y_local < Brap_min) continue;
 
                 int y_bin_idx = static_cast<int>(
@@ -176,6 +180,8 @@ void BalanceFunction::combine_and_bin_mixed_particle_pairs(
                 if (phi_idx < 0) phi_idx += Bnphi;
 
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
+                if (rap_type_ == 0)
+                    delta_y_local = part_a.rap_eta - part_b.rap_eta;
                 if (delta_y_local < Brap_min) continue;
 
                 int y_bin_idx = static_cast<int>(
@@ -200,6 +206,7 @@ int BalanceFunction::get_number_of_particles(
     }
     return(particle_number);
 }
+
 
 void BalanceFunction::output_balance_function() {
     double N_OS       = 0.;
@@ -257,7 +264,7 @@ void BalanceFunction::output_balance_function() {
                << C2_SS_delta_y_mixed[i] << endl;
     }
     output.close();
-    
+
     // output the balance function as a function of \Delta phi
     std::vector<double> Delta_phi(Bnphi, 0.);
     for (int j = 0; j < Bnphi; j++)

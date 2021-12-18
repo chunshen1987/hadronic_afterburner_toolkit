@@ -58,7 +58,7 @@ void ParameterReader::phraseEquationWithoutComments(string equation) {
 
 
 //----------------------------------------------------------------------
-long ParameterReader::find(string name) const {
+long ParameterReader::_find(string name) const {
 /*
   Check if the parameter with "name" already exists in the internal 
   "names" list. If yes, it returns its
@@ -123,7 +123,7 @@ bool ParameterReader::exist(string name) {
 /*
   Return true if parameter with "name" is registered.
 */
-    return find(name)==-1 ? false: true;
+    return _find(name)==-1 ? false: true;
 }
 
 
@@ -134,7 +134,7 @@ void ParameterReader::setVal(string name, double value) {
   internal "names" and "values" vector if "name" does not exist; 
   otherwise it is rewitten.
 */
-    long idx = find(name);
+    long idx = _find(name);
     if (idx==-1) {
           names.push_back(toLower(trim(name))); values.push_back(value);
     } else {
@@ -148,13 +148,29 @@ double ParameterReader::getVal(string name) const {
 /*
   Get the value for the parameter with "name".
 */
-    long idx = find(name);
+    long idx = _find(name);
     if (idx!=-1) {
         return values[idx];
     } else {
         cout << "ParameterReader::getVal error: parameter with name " 
              << name << " not found." << endl;
         exit(-1);
+    }
+}
+
+
+//----------------------------------------------------------------------
+//! Get the value for the parameter with "name",
+//! if the parameter does not exist, return the provided default value
+double ParameterReader::getVal(string name, double defaultValue) const {
+    long idx = _find(name);
+    if (idx != -1) {
+        return values[idx];
+    } else {
+        cout << "ParameterReader::getVal error: parameter with name "
+             << name << " not found." << endl;
+        cout << "using defaultValue: " << defaultValue << endl;
+        return(defaultValue);
     }
 }
 

@@ -16,39 +16,43 @@ class ParameterReader {
     std::vector<double> values;
 
     // all substd::string after "symbol" in "str" will be removed
-    std::string removeComments(std::string str, std::string commentSymbol); 
+    std::string removeComments(std::string str, std::string commentSymbol);
 
     // phrase an equation like "x=1", assume std::string has no comments
-    void phraseEquationWithoutComments(std::string equation); 
+    void phraseEquationWithoutComments(std::string equation);
 
     // give the index of parameter with "name", or -1 if it does not exist
-    long find(std::string name) const; 
+    long _find(std::string name) const;
 
   public:
     ParameterReader();
     ~ParameterReader();
 
     // read and phrase one setting std::string like "x=1"
-    void phraseOneLine(std::string str, std::string commentSymbol=(std::string)("#")); 
+    void phraseOneLine(std::string str,
+                       std::string commentSymbol=(std::string)("#"));
 
     // read in parameters from a file
-    //void readFromFile(std::string filename, std::string commentSymbol=(std::string)("#")); 
-    void readFromFile(std::string filename); 
+    void readFromFile(std::string filename);
 
-    // read in parameter from argument list. 
+    // read in parameter from argument list.
     // The process starts with index="start_from".
-    void readFromArguments(long argc, char * argv[], 
-                           std::string commentSymbol=(std::string)("#"), 
-                           long start_from=1); 
+    void readFromArguments(long argc, char * argv[],
+                           std::string commentSymbol=(std::string)("#"),
+                           long start_from=1);
 
     bool exist(std::string name); // check if parameter with "name" exists
 
     // set the parameter with "name" to value "value"
-    void setVal(std::string name, double value); 
+    void setVal(std::string name, double value);
 
-    double getVal(std::string name) const; // return the value for parameter with "name"
+    // return the value for parameter with "name"
+    double getVal(std::string name) const;
 
-    void echo(); // print out all parameters to the screen
+    double getVal(std::string name, double defaultValue) const;
+
+    // print out all parameters to the screen
+    void echo();
 };
 
 #endif

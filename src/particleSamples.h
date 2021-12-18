@@ -33,7 +33,7 @@ class particleSamples {
 
     int echo_level_;
     int read_in_mode_;
-    double rap_shift;
+    double rap_shift_;
     bool read_mixed_events;
 
     bool analyze_flow;
@@ -177,6 +177,10 @@ class particleSamples {
     int read_in_particle_samples_mixed_event_gzipped();
     void clear_out_previous_record(
                     std::vector< std::vector<particle_info>* >* plist);
+
+    void boostParticles(
+            std::vector< std::vector<particle_info>* >* input_particle_list,
+            const double rap_shift);
 
     void filter_particles_from_events(const int PoI_monval);
 
