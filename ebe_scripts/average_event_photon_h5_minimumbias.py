@@ -222,14 +222,20 @@ hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
 print("total number of events: {}".format(len(event_list)))
 
-dN_dy_mb = zeros(len(event_list))
-for ifolder, event_name in enumerate(event_list):
-    file_name   = "particle_9999_vndata_eta_-0.5_0.5.dat"
-    event_group = hf.get(event_name)
-    temp_data   = event_group.get(file_name)
-    temp_data   = nan_to_num(temp_data)
-    dN_dy_mb[ifolder] = -temp_data[0, 1]
-dN_dy_mb = -sort(dN_dy_mb)
+dNdyDict = {}
+dNdyList = []
+if Centrality_flag > 0:
+    for ifolder, event_name in enumerate(event_list):
+        file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
+        try:
+            event_group = hf.get(event_name)
+            temp_data   = event_group.get(file_name)
+            temp_data   = nan_to_num(temp_data)
+            dNdyDict[event_name] = temp_data[0, 1]
+        except:
+            continue
+    dNdyList = -sort(-array(list(dNdyDict.values())))
+print("Number of good events: {}".format(len(dNdyList))
 
 
 for icen in range(len(centrality_cut_list) - 1):
@@ -241,19 +247,16 @@ for icen in range(len(centrality_cut_list) - 1):
     mkdir(avg_folder)
 
     selected_events_list = []
-    for ifolder, event_name in enumerate(event_list):
-        dN_dy_cut_high = (
-            dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)])
-        dN_dy_cut_low  = dN_dy_mb[
-            min(len(dN_dy_mb) - 1,
-                int(len(dN_dy_mb)*centrality_cut_list[icen+1]/100.))
-        ]
-        file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
-        event_group = hf.get(event_name)
-        temp_data   = event_group.get(file_name)
-        temp_data   = nan_to_num(temp_data)
-        if (temp_data[0, 1] > dN_dy_cut_low
-            and temp_data[0, 1] <= dN_dy_cut_high):
+    dN_dy_cut_high = dNdyList[
+        int(len(dNdyList)*centrality_cut_list[icen]/100.)
+    ]
+    dN_dy_cut_low  = dNdyList[
+        min(len(dNdyList) - 1,
+            int(len(dNdyList)*centrality_cut_list[icen+1]/100.))
+    ]
+    for event_name in dNdyDict.keys():
+        if (dNdyDict[event_name] > dN_dy_cut_low
+            and dNdyDict[event_name] <= dN_dy_cut_high):
             selected_events_list.append(event_name)
 
     nev = len(selected_events_list)
