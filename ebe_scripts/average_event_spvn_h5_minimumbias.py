@@ -1409,11 +1409,16 @@ def calculate_vn6_over_vn4(vn_data_array):
     return(results)
 
 
-def calculate_vn_eta(dN_array, vn_array):
-    """This function computes vn(eta) """
+def calculate_vn_eta(eta_array, dN_array, vn_array, eta_min, eta_max):
+    """
+        This function computes vn(eta).
+        eta_min and eta_max specify the rapidity range of reference flow vector
+    """
     nev, neta   = dN_array.shape
     dN_array    = dN_array.reshape((nev, 1, neta))
-    vn_ref      = sum(dN_array*vn_array, axis=2)/(sum(dN_array, axis=2) + 1e-15)
+    idx         = (eta_array > eta_min) & (eta_array < eta_max)
+    vn_ref      = (sum(dN_array[:, :, idx]*vn_array[:, :, idx], axis=2)
+                   /(sum(dN_array[:, :, idx], axis=2) + 1e-15))
     vnshape     = vn_ref.shape
     nvn         = vnshape[1]
     vn_ref      = vn_ref.reshape((vnshape[0], vnshape[1], 1))
@@ -2034,13 +2039,12 @@ for icen in range(len(centrality_cut_list) - 1):
         eta_point = mean(eta_array, 0)
         dNdeta = mean(dN_array, 0)
         dNdeta_err = std(dN_array, 0)/sqrt(nev)
-        #vn_eta = sqrt(mean(abs(vn_array)**2., 0))
-        #vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
-        vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(dN_array, vn_array)
+        vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
+                eta_point, dN_array, vn_array, -5.1, -2.8)
+        vn_SP_eta_mid, vn_SP_eta_mid_err = calculate_vn_eta(
+                eta_point, dN_array, vn_array, -0.8, 0.8)
         rn_eta, rn_eta_err, rnn_eta, rnn_eta_err = calculate_rn_eta(
                                                 eta_point, dN_array, vn_array)
-        vn_eta_real = mean(real(vn_array), 0)
-        vn_eta_real_err = std(real(vn_array), 0)/sqrt(nev)
 
         ######################################################################
         # finally, output all the results
@@ -2464,8 +2468,8 @@ for icen in range(len(centrality_cut_list) - 1):
                 f.write("%.10e  %.10e  %.10e  %.10e  "
                         % (vn_SP_eta[iorder-1, ieta],
                            vn_SP_eta_err[iorder-1, ieta],
-                           vn_eta_real[iorder-1, ieta],
-                           vn_eta_real_err[iorder-1, ieta]))
+                           vn_SP_eta_mid[iorder-1, ieta],
+                           vn_SP_eta_mid_err[iorder-1, ieta]))
             f.write("\n")
         f.close()
 
