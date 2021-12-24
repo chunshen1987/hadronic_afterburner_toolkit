@@ -53,17 +53,16 @@ try:
     avg_folder_header = path.join(path.abspath(argv[2]),
                                   results_folder_name)
     print("output folder: %s" % avg_folder_header)
-    if(path.isdir(avg_folder_header)):
+    if path.isdir(avg_folder_header):
         print("folder %s already exists!" % avg_folder_header)
         var = input("do you want to delete it? [y/N]")
-        if 'y' in var:
+        if 'y' in var.lower():
             shutil.rmtree(avg_folder_header)
+            mkdir(avg_folder_header)
         else:
-            print("please choose another folder path~")
-            exit(0)
-    mkdir(avg_folder_header)
+            print("Continue analysis in {} ...".format(avg_folder_header))
 except IndexError:
-    print("Usage: average_event_spvn.py working_folder results_folder")
+    print("Usage: {} working_folder results_folder".format(argv[0]))
     exit(1)
 
 particle_list = ['9999', '211', '321', '2212', '-211', '-321', '-2212', 
@@ -1576,12 +1575,16 @@ dNdyDict = {}
 dNdyList = []
 if Centrality_flag > 0:
     for ifolder, event_name in enumerate(event_list):
-        file_name   = "particle_9999_vndata_eta_-0.5_0.5.dat"
-        event_group = hf.get(event_name)
-        temp_data   = event_group.get(file_name)
-        temp_data   = nan_to_num(temp_data)
-        dNdyDict[event_name] = temp_data[0, 1]
+        file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
+        try:
+            event_group = hf.get(event_name)
+            temp_data   = event_group.get(file_name)
+            temp_data   = nan_to_num(temp_data)
+            dNdyDict[event_name] = temp_data[0, 1]
+        except:
+            continue
     dNdyList = -sort(-array(list(dNdyDict.values())))
+print("Number of good events: {}".format(len(dNdyList))
 
 
 for icen in range(len(centrality_cut_list) - 1):
@@ -1590,7 +1593,12 @@ for icen in range(len(centrality_cut_list) - 1):
         avg_folder_header, "{0:02.0f}-{1:02.0f}".format(
             centrality_cut_list[icen], centrality_cut_list[icen+1])
     )
-    mkdir(avg_folder)
+
+    if path.isdir(avg_folder):
+        print("{} already exists, skipped ...".format(avg_folder))
+        continue
+    else:
+        mkdir(avg_folder)
 
     selected_events_list = []
     if Centrality_flag == 0:
