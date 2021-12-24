@@ -1652,10 +1652,10 @@ for icen in range(len(centrality_cut_list) - 1):
             file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
         else:
             file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
-        file_name_ref1 = 'particle_9999_vndata_diff_eta_0.5_2.dat'
-        file_name_ref2 = 'particle_9999_vndata_diff_eta_-2_-0.5.dat'
-        file_name_ALICE = 'particle_9999_vndata_diff_eta_-1_1.dat'
-        file_name_ATLAS = 'particle_9999_vndata_diff_eta_-2_2.dat'
+        file_name_ref1 = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
+        file_name_ref2 = 'particle_9999_vndata_diff_eta_-2.5_-0.5.dat'
+        file_name_ALICE = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
+        file_name_ATLAS = 'particle_9999_vndata_diff_eta_-2.5_2.5.dat'
 
         pT_array = []
         dN_array = []
