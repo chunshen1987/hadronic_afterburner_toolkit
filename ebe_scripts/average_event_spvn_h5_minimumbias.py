@@ -80,8 +80,6 @@ particle_name_list = ['charged_hadron', 'pion_p', 'kaon_p', 'proton',
                       'pion_m', 'kaon_m', 'anti_proton',
                       'Lambda', 'anti_Lambda', 'Xi_m', 'anti_Xi_p',
                       'Omega', 'anti_Omega', 'phi']
-if FastFlag:
-    particle_list = particle_list[0:1]
 
 nonlinear_reponse_correlator_name_list = [
                 'v4_L', 'v4(Psi2)', 'rho_422', 'chi_422',
@@ -91,6 +89,10 @@ nonlinear_reponse_correlator_name_list = [
 symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 
 n_order = 7
+if FastFlag:
+    particle_list = particle_list[0:1]
+    n_order = 5
+
 
 def calcualte_inte_vn(pT_low, pT_high, data):
     """
@@ -628,34 +630,19 @@ def calculate_vn_diff_SP(QnpT_diff, Qnref):
     Qnref = array(Qnref)
     nev, norder, npT = QnpT_diff.shape
 
-
     vn_diff_SP = []
     Nref = real(Qnref[:, 0])
     N2refPairs = Nref*(Nref - 1.)
+    NpTPOI = real(QnpT_diff[:, 0, :])
+    N2POIPairs = NpTPOI*Nref.reshape(nev, 1)
     for iorder in range(1, norder):
         # compute Cn^ref{2}
         QnRef_tmp = Qnref[:, iorder]
         n2ref = abs(QnRef_tmp)**2. - Nref
 
-        # calcualte observables with Jackknife resampling method
-        Cn2ref_arr = zeros(nev)
-        for iev in range(nev):
-            array_idx = [True]*nev
-            array_idx[iev] = False
-            array_idx = array(array_idx)
-
-            Cn2ref_arr[iev] = (
-                    mean(n2ref[array_idx])/mean(N2refPairs[array_idx]))
-        Cn2ref_mean = mean(Cn2ref_arr)
-        Cn2ref_err  = sqrt((nev - 1.)/nev*sum((Cn2ref_arr - Cn2ref_mean)**2.))
-
         # compute vn{SP}(pT)
-        NpTPOI = real(QnpT_diff[:, 0, :])
         QnpT_tmp = QnpT_diff[:, iorder, :]
-        Nref = Nref.reshape(nev, 1)
-        QnRef_tmp = QnRef_tmp.reshape(nev, 1)
-        N2POIPairs = NpTPOI*Nref
-        n2pT = real(QnpT_tmp*conj(QnRef_tmp))
+        n2pT = real(QnpT_tmp*conj(QnRef_tmp.reshape(nev, 1)))
 
         # calcualte observables with Jackknife resampling method
         vnSPpT_arr = zeros([nev, npT])
@@ -664,8 +651,9 @@ def calculate_vn_diff_SP(QnpT_diff, Qnref):
             array_idx[iev] = False
             array_idx = array(array_idx)
 
+            Cn2ref_arr = mean(n2ref[array_idx])/mean(N2refPairs[array_idx])
             vnSPpT_arr[iev, :] = (mean(n2pT[array_idx], 0)
-                    /mean(N2POIPairs[array_idx], 0)/sqrt(Cn2ref_arr[iev]))
+                    /mean(N2POIPairs[array_idx], 0)/sqrt(Cn2ref_arr))
         vnSPpT_mean = mean(vnSPpT_arr, 0)
         vnSPpT_err  = sqrt((nev - 1.)/nev
                            *sum((vnSPpT_arr - vnSPpT_mean)**2., 0))
@@ -2387,20 +2375,6 @@ for icen in range(len(centralityCutList) - 1):
             f.write("\n")
         f.close()
 
-        output_filename = ("%s_differential_observables_2PC.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn[2]  vn[2]_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_2PC[iorder-1, ipT],
-                                            vn_diff_2PC_err[iorder-1, ipT]))
-            f.write("\n")
-        f.close()
-
         output_filename = ("%s_differential_observables_CMS.dat"
                            % particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
@@ -2430,6 +2404,20 @@ for icen in range(len(centralityCutList) - 1):
         f.close()
 
         if not FastFlag:
+            output_filename = ("%s_differential_observables_2PC.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                    "vn[2]  vn[2]_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
+                for iorder in range(1, n_order):
+                    f.write("%.10e  %.10e  " % (vn_diff_2PC[iorder-1, ipT],
+                                                vn_diff_2PC_err[iorder-1, ipT]))
+                f.write("\n")
+            f.close()
+
             # output vn{4}(pT)
             output_filename = (
                     "%s_differential_observables_4particle_PHENIX.dat"
