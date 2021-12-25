@@ -37,15 +37,20 @@ PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
 SPS_cen_list    = [5., 12.5, 23.5, 33.5, 43.5]       # SPS PbPb
 PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
-#centrality_cut_list = (Reg_centrality_cut_list + PHOBOS_cen_list
-#                       + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
-centrality_cut_list = Reg_centrality_cut_list
+ALICE_pp_list   = [0., 100., 0., 1. 5.,
+                   0., 5., 10., 15, 20., 30., 40., 50., 70., 100.]
+centralityCutList = Reg_centrality_cut_list
 
-Centrality_flag = 1  # 0: use pre-generated centrality label in the database
+CentralityFlag = 1   # 0: use pre-generated centrality label in the database
                      # 1: sort dNch/deta and cut centrality
                      # 2: assume uneven number of events in pre-generated
                      #    centrality, remove the bias and cut on dNch/deta
-FastFlag = False
+RapidityTrigger = 0  # 0: mid-rapidity [-0.5, 0.5]
+                     # 1: PHENIX BBC trigger [-3.9, -3.1]
+                     # 2: ALICE V0A trigger [-5.1, -2.8]
+                     # 3: ATLAS forward trigger [-4.9, -3.1]
+FastFlag = False     # True: only analyze a subset of charged hadron obs.
+                     # False: full analysis
 
 try:
     data_path = path.abspath(argv[1])
@@ -1540,7 +1545,7 @@ def calculate_meanpT_fluc(dN_array, pT_array, pT_min=0.0, pT_max=3.0):
 hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
 print("total number of events: {}".format(len(event_list)))
-if Centrality_flag == 2:
+if CentralityFlag == 2:
     event_list_1 = []
     nev_min = 1e10
     nev_centrality = []
@@ -1577,9 +1582,15 @@ if Centrality_flag == 2:
 
 dNdyDict = {}
 dNdyList = []
-if Centrality_flag > 0:
+if CentralityFlag > 0:
     for ifolder, event_name in enumerate(event_list):
         file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
+        if RapidityTrigger == 1:      # PHENIX BBC Trigger
+            file_name = "particle_9999_vndata_eta_-3.9_-3.1.dat"
+        elif RapidityTrigger == 2:    # ALICE V0A Trigger
+            file_name = "particle_9999_vndata_eta_-5.1_-2.8.dat"
+        elif RapidityTrigger == 3:    # ATLAS forward Trigger
+            file_name = "particle_9999_vndata_eta_-4.9_-3.1.dat"
         try:
             event_group = hf.get(event_name)
             temp_data   = event_group.get(file_name)
@@ -1591,11 +1602,11 @@ if Centrality_flag > 0:
 print("Number of good events: {}".format(len(dNdyList))
 
 
-for icen in range(len(centrality_cut_list) - 1):
-    if centrality_cut_list[icen+1] < centrality_cut_list[icen]: continue
+for icen in range(len(centralityCutList) - 1):
+    if centralityCutList[icen+1] < centralityCutList[icen]: continue
     avg_folder = path.join(
         avg_folder_header, "{0:02.0f}-{1:02.0f}".format(
-            centrality_cut_list[icen], centrality_cut_list[icen+1])
+            centralityCutList[icen], centralityCutList[icen+1])
     )
 
     if path.isdir(avg_folder):
@@ -1605,21 +1616,21 @@ for icen in range(len(centrality_cut_list) - 1):
         mkdir(avg_folder)
 
     selected_events_list = []
-    if Centrality_flag == 0:
+    if CentralityFlag == 0:
         cen_label = ("C{0:d}-{1:d}_".format(
-            int(centrality_cut_list[icen]),
-            int(centrality_cut_list[icen+1]))
+            int(centralityCutList[icen]),
+            int(centralityCutList[icen+1]))
         )
         for ifolder, event_name in enumerate(event_list):
             if cen_label in event_name:
                 selected_events_list.append(event_name)
-    elif Centrality_flag > 0:
+    elif CentralityFlag > 0:
         dN_dy_cut_high = dNdyList[
-            int(len(dNdyList)*centrality_cut_list[icen]/100.)
+            int(len(dNdyList)*centralityCutList[icen]/100.)
         ]
         dN_dy_cut_low  = dNdyList[
             min(len(dNdyList)-1,
-                int(len(dNdyList)*centrality_cut_list[icen+1]/100.))
+                int(len(dNdyList)*centralityCutList[icen+1]/100.))
         ]
         for event_name in dNdyDict.keys():
             if (dNdyDict[event_name] > dN_dy_cut_low
@@ -1628,7 +1639,7 @@ for icen in range(len(centrality_cut_list) - 1):
 
     nev = len(selected_events_list)
     print("analysis {}%-{}% nev = {}...".format(
-            centrality_cut_list[icen], centrality_cut_list[icen+1], nev))
+            centralityCutList[icen], centralityCutList[icen+1], nev))
     if nev == 0:
         print("Skip ...")
         continue
@@ -2048,10 +2059,20 @@ for icen in range(len(centrality_cut_list) - 1):
         eta_point = mean(eta_array, 0)
         dNdeta = mean(dN_array, 0)
         dNdeta_err = std(dN_array, 0)/sqrt(nev)
-        vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                eta_point, dN_array, vn_array, -5.1, -2.8)
+        if RapidityTrigger == 0:
+            vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
+                                eta_point, dN_array, vn_array, -3.0, -3.0)
+        elif RapidityTrigger == 1:
+            vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
+                                eta_point, dN_array, vn_array, -3.9, -3.1)
+        elif RapidityTrigger == 2:
+            vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
+                                eta_point, dN_array, vn_array, -5.1, -2.8)
+        elif RapidityTrigger == 3:
+            vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
+                                eta_point, dN_array, vn_array, -4.9, -3.1)
         vn_SP_eta_mid, vn_SP_eta_mid_err = calculate_vn_eta(
-                eta_point, dN_array, vn_array, -0.8, 0.8)
+                                eta_point, dN_array, vn_array, -0.8, 0.8)
         rn_eta, rn_eta_err, rnn_eta, rnn_eta_err = calculate_rn_eta(
                                                 eta_point, dN_array, vn_array)
 
