@@ -37,7 +37,7 @@ PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
 SPS_cen_list    = [5., 12.5, 23.5, 33.5, 43.5]       # SPS PbPb
 PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
-ALICE_pp_list   = [0., 100., 0., 1. 5.,
+ALICE_pp_list   = [0., 100., 0., 1., 5.,
                    0., 5., 10., 15, 20., 30., 40., 50., 70., 100.]
 centralityCutList = Reg_centrality_cut_list
 
@@ -67,6 +67,8 @@ try:
             mkdir(avg_folder_header)
         else:
             print("Continue analysis in {} ...".format(avg_folder_header))
+    else:
+        mkdir(avg_folder_header)
 except IndexError:
     print("Usage: {} working_folder results_folder".format(argv[0]))
     exit(1)
@@ -1599,7 +1601,7 @@ if CentralityFlag > 0:
         except:
             continue
     dNdyList = -sort(-array(list(dNdyDict.values())))
-print("Number of good events: {}".format(len(dNdyList))
+print("Number of good events: {}".format(len(dNdyList)))
 
 
 for icen in range(len(centralityCutList) - 1):
