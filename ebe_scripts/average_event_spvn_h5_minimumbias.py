@@ -45,6 +45,7 @@ Centrality_flag = 1  # 0: use pre-generated centrality label in the database
                      # 1: sort dNch/deta and cut centrality
                      # 2: assume uneven number of events in pre-generated
                      #    centrality, remove the bias and cut on dNch/deta
+FastFlag = False
 
 try:
     data_path = path.abspath(argv[1])
@@ -72,6 +73,9 @@ particle_name_list = ['charged_hadron', 'pion_p', 'kaon_p', 'proton',
                       'pion_m', 'kaon_m', 'anti_proton',
                       'Lambda', 'anti_Lambda', 'Xi_m', 'anti_Xi_p',
                       'Omega', 'anti_Omega', 'phi']
+if FastFlag:
+    particle_list = particle_list[0:1]
+
 nonlinear_reponse_correlator_name_list = [
                 'v4_L', 'v4(Psi2)', 'rho_422', 'chi_422',
                 'v5_L', 'v5(Psi23)', 'rho_523', 'chi_523',
@@ -1740,7 +1744,7 @@ for icen in range(len(centrality_cut_list) - 1):
             vn_cms_array_sub1.append(temp_vn_array)
             temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data_ref2)
             vn_cms_array_sub2.append(temp_vn_array)
-            if particle_id == "9999":
+            if particle_id == "9999" and not FastFlag:
                 temp_vn_arrays = (
                         calculate_vn_arrays_for_rn_ratios(temp_data))
                 vn_cms_arrays_for_rn.append(temp_vn_arrays)
@@ -1925,7 +1929,7 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_atlas_2_gap, vn_atlas_2_gap_err = calcualte_vn_2_with_gap(
                                 vn_atlas_array_sub1, vn_atlas_array_sub2)
 
-        if (particle_id == '9999'):
+        if particle_id == '9999' and not FastFlag:
             vn_alice_array2 = array(vn_alice_array)
             vn_cms_array2 = array(vn_cms_array)
             vn_atlas_array2 = array(vn_atlas_array)
@@ -1995,22 +1999,23 @@ for icen in range(len(centrality_cut_list) - 1):
 
         # calcualte vn{SP}(pT)
         vn_diff_SP_phenix = calculate_vn_diff_SP(QnpT_diff_phenix,
-                                                  Qnref_phenix)
-        vn4_diff_phenix = calculate_vn4_diff(QnpT_diff_phenix, Qnref_phenix)
+                                                 Qnref_phenix)
         vn_diff_SP_star = calculate_vn_diff_SP(QnpT_diff_star, Qnref_star)
-        vn4_diff_star = calculate_vn4_diff(QnpT_diff_star, Qnref_star)
-
         vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice, Qnref_alice)
-        vn4_diff_alice = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
-
         vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_cms)
-        vn4_diff_cms = calculate_vn4_diff(QnpT_diff_cms, Qnref_cms)
         vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_atlas)
-        vn4_diff_atlas = calculate_vn4_diff(QnpT_diff_atlas, Qnref_atlas)
 
-        # calcualte vn[2](pT)
-        vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
-                vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
+        if not FastFlag:
+            vn4_diff_phenix = calculate_vn4_diff(QnpT_diff_phenix,
+                                                 Qnref_phenix)
+            vn4_diff_star = calculate_vn4_diff(QnpT_diff_star, Qnref_star)
+            vn4_diff_alice = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
+            vn4_diff_cms = calculate_vn4_diff(QnpT_diff_cms, Qnref_cms)
+            vn4_diff_atlas = calculate_vn4_diff(QnpT_diff_atlas, Qnref_atlas)
+
+            # calcualte vn[2](pT)
+            vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
+                    vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
 
         # then particle rapidity distribution
         if particle_id == '9999':
@@ -2054,7 +2059,7 @@ for icen in range(len(centrality_cut_list) - 1):
         # finally, output all the results
         ######################################################################
 
-        if (particle_id =='9999'):
+        if particle_id =='9999' and not FastFlag:
             # output non-linear response coefficients chi_n for CMS pt cut
             output_filename = ("non_linear_response_coefficients_CMS.dat")
             f = open(path.join(avg_folder, output_filename), 'w')
@@ -2216,7 +2221,8 @@ for icen in range(len(centrality_cut_list) - 1):
             # output vn6/vn4 ratio for PHENIX pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_PHENIX.dat")
             f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
+            f.write(
+                "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_phenix[0], vn6_over_vn4_phenix[1],
                        vn6_over_vn4_phenix[2], vn6_over_vn4_phenix[3]))
@@ -2225,7 +2231,8 @@ for icen in range(len(centrality_cut_list) - 1):
             # output vn6/vn4 ratio for STAR pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_STAR.dat")
             f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
+            f.write(
+                "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_star[0], vn6_over_vn4_star[1],
                        vn6_over_vn4_star[2], vn6_over_vn4_star[3]))
@@ -2234,7 +2241,8 @@ for icen in range(len(centrality_cut_list) - 1):
             # output vn6/vn4 ratio for ALICE pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ALICE.dat")
             f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
+            f.write(
+                "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_alice[0], vn6_over_vn4_alice[1],
                        vn6_over_vn4_alice[2], vn6_over_vn4_alice[3]))
@@ -2243,7 +2251,8 @@ for icen in range(len(centrality_cut_list) - 1):
             # output vn6/vn4 ratio for CMS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_CMS.dat")
             f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
+            f.write(
+                "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_cms[0], vn6_over_vn4_cms[1],
                        vn6_over_vn4_cms[2], vn6_over_vn4_cms[3]))
@@ -2252,7 +2261,8 @@ for icen in range(len(centrality_cut_list) - 1):
             # output vn6/vn4 ratio for ATLAS pt cut
             output_filename = ("charged_hadron_vn6_over_vn4_ATLAS.dat")
             f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
+            f.write(
+                "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
             f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                     % (2, vn6_over_vn4_atlas[0], vn6_over_vn4_atlas[1],
                        vn6_over_vn4_atlas[2], vn6_over_vn4_atlas[3]))
@@ -2271,7 +2281,8 @@ for icen in range(len(centrality_cut_list) - 1):
         f.write("sigma_pT/<pT>= %.5e +/- %.5e\n"% (sigma_pT, sigma_pT_err))
         for iorder in range(1, n_order):
             f.write("v_%d{2}(phenix)= %.5e +/- %.5e\n"
-                    % (iorder, vn_phenix_2[iorder-1], vn_phenix_2_err[iorder-1]))
+                    % (iorder, vn_phenix_2[iorder-1],
+                       vn_phenix_2_err[iorder-1]))
             f.write("v_%d{2}(STAR)= %.5e +/- %.5e\n"
                     % (iorder, vn_star_2[iorder-1], vn_star_2_err[iorder-1]))
             f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
@@ -2395,69 +2406,78 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
 
-        # output vn{4}(pT)
-        output_filename = ("%s_differential_observables_4particle_PHENIX.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  vn{4}  vn{4}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  " % (pT_spectra[ipT]))
-            for iorder in range(1, 4):
-                f.write("%.10e  %.10e  " % (vn4_diff_phenix[2*iorder-2][ipT],
-                                            vn4_diff_phenix[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
+        if not FastFlag:
+            # output vn{4}(pT)
+            output_filename = (
+                    "%s_differential_observables_4particle_PHENIX.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  vn{4}  vn{4}_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  " % (pT_spectra[ipT]))
+                for iorder in range(1, 4):
+                    f.write("%.10e  %.10e  " % (
+                        vn4_diff_phenix[2*iorder-2][ipT],
+                        vn4_diff_phenix[2*iorder-1][ipT]))
+                f.write("\n")
+            f.close()
 
-        output_filename = ("%s_differential_observables_4particle_STAR.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  vn{4}  vn{4}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  " % (pT_spectra[ipT]))
-            for iorder in range(1, 4):
-                f.write("%.10e  %.10e  " % (vn4_diff_star[2*iorder-2][ipT],
-                                            vn4_diff_star[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
+            output_filename = (
+                    "%s_differential_observables_4particle_STAR.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  vn{4}  vn{4}_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  " % (pT_spectra[ipT]))
+                for iorder in range(1, 4):
+                    f.write("%.10e  %.10e  " % (
+                        vn4_diff_star[2*iorder-2][ipT],
+                        vn4_diff_star[2*iorder-1][ipT]))
+                f.write("\n")
+            f.close()
 
-        output_filename = ("%s_differential_observables_4particle_ALICE.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  vn{4}  vn{4}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  " % (pT_spectra[ipT]))
-            for iorder in range(1, 4):
-                f.write("%.10e  %.10e  " % (vn4_diff_alice[2*iorder-2][ipT],
-                                            vn4_diff_alice[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
+            output_filename = (
+                    "%s_differential_observables_4particle_ALICE.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  vn{4}  vn{4}_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  " % (pT_spectra[ipT]))
+                for iorder in range(1, 4):
+                    f.write("%.10e  %.10e  " % (
+                        vn4_diff_alice[2*iorder-2][ipT],
+                        vn4_diff_alice[2*iorder-1][ipT]))
+                f.write("\n")
+            f.close()
 
-        output_filename = ("%s_differential_observables_4particle_CMS.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  vn{4}  vn{4}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  " % (pT_spectra[ipT]))
-            for iorder in range(1, 4):
-                f.write("%.10e  %.10e  " % (vn4_diff_cms[2*iorder-2][ipT],
-                                            vn4_diff_cms[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
+            output_filename = ("%s_differential_observables_4particle_CMS.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  vn{4}  vn{4}_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  " % (pT_spectra[ipT]))
+                for iorder in range(1, 4):
+                    f.write("%.10e  %.10e  " % (vn4_diff_cms[2*iorder-2][ipT],
+                                                vn4_diff_cms[2*iorder-1][ipT]))
+                f.write("\n")
+            f.close()
 
-        output_filename = ("%s_differential_observables_4particle_ATLAS.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  vn{4}  vn{4}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  " % (pT_spectra[ipT]))
-            for iorder in range(1, 4):
-                f.write("%.10e  %.10e  " % (vn4_diff_atlas[2*iorder-2][ipT],
-                                            vn4_diff_atlas[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
+            output_filename = (
+                    "%s_differential_observables_4particle_ATLAS.dat"
+                               % particle_name_list[ipart])
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  vn{4}  vn{4}_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  " % (pT_spectra[ipT]))
+                for iorder in range(1, 4):
+                    f.write("%.10e  %.10e  " % (
+                        vn4_diff_atlas[2*iorder-2][ipT],
+                        vn4_diff_atlas[2*iorder-1][ipT]))
+                f.write("\n")
+            f.close()
 
-        output_filename = ("%s_rapidity_distribution.dat"
-                           % particle_name_list[ipart])
+        output_filename = "{}_rapidity_distribution.dat".format(
+                                                    particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
         if(particle_id == '9999'):
             f.write("#eta  dN/deta  dN/deta_err  vn{2}(eta)  vn{2}(eta)_err"
@@ -2477,7 +2497,7 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("\n")
         f.close()
 
-        if (particle_id == '9999'):
+        if particle_id == '9999' and not FastFlag:
             output_filename = ("%s_vn_distribution_PHENIX.dat"
                                % particle_name_list[ipart])
             f = open(path.join(avg_folder, output_filename), 'w')
