@@ -812,7 +812,7 @@ def calculate_vn_distribution(vn_array, outputFileName):
 
 
 def calcualte_event_plane_correlations_3sub(vn_array, vn_array_sub1,
-                                            vn_array_sub2, output_filename):
+                                            vn_array_sub2, outputFileName):
     """
         this function compute the three-particle correlations with Qn
         vectors from three different sub-events
@@ -926,7 +926,7 @@ def calcualte_event_plane_correlations_3sub(vn_array, vn_array_sub1,
     corr_246_err = sqrt((nev - 1.)/nev*sum((corr_246_JK - corr_246)**2.))
 
     # output results to a file
-    f = open(output_filename), 'w')
+    f = open(outputFileName, 'w')
     f.write("#correlator  value  value_err\n")
     f.write("224  %.5e  %.5e\n" % (corr_224, corr_224_err))
     f.write("336  %.5e  %.5e\n" % (corr_336, corr_336_err))
