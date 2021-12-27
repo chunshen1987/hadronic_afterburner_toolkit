@@ -54,6 +54,28 @@ except IndexError:
     exit(1)
 
 
+def check_an_event_is_good(h5_event):
+    """This function checks the given event contains all required files"""
+    required_files_list = [
+        'particle_9999_vndata_eta_-0.5_0.5.dat',
+        "Smu_pT_Thermal_pseudorapidity_3122.dat",
+        "Smu_phi_Thermal_pseudorapidity_3122.dat",
+        "Smu_y_Thermal_pseudorapidity_3122.dat",
+        'particle_211_vndata_diff_y_-0.5_0.5.dat',
+        'particle_321_vndata_diff_y_-0.5_0.5.dat',
+        'particle_2212_vndata_diff_y_-0.5_0.5.dat',
+        'particle_3122_vndata_diff_y_-0.5_0.5.dat',
+        'particle_-3122_vndata_diff_y_-0.5_0.5.dat',
+    ]
+    event_file_list = list(h5_event.keys())
+    for ifile in required_files_list:
+        if ifile not in event_file_list:
+            print("event {} is bad, missing {} ...".format(h5_event.name,
+                                                           ifile))
+            return False
+    return True
+
+
 def calculate_meanpT_inte_vn(pT_low, pT_high, data):
     """
         this function calculates the dN/dy, <pT>, pT-integrated vn in a
@@ -502,16 +524,14 @@ print("total number of events: {}".format(len(event_list)))
 dNdyDict = {}
 for ifolder, event_name in enumerate(event_list):
     file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
-    try:
-        event_group = hf.get(event_name)
+    event_group = hf.get(event_name)
+    eventStatus = check_an_event_is_good(event_group)
+    if eventStatus:
         temp_data   = event_group.get(file_name)
         temp_data   = nan_to_num(temp_data)
         dNdyDict[event_name] = temp_data[0, 1]
-    except:
-        continue
 dNdyList = -sort(-array(list(dNdyDict.values())))
 print("Number of good events: {}".format(len(dNdyList)))
-
 
 for icen in range(len(centrality_cut_list) - 1):
     if centrality_cut_list[icen+1] < centrality_cut_list[icen]: continue
@@ -539,8 +559,6 @@ for icen in range(len(centrality_cut_list) - 1):
     if nev == 0:
         print("Skip ...")
         continue
-
-    print("processing spin polarization ...")
 
     vnFileName     = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
     vnRefFileName1 = 'particle_9999_vndata_diff_eta_0.5_2.dat'
