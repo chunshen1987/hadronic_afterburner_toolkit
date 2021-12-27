@@ -1459,7 +1459,7 @@ def calculate_vn6_over_vn4(vn_data_array, outputFileName):
     f.write(
         "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
     f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
-            % (2, r2_mean, r2_err, gamma1_mean, gamma_1_err))
+            % (2, r2_mean, r2_err, gamma1_mean, gamma1_err))
     f.close()
     return
 
