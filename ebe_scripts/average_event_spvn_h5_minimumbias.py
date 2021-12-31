@@ -1484,7 +1484,8 @@ def calculate_vn_eta(eta_array, dN_array, vn_array, eta_min, eta_max):
         array_idx[iev] = False
         array_idx      = array(array_idx)
         vn_den         = mean((absolute(vn_ref[array_idx, :, :]))**2., axis=0)
-        vn_SP          = mean(vn_SP_ev[array_idx, :, :], axis=0)/sqrt(vn_den)
+        vn_SP          = (mean(vn_SP_ev[array_idx, :, :], axis=0)
+                          /(sqrt(vn_den) + 1e-16))
         vn_SP_array[iev, :, :] = vn_SP
     vn_SP_mean = mean(vn_SP_array, axis=0)
     vn_SP_err  = sqrt((nev - 1.)/nev*sum((vn_SP_array - vn_SP_mean)**2., axis=0))
