@@ -2184,7 +2184,7 @@ for icen in range(len(centralityCutList) - 1):
         dNdeta_err = std(dN_array, 0)/sqrt(nev)
         if RapidityTrigger == 0:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -3.0, -3.0)
+                                eta_point, dN_array, vn_array, -3.0, 3.0)
         elif RapidityTrigger == 1:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
                                 eta_point, dN_array, vn_array, -3.9, -3.1)
