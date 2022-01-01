@@ -52,12 +52,20 @@ RapidityTrigger = 0  # 0: mid-rapidity [-0.5, 0.5]
 FastFlag = False     # True: only analyze a subset of charged hadron obs.
                      # False: full analysis
 
+RapTrigLabel = "CL1"
+if RapidityTrigger == 1:
+    RapTrigLabel = "BBC"
+elif RapidityTrigger == 2:
+    RapTrigLabel = "V0A"
+elif RapidityTrigger == 3:
+    RapTrigLabel = "ATLASForward"
+
 try:
     data_path = path.abspath(argv[1])
     data_name = data_path.split("/")[-1]
-    results_folder_name = data_name.split(".h5")[0]
-    avg_folder_header = path.join(path.abspath(argv[2]),
-                                  results_folder_name)
+    resultsFolderName = data_name.split(".h5")[0]
+    avg_folder_header = path.join(
+        path.abspath(argv[2]), "{}_{}".format(resultsFolderName, RapTrigLabel))
     print("output folder: %s" % avg_folder_header)
     if path.isdir(avg_folder_header):
         print("folder %s already exists!" % avg_folder_header)
