@@ -28,7 +28,8 @@ PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
 SPS_cen_list    = [5., 12.5, 23.5, 33.5, 43.5]       # SPS PbPb
 PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
-centrality_cut_list = [0., 100.]
+
+centrality_cut_list = Reg_centrality_cut_list + [20., 50., 20., 60.]
 
 n_order = 7
 vorticityType = "Thermal"
@@ -236,6 +237,80 @@ def calculate_vn_eta(eta_array, dN_array, vn_array, eta_min, eta_max):
     vn_SP_mean = mean(vn_SP_array, axis=0)
     vn_SP_err  = sqrt((nev - 1.)/nev*sum((vn_SP_array - vn_SP_mean)**2., axis=0))
     return([vn_SP_mean, vn_SP_err])
+
+
+def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_):
+    """
+        This function compute the event-averaged S^mu
+        pT integated from pT_min, pT_max
+        y integrated from -1 to 1
+    """
+    filelist = ["Smu_pT_{}_pseudorapidity_3122.dat",
+                "Smu_pT_{}_pseudorapidity_3122_wSIP_BBPP.dat",
+                "Smu_pT_{}_pseudorapidity_3122_wSIP_LY.dat",
+                "Smu_pT_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+
+    pT_arr = []
+    dN_list = []
+    Sx_list = []
+    Sy_list = []
+    Sz_list = []
+    for ifile in filelist:
+        dN_list.append([])
+        Sx_list.append([])
+        Sy_list.append([])
+        Sz_list.append([])
+
+    nev = len(eventList_)
+    for eventName in eventList_:
+        event_group = hf_.get(eventName)
+        for ifile, filename in enumerate(filelist):
+            spin_data = nan_to_num(
+                    event_group.get(filename.format(vorticityType)))
+
+            if ifile == 0:
+                pT_arr = spin_data[:, 0]
+            idx = (pT_arr > pTMin_) & (pT_arr < pTMax_)
+
+            dN_list[ifile].append(sum(spin_data[idx, 1]))
+            Sx_list[ifile].append(sum(spin_data[idx, 1]*spin_data[idx, 7]))
+            Sy_list[ifile].append(sum(spin_data[idx, 1]*spin_data[idx, 8]))
+            Sz_list[ifile].append(sum(spin_data[idx, 1]*spin_data[idx, 9]))
+
+
+    Sx_avg = []; Sx_err = []
+    Sy_avg = []; Sy_err = []
+    Sz_avg = []; Sz_err = []
+    for ifile in range(len(filelist)):
+        Sx_avg.append(mean(array(Sx_list[ifile]), axis=0)
+                      /mean(array(dN_list[ifile]), axis=0))
+        Sx_err.append(std(array(Sx_list[ifile]), axis=0)
+                      /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
+        Sy_avg.append(mean(array(Sy_list[ifile]), axis=0)
+                      /mean(array(dN_list[ifile]), axis=0))
+        Sy_err.append(std(array(Sy_list[ifile]), axis=0)
+                      /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
+        Sz_avg.append(mean(array(Sz_list[ifile]), axis=0)
+                      /mean(array(dN_list[ifile]), axis=0))
+        Sz_err.append(std(array(Sz_list[ifile]), axis=0)
+                      /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
+
+    f = open(path.join(outputFolder_,
+                       "averaged_Smu_{}_pT_{}_{}.txt".format(vorticityType,
+                                                             pTMin_, pTMax_)),
+             "a")
+    if icen == 0:
+        f.write("# cen  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
+                + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
+    f.write("{}  ".format(
+        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2.))
+    for icol in range(len(filelist)):
+        f.write("%.5e  %.5e  " % (Sx_avg[icol], Sx_err[icol]))
+        f.write("%.5e  %.5e  " % (Sy_avg[icol], Sy_err[icol]))
+        f.write("%.5e  %.5e  " % (Sz_avg[icol], Sz_err[icol]))
+    f.write("\n")
+    f.close()
 
 
 def analyze_Smu_pT(hf_, eventList_, outputFolder_):
@@ -686,6 +761,7 @@ for icen in range(len(centrality_cut_list) - 1):
                             eta_point, dN_array, vn_array, -0.5, 0.5)
 
     # analysis spin observables
+    analyze_Smu(hf, selected_events_list, 0.5, 3.0, avg_folder_header, icen)
     analyze_Smu_pT(hf, selected_events_list, avg_folder)
     analyze_Smu_y(hf, selected_events_list, avg_folder)
     for iorder in range(4):
