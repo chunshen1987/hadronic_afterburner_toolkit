@@ -137,9 +137,12 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
 
     // now identified particle
-    paraRdr_.setVal("rap_type", 1);
+    int rap_type_for_pid = paraRdr_.getVal("rap_type_for_pid");
+    paraRdr_.setVal("rap_type", rap_type_for_pid);
     paraRdr_.setVal("rapidity_distribution", 1);
-    paraRdr_.setVal("rap_min", -0.5); paraRdr_.setVal("rap_max", 0.5);
+    double rap_min_for_pid = paraRdr_.getVal("rap_min_for_pid");
+    double rap_max_for_pid = paraRdr_.getVal("rap_max_for_pid");
+    paraRdr_.setVal("rap_min", rap_min_for_pid); paraRdr_.setVal("rap_max", rap_max_for_pid);
     paraRdr_.setVal("particle_monval", 211);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", -211);

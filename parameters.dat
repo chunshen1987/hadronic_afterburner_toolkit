@@ -49,6 +49,14 @@ rap_max = 0.5                 # maximum value of rapidity integration
                               # range for mid-rapidity observables 
 
 rap_type = 1                  # 0: for pseudo-rapidity; 1: for rapidity
+
+rap_min_for_pid = -0.5        # minimum value of rapidity integration 
+                              # range for mid-rapidity observables 
+rap_max_for_pid = 0.5         # maximum value of rapidity integration
+                              # range for mid-rapidity observables 
+
+rap_type_for_pid = 1          # 0: for pseudo-rapidity; 1: for rapidity
+rap_shift = 0.000             # The rapidity shift
 rapidity_distribution = 1     # 1: output particle rapidity distribution 
 n_rap = 141                   # numpber of points in rapidity distr.
 rapidity_dis_min = -7.00      # minimum value of particle rapidity 
