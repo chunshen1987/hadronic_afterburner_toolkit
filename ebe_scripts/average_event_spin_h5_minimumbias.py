@@ -239,7 +239,8 @@ def calculate_vn_eta(eta_array, dN_array, vn_array, eta_min, eta_max):
     return([vn_SP_mean, vn_SP_err])
 
 
-def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_):
+def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
+                vn_array_):
     """
         This function compute the event-averaged S^mu
         pT integated from pT_min, pT_max
@@ -295,6 +296,33 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_):
         Sz_err.append(std(array(Sz_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
 
+    # compute correlation between S^y and v_2
+    v2_array = abs(vn_array_[:, 3])
+    rho_v2Sy_avg = []; rho_v2Sy_err = []
+    for ifile in range(len(filelist)):
+        Sy_array = array(Sy_list[ifile])/array(dN_list[ifile])
+
+        # compute the error using the jackknife method
+        rho_v2Sy = zeros(nev)
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            rho_v2Sy[iev] = (mean(v2_array[array_idx]*abs(Sy_array[array_idx]))
+                             /sqrt(mean(v2_array[array_idx]**2.)
+                                   *mean(Sy_array[array_idx]**2.)))
+        rho_v2Sy_mean_tmp = mean(rho_v2Sy)
+        rho_v2Sy_avg.append(rho_v2Sy_mean_tmp)
+        rho_v2Sy_err.append(sqrt((nev - 1.)/nev
+                            *sum((rho_v2Sy - rho_v2Sy_mean_tmp)**2.)))
+
+    # compute correlation between S^y and meanpT
+    meanpT_array = abs(vn_array_[:, 1])
+    rho_pTSy_avg = []; rho_pTSy_err = []
+
+
+    # output results to files
     f = open(path.join(outputFolder_,
                        "averaged_Smu_{}_pT_{}_{}.txt".format(vorticityType,
                                                              pTMin_, pTMax_)),
@@ -309,6 +337,22 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_):
         f.write("%.5e  %.5e  " % (Sx_avg[icol], Sx_err[icol]))
         f.write("%.5e  %.5e  " % (Sy_avg[icol], Sy_err[icol]))
         f.write("%.5e  %.5e  " % (Sz_avg[icol], Sz_err[icol]))
+    f.write("\n")
+    f.close()
+
+
+    f = open(path.join(outputFolder_,
+                       "Rho_v2Sy_{}_pT_{}_{}.txt".format(vorticityType,
+                                                         pTMin_, pTMax_)),
+             "a")
+    if icen == 0:
+        f.write("# cen  rho(v2, Sy)  rho(v2, Sy)_err  "
+                + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
+    f.write("{}  ".format(
+        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2.))
+    for icol in range(len(filelist)):
+        f.write("%.5e  %.5e  " % (rho_v2Sy_avg[icol], rho_v2Sy_err[icol]))
     f.write("\n")
     f.close()
 
@@ -761,13 +805,14 @@ for icen in range(len(centrality_cut_list) - 1):
                             eta_point, dN_array, vn_array, -0.5, 0.5)
 
     # analysis spin observables
-    analyze_Smu(hf, selected_events_list, 0.5, 3.0, avg_folder_header, icen)
+    analyze_Smu(hf, selected_events_list, 0.5, 3.0, avg_folder_header, icen,
+                vn_alice_array)
     analyze_Smu_pT(hf, selected_events_list, avg_folder)
     analyze_Smu_y(hf, selected_events_list, avg_folder)
     for iorder in range(4):
         analyze_Smu_phi(hf, selected_events_list, avg_folder,
                         vn_alice_array, iorder)
-    analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
+    #analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
 
     ######################################################################
     # finally, output all the results
