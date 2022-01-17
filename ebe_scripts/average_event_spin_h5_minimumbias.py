@@ -296,11 +296,21 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
         Sz_err.append(std(array(Sz_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
 
-    # compute correlation between S^y and v_2
-    v2_array = abs(vn_array_[:, 3])
+    # compute correlation between S^y and v_2^2
+    dN_array = vn_array_[:, 0]
+    v2_array = abs(vn_array_[:, 3])**2.
+
+    delta_N = dN_array - mean(dN_array)
+    varN = std(dN_array)**2.
+    delta_v2 = v2_array - mean(v2_array)
+    hat_delta_v2 = delta_v2 - mean(delta_v2*delta_N)/varN*delta_N
+
     rho_v2Sy_avg = []; rho_v2Sy_err = []
     for ifile in range(len(filelist)):
         Sy_array = array(Sy_list[ifile])/array(dN_list[ifile])
+
+        delta_Sy =  Sy_array - mean(Sy_array)
+        hat_delta_Sy = delta_Sy - mean(delta_Sy*delta_N)/varN*delta_N
 
         # compute the error using the jackknife method
         rho_v2Sy = zeros(nev)
@@ -309,9 +319,10 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
             array_idx[iev] = False
             array_idx = array(array_idx)
 
-            rho_v2Sy[iev] = (mean(v2_array[array_idx]*abs(Sy_array[array_idx]))
-                             /sqrt(mean(v2_array[array_idx]**2.)
-                                   *mean(Sy_array[array_idx]**2.)))
+            rho_v2Sy[iev] = (mean(hat_delta_v2[array_idx]
+                                  *hat_delta_Sy[array_idx])
+                             /sqrt(mean(hat_delta_v2[array_idx]**2.)
+                                   *mean(hat_delta_Sy[array_idx]**2.)))
         rho_v2Sy_mean_tmp = mean(rho_v2Sy)
         rho_v2Sy_avg.append(rho_v2Sy_mean_tmp)
         rho_v2Sy_err.append(sqrt((nev - 1.)/nev
