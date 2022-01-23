@@ -1127,7 +1127,7 @@ def calculate_symmetric_cumulant(vn_data_array, outputFileName):
     """
     vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
-    dN = real(vn_data_array[:, 0])
+    dN = real(vn_data_array[:, -1])
     Q1 = dN*vn_data_array[:, 1]
     Q2 = dN*vn_data_array[:, 2]
     Q3 = dN*vn_data_array[:, 3]
@@ -1155,34 +1155,46 @@ def calculate_symmetric_cumulant(vn_data_array, outputFileName):
     # calcualte observables with Jackknife resampling method
     SC32_array = zeros(nev)
     SC42_array = zeros(nev)
+    NSC32_array = zeros(nev)
+    NSC42_array = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
         # SC(3,2)
-        SC32_array[iev] = (mean(Q_32[array_idx])/mean(N4_weight[array_idx])
-                           - (mean(Q3_2[array_idx])*mean(Q2_2[array_idx]))
-                             /(mean(N2_weight[array_idx])**2.))
+        v2v3 = ((mean(Q3_2[array_idx])*mean(Q2_2[array_idx]))
+                /(mean(N2_weight[array_idx])**2.))
+        SC32_array[iev] = (
+                mean(Q_32[array_idx])/mean(N4_weight[array_idx]) - v2v3)
+        NSC32_array[iev] = SC32_array[iev]/v2v3
 
         # SC(4,2)
-        SC42_array[iev] = (mean(Q_42[array_idx])/mean(N4_weight[array_idx])
-                           - (mean(Q4_2[array_idx])*mean(Q2_2[array_idx]))
-                             /(mean(N2_weight[array_idx])**2.))
+        v2v4 = ((mean(Q4_2[array_idx])*mean(Q2_2[array_idx]))
+                /(mean(N2_weight[array_idx])**2.))
+        SC42_array[iev] = (
+                mean(Q_42[array_idx])/mean(N4_weight[array_idx]) - v2v4)
+        NSC42_array[iev] = SC42_array[iev]/v2v4
 
     SC32_mean = mean(SC32_array)
     SC32_err = sqrt((nev - 1.)/nev*sum((SC32_array - SC32_mean)**2.))
+    NSC32_mean = mean(NSC32_array)
+    NSC32_err = sqrt((nev - 1.)/nev*sum((NSC32_array - NSC32_mean)**2.))
 
     SC42_mean = mean(SC42_array)
     SC42_err = sqrt((nev - 1.)/nev*sum((SC42_array - SC42_mean)**2.))
+    NSC42_mean = mean(NSC42_array)
+    NSC42_err = sqrt((nev - 1.)/nev*sum((NSC42_array - NSC42_mean)**2.))
 
-    results = [SC32_mean, SC32_err, SC42_mean, SC42_err]
+    results = [SC32_mean, SC32_err, NSC32_mean, NSC32_err,
+               SC42_mean, SC42_err, NSC42_mean, NSC42_err]
     f = open(outputFileName, 'w')
-    f.write("# type  value  stat. err\n")
+    f.write("# type  SC{mn}  SC{mn}_err  NSC{mn}  NSC{mn}_err\n")
     for i in range(len(symmetric_cumulant_name_list)):
-        f.write("%s  %.10e  %.10e\n"
+        f.write("%s  %.10e  %.10e  %.10e  %.10e\n"
                 % (symmetric_cumulant_name_list[i],
-                   results[2*i], results[2*i+1]))
+                   results[4*i],   results[4*i+1],
+                   results[4*i+2], results[4*i+3]))
     f.close()
     return
 

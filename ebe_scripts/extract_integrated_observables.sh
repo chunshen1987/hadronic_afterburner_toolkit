@@ -15,6 +15,7 @@ filename5="charged_hadron_v24_over_v22_$exp.dat"
 filename51="charged_hadron_v34_over_v32_$exp.dat"
 filename52="charged_hadron_v26_over_v24_$exp.dat"
 filename53="symmetric_cumulants_$exp.dat"
+filename6="NonlinearResponse_$exp.dat"
 
 idx=0
 centrality=(2.5 7.5 15 25 35 45 55 65 75 85 95)
@@ -34,7 +35,8 @@ centrality=(2.5 7.5 15 25 35 45 55 65 75 85 95)
     echo "# cen dN/deta(ch)  v2{6}/v2{4}(ch) v2{6}/v2{4}_err(ch) gamma1 gamma1_err" > $filename52
     if [ $exp = "ALICE" ]
     then
-        echo "# cen dN/deta(ch)  SC32  SC32_err  SC42  SC42_err" > $filename53
+        echo "# cen dN/deta(ch)  SC32  SC32_err  SC42  SC42_err  NSC32  NSC32_err  NSC42  NSC42_err" > $filename53
+        echo "# cen dN/deta(ch) v_{4,22}  v_{5,23}  chi_{4,22}  chi_{5,23}  rho_{4,22}  rho_{5,23}" > $filename6
     fi
     for icen in 00-05 05-10 10-20 20-30 30-40 40-50 50-60 60-70 70-80 80-90 90-100
     do
@@ -81,6 +83,14 @@ centrality=(2.5 7.5 15 25 35 45 55 65 75 85 95)
             SC32=`head -n 2 ./$icen/symmetric_cumulant_$exp.dat | tail -n 1 | awk {'print $2, $3'}`
             SC42=`head -n 3 ./$icen/symmetric_cumulant_$exp.dat | tail -n 1 | awk {'print $2, $3'}`
             echo ${centrality[idx]} $dNdyCut $SC32 $SC42 >> $filename53
+
+            v4Psi2=`cat ./$icen/non_linear_response_coefficients_$exp.dat | grep "v4(Psi2)" | awk {'print $2, $3'}`
+            v5Psi23=`cat ./$icen/non_linear_response_coefficients_$exp.dat | grep "v5(Psi23)" | awk {'print $2, $3'}`
+            chi422=`cat ./$icen/non_linear_response_coefficients_$exp.dat | grep "chi_422" | awk {'print $2, $3'}`
+            chi523=`cat ./$icen/non_linear_response_coefficients_$exp.dat | grep "chi_523" | awk {'print $2, $3'}`
+            rho422=`cat ./$icen/non_linear_response_coefficients_$exp.dat | grep "rho_422" | awk {'print $2, $3'}`
+            rho523=`cat ./$icen/non_linear_response_coefficients_$exp.dat | grep "rho_523" | awk {'print $2, $3'}`
+            echo ${centrality[idx]} $dNdyCut $v4Psi2 $v5Psi23 $chi422 $chi523 $rho422 $rho523 >> $filename6
         fi
         # pid <pT>
         charged=`cat ./$icen/charged_hadron_integrated_observables.dat | grep -m 1 "<pT>" | cut -f 2,4 -d " "`

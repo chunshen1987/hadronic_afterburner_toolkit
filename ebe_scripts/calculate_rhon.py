@@ -269,6 +269,7 @@ def calculate_symmetric_cumulant(data_arr):
     nev = len(data_arr[:, 0])
     dN = real(data_arr[:, 0])
     meanN = mean(dN)
+    dN = real(data_arr[:, -1])
     Q1 = dN*data_arr[:, 2]
     Q2 = dN*data_arr[:, 3]
     Q3 = dN*data_arr[:, 4]
