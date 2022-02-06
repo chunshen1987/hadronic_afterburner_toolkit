@@ -93,15 +93,15 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("rap_type", 0);
     paraRdr_.setVal("rapidity_distribution", 1);
     paraRdr_.setVal("rap_min", -0.5); paraRdr_.setVal("rap_max", 0.5);
-    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC
-    paraRdr_.setVal("vn_rapidity_dis_pT_max", 2.0);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.0); // the ATLAS pT cut for UPC
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut for pPb
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", -1.0); paraRdr_.setVal("rap_max", -0.1);
+    paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -1.7);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", 0.1); paraRdr_.setVal("rap_max", 1.0);
+    paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 5.1);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -1.0); paraRdr_.setVal("rap_max", 1.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
@@ -111,9 +111,9 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -2.4); paraRdr_.setVal("rap_max", 2.4);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", 1.0); paraRdr_.setVal("rap_max", 2.5);
+    paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 3.4);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", -2.5); paraRdr_.setVal("rap_max", -1.0); // ATLAS  UPC eta cut
+    paraRdr_.setVal("rap_min", -3.4); paraRdr_.setVal("rap_max", -1.7); // ATLAS  UPC eta cut
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     // PHENIX FVTXS
     paraRdr_.setVal("rap_min", -3.0); paraRdr_.setVal("rap_max", -1.0);
