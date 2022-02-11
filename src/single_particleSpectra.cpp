@@ -2480,13 +2480,21 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         if (rap_local > rapidity_dis_min && rap_local < rapidity_dis_max) {
             int rap_idx = static_cast<int>(
                     (rap_local - rapidity_dis_min)/drap);
-            if (flag == 0) {
-                rapidity_array[rap_idx] += rap_local;
-                dNdy_array[rap_idx]++;
-            }
-            // calcualte vn
             double px_local = 0.0;
             double py_local = 0.0;
+            double p_perp = 0.0;
+            // calculate dNch deta with pT cut 
+            if (flag == 0) {
+                px_local = particle_list->get_particle(event_id, i).px;
+                py_local = particle_list->get_particle(event_id, i).py;
+                p_perp = sqrt(px_local*px_local + py_local*py_local);
+                if (p_perp > vn_rapidity_dis_pT_min 
+                    && p_perp < vn_rapidity_dis_pT_max) {
+                    rapidity_array[rap_idx] += rap_local;
+                    dNdy_array[rap_idx]++;
+                }
+            }
+            // calculate vn
             if (flag == 0) {
                 px_local = particle_list->get_particle(event_id, i).px;
                 py_local = particle_list->get_particle(event_id, i).py;
@@ -2497,7 +2505,7 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
                 px_local = particle_list->get_negative_particle(event_id, i).px;
                 py_local = particle_list->get_negative_particle(event_id, i).py;
             }
-            double p_perp = sqrt(px_local*px_local + py_local*py_local);
+            p_perp = sqrt(px_local*px_local + py_local*py_local);
             if (p_perp > vn_rapidity_dis_pT_min 
                 && p_perp < vn_rapidity_dis_pT_max) {
                 double p_phi = atan2(py_local, px_local);
