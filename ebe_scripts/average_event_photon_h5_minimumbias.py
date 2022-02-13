@@ -223,19 +223,17 @@ event_list = list(hf.keys())
 print("total number of events: {}".format(len(event_list)))
 
 dNdyDict = {}
-dNdyList = []
-if Centrality_flag > 0:
-    for ifolder, event_name in enumerate(event_list):
-        file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
-        try:
-            event_group = hf.get(event_name)
-            temp_data   = event_group.get(file_name)
-            temp_data   = nan_to_num(temp_data)
-            dNdyDict[event_name] = temp_data[0, 1]
-        except:
-            continue
-    dNdyList = -sort(-array(list(dNdyDict.values())))
-print("Number of good events: {}".format(len(dNdyList))
+for ifolder, event_name in enumerate(event_list):
+    file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
+    try:
+        event_group = hf.get(event_name)
+        temp_data   = event_group.get(file_name)
+        temp_data   = nan_to_num(temp_data)
+        dNdyDict[event_name] = temp_data[0, 1]
+    except:
+        continue
+dNdyList = -sort(-array(list(dNdyDict.values())))
+print("Number of good events: {}".format(len(dNdyList)))
 
 
 for icen in range(len(centrality_cut_list) - 1):
