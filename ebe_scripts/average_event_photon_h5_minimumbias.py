@@ -266,7 +266,7 @@ for icen in range(len(centrality_cut_list) - 1):
 
     print("processing photon ...")
 
-    refFileName = 'particle_9999_vndata_diff_eta_0.5_2.dat'
+    refFileName = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
     photonFilename = 'photon_total_Spvn.dat'
 
     pT_array = []
