@@ -18,7 +18,6 @@
 
 from sys import argv, exit
 from os import path, mkdir
-from glob import glob
 from numpy import *
 import h5py
 import shutil
@@ -75,12 +74,15 @@ def calculate_meanpT_inte_vn(pT_low, pT_high, data, fileType):
     pT_event = data[:, 0]
     if fileType == 0:
         dN_event = data[:, 2]
+        N_event = data[:, -1]
     else:
         dN_event = data[:, 1]
+        N_event = data[:, 1]
     # dN/(2pi*pT*dpT*dy)
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
-    N = sum(dN_interp*pT_inte_array)*dpT*2.*pi
     meanpT = sum(dN_interp*pT_inte_array**2.)/sum(dN_interp*pT_inte_array)
+    N_interp = exp(interp(pT_inte_array, pT_event, log(N_event+1e-30)))
+    N = sum(N_interp)*dpT/0.1
     temp_vn_array = [N, meanpT,]
     for iorder in range(1, n_order):
         if fileType == 0:
@@ -126,7 +128,8 @@ def calcualte_vn_2_with_gap(vn_data_array_sub1, vn_data_array_sub2):
     return(nan_to_num(vn_2), nan_to_num(vn_2_err))
 
 
-def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
+def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high,
+                                   data, data_ref1, data_ref2):
     """
         This function computes pT differential vn{4} for a single event
         It returns [Qn_pT_arr, Qn_ref_arr]
@@ -135,34 +138,44 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
     dN_event = data[:, 1]  # photon
-    dN_ref_event = data_ref[:, 2]
-    pT_ref_event = data_ref[:, 0]
-    dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
-                               log(dN_ref_event + 1e-30)))
-    dN_ref = sum(dN_ref_interp*pT_inte_array)*dpT*2.*pi
-    temp_Qn_pT_array = [dN_event,]
-    temp_Qn_ref_array = [dN_ref,]
+    dN_ref1_interp = exp(interp(pT_inte_array, data_ref1[:, 1],
+                                log(data_ref1[:, -1] + 1e-30)))
+    dN_ref1 = sum(dN_ref1_interp)*dpT/0.1
+    dN_ref2_interp = exp(interp(pT_inte_array, data_ref2[:, 0],
+                                log(data_ref2[:, -1] + 1e-30)))
+    dN_ref2 = sum(dN_ref2_interp)*dpT/0.1
+    temp_Qn_pT_array   = [dN_event,]
+    temp_Qn_ref1_array = [dN_ref1,]
+    temp_Qn_ref2_array = [dN_ref2,]
     for iorder in range(1, n_order):
         vn_real_event = data[:, 3*iorder-1]  # photon
         vn_imag_event = data[:, 3*iorder]    # photon
-        vn_ref_real_event = data_ref[:, 4*iorder]
-        vn_ref_imag_event = data_ref[:, 4*iorder+2]
-        vn_ref_real_interp = interp(pT_inte_array, pT_ref_event,
-                                    vn_ref_real_event)
-        vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
-                                    vn_ref_imag_event)
+        vn_ref_real_interp = interp(pT_inte_array, data_ref1[:, 1],
+                                    data_ref1[:, 4*iorder])
+        vn_ref_imag_interp = interp(pT_inte_array, data_ref1[:, 1],
+                                    data_ref1[:, 4*iorder+2])
         vn_ref_real_inte = (
-            sum(vn_ref_real_interp*dN_ref_interp)/sum(dN_ref_interp))
+            sum(vn_ref_real_interp*dN_ref1_interp)/sum(dN_ref1_interp))
         vn_ref_imag_inte = (
-            sum(vn_ref_imag_interp*dN_ref_interp)/sum(dN_ref_interp))
-        Qn_ref = dN_ref*(vn_ref_real_inte + 1j*vn_ref_imag_inte)
+            sum(vn_ref_imag_interp*dN_ref1_interp)/sum(dN_ref1_interp))
+        Qn_ref1 = dN_ref1*(vn_ref_real_inte + 1j*vn_ref_imag_inte)
+        vn_ref_real_interp = interp(pT_inte_array, data_ref2[:, 1],
+                                    data_ref2[:, 4*iorder])
+        vn_ref_imag_interp = interp(pT_inte_array, data_ref2[:, 1],
+                                    data_ref2[:, 4*iorder+2])
+        vn_ref_real_inte = (
+            sum(vn_ref_real_interp*dN_ref2_interp)/sum(dN_ref2_interp))
+        vn_ref_imag_inte = (
+            sum(vn_ref_imag_interp*dN_ref2_interp)/sum(dN_ref2_interp))
+        Qn_ref2 = dN_ref2*(vn_ref_real_inte + 1j*vn_ref_imag_inte)
         Qn_pt  = dN_event*(vn_real_event + 1j*vn_imag_event)
         temp_Qn_pT_array.append(Qn_pt)
-        temp_Qn_ref_array.append(Qn_ref)
-    return(temp_Qn_pT_array, temp_Qn_ref_array)
+        temp_Qn_ref1_array.append(Qn_ref1)
+        temp_Qn_ref2_array.append(Qn_ref2)
+    return(temp_Qn_pT_array, temp_Qn_ref1_array, temp_Qn_ref2_array)
 
 
-def calculate_vn_diff_SP(QnpT_diff, Qnref):
+def calculate_vn_diff_SP(QnpT_diff, Qnref1, Qnref2):
     """
         this funciton calculates the scalar-product vn
         assumption: QnpT is photon, Qnref is charged hadrons
@@ -170,36 +183,23 @@ def calculate_vn_diff_SP(QnpT_diff, Qnref):
         return: [vn{SP}(pT), vn{SP}(pT)_err]
     """
     QnpT_diff = array(QnpT_diff)
-    Qnref = array(Qnref)
+    Qnref1 = array(Qnref1)
+    Qnref2 = array(Qnref2)
     nev, norder, npT = QnpT_diff.shape
 
     vn_diff_SP = []
-    Nref = real(Qnref[:, 0])
-    N2refPairs = Nref*(Nref - 1.)
+    Nref = real(Qnref1[:, 0])
+    N2refPairs = real(Qnref1[:, 0]*Qnref2[:, 0])
+    NpTPOI = real(QnpT_diff[:, 0, :])
+    N2POIPairs = NpTPOI*Nref.reshape(nev, 1)
     for iorder in range(1, norder):
         # compute Cn^ref{2}
-        QnRef_tmp = Qnref[:, iorder]
-        n2ref = abs(QnRef_tmp)**2. - Nref
-
-        # calcualte observables with Jackknife resampling method
-        Cn2ref_arr = zeros(nev)
-        for iev in range(nev):
-            array_idx = [True]*nev
-            array_idx[iev] = False
-            array_idx = array(array_idx)
-
-            Cn2ref_arr[iev] = (
-                    mean(n2ref[array_idx])/mean(N2refPairs[array_idx]))
-        Cn2ref_mean = mean(Cn2ref_arr)
-        Cn2ref_err  = sqrt((nev - 1.)/nev*sum((Cn2ref_arr - Cn2ref_mean)**2.))
+        QnRef_tmp = Qnref1[:, iorder]
+        n2ref = abs(Qnref1[:, iorder]*Qnref2[:, iorder])
 
         # compute vn{SP}(pT)
-        NpTPOI = real(QnpT_diff[:, 0, :])
         QnpT_tmp = QnpT_diff[:, iorder, :]
-        Nref = Nref.reshape(nev, 1)
-        QnRef_tmp = QnRef_tmp.reshape(nev, 1)
-        N2POIPairs = NpTPOI*Nref
-        n2pT = real(QnpT_tmp*conj(QnRef_tmp))
+        n2pT = real(QnpT_tmp*conj(QnRef_tmp.reshape(nev, 1)))
 
         # calcualte observables with Jackknife resampling method
         vnSPpT_arr = zeros([nev, npT])
@@ -208,8 +208,9 @@ def calculate_vn_diff_SP(QnpT_diff, Qnref):
             array_idx[iev] = False
             array_idx = array(array_idx)
 
+            Cn2ref_arr = mean(n2ref[array_idx])/mean(N2refPairs[array_idx])
             vnSPpT_arr[iev, :] = (mean(n2pT[array_idx], 0)
-                    /mean(N2POIPairs[array_idx], 0)/sqrt(Cn2ref_arr[iev]))
+                    /mean(N2POIPairs[array_idx], 0)/sqrt(Cn2ref_arr))
         vnSPpT_mean = mean(vnSPpT_arr, 0)
         vnSPpT_err  = sqrt((nev - 1.)/nev
                            *sum((vnSPpT_arr - vnSPpT_mean)**2., 0))
@@ -266,7 +267,8 @@ for icen in range(len(centrality_cut_list) - 1):
 
     print("processing photon ...")
 
-    refFileName = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
+    refFileName1 = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
+    refFileName2 = 'particle_9999_vndata_diff_eta_-2.5_-0.5.dat'
     photonFilename = 'photon_total_Spvn.dat'
 
     pT_array = []
@@ -275,12 +277,13 @@ for icen in range(len(centrality_cut_list) - 1):
     vn_phenix_array_ref = []
     vn_alice_array = []
     vn_alice_array_ref = []
-    QnpT_diff_phenix = []; Qnref_phenix = []
-    QnpT_diff_alice = []; Qnref_alice = []
+    QnpT_diff_phenix = []; Qnref1_phenix = []; Qnref2_phenix = []
+    QnpT_diff_alice = []; Qnref1_alice = []; Qnref2_alice = []
     for ifolder, event_name in enumerate(selected_events_list):
-        event_group   = hf.get(event_name)
-        temp_data     = nan_to_num(event_group.get(photonFilename))
-        temp_data_ref = nan_to_num(event_group.get(refFileName))
+        event_group    = hf.get(event_name)
+        temp_data      = nan_to_num(event_group.get(photonFilename))
+        temp_data_ref1 = nan_to_num(event_group.get(refFileName1))
+        temp_data_ref2 = nan_to_num(event_group.get(refFileName2))
 
         dN_event = temp_data[:, 1]  # dN/(2pi dy pT dpT)
         pT_event = temp_data[:, 0]
@@ -293,27 +296,31 @@ for icen in range(len(centrality_cut_list) - 1):
         # vn with PHENIX pT cut
         temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0, temp_data, 1)
         vn_phenix_array.append(temp_vn_array)
-        temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0, temp_data_ref, 0)
+        temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0, temp_data_ref1, 0)
         vn_phenix_array_ref.append(temp_vn_array)
 
         # vn with ALICE pT cut
         temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0, temp_data, 1)
         vn_alice_array.append(temp_vn_array)
-        temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0, temp_data_ref, 0)
+        temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0, temp_data_ref1, 0)
         vn_alice_array_ref.append(temp_vn_array)
 
         # pT-differential vn using scalar-product method
         # vn{SP}(pT) with PHENIX pT cut
         temp_arr = calculate_diff_vn_single_event(0.2, 2.0, temp_data,
-                                                  temp_data_ref)
+                                                  temp_data_ref1,
+                                                  temp_data_ref2)
         QnpT_diff_phenix.append(temp_arr[0])
-        Qnref_phenix.append(temp_arr[1])
+        Qnref1_phenix.append(temp_arr[1])
+        Qnref2_phenix.append(temp_arr[2])
 
         # vn{SP}(pT) with ALICE pT cut
         temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
-                                                  temp_data_ref)
+                                                  temp_data_ref1,
+                                                  temp_data_ref2)
         QnpT_diff_alice.append(temp_arr[0])
-        Qnref_alice.append(temp_arr[1])
+        Qnref1_alice.append(temp_arr[1])
+        Qnref2_alice.append(temp_arr[2])
 
     # now we perform event average
     dN_array = array(dN_array)
@@ -352,8 +359,9 @@ for icen in range(len(centrality_cut_list) - 1):
 
     # calcualte vn{SP}(pT)
     vn_diff_SP_phenix = calculate_vn_diff_SP(QnpT_diff_phenix,
-                                             Qnref_phenix)
-    vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice, Qnref_alice)
+                                             Qnref1_phenix, Qnref2_phenix)
+    vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice,
+                                            Qnref1_alice, Qnref2_alice)
 
     ######################################################################
     # finally, output all the results
@@ -382,11 +390,11 @@ for icen in range(len(centrality_cut_list) - 1):
     f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
             + "vn{SP}  vn{SP}_err\n")
     for ipT in range(len(pT_spectra)):
-        f.write("%.10e  %.10e  %.10e  "
+        f.write("%.6e  %.6e  %.6e  "
                 % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
         for iorder in range(1, n_order):
-            f.write("%.10e  %.10e  " % (vn_diff_SP_phenix[2*iorder-2][ipT],
-                                        vn_diff_SP_phenix[2*iorder-1][ipT]))
+            f.write("%.6e  %.6e  " % (vn_diff_SP_phenix[2*iorder-2][ipT],
+                                      vn_diff_SP_phenix[2*iorder-1][ipT]))
         f.write("\n")
     f.close()
 
@@ -395,11 +403,11 @@ for icen in range(len(centrality_cut_list) - 1):
     f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
             + "vn{SP}  vn{SP}_err\n")
     for ipT in range(len(pT_spectra)):
-        f.write("%.10e  %.10e  %.10e  "
+        f.write("%.6e  %.6e  %.6e  "
                 % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
         for iorder in range(1, n_order):
-            f.write("%.10e  %.10e  " % (vn_diff_SP_alice[2*iorder-2][ipT],
-                                        vn_diff_SP_alice[2*iorder-1][ipT]))
+            f.write("%.6e  %.6e  " % (vn_diff_SP_alice[2*iorder-2][ipT],
+                                      vn_diff_SP_alice[2*iorder-1][ipT]))
         f.write("\n")
     f.close()
 
