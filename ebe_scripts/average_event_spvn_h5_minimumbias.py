@@ -82,6 +82,116 @@ symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 
 n_order = 7
 
+def calculate_vn_eta_32pc(dN_array, vn_array,vn_data_array_sub1,vn_data_array_sub2):
+    """This function computes vn(eta) using the 3-2PC method"""
+    vn_data_array_sub1 = array(vn_data_array_sub1)
+    vn_data_array_sub2 = array(vn_data_array_sub2)
+    nev = len(vn_data_array_sub1[:, 0])
+    dN1 = real(vn_data_array_sub1[:, 0])
+    dN1 = dN1.reshape(len(dN1), 1)
+    dN2 = real(vn_data_array_sub2[:, 0])
+    dN2 = dN1.reshape(len(dN2), 1)
+    Qn_array1 = vn_data_array_sub1[:, 1:]
+    Qn_array2 = vn_data_array_sub2[:, 1:]
+    corrBC = (Qn_array1*conj(Qn_array2) + 1e-15)
+    nev, neta   = dN_array.shape
+    dN_array    = dN_array.reshape((nev, 1, neta))
+    vn_ref      = sum(dN_array*vn_array, axis=2)/(sum(dN_array, axis=2) + 1e-15)
+    vnshape     = vn_ref.shape
+    nvn         = vnshape[1]
+    vn_ref      = vn_ref.reshape((vnshape[0], vnshape[1], 1))
+    vn_SP_evAC  = []
+    vn_SP_evAB  = [] 
+    for ieta in range(neta):
+        mid  = real(vn_array[:, :,ieta]*conj(Qn_array1))
+        vn_SP_evAC.append(mid)
+        mid  = real(vn_array[:, :,ieta]*conj(Qn_array2))
+        vn_SP_evAB.append(mid)
+    vn_SP_evAB  = array(vn_SP_evAB)
+    vn_SP_evAC  = array(vn_SP_evAC)
+    vn_SP_array = zeros([nvn, neta])
+    vn_SP_err   = zeros([nvn, neta])
+    vn_SP_ev    = (vn_SP_evAC * vn_SP_evAB)
+    for iev in range(neta):
+        vn_SP          = vn_SP_ev[iev, :, :]/(corrBC)
+        vn_SP = mean(vn_SP, axis=0)
+        vn_SP_err[ :, iev] = std(vn_SP, axis=0)
+        vn_SP_array[ :, iev] = sqrt(vn_SP.real)
+    vn_SP_mean = vn_SP_array #mean(vn_SP_array, axis=1)
+    return([vn_SP_mean, vn_SP_err])
+
+def calculate_vn_diff_SP_wight(QnpT_diff1, Qnref1, QnpT_diff2, Qnref2):
+    """
+        this funciton calculates the scalar-product vn
+        assumption: no overlap between particles of interest
+                    and reference flow Qn vectors
+        inputs: QnpT_diff1[nev, norder, npT], Qnref1[nev, norder], 
+                QnpT_diff2[nev, norder, npT], Qnref2[nev, norder]
+        return: [vn{SP}(pT), vn{SP}(pT)_err]
+    """
+    QnpT_diff1 = array(QnpT_diff1)
+    Qnref1 = array(Qnref1)
+    nev, norder, npT = QnpT_diff1.shape
+
+    QnpT_diff2 = array(QnpT_diff2)
+    Qnref2 = array(Qnref2)
+    nev, norder, npT = QnpT_diff2.shape
+
+    vn_diff_SP = []
+    Nref1 = real(Qnref1[:, 0])
+    Nref2 = real(Qnref2[:, 0])
+    N2refPairs = Nref1*Nref2
+    for iorder in range(1, norder):
+        # compute Cn^ref{2}
+        QnRef_tmp1 = Qnref1[:, iorder]
+        QnRef_tmp2 = Qnref2[:, iorder]
+        n2ref = real(QnRef_tmp1*conj(QnRef_tmp2))
+
+        # calcualte observables with Jackknife resampling method
+        Cn2ref_arr = zeros(nev)
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            Cn2ref_arr[iev] = (
+                    mean(n2ref[array_idx])/mean(N2refPairs[array_idx]))
+        Cn2ref_mean = mean(Cn2ref_arr)
+        Cn2ref_err  = sqrt((nev - 1.)/nev*sum((Cn2ref_arr - Cn2ref_mean)**2.))
+
+        # compute vn{SP}(pT)
+        NpTPOI = real(QnpT_diff1[:, 0, :])
+        QnpT_tmp = QnpT_diff1[:, iorder, :]
+        Nref = Nref1.reshape(nev, 1)
+        QnRef_tmp = QnRef_tmp1.reshape(nev, 1)
+        N2POIPairs1 = NpTPOI*Nref
+        n2pT1 = real(QnpT_tmp*conj(QnRef_tmp))
+
+        NpTPOI = real(QnpT_diff2[:, 0, :])
+        QnpT_tmp = QnpT_diff2[:, iorder, :]
+        Nref = Nref2.reshape(nev, 1)
+        QnRef_tmp = QnRef_tmp2.reshape(nev, 1)
+        N2POIPairs2 = NpTPOI*Nref
+        n2pT2 = real(QnpT_tmp*conj(QnRef_tmp))
+
+        n2pT = n2pT1 + n2pT2 
+        N2POIPairs = N2POIPairs1 + N2POIPairs2
+        # calcualte observables with Jackknife resampling method
+        vnSPpT_arr = zeros([nev, npT])
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            vnSPpT_arr[iev, :] = (mean(n2pT[array_idx], 0)
+                    /mean(N2POIPairs[array_idx], 0)/sqrt(Cn2ref_arr[iev]))
+        vnSPpT_mean = mean(vnSPpT_arr, 0)
+        vnSPpT_err  = sqrt((nev - 1.)/nev
+                           *sum((vnSPpT_arr - vnSPpT_mean)**2., 0))
+        vn_diff_SP.append(vnSPpT_mean)
+        vn_diff_SP.append(vnSPpT_err)
+    return vn_diff_SP
+    
 def calcualte_inte_vn(pT_low, pT_high, data):
     """
         this function calculates the pT-integrated vn in a 
@@ -1776,6 +1886,16 @@ for icen in range(len(centrality_cut_list) - 1):
             QnpT_diff_atlas.append(temp_arr[0])
             Qnref_atlas.append(temp_arr[1])
 
+            # vn{SP}(pT) with ATLAS pT cut
+            temp_arr = calculate_diff_vn_single_event(0.400, 2.0, temp_data_ref1,
+                                                     temp_data_ref2)
+            QnpT_diff_atlas_1.append(temp_arr[0])
+            Qnref_atlas_1.append(temp_arr[1])
+            temp_arr = calculate_diff_vn_single_event(0.400, 2.0, temp_data_ref2,
+                                                     temp_data_ref1)
+            QnpT_diff_atlas_2.append(temp_arr[0])
+            Qnref_atlas_2.append(temp_arr[1])
+            
             # pT-differential vn using 2PC method
             # vn[2](pT)
             temp_vn_diff_real, temp_vn_diff_imag, temp_dn_diff = (
@@ -1994,11 +2114,13 @@ for icen in range(len(centrality_cut_list) - 1):
         vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice, Qnref_alice)
         vn4_diff_alice = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
 
-        vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_star)
+        vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_cms)
         vn4_diff_cms = calculate_vn4_diff(QnpT_diff_cms, Qnref_cms)
-        vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_star)
+        vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_atlas)
         vn4_diff_atlas = calculate_vn4_diff(QnpT_diff_atlas, Qnref_atlas)
-
+        vn_diff_SP_atlas_wight = calculate_vn_diff_SP_wight(QnpT_diff_atlas_1, Qnref_atlas_1,
+                                                            QnpT_diff_atlas_2, Qnref_atlas_2)
+                                                      
         # calcualte vn[2](pT)
         vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
                 vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
@@ -2037,6 +2159,7 @@ for icen in range(len(centrality_cut_list) - 1):
         #vn_eta = sqrt(mean(abs(vn_array)**2., 0))
         #vn_eta_err = std(abs(vn_array)**2., 0)/sqrt(nev)/2./(vn_eta + 1e-15)
         vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(dN_array, vn_array)
+        vn_SP_eta32pc, vn_SP_eta_err32pc = calculate_vn_eta_32pc(dN_array, vn_array, vn_ALICE_array_TPC, vn_ALICE_array_FMD3)
         rn_eta, rn_eta_err, rnn_eta, rnn_eta_err = calculate_rn_eta(
                                                 eta_point, dN_array, vn_array)
         vn_eta_real = mean(real(vn_array), 0)
