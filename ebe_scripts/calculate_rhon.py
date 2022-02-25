@@ -59,19 +59,22 @@ def calculate_meanpT_inte_vn(pT_low, pT_high, data):
         given pT range (pT_low, pT_high) for every event in the data
     """
     dN_event = data[:, 2]
+    N_event = data[:, -1]
     pT_event = data[:, 0]
 
     pT_inte_array = linspace(0., 4.0, 200)
     dpT = pT_inte_array[1] - pT_inte_array[0]
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
-    N = sum(dN_interp*pT_inte_array)*dpT*2.*pi
+    dN = sum(dN_interp*pT_inte_array)*dpT*2.*pi
+    N_interp = exp(interp(pT_inte_array, pT_event, log(N_event+1e-30)))
+    N = sum(N_interp)*dpT/0.1
 
     npT = 50
     pT_inte_array = linspace(pT_low, pT_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
     meanpT = sum(dN_interp*pT_inte_array**2.)/sum(dN_interp*pT_inte_array)
-    temp_vn_array = [N, meanpT,]
+    temp_vn_array = [dN, meanpT,]
     for iorder in range(1, n_order):
         vn_real_event = data[:, 4*iorder]
         vn_imag_event = data[:, 4*iorder+2]
@@ -85,6 +88,7 @@ def calculate_meanpT_inte_vn(pT_low, pT_high, data):
             /sum(dN_interp*pT_inte_array))
         vn_inte = vn_real_inte + 1j*vn_imag_inte
         temp_vn_array.append(vn_inte)
+    temp_vn_array.append(N)
     return(temp_vn_array)
 
 
@@ -101,8 +105,8 @@ def calculate_rhon(data_arr):
     meanN = real(mean(data_arr[:, 0]))
     varN  = std(data_arr[:, 0])**2.
 
-    delta_N  = data_arr[:, 0] - meanN
-    delta_pT = data_arr[:, 1] - mean(data_arr[:, 1])
+    delta_N  = real(data_arr[:, 0]) - meanN
+    delta_pT = real(data_arr[:, 1]) - mean(real(data_arr[:, 1]))
     delta_v2 = abs(data_arr[:, 3])**2. - mean(abs(data_arr[:, 3])**2.)
     delta_v3 = abs(data_arr[:, 4])**2. - mean(abs(data_arr[:, 4])**2.)
     delta_v4 = abs(data_arr[:, 5])**2. - mean(abs(data_arr[:, 5])**2.)
@@ -151,8 +155,8 @@ def calculate_rhonm(data_arr):
     meanN = mean(data_arr[:, 0])
     varN  = std(data_arr[:, 0])**2.
 
-    delta_N  = data_arr[:, 0] - meanN
-    delta_pT = data_arr[:, 1] - mean(data_arr[:, 1])
+    delta_N  = real(data_arr[:, 0]) - meanN
+    delta_pT = real(data_arr[:, 1]) - mean(real(data_arr[:, 1]))
     delta_v2 = abs(data_arr[:, 3])**2. - mean(abs(data_arr[:, 3])**2.)
     delta_v3 = abs(data_arr[:, 4])**2. - mean(abs(data_arr[:, 4])**2.)
     delta_v4 = abs(data_arr[:, 5])**2. - mean(abs(data_arr[:, 5])**2.)
@@ -199,7 +203,7 @@ def calculate_meanpT_moments(data_arr):
     varN  = std(data_arr[:, 0])**2.
 
     delta_N  = data_arr[:, 0] - meanN
-    delta_pT = data_arr[:, 1] - mean(data_arr[:, 1])
+    delta_pT = real(data_arr[:, 1]) - mean(real(data_arr[:, 1]))
 
     hat_delta_pT = delta_pT - mean(delta_pT*delta_N)/varN*delta_N
 
@@ -211,7 +215,7 @@ def calculate_meanpT_moments(data_arr):
         array_idx[iev] = False
         array_idx      = array(array_idx)
         rho2_array[iev] = (sqrt(mean(hat_delta_pT[array_idx]**2.))
-                           /mean(data_arr[array_idx, 1]))
+                           /mean(real(data_arr[array_idx, 1])))
         rho3_array[iev] = (mean(hat_delta_pT[array_idx]**3.)
                            /(mean(hat_delta_pT[array_idx]**2.)**1.5))
     rho2_mean  = real(mean(rho2_array))
@@ -438,10 +442,8 @@ for icen in range(len(centrality_cut_list) - 1):
             file_name = 'particle_%s_vndata_diff_eta_-0.8_0.8.dat' % particle_id
         else:
             file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
-        file_name_ref1 = 'particle_9999_vndata_diff_eta_0.5_2.dat'
-        file_name_ref2 = 'particle_9999_vndata_diff_eta_-2_-0.5.dat'
         file_name_ALICE = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
-        file_name_ATLAS = 'particle_9999_vndata_diff_eta_-2_2.dat'
+        file_name_ATLAS = 'particle_9999_vndata_diff_eta_-2.5_2.5.dat'
         ecc_filename = "eccentricities_evo_eta_-0.5_0.5.dat"
         eccp_filename = "momentum_anisotropy_eta_-0.5_0.5.dat"
 
@@ -451,27 +453,14 @@ for icen in range(len(centrality_cut_list) - 1):
         dN_array_ALICE = []
         pT_array_ATLAS = []
         dN_array_ATLAS = []
-        vn_phenix_array = []
-        vn_phenix_array_sub1 = []; vn_phenix_array_sub2 = []
-        vn_star_array = []
-        vn_star_array_sub1 = []; vn_star_array_sub2 = []
         vn_alice_array = []
-        vn_alice_array_sub1 = []; vn_alice_array_sub2 = []
-        vn_cms_array = []
-        vn_cms_array_sub1 = []; vn_cms_array_sub2 = []
-        vn_cms_arrays_for_rn = []
         vn_atlas_array = []
-        vn_atlas_array_sub1 = []; vn_atlas_array_sub2 = []
         eccn_array = []
         eccp2_array = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
             temp_data = nan_to_num(temp_data)
-            temp_data_ref1 = event_group.get(file_name_ref1)
-            temp_data_ref1 = nan_to_num(temp_data_ref1)
-            temp_data_ref2 = event_group.get(file_name_ref2)
-            temp_data_ref2 = nan_to_num(temp_data_ref2)
             temp_ecc_data = event_group.get(ecc_filename)
             temp_eccp_data = event_group.get(eccp_filename)
 
@@ -488,60 +477,37 @@ for icen in range(len(centrality_cut_list) - 1):
             dN_array.append(dN_event)
             eccn_array.append(init_eccn)
             eccp2_array.append(init_eccp)
-            if particle_id == "9999":
-                try:
-                    temp_data1 = event_group.get(file_name_ATLAS)
-                    temp_data1 = nan_to_num(temp_data1)
-                    pT_array_ATLAS.append(temp_data1[:, 0])
-                    dN_array_ATLAS.append(temp_data1[:, 2])
-                    temp_data1 = event_group.get(file_name_ALICE)
-                    temp_data1 = nan_to_num(temp_data1)
-                    pT_array_ALICE.append(temp_data1[:, 0])
-                    dN_array_ALICE.append(temp_data1[:, 2])
-                except:
-                    continue
 
-            # pT-integrated vn
-            # vn with PHENIX pT cut
-            temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0, temp_data)
-            vn_phenix_array.append(temp_vn_array)
-
-            # vn with STAR pT cut
-            temp_vn_array = calculate_meanpT_inte_vn(0.15, 2.0, temp_data)
-            vn_star_array.append(temp_vn_array)
+            temp_data_ATLAS = event_group.get(file_name_ATLAS)
+            temp_data_ATLAS = nan_to_num(temp_data_ATLAS)
+            pT_array_ATLAS.append(temp_data_ATLAS[:, 0])
+            dN_array_ATLAS.append(temp_data_ATLAS[:, 2])
+            temp_data_ALICE = event_group.get(file_name_ALICE)
+            temp_data_ALICE = nan_to_num(temp_data_ALICE)
+            pT_array_ALICE.append(temp_data_ALICE[:, 0])
+            dN_array_ALICE.append(temp_data_ALICE[:, 2])
 
             # vn with ALICE pT cut
             temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0, temp_data)
             vn_alice_array.append(temp_vn_array)
 
-            # vn with CMS pT cut
-            temp_vn_array = calculate_meanpT_inte_vn(0.3, 3.0, temp_data)
-            vn_cms_array.append(temp_vn_array)
-
             # vn with ATLAS pT cut
-            temp_vn_array = calculate_meanpT_inte_vn(0.5, 3.0, temp_data)
+            temp_vn_array = calculate_meanpT_inte_vn(0.5, 3.0, temp_data_ATLAS)
             vn_atlas_array.append(temp_vn_array)
 
         # now we perform event average
         dN_array = array(dN_array)
         pT_array = array(pT_array)
 
-        vn_phenix_array = array(vn_phenix_array)
-        vn_star_array   = array(vn_star_array)
         vn_alice_array  = array(vn_alice_array)
-        vn_cms_array    = array(vn_cms_array)
         vn_atlas_array  = array(vn_atlas_array)
 
-        #rhon_phenix = calculate_rhon(vn_phenix_array)
-        #rhon_star   = calculate_rhon(vn_star_array)
-        #rhon_cms    = calculate_rhon(vn_cms_array)
-        rhon_atlas   = calculate_rhon(vn_atlas_array)
-        rhonm_atlas  = calculate_rhonm(vn_atlas_array)
-        rhon_alice  = calculate_rhon(vn_alice_array)
-        rhonm_alice  = calculate_rhonm(vn_alice_array)
+        rhon_atlas = calculate_rhon(vn_atlas_array)
+        rhonm_atlas = calculate_rhonm(vn_atlas_array)
+        rhon_alice = calculate_rhon(vn_alice_array)
+        rhonm_alice = calculate_rhonm(vn_alice_array)
         SC_alice = calculate_symmetric_cumulant(vn_alice_array)
         meanpT_Cn_alice = calculate_meanpT_moments(vn_alice_array)
-        #print(meanpT_Cn_alice)
 
         n_pT = len(pT_array[0, :])
         pT_spectra = zeros([n_pT])
