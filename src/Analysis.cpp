@@ -102,6 +102,9 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.0); // the ALICE pT cut2 for pPb
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
     paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -1.7);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 5.1);
@@ -130,28 +133,38 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -4.9); paraRdr_.setVal("rap_max", -3.1); // ATLAS  pPb centrality eta cut
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    // PHENIX FVTXS
     paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -2.8);// ALICE pPb centrality eta cut
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 2.8); paraRdr_.setVal("rap_max", 5.1);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    // PHENIX CNT
     paraRdr_.setVal("rap_min", -0.35); paraRdr_.setVal("rap_max", 0.35);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    // STAR TPC
     paraRdr_.setVal("rap_min", -0.9); paraRdr_.setVal("rap_max", 0.9);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    // STAR BBC
     paraRdr_.setVal("rap_min", -3.4); paraRdr_.setVal("rap_max", -1.7);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 3.4);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    // PHENIX BBC
     paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -1.7);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 5.1);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-
+    // PHENIX FVTXS
+    paraRdr_.setVal("rap_min", -3.0); paraRdr_.setVal("rap_max", -1.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 1.0); paraRdr_.setVal("rap_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // PHENIX BBCS
+    paraRdr_.setVal("rap_min", -3.9); paraRdr_.setVal("rap_max", -3.1);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 3.9);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // STAR BBC
+    paraRdr_.setVal("rap_min", -5.0); paraRdr_.setVal("rap_max", -3.3);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 3.3); paraRdr_.setVal("rap_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    
     // now identified particle
     int rap_type_for_pid = paraRdr_.getVal("rap_type_for_pid");
     paraRdr_.setVal("rap_type", rap_type_for_pid);
