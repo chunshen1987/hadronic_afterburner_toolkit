@@ -61,6 +61,23 @@ except IndexError:
     exit(1)
 
 
+def check_an_event_is_good(h5_event):
+    """This function checks the given event contains all required files"""
+    required_files_list = [
+        'particle_9999_vndata_eta_-0.5_0.5.dat',
+        'particle_9999_vndata_diff_eta_0.5_2.5.dat',
+        'particle_9999_vndata_diff_eta_-2.5_-0.5.dat',
+        'photon_total_Spvn.dat',
+    ]
+    event_file_list = list(h5_event.keys())
+    for ifile in required_files_list:
+        if ifile not in event_file_list:
+            print("event {} is bad, missing {} ...".format(h5_event.name,
+                                                           ifile))
+            return False
+    return True
+
+
 def calculate_meanpT_inte_vn(pT_low, pT_high, data, fileType):
     """
         this function calculates the dN/dy, <pT>, pT-integrated vn in a
@@ -225,14 +242,13 @@ print("total number of events: {}".format(len(event_list)))
 
 dNdyDict = {}
 for ifolder, event_name in enumerate(event_list):
+    event_group = hf.get(event_name)
+    eventStatus = check_an_event_is_good(event_group)
     file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
-    try:
-        event_group = hf.get(event_name)
-        temp_data   = event_group.get(file_name)
-        temp_data   = nan_to_num(temp_data)
+    if eventStatus:
+        temp_data = event_group.get(file_name)
+        temp_data = nan_to_num(temp_data)
         dNdyDict[event_name] = temp_data[0, 1]
-    except:
-        continue
 dNdyList = -sort(-array(list(dNdyDict.values())))
 print("Number of good events: {}".format(len(dNdyList)))
 

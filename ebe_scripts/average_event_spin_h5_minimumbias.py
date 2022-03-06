@@ -657,8 +657,8 @@ for ifolder, event_name in enumerate(event_list):
     event_group = hf.get(event_name)
     eventStatus = check_an_event_is_good(event_group)
     if eventStatus:
-        temp_data   = event_group.get(file_name)
-        temp_data   = nan_to_num(temp_data)
+        temp_data = event_group.get(file_name)
+        temp_data = nan_to_num(temp_data)
         dNdyDict[event_name] = temp_data[0, 1]
 dNdyList = -sort(-array(list(dNdyDict.values())))
 print("Number of good events: {}".format(len(dNdyList)))
