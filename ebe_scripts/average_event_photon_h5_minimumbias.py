@@ -36,7 +36,7 @@ PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
 SPS_cen_list    = [5., 12.5, 23.5, 33.5, 43.5]       # SPS PbPb
 PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
-centrality_cut_list = Reg_centrality_cut_list
+centrality_cut_list = Reg_centrality_cut_list + [0., 20., 40., 60., 80.]
 
 n_order = 7
 
