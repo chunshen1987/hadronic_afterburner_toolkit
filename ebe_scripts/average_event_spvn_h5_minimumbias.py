@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
      This script performs event averaging for particle 
      spectra and anisotropic flow coefficients calculated 
@@ -35,7 +35,7 @@ Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
                            60., 70., 80., 90., 100.]
 PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
 SPS_cen_list    = [5., 12.5, 23.5, 33.5, 43.5]       # SPS PbPb
-PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
+PHENIX_cen_list = [0., 20., 40., 60., 88.]           # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 ALICE_pp_list   = [0., 100., 0., 1., 5.,
                    0., 5., 10., 15, 20., 30., 40., 50., 70., 100.]
@@ -63,6 +63,7 @@ elif RapidityTrigger == 3:
 try:
     data_path = path.abspath(argv[1])
     data_name = data_path.split("/")[-1]
+    data_path = "/".join(data_path.split("/")[0:-1])
     resultsFolderName = data_name.split(".h5")[0]
     avg_folder_header = path.join(
         path.abspath(argv[2]), "{}_{}".format(resultsFolderName, RapTrigLabel))
@@ -77,6 +78,9 @@ try:
             print("Continue analysis in {} ...".format(avg_folder_header))
     else:
         mkdir(avg_folder_header)
+    paraFiles = glob(path.join(data_path, "*.py"))
+    for iFile in paraFiles:
+        shutil.copy(iFile, avg_folder_header)
 except IndexError:
     print("Usage: {} working_folder results_folder".format(argv[0]))
     exit(1)
@@ -100,6 +104,27 @@ n_order = 7
 if FastFlag:
     particle_list = particle_list[0:1]
     n_order = 5
+
+
+def check_an_event_is_good(h5_event):
+    """This function checks the given event contains all required files"""
+    required_files_list = [
+        'particle_9999_vndata_eta_-0.5_0.5.dat',
+        'particle_9999_vndata_eta_-2.5_-0.5.dat',
+        'particle_9999_vndata_eta_0.5_2.5.dat',
+        'particle_211_vndata_diff_y_-0.5_0.5.dat',
+        'particle_321_vndata_diff_y_-0.5_0.5.dat',
+        'particle_2212_vndata_diff_y_-0.5_0.5.dat',
+        'particle_3122_vndata_diff_y_-0.5_0.5.dat',
+        'particle_-3122_vndata_diff_y_-0.5_0.5.dat',
+    ]
+    event_file_list = list(h5_event.keys())
+    for ifile in required_files_list:
+        if ifile not in event_file_list:
+            print("event {} is bad, missing {} ...".format(h5_event.name,
+                                                           ifile))
+            return False
+    return True
 
 
 def calcualte_inte_vn(pT_low, pT_high, data):
@@ -1621,7 +1646,7 @@ def calculate_meanpT_fluc(dN_array, pT_array, pT_min=0.0, pT_max=3.0):
     return([rn_mean, rn_err])
 
 
-hf = h5py.File(data_path, "r")
+hf = h5py.File(path.join(data_path, data_name), "r")
 event_list = list(hf.keys())
 print("total number of events: {}".format(len(event_list)))
 if CentralityFlag == 2:
@@ -1670,13 +1695,12 @@ if CentralityFlag > 0:
             file_name = "particle_9999_vndata_eta_-5.1_-2.8.dat"
         elif RapidityTrigger == 3:    # ATLAS forward Trigger
             file_name = "particle_9999_vndata_eta_-4.9_-3.1.dat"
-        try:
-            event_group = hf.get(event_name)
+        event_group = hf.get(event_name)
+        eventStatus = check_an_event_is_good(event_group)
+        if eventStatus:
             temp_data   = event_group.get(file_name)
             temp_data   = nan_to_num(temp_data)
             dNdyDict[event_name] = temp_data[0, 1]
-        except:
-            continue
     dNdyList = -sort(-array(list(dNdyDict.values())))
 print("Number of good events: {}".format(len(dNdyList)))
 
