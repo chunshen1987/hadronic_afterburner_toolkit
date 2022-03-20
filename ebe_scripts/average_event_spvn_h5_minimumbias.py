@@ -40,6 +40,12 @@ STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 ALICE_pp_list   = [0., 100., 0., 1., 5.,
                    0., 5., 10., 15, 20., 30., 40., 50., 70., 100.]
 centralityCutList = Reg_centrality_cut_list
+dNcutList = []    # pre-defined Nch cut if simulation is not minimum bias
+
+#centralityCutList = Reg_centrality_cut_list + PHOBOS_cen_list
+#dNcutList = [1e5, 544.20, 448.98, 309.78, 204.20, 131.71, 83.02, 45.85,
+#             24.89, 11.73, 4.58, 0.16,
+#             1e5, 517.67, 362.21, 254.18, 161.67, 108.68, 61.31]
 
 CentralityFlag = 1   # 0: use pre-generated centrality label in the database
                      # 1: sort dNch/deta and cut centrality
@@ -1735,6 +1741,10 @@ for icen in range(len(centralityCutList) - 1):
             min(len(dNdyList)-1,
                 int(len(dNdyList)*centralityCutList[icen+1]/100.))
         ]
+        if len(dNcutList) == len(centralityCutList):
+            dN_dy_cut_high = dNcutList[icen]
+            dN_dy_cut_low = dNcutList[icen+1]
+
         for event_name in dNdyDict.keys():
             if (dNdyDict[event_name] > dN_dy_cut_low
                 and dNdyDict[event_name] <= dN_dy_cut_high):
@@ -1743,6 +1753,7 @@ for icen in range(len(centralityCutList) - 1):
     nev = len(selected_events_list)
     print("analysis {}%-{}% nev = {}...".format(
             centralityCutList[icen], centralityCutList[icen+1], nev))
+    print("dNdy: {0:.2f} - {1:.2f}".format(dN_dy_cut_low, dN_dy_cut_high))
     if nev == 0:
         print("Skip ...")
         continue
