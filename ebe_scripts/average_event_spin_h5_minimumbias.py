@@ -31,6 +31,11 @@ STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 
 centrality_cut_list = Reg_centrality_cut_list + [20., 50., 20., 60.]
 
+# predefined dNcut List
+#dNcutList = [1000., 544.20, 448.98, 309.78, 204.20, 131.71, 83.02, 45.85,
+#             24.89, 11.73, 4.58, 0.16, 309.78, 83.02, 309.78, 45.82]
+dNcutList = []
+
 n_order = 7
 vorticityType = "Thermal"
 
@@ -296,15 +301,20 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
         Sz_err.append(std(array(Sz_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
 
-    # compute correlation between S^y and v_2^2
-    dN_array = vn_array_[:, 0]
+    # compute correlation between S^y and v_2^2 and S^y vs. mean pT
+    dN_array = real(vn_array_[:, 0])
+    dN_avg = mean(dN_array)
+    meanpT_array = abs(vn_array_[:, 1])
     v2_array = abs(vn_array_[:, 3])**2.
 
-    delta_N = dN_array - mean(dN_array)
+    delta_N = dN_array - dN_avg
     varN = std(dN_array)**2.
+    delta_meanpT = meanpT_array - mean(meanpT_array)
+    hat_delta_meanpT = delta_meanpT - mean(delta_meanpT*delta_N)/varN*delta_N
     delta_v2 = v2_array - mean(v2_array)
     hat_delta_v2 = delta_v2 - mean(delta_v2*delta_N)/varN*delta_N
 
+    rho_pTSy_avg = []; rho_pTSy_err = []
     rho_v2Sy_avg = []; rho_v2Sy_err = []
     for ifile in range(len(filelist)):
         Sy_array = array(Sy_list[ifile])/array(dN_list[ifile])
@@ -314,6 +324,7 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
 
         # compute the error using the jackknife method
         rho_v2Sy = zeros(nev)
+        rho_pTSy = zeros(nev)
         for iev in range(nev):
             array_idx = [True]*nev
             array_idx[iev] = False
@@ -323,15 +334,18 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
                                   *hat_delta_Sy[array_idx])
                              /sqrt(mean(hat_delta_v2[array_idx]**2.)
                                    *mean(hat_delta_Sy[array_idx]**2.)))
+            rho_pTSy[iev] = (mean(hat_delta_meanpT[array_idx]
+                                  *hat_delta_Sy[array_idx])
+                             /sqrt(mean(hat_delta_meanpT[array_idx]**2.)
+                                   *mean(hat_delta_Sy[array_idx]**2.)))
         rho_v2Sy_mean_tmp = mean(rho_v2Sy)
+        rho_pTSy_mean_tmp = mean(rho_pTSy)
         rho_v2Sy_avg.append(rho_v2Sy_mean_tmp)
         rho_v2Sy_err.append(sqrt((nev - 1.)/nev
                             *sum((rho_v2Sy - rho_v2Sy_mean_tmp)**2.)))
-
-    # compute correlation between S^y and meanpT
-    meanpT_array = abs(vn_array_[:, 1])
-    rho_pTSy_avg = []; rho_pTSy_err = []
-
+        rho_pTSy_avg.append(rho_pTSy_mean_tmp)
+        rho_pTSy_err.append(sqrt((nev - 1.)/nev
+                            *sum((rho_pTSy - rho_pTSy_mean_tmp)**2.)))
 
     # output results to files
     f = open(path.join(outputFolder_,
@@ -339,11 +353,11 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
                                                              pTMin_, pTMax_)),
              "a")
     if icen == 0:
-        f.write("# cen  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
+        f.write("# cen  Nch  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
                 + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
                                                                 vorticityType))
-    f.write("{}  ".format(
-        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2.))
+    f.write("{0}  {1:.5e}  ".format(
+        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2., dN_avg))
     for icol in range(len(filelist)):
         f.write("%.5e  %.5e  " % (Sx_avg[icol], Sx_err[icol]))
         f.write("%.5e  %.5e  " % (Sy_avg[icol], Sy_err[icol]))
@@ -351,19 +365,33 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
     f.write("\n")
     f.close()
 
-
     f = open(path.join(outputFolder_,
                        "Rho_v2Sy_{}_pT_{}_{}.txt".format(vorticityType,
                                                          pTMin_, pTMax_)),
              "a")
     if icen == 0:
-        f.write("# cen  rho(v2, Sy)  rho(v2, Sy)_err  "
+        f.write("# cen  Nch  rho(v2, Sy)  rho(v2, Sy)_err  "
                 + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
                                                                 vorticityType))
-    f.write("{}  ".format(
-        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2.))
+    f.write("{0}  {1:.5e}  ".format(
+        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2., dN_avg))
     for icol in range(len(filelist)):
         f.write("%.5e  %.5e  " % (rho_v2Sy_avg[icol], rho_v2Sy_err[icol]))
+    f.write("\n")
+    f.close()
+
+    f = open(path.join(outputFolder_,
+                       "Rho_pTSy_{}_pT_{}_{}.txt".format(vorticityType,
+                                                         pTMin_, pTMax_)),
+             "a")
+    if icen == 0:
+        f.write("# cen  Nch  rho([pT], Sy)  rho([pT], Sy)_err  "
+                + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
+    f.write("{0}  {1:.5e}  ".format(
+        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2., dN_avg))
+    for icol in range(len(filelist)):
+        f.write("%.5e  %.5e  " % (rho_pTSy_avg[icol], rho_pTSy_err[icol]))
     f.write("\n")
     f.close()
 
@@ -657,8 +685,8 @@ for ifolder, event_name in enumerate(event_list):
     event_group = hf.get(event_name)
     eventStatus = check_an_event_is_good(event_group)
     if eventStatus:
-        temp_data = event_group.get(file_name)
-        temp_data = nan_to_num(temp_data)
+        temp_data   = event_group.get(file_name)
+        temp_data   = nan_to_num(temp_data)
         dNdyDict[event_name] = temp_data[0, 1]
 dNdyList = -sort(-array(list(dNdyDict.values())))
 print("Number of good events: {}".format(len(dNdyList)))
@@ -678,6 +706,10 @@ for icen in range(len(centrality_cut_list) - 1):
         min(len(dNdyList) - 1,
             int(len(dNdyList)*centrality_cut_list[icen+1]/100.))
     ]
+    if len(dNcutList) == len(centrality_cut_list):
+        dN_dy_cut_high = dNcutList[icen]
+        dN_dy_cut_low = dNcutList[icen+1]
+
     for event_name in dNdyDict.keys():
         if (dNdyDict[event_name] > dN_dy_cut_low
             and dNdyDict[event_name] <= dN_dy_cut_high):
@@ -686,13 +718,14 @@ for icen in range(len(centrality_cut_list) - 1):
     nev = len(selected_events_list)
     print("analysis {}%-{}% nev = {}...".format(
             centrality_cut_list[icen], centrality_cut_list[icen+1], nev))
+    print("dNdy: {0:.2f} - {1:.2f}".format(dN_dy_cut_low, dN_dy_cut_high))
     if nev == 0:
         print("Skip ...")
         continue
 
     vnFileName     = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
-    vnRefFileName1 = 'particle_9999_vndata_diff_eta_0.5_2.dat'
-    vnRefFileName2 = 'particle_9999_vndata_diff_eta_-2_-0.5.dat'
+    vnRefFileName1 = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
+    vnRefFileName2 = 'particle_9999_vndata_diff_eta_-2.5_-0.5.dat'
 
     pT_array = []
     dN_array = []
@@ -823,7 +856,7 @@ for icen in range(len(centrality_cut_list) - 1):
     for iorder in range(4):
         analyze_Smu_phi(hf, selected_events_list, avg_folder,
                         vn_alice_array, iorder)
-    #analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
+    analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
 
     ######################################################################
     # finally, output all the results
