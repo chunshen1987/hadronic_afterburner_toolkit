@@ -30,7 +30,6 @@ PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 
 centrality_cut_list = Reg_centrality_cut_list + [20., 50., 20., 60.]
-
 # predefined dNcut List
 #dNcutList = [1000., 544.20, 448.98, 309.78, 204.20, 131.71, 83.02, 45.85,
 #             24.89, 11.73, 4.58, 0.16, 309.78, 83.02, 309.78, 45.82]
@@ -352,12 +351,13 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
                        "averaged_Smu_{}_pT_{}_{}.txt".format(vorticityType,
                                                              pTMin_, pTMax_)),
              "a")
-    if icen == 0:
+    if icen_ == 0:
         f.write("# cen  Nch  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
                 + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
                                                                 vorticityType))
     f.write("{0}  {1:.5e}  ".format(
-        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2., dN_avg))
+        (centrality_cut_list[icen_] + centrality_cut_list[icen_+1])/2.,
+         dN_avg))
     for icol in range(len(filelist)):
         f.write("%.5e  %.5e  " % (Sx_avg[icol], Sx_err[icol]))
         f.write("%.5e  %.5e  " % (Sy_avg[icol], Sy_err[icol]))
@@ -369,12 +369,13 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
                        "Rho_v2Sy_{}_pT_{}_{}.txt".format(vorticityType,
                                                          pTMin_, pTMax_)),
              "a")
-    if icen == 0:
+    if icen_ == 0:
         f.write("# cen  Nch  rho(v2, Sy)  rho(v2, Sy)_err  "
                 + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
                                                                 vorticityType))
     f.write("{0}  {1:.5e}  ".format(
-        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2., dN_avg))
+        (centrality_cut_list[icen_] + centrality_cut_list[icen_+1])/2.,
+        dN_avg))
     for icol in range(len(filelist)):
         f.write("%.5e  %.5e  " % (rho_v2Sy_avg[icol], rho_v2Sy_err[icol]))
     f.write("\n")
@@ -384,12 +385,13 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
                        "Rho_pTSy_{}_pT_{}_{}.txt".format(vorticityType,
                                                          pTMin_, pTMax_)),
              "a")
-    if icen == 0:
+    if icen_ == 0:
         f.write("# cen  Nch  rho([pT], Sy)  rho([pT], Sy)_err  "
                 + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
                                                                 vorticityType))
     f.write("{0}  {1:.5e}  ".format(
-        (centrality_cut_list[icen] + centrality_cut_list[icen+1])/2., dN_avg))
+        (centrality_cut_list[icen_] + centrality_cut_list[icen_+1])/2.,
+        dN_avg))
     for icol in range(len(filelist)):
         f.write("%.5e  %.5e  " % (rho_pTSy_avg[icol], rho_pTSy_err[icol]))
     f.write("\n")
@@ -462,7 +464,8 @@ def analyze_Smu_pT(hf_, eventList_, outputFolder_):
     f.close()
 
 
-def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_):
+def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
+                    globalOutputFolder_, icen_):
     """
         This function computes the event-averaged S^mu(phi) with respect to
         the anisotropic flow angle vn.
@@ -481,11 +484,17 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_):
     Sx_list = []
     Sy_list = []
     Sz_list = []
+    fnSx_list = []
+    fnSy_list = []
+    fnSz_list = []
     for ifile in filelist:
         dN_list.append([])
         Sx_list.append([])
         Sy_list.append([])
         Sz_list.append([])
+        fnSx_list.append([])
+        fnSy_list.append([])
+        fnSz_list.append([])
 
     nev = len(eventList_)
     for ievent, eventName in enumerate(eventList_):
@@ -503,10 +512,15 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_):
 
             if ifile == 0:
                 phi_arr = spin_data[:, 0]
+            dphi = phi_arr[1] - phi_arr[0]
 
-            phi_local = phi_arr + psi_n
-            phi_local[phi_local < 0.] += 2.*pi
-            phi_local[phi_local > 2.*pi] -= 2.*pi
+            phi_local = phi_arr + psi_n     # the "+" sign is correct
+                                            # phi_arr = phi - Psi_n
+            for ii in range(len(phi_local)):
+                while phi_local[ii] < 0:
+                    phi_local[ii] += 2.*pi
+                while phi_local[ii] > 2.*pi:
+                    phi_local[ii] -= 2.*pi
 
             dN = interp(phi_local, phi_arr, spin_data[:, 1])
             Sx = interp(phi_local, phi_arr, spin_data[:, 7])
@@ -517,23 +531,35 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_):
             Sx_list[ifile].append(Sx)
             Sy_list[ifile].append(Sy)
             Sz_list[ifile].append(Sz)
+            fnSx_list[ifile].append(sum(Sx*sin(iorder_*phi_arr))*dphi/(2*pi))
+            fnSy_list[ifile].append(sum(Sy*cos(iorder_*phi_arr))/sum(Sy))
+            fnSz_list[ifile].append(sum(Sz*sin(iorder_*phi_arr))*dphi/(2*pi))
 
     Sx_avg = []; Sx_err = []
     Sy_avg = []; Sy_err = []
     Sz_avg = []; Sz_err = []
+    fnSx_avg = []; fnSx_err = []
+    fnSy_avg = []; fnSy_err = []
+    fnSz_avg = []; fnSz_err = []
     for ifile in range(len(filelist)):
         Sx_avg.append(mean(array(dN_list[ifile])*array(Sx_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0))
         Sx_err.append(std(array(dN_list[ifile])*array(Sx_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
+        fnSx_avg.append(mean(array(fnSx_list[ifile])))
+        fnSx_err.append(std(array(fnSx_list[ifile]))/sqrt(nev))
         Sy_avg.append(mean(array(dN_list[ifile])*array(Sy_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0))
         Sy_err.append(std(array(dN_list[ifile])*array(Sy_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
+        fnSy_avg.append(mean(array(fnSy_list[ifile])))
+        fnSy_err.append(std(array(fnSy_list[ifile]))/sqrt(nev))
         Sz_avg.append(mean(array(dN_list[ifile])*array(Sz_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0))
         Sz_err.append(std(array(dN_list[ifile])*array(Sz_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
+        fnSz_avg.append(mean(array(fnSz_list[ifile])))
+        fnSz_err.append(std(array(fnSz_list[ifile]))/sqrt(nev))
 
     fileLabel = "Psi{}".format(iorder_)
     if iorder_ == 0:
@@ -543,7 +569,8 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_):
                                                            vorticityType)),
              "w")
     f.write("# phi  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
-            + "({0}  {0}+SIP(BBPP)  {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(vorticityType))
+            + "({0}  {0}+SIP(BBP)  {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
     for iphi in range(len(phi_arr)):
         f.write("%.5e  " % phi_arr[iphi])
         for icol in range(len(filelist)):
@@ -552,6 +579,28 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_):
             f.write("%.5e  %.5e  " % (Sz_avg[icol][iphi], Sz_err[icol][iphi]))
         f.write("\n")
     f.close()
+
+    if iorder_ > 0:
+        dN_avg = mean(real(vnArr_[:, 0]))
+        f = open(path.join(globalOutputFolder_,
+                           "f{}_{}.txt".format(iorder_, vorticityType)),
+                 "a")
+        if icen_ == 0:
+            f.write("# cen  Nch  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
+                    + "({0}  {0}+SIP(BBP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                    vorticityType))
+        f.write("{0}  {1:.5e}  ".format(
+            (centrality_cut_list[icen_] + centrality_cut_list[icen_+1])/2.,
+             dN_avg))
+        for icol in range(len(filelist)):
+            f.write("{0:.5e}  {1:.5e}  ".format(fnSx_avg[icol],
+                                                fnSx_err[icol]))
+            f.write("{0:.5e}  {1:.5e}  ".format(fnSy_avg[icol],
+                                                fnSy_err[icol]))
+            f.write("{0:.5e}  {1:.5e}  ".format(fnSz_avg[icol],
+                                                fnSz_err[icol]))
+        f.write("\n")
+        f.close()
 
 
 def analyze_Smu_y(hf_, eventList_, outputFolder_):
@@ -853,9 +902,9 @@ for icen in range(len(centrality_cut_list) - 1):
                 vn_alice_array)
     analyze_Smu_pT(hf, selected_events_list, avg_folder)
     analyze_Smu_y(hf, selected_events_list, avg_folder)
-    for iorder in range(4):
+    for iorder in range(5):
         analyze_Smu_phi(hf, selected_events_list, avg_folder,
-                        vn_alice_array, iorder)
+                        vn_alice_array, iorder, avg_folder_header, icen)
     analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
 
     ######################################################################
