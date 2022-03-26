@@ -535,12 +535,21 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
             fnSy_list[ifile].append(sum(Sy*cos(iorder_*phi_arr))/sum(Sy))
             fnSz_list[ifile].append(sum(Sz*sin(iorder_*phi_arr))*dphi/(2*pi))
 
+    dN_array = real(vnArr_[:, 0])
+    dN_avg = mean(dN_array)
+    delta_N = dN_array - dN_avg
+    varN = std(dN_array)**2.
+    Qn_array = abs(vnArr_[:, iorder_+1])**2.
+    delta_Qn = Qn_array - mean(Qn_array)
+    hat_delta_Qn = delta_Qn - mean(delta_Qn*delta_N)/varN*delta_N
+
     Sx_avg = []; Sx_err = []
     Sy_avg = []; Sy_err = []
     Sz_avg = []; Sz_err = []
     fnSx_avg = []; fnSx_err = []
     fnSy_avg = []; fnSy_err = []
     fnSz_avg = []; fnSz_err = []
+    rho_vnfnSz_avg = []; rho_vnfnSz_err = []
     for ifile in range(len(filelist)):
         Sx_avg.append(mean(array(dN_list[ifile])*array(Sx_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0))
@@ -560,6 +569,24 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
         fnSz_avg.append(mean(array(fnSz_list[ifile])))
         fnSz_err.append(std(array(fnSz_list[ifile]))/sqrt(nev))
+
+        # compute the error using the jackknife method
+        rho_vnfnSz = zeros(nev)
+        fnSz = array(fnSz_list[ifile])
+        delta_fnSz = fnSz - mean(fnSz)
+        hat_delta_fnSz = delta_fnSz - mean(delta_fnSz*delta_N)/varN*delta_N
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            rho_vnfnSz[iev] = (mean(hat_delta_fnSz[array_idx]
+                                    *hat_delta_Qn[array_idx])
+                               /sqrt(mean(hat_delta_fnSz[array_idx]**2.)
+                                     *mean(hat_delta_Qn[array_idx]**2.)))
+        rho_vnfnSz_avg.append(mean(rho_vnfnSz))
+        rho_vnfnSz_err.append(sqrt((nev - 1.)/nev
+                              *sum((rho_vnfnSz - mean(rho_vnfnSz))**2.)))
 
     fileLabel = "Psi{}".format(iorder_)
     if iorder_ == 0:
@@ -599,6 +626,23 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
                                                 fnSy_err[icol]))
             f.write("{0:.5e}  {1:.5e}  ".format(fnSz_avg[icol],
                                                 fnSz_err[icol]))
+        f.write("\n")
+        f.close()
+
+        f = open(path.join(globalOutputFolder_,
+                           "Rho_v{0}f{0}Pz_{1}.txt".format(iorder_,
+                                                           vorticityType)),
+                 "a")
+        if icen_ == 0:
+            f.write("# cen  Nch  rho(vn, fnPz)  rho(vn, fnPz)_err  "
+                     + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
+        f.write("{0}  {1:.5e}  ".format(
+            (centrality_cut_list[icen_] + centrality_cut_list[icen_+1])/2.,
+            dN_avg))
+        for icol in range(len(filelist)):
+            f.write("%.5e  %.5e  " % (rho_vnfnSz_avg[icol],
+                                      rho_vnfnSz_err[icol]))
         f.write("\n")
         f.close()
 
@@ -902,7 +946,7 @@ for icen in range(len(centrality_cut_list) - 1):
                 vn_alice_array)
     analyze_Smu_pT(hf, selected_events_list, avg_folder)
     analyze_Smu_y(hf, selected_events_list, avg_folder)
-    for iorder in range(5):
+    for iorder in range(n_order):
         analyze_Smu_phi(hf, selected_events_list, avg_folder,
                         vn_alice_array, iorder, avg_folder_header, icen)
     analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
