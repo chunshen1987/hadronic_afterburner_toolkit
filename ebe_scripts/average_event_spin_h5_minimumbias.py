@@ -63,6 +63,8 @@ def check_an_event_is_good(h5_event):
     """This function checks the given event contains all required files"""
     required_files_list = [
         'particle_9999_vndata_eta_-0.5_0.5.dat',
+        'particle_9999_vndata_eta_-1_-0.1.dat',
+        'particle_9999_vndata_eta_0.1_1.dat',
         "Smu_pT_Thermal_pseudorapidity_3122.dat",
         "Smu_phi_Thermal_pseudorapidity_3122.dat",
         "Smu_y_Thermal_pseudorapidity_3122.dat",
@@ -464,8 +466,8 @@ def analyze_Smu_pT(hf_, eventList_, outputFolder_):
     f.close()
 
 
-def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
-                    globalOutputFolder_, icen_):
+def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, vnRef1_, vnRef2_,
+                    iorder_, globalOutputFolder_, icen_):
     """
         This function computes the event-averaged S^mu(phi) with respect to
         the anisotropic flow angle vn.
@@ -478,6 +480,8 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
                 "Smu_phi_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
 
     vnArr_ = array(vnArr_)
+    vnRef1_ = array(vnRef1_)
+    vnRef2_ = array(vnRef2_)
 
     phi_arr = []
     dN_list = []
@@ -514,6 +518,19 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
                 phi_arr = spin_data[:, 0]
             dphi = phi_arr[1] - phi_arr[0]
 
+            fnSx_list[ifile].append(
+                (     sum(spin_data[:, 7]*cos(iorder_*phi_arr))*dphi/(2*pi)
+                 + 1j*sum(spin_data[:, 7]*sin(iorder_*phi_arr))*dphi/(2*pi))
+            )
+            fnSy_list[ifile].append(
+                (     sum(spin_data[:, 8]*cos(iorder_*phi_arr))*dphi/(2*pi)
+                 + 1j*sum(spin_data[:, 8]*sin(iorder_*phi_arr))*dphi/(2*pi))
+            )
+            fnSz_list[ifile].append(
+                (     sum(spin_data[:, 9]*cos(iorder_*phi_arr))*dphi/(2*pi)
+                 + 1j*sum(spin_data[:, 9]*sin(iorder_*phi_arr))*dphi/(2*pi))
+            )
+
             phi_local = phi_arr + psi_n     # the "+" sign is correct
                                             # phi_arr = phi - Psi_n
             for ii in range(len(phi_local)):
@@ -531,18 +548,17 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
             Sx_list[ifile].append(Sx)
             Sy_list[ifile].append(Sy)
             Sz_list[ifile].append(Sz)
-            fnSx_list[ifile].append(sum(Sx*sin(iorder_*phi_arr))*dphi/(2*pi))
-            fnSy_list[ifile].append(sum(Sy*cos(iorder_*phi_arr))/sum(Sy))
-            fnSz_list[ifile].append(sum(Sz*sin(iorder_*phi_arr))*dphi/(2*pi))
 
     dN_array = real(vnArr_[:, 0])
     dN_avg = mean(dN_array)
     delta_N = dN_array - dN_avg
     varN = std(dN_array)**2.
-    Qn_array = abs(vnArr_[:, iorder_+1])**2.
-    delta_Qn = Qn_array - mean(Qn_array)
+    Qn_magsq = abs(vnArr_[:, iorder_+1])**2.
+    delta_Qn = Qn_magsq - mean(Qn_magsq)
     hat_delta_Qn = delta_Qn - mean(delta_Qn*delta_N)/varN*delta_N
 
+    QnRef1 = vnRef1_[:, iorder_+1]
+    QnRef2 = vnRef2_[:, iorder_+1]
     Sx_avg = []; Sx_err = []
     Sy_avg = []; Sy_err = []
     Sz_avg = []; Sz_err = []
@@ -555,35 +571,81 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
                       /mean(array(dN_list[ifile]), axis=0))
         Sx_err.append(std(array(dN_list[ifile])*array(Sx_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
-        fnSx_avg.append(mean(array(fnSx_list[ifile])))
-        fnSx_err.append(std(array(fnSx_list[ifile]))/sqrt(nev))
         Sy_avg.append(mean(array(dN_list[ifile])*array(Sy_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0))
         Sy_err.append(std(array(dN_list[ifile])*array(Sy_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
-        fnSy_avg.append(mean(array(fnSy_list[ifile])))
-        fnSy_err.append(std(array(fnSy_list[ifile]))/sqrt(nev))
         Sz_avg.append(mean(array(dN_list[ifile])*array(Sz_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0))
         Sz_err.append(std(array(dN_list[ifile])*array(Sz_list[ifile]), axis=0)
                       /mean(array(dN_list[ifile]), axis=0)/sqrt(nev))
-        fnSz_avg.append(mean(array(fnSz_list[ifile])))
-        fnSz_err.append(std(array(fnSz_list[ifile]))/sqrt(nev))
 
         # compute the error using the jackknife method
+        fnSxArr = array(fnSx_list[ifile])
+        fnSyArr = array(fnSy_list[ifile])
+        fnSzArr = array(fnSz_list[ifile])
+        fnSxReal = zeros(nev); fnSxImag = zeros(nev)
+        fnSyReal = zeros(nev); fnSyImag = zeros(nev)
+        fnSzReal = zeros(nev); fnSzImag = zeros(nev)
         rho_vnfnSz = zeros(nev)
-        fnSz = array(fnSz_list[ifile])
-        delta_fnSz = fnSz - mean(fnSz)
+        fnSzMagsq = abs(fnSzArr)**2.
+        delta_fnSz = fnSzMagsq - mean(fnSzMagsq)
         hat_delta_fnSz = delta_fnSz - mean(delta_fnSz*delta_N)/varN*delta_N
         for iev in range(nev):
             array_idx = [True]*nev
             array_idx[iev] = False
             array_idx = array(array_idx)
 
+            fnSxReal[iev] = (
+                real(mean(fnSxArr[array_idx]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2.))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSxImag[iev] = (
+                imag(mean(fnSxArr[array_idx]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2.))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSyReal[iev] = (
+                real(mean(fnSyArr[array_idx]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2.))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSyImag[iev] = (
+                imag(mean(fnSyArr[array_idx]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2.))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSzReal[iev] = (
+                real(mean(fnSzArr[array_idx]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2.))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSzImag[iev] = (
+                imag(mean(fnSzArr[array_idx]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2.))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+
             rho_vnfnSz[iev] = (mean(hat_delta_fnSz[array_idx]
                                     *hat_delta_Qn[array_idx])
                                /sqrt(mean(hat_delta_fnSz[array_idx]**2.)
                                      *mean(hat_delta_Qn[array_idx]**2.)))
+        fnSx_avg.append(mean(fnSxReal) + 1j*mean(fnSxImag))
+        fnSx_err.append(
+                sqrt((nev - 1.)/nev*sum((fnSxReal - mean(fnSxReal))**2.))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSxImag - mean(fnSxImag))**2.))
+        )
+        fnSy_avg.append(mean(fnSyReal) + 1j*mean(fnSyImag))
+        fnSy_err.append(
+                sqrt((nev - 1.)/nev*sum((fnSyReal - mean(fnSyReal))**2.))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSyImag - mean(fnSyImag))**2.))
+        )
+        fnSz_avg.append(mean(fnSzReal) + 1j*mean(fnSzImag))
+        fnSz_err.append(
+                sqrt((nev - 1.)/nev*sum((fnSzReal - mean(fnSzReal))**2.))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSzImag - mean(fnSzImag))**2.))
+        )
         rho_vnfnSz_avg.append(mean(rho_vnfnSz))
         rho_vnfnSz_err.append(sqrt((nev - 1.)/nev
                               *sum((rho_vnfnSz - mean(rho_vnfnSz))**2.)))
@@ -613,19 +675,33 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, iorder_,
                            "f{}_{}.txt".format(iorder_, vorticityType)),
                  "a")
         if icen_ == 0:
-            f.write("# cen  Nch  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
+            f.write("# cen  Nch  Re{fn(S^x)}  Re{fn(S^x)}_err  "
+                    + "Im{fn(S^x)}  Im{fn(S^x)}_err  "
+                    + "Re{fn(S^y)}  Re{fn(S^y)}_err  "
+                    + "Im{fn(S^y)}  Im{fn(S^y)}_err  "
+                    + "Re{fn(S^z)}  Re{fn(S^z)}_err  "
+                    + "Im{fn(S^z)}  Im{fn(S^z)}_err  "
                     + "({0}  {0}+SIP(BBP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
                                                                     vorticityType))
         f.write("{0}  {1:.5e}  ".format(
             (centrality_cut_list[icen_] + centrality_cut_list[icen_+1])/2.,
              dN_avg))
         for icol in range(len(filelist)):
-            f.write("{0:.5e}  {1:.5e}  ".format(fnSx_avg[icol],
-                                                fnSx_err[icol]))
-            f.write("{0:.5e}  {1:.5e}  ".format(fnSy_avg[icol],
-                                                fnSy_err[icol]))
-            f.write("{0:.5e}  {1:.5e}  ".format(fnSz_avg[icol],
-                                                fnSz_err[icol]))
+            f.write("{0:.5e}  {1:.5e}  {2:.5e}  {3:.5e}  ".format(
+                                            nan_to_num(real(fnSx_avg[icol])),
+                                            nan_to_num(real(fnSx_err[icol])),
+                                            nan_to_num(imag(fnSx_avg[icol])),
+                                            nan_to_num(imag(fnSx_err[icol]))))
+            f.write("{0:.5e}  {1:.5e}  {2:.5e}  {3:.5e}  ".format(
+                                            nan_to_num(real(fnSy_avg[icol])),
+                                            nan_to_num(real(fnSy_err[icol])),
+                                            nan_to_num(imag(fnSy_avg[icol])),
+                                            nan_to_num(imag(fnSy_err[icol]))))
+            f.write("{0:.5e}  {1:.5e}  {2:.5e}  {3:.5e}  ".format(
+                                            nan_to_num(real(fnSz_avg[icol])),
+                                            nan_to_num(real(fnSz_err[icol])),
+                                            nan_to_num(imag(fnSz_avg[icol])),
+                                            nan_to_num(imag(fnSz_err[icol]))))
         f.write("\n")
         f.close()
 
@@ -817,8 +893,8 @@ for icen in range(len(centrality_cut_list) - 1):
         continue
 
     vnFileName     = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
-    vnRefFileName1 = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
-    vnRefFileName2 = 'particle_9999_vndata_diff_eta_-2.5_-0.5.dat'
+    vnRefFileName1 = 'particle_9999_vndata_diff_eta_0.1_1.dat'
+    vnRefFileName2 = 'particle_9999_vndata_diff_eta_-1_-0.1.dat'
 
     pT_array = []
     dN_array = []
@@ -948,7 +1024,8 @@ for icen in range(len(centrality_cut_list) - 1):
     analyze_Smu_y(hf, selected_events_list, avg_folder)
     for iorder in range(n_order):
         analyze_Smu_phi(hf, selected_events_list, avg_folder,
-                        vn_alice_array, iorder, avg_folder_header, icen)
+                        vn_alice_array, vn_alice_array_ref1,
+                        vn_alice_array_ref2, iorder, avg_folder_header, icen)
     analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
 
     ######################################################################
