@@ -99,12 +99,12 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.0); // the ALICE pT cut2 for pPb
-    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
-    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); // the ALICE pT cut2 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -1.7);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 1.7); paraRdr_.setVal("rap_max", 5.1);
@@ -173,16 +173,82 @@ void Analysis::FlowAnalysis() {
     double rap_max_for_pid = paraRdr_.getVal("rap_max_for_pid");
     paraRdr_.setVal("rap_min", rap_min_for_pid); paraRdr_.setVal("rap_max", rap_max_for_pid);
     paraRdr_.setVal("particle_monval", 211);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC dNch/deta
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); // the ALICE pT cut2 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", -211);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC dNch/deta
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); // the ALICE pT cut2 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", 321);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC dNch/deta
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); // the ALICE pT cut2 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", -321);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC dNch/deta
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); // the ALICE pT cut2 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", 2212);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC dNch/deta
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); // the ALICE pT cut2 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", -2212);
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC dNch/deta
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); // the ALICE pT cut2 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     if (paraRdr_.getVal("resonance_weak_feed_down_flag") == 0) {
         paraRdr_.setVal("particle_monval", 3122);
