@@ -273,12 +273,28 @@ void Analysis::FlowAnalysis() {
         spvn.push_back(new singleParticleSpectra(paraRdr_, path_,
                                                  ran_gen_ptr_));
     }
-    paraRdr_.setVal("rap_type", 0);
     paraRdr_.setVal("particle_monval", 2212);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("particle_monval", -2212);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
 
+    // Output the STAR UPC baryon junction results
+    int output_y_pt_spectra = 0;
+    output_y_pt_spectra = paraRdr_.getVal("output_y_pt_spectra");
+    if (output_y_pt_spectra == 1) {
+        paraRdr_.setVal("rap_type", 1);
+        for (int i=0; i<7; i++) {
+            std::string string_ylow = "y" + std::to_string(i);
+            std::string string_yup  = "y" + std::to_string(i+1);
+            double ylow = paraRdr_.getVal(string_ylow);
+            double yupper = paraRdr_.getVal(string_yup);
+            paraRdr_.setVal("rap_min", ylow); paraRdr_.setVal("rap_max", yupper);
+            paraRdr_.setVal("particle_monval", 2212);
+            spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+            paraRdr_.setVal("particle_monval", -2212);
+            spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+        }
+    }
     // lastly, if we want to compute multi-particle correlations within
     // the same UrQMD events
     if (compute_correlation == 1) {
