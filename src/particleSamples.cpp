@@ -24,7 +24,19 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
     event_buffer_size = paraRdr_.getVal("event_buffer_size");
     read_in_mode_     = paraRdr_.getVal("read_in_mode");
     rap_shift_        = paraRdr_.getVal("rap_shift");
-
+    std::ifstream rapidity_shift_File("rapidity_shift");
+    int rap_shift_from_file = 0; 
+    double rootgammaN;
+    double rap_shift_temp;
+    if (!rapidity_shift_File) {
+        std::cout << "ParameterReader::readFromFile error: file rapidity_shift "
+                  << " does not exist." << std::endl;
+    } else {
+        rapidity_shift_File >> rap_shift_from_file >> rootgammaN >> rap_shift_temp;
+    }
+    if (rap_shift_from_file==1) rap_shift_ = rap_shift_temp;
+    std::cout << " rap_shift_ = " << rap_shift_ << std::endl;
+    rapidity_shift_File.close();
     if (paraRdr_.getVal("analyze_flow") == 1)
         analyze_flow = true;
     else
