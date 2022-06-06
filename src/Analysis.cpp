@@ -298,14 +298,14 @@ void Analysis::FlowAnalysis() {
     // Output the neutron for the ZDC of STAR
     paraRdr_.setVal("rap_type", 0);
     paraRdr_.setVal("particle_monval", 2112);
-    paraRdr_.setVal("rap_min", 6.5); paraRdr_.setVal("rap_max", 7.5);
+    paraRdr_.setVal("rap_min", 6.3); paraRdr_.setVal("rap_max", 8.5);
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); 
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("vn_rapidity_dis_pT_min", -1.0); 
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", -7.5); paraRdr_.setVal("rap_max", -6.5);
+    paraRdr_.setVal("rap_min", -8.5); paraRdr_.setVal("rap_max", -6.3);
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); 
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
