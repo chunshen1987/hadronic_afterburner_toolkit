@@ -96,6 +96,9 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the ATLAS pT cut for UPC dNch/deta
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.4); // the STAR isobar pT cut
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 4.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.20); // the ALICE pT cut1 for pPb
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
@@ -160,9 +163,9 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 3.9);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     // STAR BBC
-    paraRdr_.setVal("rap_min", -5.0); paraRdr_.setVal("rap_max", -3.3);
+    paraRdr_.setVal("rap_min", -5.1); paraRdr_.setVal("rap_max", -3.1);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
-    paraRdr_.setVal("rap_min", 3.3); paraRdr_.setVal("rap_max", 5.0);
+    paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 5.1);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     
     // now identified particle
