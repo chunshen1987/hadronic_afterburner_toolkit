@@ -69,7 +69,7 @@ try:
     else:
         mkdir(avg_folder_header)
 except IndexError:
-    print("Usage: {} working_folder results_folder".format(argv[0]))
+    print("Usage: {} <path_to_hdf5_dataFile> <results_folder>".format(argv[0]))
     exit(1)
 
 particle_list = ['9999']
@@ -195,13 +195,14 @@ def calculate_rn_eta(eta_array, eta_min, eta_max, dN_array, vn_array,
     f.write("#eta  rn(eta)  rn_err(eta)  rnn(eta)  rnn_err(eta)\n")
     for ieta in range(len(eta_array)-1):
         f.write("%.10e  " % eta_array[ieta])
-        for iorder in range(0, n_order-1):
+        for iorder in range(nQn):
             f.write("%.10e  %.10e  %.10e  %.10e  "
                     % (rn_mean[iorder, ieta], rn_err[iorder, ieta],
                        rnn_mean[iorder, ieta], rnn_err[iorder, ieta]))
         f.write("\n")
     f.close()
     return rn_slope, rnn_slope
+
 
 
 ###############################################################################
@@ -237,6 +238,10 @@ rnSlopeFile = open(path.join(avg_folder_header, "rnSlope.dat"), "w")
 rnSlopeFile.write("#cen  rn_slope  rn_slope_err (n = 2 - 4)\n")
 rnnSlopeFile = open(path.join(avg_folder_header, "rnnSlope.dat"), "w")
 rnnSlopeFile.write("#cen  rnn_slope  rnn_slope_err (n = 2 - 4)\n")
+ecc_rnSlopeFile = open(path.join(avg_folder_header, "ecc_rnSlope.dat"), "w")
+ecc_rnSlopeFile.write("#cen  rn_slope  rn_slope_err (n = 2 - 4)\n")
+ecc_rnnSlopeFile = open(path.join(avg_folder_header, "ecc_rnnSlope.dat"), "w")
+ecc_rnnSlopeFile.write("#cen  rnn_slope  rnn_slope_err (n = 2 - 4)\n")
 for icen in range(len(centralityCutList) - 1):
     if centralityCutList[icen+1] < centralityCutList[icen]: continue
     avg_folder = path.join(
@@ -283,10 +288,26 @@ for icen in range(len(centralityCutList) - 1):
         dN_array = []
         totalN_array = []
         vn_array = []
+        ecc_eta_arr = []
+        dEdetas_array = []
+        eccn_array = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
-            temp_data = event_group.get(file_name)
-            temp_data = nan_to_num(temp_data)
+            eccFileList = []
+            for ifile in event_group.keys():
+                if "eccentricities_evo_ed" in ifile:
+                    eccFileList.append(ifile)
+            ecc_data = nan_to_num(event_group.get(eccFileList[0]))
+            temp_data = nan_to_num(event_group.get(file_name))
+
+            if ifolder == 0:
+                ecc_eta_arr = ecc_data[:, 0]
+            dEdetas_array.append(ecc_data[:, 1])
+            temp_eccn_array = []
+            for iorder in range(1, 6):
+                eccn = ecc_data[:, 2*iorder] + 1j*ecc_data[:, 2*iorder+1]
+                temp_eccn_array.append(eccn)
+            eccn_array.append(temp_eccn_array)
 
             eta_array.append(temp_data[:, 0])
             dN_array.append(temp_data[:, 1])
@@ -303,6 +324,8 @@ for icen in range(len(centralityCutList) - 1):
         dN_array = array(dN_array)
         totalN_array = array(totalN_array)
         vn_array = array(vn_array)
+        dEdetas_array = array(dEdetas_array)
+        eccn_array = array(eccn_array)
 
         eta_point = mean(eta_array, 0)
         dNdeta = mean(dN_array, 0)
@@ -344,12 +367,25 @@ for icen in range(len(centralityCutList) - 1):
         f.close()
 
         # calculate the longitudinal flow decorrelation with ATLAS cut
+        etaMin = 4.0; etaMax = 4.9
+        output_filename = path.join(avg_folder, "ecc_rn_eta.dat")
+        ecc_rnSlope, ecc_rnnSlope = calculate_rn_eta(
+                ecc_eta_arr, etaMin, etaMax, dEdetas_array, eccn_array,
+                output_filename)
         output_filename = path.join(avg_folder, "{}_rn_eta.dat".format(
                                                     particle_name_list[ipart]))
-        rnSlope, rnnSlope = calculate_rn_eta(eta_point, 4.0, 4.9, dN_array,
-                                             vn_array, output_filename)
+        rnSlope, rnnSlope = calculate_rn_eta(
+                eta_point, etaMin, etaMax, dN_array, vn_array, output_filename)
         centralityCenter = (centralityCutList[icen]
                             + centralityCutList[icen+1])/2.
+        ecc_rnSlopeFile.write("%.2f  " % centralityCenter)
+        for ir, ir_err in ecc_rnSlope:
+            ecc_rnSlopeFile.write("%.6e  %.6e  " % (ir, ir_err))
+        ecc_rnSlopeFile.write("\n")
+        ecc_rnnSlopeFile.write("%.2f  " % centralityCenter)
+        for ir, ir_err in ecc_rnnSlope:
+            ecc_rnnSlopeFile.write("%.6e  %.6e  " % (ir, ir_err))
+        ecc_rnnSlopeFile.write("\n")
         rnSlopeFile.write("%.2f  " % centralityCenter)
         for ir, ir_err in rnSlope:
             rnSlopeFile.write("%.6e  %.6e  " % (ir, ir_err))
@@ -361,5 +397,7 @@ for icen in range(len(centralityCutList) - 1):
 
 rnSlopeFile.close()
 rnnSlopeFile.close()
+ecc_rnSlopeFile.close()
+ecc_rnnSlopeFile.close()
 print("Analysis is done.")
 
