@@ -347,6 +347,7 @@ for icen in range(len(centrality_cut_list) - 1):
     pT_array = temp[:, 1].reshape(-1, NPT)[0, :]
     y_array = temp[:, 0].reshape(-1, NPT)[:, 0]
 
+    NcollList = []
     for iy, yrap in enumerate(list(y_array)):
         dN_array = []
         vn_phenix_array = []
@@ -356,10 +357,19 @@ for icen in range(len(centrality_cut_list) - 1):
         QnpT_diff_phenix = []; Qnref1_phenix = []; Qnref2_phenix = []
         QnpT_diff_alice = []; Qnref1_alice = []; Qnref2_alice = []
         for ifolder, event_name in enumerate(selected_events_list):
+            event_id = event_name.split("_")[-1]
+            event_id = ''.join([n for n in event_id if n.isdigit()])
             event_group    = hf.get(event_name)
             temp_data_ref0 = nan_to_num(event_group.get(refFileName0))
             temp_data_ref1 = nan_to_num(event_group.get(refFileName1))
             temp_data_ref2 = nan_to_num(event_group.get(refFileName2))
+
+            if iy == 0:
+                # get Ncoll for the event
+                iniFileName = "strings_{}.dat".format(event_id)
+                header = str(list(event_group[iniFileName].attrs.values())[0])
+                Ncoll = int(header.split()[10])
+                NcollList.append(Ncoll)
 
             photonRes = []
             for iphoton, photonFilename in enumerate(photonFileList):
@@ -478,4 +488,13 @@ for icen in range(len(centrality_cut_list) - 1):
                     % (iorder, vn_alice_2_gap[iorder-1],
                        vn_alice_2_gap_err[iorder-1]))
         f.close()
+
+    # output Ncoll for the centrality bin
+    ncollFilename = "Ncoll.dat"
+    ncollf = open(path.join(avg_folder, ncollFilename), 'w')
+    NcollList = array(NcollList)
+    ncollf.write("# Ncoll  stat err\n")
+    ncollf.write("{0:.2f}  {1:.2f}\n".format(mean(NcollList),
+                                             std(NcollList)/sqrt(nev)))
+    ncollf.close()
 print("Analysis is done.")
