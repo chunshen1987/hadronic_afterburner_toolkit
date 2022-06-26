@@ -84,7 +84,7 @@ try:
             print("Continue analysis in {} ...".format(avg_folder_header))
     else:
         mkdir(avg_folder_header)
-    paraFiles = glob(path.join(data_path, "*.py"))
+    paraFiles = glob(path.join(data_path, "parameter*"))
     for iFile in paraFiles:
         shutil.copy(iFile, avg_folder_header)
 except IndexError:
