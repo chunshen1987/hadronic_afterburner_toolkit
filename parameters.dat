@@ -59,7 +59,7 @@ rapidity_dis_max = 7.00       # maximum value of particle rapidity
 vn_rapidity_dis_pT_min = 0.20 # the minimum value of pT for vn rap. distr.
 vn_rapidity_dis_pT_max = 3.0  # the maximum value of pT for vn rap. distr.
 
-rapidityPTDistributionFlag 0  # Flag to output Qn vector in (pT, y) bins
+rapidityPTDistributionFlag = 0  # Flag to output Qn vector in (pT, y) bins
 
 check_spatial_dis = 0         # flag to check dN/dtau distribution
 intrinsic_detas = 0.1         # deta_s in the output samples
