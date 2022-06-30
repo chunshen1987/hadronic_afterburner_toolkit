@@ -54,6 +54,9 @@ class singleParticleSpectra {
     std::vector<std::vector<double>> Qn_diff_vector_real_err;
     std::vector<std::vector<double>> Qn_diff_vector_imag_err;
 
+    int rapidityPTDistributionFlag_;
+    std::vector<std::vector<std::vector<double>>> Qn_pTrapdiff_vector;
+
     int flag_correlation;
     std::vector<double> Qn2_vector;
     std::vector<double> Qn2_vector_err;
@@ -353,7 +356,10 @@ class singleParticleSpectra {
         std::vector<std::vector<double>> &event_Qn_imag,
         std::vector<std::vector<double>> &event_Qn_imag_err, int flag);
 
+    void calculateRapidityPTDistribution(const int event_id);
+
     void output_rapidity_distribution();
+    void outputRapidityPTDistribution();
 
     void check_dNdSV(int event_id);
     void output_dNdSV();

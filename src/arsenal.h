@@ -16,6 +16,9 @@ namespace AfterburnerUtil {
     std::string trim(std::string str);
     void resize2DVector(std::vector<std::vector<double>> &vec2D,
                         const int nx, const int ny, const double val);
+    void resize3DVector(std::vector<std::vector<std::vector<double>>> &vec3D,
+                        const int nx, const int ny, const int nz,
+                        const double val);
 }
 
 #endif

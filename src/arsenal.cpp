@@ -83,4 +83,25 @@ void resize2DVector(std::vector<std::vector<double>> &vec2D,
     }
 }
 
+
+void resize3DVector(std::vector<std::vector<std::vector<double>>> &vec3D,
+                    const int nx, const int ny, const int nz,
+                    const double val) {
+    for (unsigned int i = 0; i < vec3D.size(); i++) {
+        for (unsigned int j = 0; j < vec3D[i].size(); j++) {
+            vec3D[i][j].clear();
+        }
+        vec3D[i].clear();
+    }
+    vec3D.clear();
+    for (int ix = 0; ix < nx; ix++) {
+        std::vector<std::vector<double>> tmp2D;
+        for (int iy = 0; iy < ny; iy++) {
+            std::vector<double> tmp(nz, val);
+            tmp2D.push_back(tmp);
+        }
+        vec3D.push_back(tmp2D);
+    }
+}
+
 }
