@@ -314,9 +314,15 @@ void Analysis::FlowAnalysis_3D() {
     paraRdr.setVal("particle_monval", 9999);
     paraRdr.setVal("rap_type", 0);
     paraRdr.setVal("rapidity_distribution", 1);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
+    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", 2.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 2.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", -0.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("rapidityPTDistributionFlag", 1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
