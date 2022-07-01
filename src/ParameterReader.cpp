@@ -154,6 +154,7 @@ double ParameterReader::getVal(string name, double defaultValue) const {
         cout << "ParameterReader::getVal error: parameter with name "
              << name << " not found." << endl;
         cout << "using defaultValue: " << defaultValue << endl;
+        setVal(name, defaultValue);
         return(defaultValue);
     }
 }
