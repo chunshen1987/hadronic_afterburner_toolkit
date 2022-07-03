@@ -146,6 +146,21 @@ void ParameterReader::setVal(string name, double value) {
 //----------------------------------------------------------------------
 //! Get the value for the parameter with "name",
 //! if the parameter does not exist, return the provided default value
+double ParameterReader::getVal(string name) const {
+    long idx = _find(name);
+    if (idx != -1) {
+        return values[idx];
+    } else {
+        cout << "ParameterReader::getVal error: parameter with name "
+             << name << " not found." << endl;
+        exit(-1);
+    }
+}
+
+
+//----------------------------------------------------------------------
+//! Get the value for the parameter with "name",
+//! if the parameter does not exist, return the provided default value
 double ParameterReader::getVal(string name, double defaultValue) const {
     long idx = _find(name);
     if (idx != -1) {
@@ -154,7 +169,6 @@ double ParameterReader::getVal(string name, double defaultValue) const {
         cout << "ParameterReader::getVal error: parameter with name "
              << name << " not found." << endl;
         cout << "using defaultValue: " << defaultValue << endl;
-        setVal(name, defaultValue);
         return(defaultValue);
     }
 }
