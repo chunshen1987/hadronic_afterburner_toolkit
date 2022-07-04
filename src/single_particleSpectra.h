@@ -38,11 +38,11 @@ class singleParticleSpectra {
     double rapidity_dis_min, rapidity_dis_max, drap;
     std::vector<double> rapidity_array;
     std::vector<double> dNdy_array;
+    std::vector<double> dETdy_array;
 
     double vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max;
-    double **vn_real_rapidity_dis_array, **vn_imag_rapidity_dis_array;
-    double **vn_real_rapidity_dis_array_err;
-    double **vn_imag_rapidity_dis_array_err;
+    std::vector<std::vector<double>> vn_real_rapidity_dis_array;
+    std::vector<std::vector<double>> vn_imag_rapidity_dis_array;
 
     int total_number_of_events;
     std::vector<double> Qn_vector_real;
@@ -352,9 +352,7 @@ class singleParticleSpectra {
     //! rapidity in one event
     void calculate_rapidity_distribution(int event_id,
         std::vector<std::vector<double>> &event_Qn_real,
-        std::vector<std::vector<double>> &event_Qn_real_err,
-        std::vector<std::vector<double>> &event_Qn_imag,
-        std::vector<std::vector<double>> &event_Qn_imag_err, int flag);
+        std::vector<std::vector<double>> &event_Qn_imag, int flag);
 
     void calculateRapidityPTDistribution(const int event_id);
 

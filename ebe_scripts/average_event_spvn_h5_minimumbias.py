@@ -1515,45 +1515,40 @@ def calculate_vn6_over_vn4(vn_data_array, outputFileName):
     return
 
 
-def calculate_vn_eta(eta_array, dN_array, vn_array, eta_min, eta_max):
+def calculate_vn_eta(eta_array, Qn_rap_array, eta_min, eta_max):
     """
         This function computes vn(eta).
         eta_min and eta_max specify the rapidity range of reference flow vector
     """
-    nev, neta   = dN_array.shape
-    dN_array    = dN_array.reshape((nev, 1, neta))
-    idx         = (eta_array > eta_min) & (eta_array < eta_max)
-    vn_ref      = (sum(dN_array[:, :, idx]*vn_array[:, :, idx], axis=2)
-                   /(sum(dN_array[:, :, idx], axis=2) + 1e-15))
-    vnshape     = vn_ref.shape
-    nvn         = vnshape[1]
-    vn_ref      = vn_ref.reshape((vnshape[0], vnshape[1], 1))
-    vn_SP_ev    = real(vn_array*conj(vn_ref))
+    nev, nvn, neta = Qn_rap_array[:, 1:, :].shape
+    dN_array = Qn_rap_array[:, 0, :].reshape((nev, 1, neta))
+    idx = (eta_array > eta_min) & (eta_array < eta_max)
+    Qn_ref = sum(Qn_rap_array[:, 1:, idx], axis=2)
+    Qn_ref = Qn_ref.reshape((nev, nvn, 1))
+    vn_SP_ev    = real(Qn_rap_array[:, 1, :]*conj(Qn_ref))
     vn_SP_array = zeros([nev, nvn, neta])
     for iev in range(nev):
         array_idx      = [True]*nev
         array_idx[iev] = False
         array_idx      = array(array_idx)
-        vn_den         = mean((absolute(vn_ref[array_idx, :, :]))**2., axis=0)
+        vn_den         = mean((absolute(Qn_ref[array_idx, :, :]))**2., axis=0)
         vn_SP          = (mean(vn_SP_ev[array_idx, :, :], axis=0)
-                          /(sqrt(vn_den) + 1e-16))
+                          /((sqrt(vn_den) + 1e-16)
+                             *mean(dN_array[array_idx, :, :], axis=0)))
         vn_SP_array[iev, :, :] = vn_SP
     vn_SP_mean = mean(vn_SP_array, axis=0)
     vn_SP_err  = sqrt((nev - 1.)/nev*sum((vn_SP_array - vn_SP_mean)**2., axis=0))
     return([vn_SP_mean, vn_SP_err])
 
 
-def calculate_rn_eta(eta_array, dN_array, vn_array, outputFileName):
+def calculate_rn_eta(eta_array, Qn_rap_array, outputFileName):
     """
         This function computes the longitudinal factorization breaking ratios
         for all n passed from vn_array
             eta, rn(eta)
     """
-    nev, neta = dN_array.shape
-    dN_array  = dN_array.reshape((nev, 1, neta))
-    Qn_array  = vn_array
-    Qnshape   = Qn_array.shape
-    nQn       = Qnshape[1]
+    nev, nQn, neta = Qn_rap_array[:, 1:, :].shape
+    Qn_array = Qn_rap_array[:, 1:, :]
 
     # calculate the reference flow vector for every event
     eta_b_min    = 2.5
@@ -1563,8 +1558,6 @@ def calculate_rn_eta(eta_array, dN_array, vn_array, outputFileName):
     Qn_ref1      = [] 
     Qn_ref2      = [] 
     for iev in range(nev):
-        dN1_interp = interp(eta_ref1_tmp, eta_array, dN_array[iev, 0, :])
-        dN2_interp = interp(eta_ref2_tmp, eta_array, dN_array[iev, 0, :])
         Qn_ref1_vec = []
         Qn_ref2_vec = []
         for iorder in range(nQn):
@@ -1572,10 +1565,8 @@ def calculate_rn_eta(eta_array, dN_array, vn_array, outputFileName):
                                 Qn_array[iev, iorder, :])
             Qn2_interp = interp(eta_ref2_tmp, eta_array,
                                 Qn_array[iev, iorder, :])
-            Qn_ref1_vec.append(sum(dN1_interp*Qn1_interp)
-                               /(sum(dN1_interp) + 1e-15))
-            Qn_ref2_vec.append(sum(dN2_interp*Qn2_interp)
-                               /(sum(dN2_interp) + 1e-15))
+            Qn_ref1_vec.append(sum(Qn1_interp))
+            Qn_ref2_vec.append(sum(Qn2_interp))
         Qn_ref1.append(Qn_ref1_vec)
         Qn_ref2.append(Qn_ref2_vec)
     Qn_ref1 = array(Qn_ref1).reshape((nev, nQn, 1))
@@ -2214,7 +2205,7 @@ for icen in range(len(centralityCutList) - 1):
 
         eta_array = []
         dN_array = []
-        vn_array = []
+        Qn_rap_array = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
@@ -2222,39 +2213,42 @@ for icen in range(len(centralityCutList) - 1):
 
             eta_array.append(temp_data[:, 0])
             dN_array.append(temp_data[:, 1])
-            temp_vn_array = []
-            for iorder in range(1, n_order):
-                vn_real = temp_data[:, 6*iorder-3]
-                vn_imag = temp_data[:, 6*iorder-1]
-                vn = vn_real + 1j*vn_imag
-                temp_vn_array.append(vn)
-            vn_array.append(temp_vn_array)
+            temp_Qn_array = []
+            for iorder in range(0, n_order):
+                Qn_real = temp_data[:, 2*iorder+1]*temp_data[:, -1]
+                Qn_imag = temp_data[:, 2*iorder+2]*temp_data[:, -1]
+                if iorder == 0:
+                    Qn = temp_data[:, -1]
+                else:
+                    Qn = Qn_real + 1j*Qn_imag
+                temp_Qn_array.append(Qn)
+            Qn_rap_array.append(temp_Qn_array)
 
         eta_array = array(eta_array)
         dN_array = array(dN_array)
-        vn_array = array(vn_array)
+        Qn_rap_array = array(Qn_rap_array)
 
         eta_point = mean(eta_array, 0)
         dNdeta = mean(dN_array, 0)
         dNdeta_err = std(dN_array, 0)/sqrt(nev)
         if RapidityTrigger == 0:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -3.0, 3.0)
+                                        eta_point, Qn_rap_array, -3.0, 3.0)
         elif RapidityTrigger == 1:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -3.9, -3.1)
+                                        eta_point, Qn_rap_array, -3.9, -3.1)
         elif RapidityTrigger == 2:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -5.1, -2.8)
+                                        eta_point, Qn_rap_array, -5.1, -2.8)
         elif RapidityTrigger == 3:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -4.9, -3.1)
+                                        eta_point, Qn_rap_array, -4.9, -3.1)
         vn_SP_eta_mid, vn_SP_eta_mid_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -0.8, 0.8)
+                                        eta_point, Qn_rap_array, -0.8, 0.8)
 
         output_filename = path.join(avg_folder, "{}_rn_eta.dat".format(
                                                     particle_name_list[ipart]))
-        calculate_rn_eta(eta_point, dN_array, vn_array, output_filename)
+        calculate_rn_eta(eta_point, Qn_rap_array, output_filename)
 
         ######################################################################
         # finally, output all the results
