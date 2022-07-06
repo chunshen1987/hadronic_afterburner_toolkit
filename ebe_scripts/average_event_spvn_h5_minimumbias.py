@@ -1555,8 +1555,8 @@ def calculate_rn_eta(eta_array, Qn_rap_array, outputFileName):
     eta_b_max    = 4.0
     eta_ref1_tmp = linspace(eta_b_min, eta_b_max, 16)
     eta_ref2_tmp = linspace(-eta_b_max, -eta_b_min, 16)
-    Qn_ref1      = [] 
-    Qn_ref2      = [] 
+    Qn_ref1      = []
+    Qn_ref2      = []
     for iev in range(nev):
         Qn_ref1_vec = []
         Qn_ref2_vec = []
