@@ -1525,7 +1525,7 @@ def calculate_vn_eta(eta_array, Qn_rap_array, eta_min, eta_max):
     idx = (eta_array > eta_min) & (eta_array < eta_max)
     Qn_ref = sum(Qn_rap_array[:, 1:, idx], axis=2)
     Qn_ref = Qn_ref.reshape((nev, nvn, 1))
-    vn_SP_ev    = real(Qn_rap_array[:, 1, :]*conj(Qn_ref))
+    vn_SP_ev    = real(Qn_rap_array[:, 1:, :]*conj(Qn_ref))
     vn_SP_array = zeros([nev, nvn, neta])
     for iev in range(nev):
         array_idx      = [True]*nev
