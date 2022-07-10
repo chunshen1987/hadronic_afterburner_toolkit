@@ -48,7 +48,7 @@ except IndexError:
 hf = h5py.File(data_path, "r")
 event_list = list(hf.keys())
 nev = len(event_list)
-KT_values = ['0_0.2', '0.2_0.4', '0.4_0.6', '0.6_0.8', '0.8_1']
+KT_values = ['0.15_0.25', '0.25_0.35', '0.35_0.45', '0.45_0.55']
 
 for iKT in range(len(KT_values)):
     file_name = 'HBT_correlation_function_KT_%s.dat' % KT_values[iKT]
