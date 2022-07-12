@@ -56,8 +56,11 @@ try:
     data_name = data_path.split("/")[-1]
     data_path = "/".join(data_path.split("/")[0:-1])
     resultsFolderName = data_name.split(".h5")[0]
-    avg_folder_header = path.join(
-        path.abspath(argv[2]), "{}_{}".format(resultsFolderName, RapTrigLabel))
+    avg_folder_header = path.join(path.abspath(argv[2]),
+                                  "{}_{}".format(resultsFolderName,
+                                                 RapTrigLabel))
+    avgResH5Filename = path.join("{}_{}_HBT.h5".format(resultsFolderName,
+                                                       RapTrigLabel))
     print("output folder: %s" % avg_folder_header)
     if path.isdir(avg_folder_header):
         print("folder %s already exists!" % avg_folder_header)
@@ -72,6 +75,8 @@ try:
     paraFiles = glob(path.join(data_path, "parameter*"))
     for iFile in paraFiles:
         shutil.copy(iFile, avg_folder_header)
+    avgResH5File = h5py.File("{}/{}".format(avg_folder_header,
+                                            avgResH5Filename), "w")
 except IndexError:
     print("Usage: {} working_folder results_folder".format(argv[0]))
     exit(1)
@@ -122,16 +127,9 @@ print("Number of good events: {}".format(len(dNdyList)))
 
 for icen in range(len(centralityCutList) - 1):
     if centralityCutList[icen+1] < centralityCutList[icen]: continue
-    avg_folder = path.join(
-        avg_folder_header, "{0:02.0f}-{1:02.0f}".format(
-            centralityCutList[icen], centralityCutList[icen+1])
-    )
-
-    if path.isdir(avg_folder):
-        print("{} already exists, skipped ...".format(avg_folder))
-        continue
-    else:
-        mkdir(avg_folder)
+    groupName = "{0:02.0f}-{1:02.0f}".format(centralityCutList[icen],
+                                             centralityCutList[icen+1])
+    cenGroup = avgResH5File.create_group(groupName)
 
     selected_events_list = []
     dN_dy_cut_high = dNdyList[
@@ -219,8 +217,10 @@ for icen in range(len(centralityCutList) - 1):
         event_avg_data[:, 5] = denorm
         event_avg_data[:, 6] = correlation
         event_avg_data[:, 7] = correlation_err
-        savetxt(path.join(avg_folder, file_name), event_avg_data,
-                fmt='%.10e', delimiter='  ')
-
+        h5data = cenGroup.create_dataset("{0}".format(file_name),
+                                         data=event_avg_data,
+                                         compression="gzip",
+                                         compression_opts=9)
+avgResH5File.close()
 print("Analysis is done.")
 
