@@ -37,13 +37,12 @@ HBT_correlation::HBT_correlation(
     azimuthal_flag_ = paraRdr_.getVal("azimuthal_flag");
     invariant_radius_flag_ = paraRdr_.getVal("invariant_radius_flag");
 
-    n_KT            = paraRdr_.getVal("n_KT");
-    n_Kphi          = paraRdr_.getVal("n_Kphi");
-    KT_min          = paraRdr_.getVal("KT_min");
-    KT_max          = paraRdr_.getVal("KT_max");
-    Krap_min        = paraRdr_.getVal("Krap_min");
-    Krap_max        = paraRdr_.getVal("Krap_max");
-    buffer_rapidity = paraRdr_.getVal("buffer_rapidity");
+    n_KT      = paraRdr_.getVal("n_KT");
+    n_Kphi    = paraRdr_.getVal("n_Kphi");
+    KT_min    = paraRdr_.getVal("KT_min");
+    KT_max    = paraRdr_.getVal("KT_max");
+    Krap_min_ = paraRdr_.getVal("HBTrap_min");
+    Krap_max_ = paraRdr_.getVal("HBTrap_max");
 
     dKT   = (KT_max - KT_min)/(n_KT - 1);
     dKphi = 2*M_PI/n_Kphi;                  // does not need 0 and 2*pi
@@ -255,8 +254,8 @@ void HBT_correlation::combine_and_bin_particle_pairs(
                                                 std::vector<int> event_list) {
     double hbarC_inv = 1./hbarC;
     std::vector<particle_info> temp_particle_list;
-    double particle_list_rapidity_cut_max = tanh(Krap_max + buffer_rapidity);
-    double particle_list_rapidity_cut_min = tanh(Krap_min - buffer_rapidity);
+    double particle_list_rapidity_cut_max = tanh(Krap_max_);
+    double particle_list_rapidity_cut_min = tanh(Krap_min_);
     for (int j = 0; j < number_of_oversample_events_; j++) {
         int event_id = event_list[j];
         int event_number_particle = (
@@ -289,8 +288,6 @@ void HBT_correlation::combine_and_bin_particle_pairs(
     // nested pair loop
     messager << "number of pairs: " << number_of_pairs;
     messager.flush("info");
-    double rapidity_cut_max = tanh(Krap_max);
-    double rapidity_cut_min = tanh(Krap_min);
     double KT_min_sq = KT_min*KT_min;
     double KT_max_sq = KT_max*KT_max;
     for (int i = 0; i < number_of_particles; i++) {
@@ -316,12 +313,6 @@ void HBT_correlation::combine_and_bin_particle_pairs(
             double K_z = 0.5*(particle_1_pz + particle_2_pz);
             double K_E = 0.5*(particle_1_E + particle_2_E);
             double K_z_over_K_E = K_z/K_E;
-
-            // rapidity cut
-            if (K_z_over_K_E < rapidity_cut_min
-                || K_z_over_K_E > rapidity_cut_max) {
-                continue;
-            }
 
             // K_T cut
             double K_x = 0.5*(particle_1_px + particle_2_px);
@@ -465,8 +456,8 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                                         std::vector<int> mixed_event_list) {
     long long int number_of_particles_1 = (
             particle_list->get_number_of_particles(event_id1));
-    double particle_list_rapidity_cut_max = tanh(Krap_max + buffer_rapidity);
-    double particle_list_rapidity_cut_min = tanh(Krap_min - buffer_rapidity);
+    double particle_list_rapidity_cut_max = tanh(Krap_max_);
+    double particle_list_rapidity_cut_min = tanh(Krap_min_);
     std::vector<particle_info> temp_particle_list_1;
     for (int i = 0; i < number_of_particles_1; i++) {
         double temp_E = particle_list->get_particle(event_id1, i).E;
@@ -550,8 +541,6 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
             number_of_particles_1*number_of_particles_2);
     messager << "number of mixed pairs: " << number_of_pairs;
     messager.flush("info");
-    double rapidity_cut_min = tanh(Krap_min);
-    double rapidity_cut_max = tanh(Krap_max);
     double KT_min_sq = KT_min*KT_min;
     double KT_max_sq = KT_max*KT_max;
     for (int i = 0; i < number_of_particles_1; i++) {
@@ -568,10 +557,6 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
             double K_z = 0.5*(particle_1_pz + particle_2_pz);
             double K_E = 0.5*(particle_1_E + particle_2_E);
             double K_z_over_K_E = K_z/K_E;
-            if (K_z_over_K_E < rapidity_cut_min 
-                || K_z_over_K_E > rapidity_cut_max) {
-                continue;
-            }
 
             double K_x = 0.5*(particle_1_px + particle_2_px);
             double K_y = 0.5*(particle_1_py + particle_2_py);

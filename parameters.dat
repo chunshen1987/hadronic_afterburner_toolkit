@@ -100,11 +100,8 @@ KT_max = 0.55                        # maximum value of the pair momentum k_T
 n_Kphi = 48                          # number of the azimuthal angles for the 
                                      # pair momentum k_T 
                                      # (range is assumed to be from 0 to 2*pi)
-Krap_min = -0.5                      # minimum accept pair momentum rapidity
-Krap_max = 0.5                       # maximum accept pair momentum rapidity
-buffer_rapidity = 5.0                # collect particles with rapidity from 
-                                     # [Krap_min - buffer_rapidity, 
-                                     #  Krap_max + buffer_rapidity]
+HBTrap_min = -0.5                    # minimum accept rapidity for particle pair
+HBTrap_max = 0.5                     # maximum accept rapidity for particle pair
 
 qnpts = 31                           # number of points for momentum q 
                                      # (difference of the pair momentum) for 

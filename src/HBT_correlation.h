@@ -31,8 +31,7 @@ class HBT_correlation {
     int n_KT, n_Kphi;
     double dKT, dKphi;
     double KT_min, KT_max;
-    double Krap_min, Krap_max;
-    double buffer_rapidity;
+    double Krap_min_, Krap_max_;
     std::vector<double> KT_array_, Kphi_array_;
 
     std::vector<double> q_out, q_side, q_long;
