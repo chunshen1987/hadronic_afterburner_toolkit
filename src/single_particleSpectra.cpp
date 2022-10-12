@@ -516,8 +516,12 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                     event_Qn_real_err[iorder] += cos_nphi*cos_nphi;
                     event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
                 }
+
+                if (p_perp < pT_min) continue;
+
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 if (p_idx < 0 || p_idx >= npT) continue;
+
                 event_pT_mean[p_idx]     += p_perp;
                 event_pT_mean_err[p_idx] += p_perp*p_perp;
                 for (int iorder = 0; iorder < order_max; iorder++) {
@@ -2310,12 +2314,17 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
         }
 
+        if (rap_local < rapidity_dis_min) continue;
+
         int rap_idx = static_cast<int>((rap_local - rapidity_dis_min)/drap);
         if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
         double px_local = particle_list->get_particle(event_id, i).px;
         double py_local = particle_list->get_particle(event_id, i).py;
         double p_perp = sqrt(px_local*px_local + py_local*py_local);
+
+        if (p_perp < pT_min) continue;
+
         int pT_idx = static_cast<int>((p_perp - pT_min)/dpT);
         if (pT_idx < 0 || pT_idx >= npT) continue;
 
