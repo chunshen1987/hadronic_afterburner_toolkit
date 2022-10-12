@@ -2394,6 +2394,8 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
         }
 
+        if (rap_local < rapidity_dis_min) continue;
+
         int rap_idx = static_cast<int>((rap_local - rapidity_dis_min)/drap);
         if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
