@@ -455,7 +455,8 @@ def analyze_Smu_pT(hf_, eventList_, outputFolder_):
     f = open(path.join(outputFolder_,
                        "averaged_Smu_pT_{}.txt".format(vorticityType)), "w")
     f.write("# pT  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
-            + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(vorticityType))
+            + "({0}  {0}+SIP(BBPP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
     for ipT in range(len(pT_arr)):
         f.write("%.5e  " % pT_arr[ipT])
         for icol in range(len(filelist)):
@@ -682,7 +683,7 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, vnRef1_, vnRef2_,
                     + "Re{fn(S^z)}  Re{fn(S^z)}_err  "
                     + "Im{fn(S^z)}  Im{fn(S^z)}_err  "
                     + "({0}  {0}+SIP(BBP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
-                                                                    vorticityType))
+                                                                vorticityType))
         f.write("{0}  {1:.5e}  ".format(
             (centrality_cut_list[icen_] + centrality_cut_list[icen_+1])/2.,
              dN_avg))
@@ -777,13 +778,190 @@ def analyze_Smu_y(hf_, eventList_, outputFolder_):
     f = open(path.join(outputFolder_,
                        "averaged_Smu_y_{}.txt".format(vorticityType)), "w")
     f.write("# eta  S^x  S^x_err  S^y  S^y_err  S^z  S^z_err  "
-            + "({0}  {0}+SIP(BBPP)  {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(vorticityType))
+            + "({0}  {0}+SIP(BBPP)  {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
     for iy in range(len(y_arr)):
         f.write("%.5e  " % y_arr[iy])
         for icol in range(len(filelist)):
             f.write("%.5e  %.5e  " % (Sx_avg[icol][iy], Sx_err[icol][iy]))
             f.write("%.5e  %.5e  " % (Sy_avg[icol][iy], Sy_err[icol][iy]))
             f.write("%.5e  %.5e  " % (Sz_avg[icol][iy], Sz_err[icol][iy]))
+        f.write("\n")
+    f.close()
+
+
+def analyze_spin_vn_pTdiff(hf_, eventList_, outputFolder_, vnArr_,
+                           vnRef1_, vnRef2_, iorder_, globalOutputFolder_,
+                           icen_):
+    """
+        This function computes the event-averaged Fourier coefficents of
+        S^mu_n(pT) with respect to the anisotropic flow angle vn.
+
+        iorder_ = 0: phi_n = 0 corresponds to the reaction plane
+    """
+    filelist = ["Smu_dpTdphi_{}_pseudorapidity_3122.dat",
+                "Smu_dpTdphi_{}_pseudorapidity_3122_wSIP_BBPP.dat",
+                "Smu_dpTdphi_{}_pseudorapidity_3122_wSIP_LY.dat",
+                "Smu_dpTdphi_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+
+    vnArr_ = array(vnArr_)
+    vnRef1_ = array(vnRef1_)
+    vnRef2_ = array(vnRef2_)
+
+    NPHI = 48
+    NPT = 30
+    phi_arr = []
+    pT_arr  = []
+    dN_list = []
+    Sx_list = []
+    Sy_list = []
+    Sz_list = []
+    fnSx_list = []
+    fnSy_list = []
+    fnSz_list = []
+    for ifile in filelist:
+        dN_list.append([])
+        Sx_list.append([])
+        Sy_list.append([])
+        Sz_list.append([])
+        fnSx_list.append([])
+        fnSy_list.append([])
+        fnSz_list.append([])
+
+    nev = len(eventList_)
+    for ievent, eventName in enumerate(eventList_):
+        event_group = hf_.get(eventName)
+        for ifile, filename in enumerate(filelist):
+            spin_data = nan_to_num(
+                    event_group.get(filename.format(vorticityType)))
+
+            if ifile == 0:
+                pT_arr  = (spin_data[:, 0].reshape(NPT, NPHI))[:, 0]
+                phi_arr = spin_data[0:NPHI, 1]
+                pT_arr  = pT_arr.reshape(NPT, 1)
+                phi_arr = phi_arr.reshape(1, NPHI)
+
+            dpT  = pT_arr[1, 0] - pT_arr[0, 0]
+            dphi = phi_arr[0, 1] - phi_arr[0, 0]
+
+            dN_list[ifile].append(
+                sum(spin_data[:, 2].reshape(NPT, NPHI), axis=1)*dphi)
+
+            Sx_mat = spin_data[:, 8].reshape(NPT, NPHI)
+            fnSx_list[ifile].append(
+                (     sum(Sx_mat*cos(iorder_*phi_arr), axis=1)*dphi/(2*pi)
+                 + 1j*sum(Sx_mat*sin(iorder_*phi_arr), axis=1)*dphi/(2*pi))
+            )
+            Sy_mat = spin_data[:, 9].reshape(NPT, NPHI)
+            fnSy_list[ifile].append(
+                (     sum(Sy_mat*cos(iorder_*phi_arr), axis=1)*dphi/(2*pi)
+                 + 1j*sum(Sy_mat*sin(iorder_*phi_arr), axis=1)*dphi/(2*pi))
+            )
+            Sz_mat = spin_data[:, 10].reshape(NPT, NPHI)
+            fnSz_list[ifile].append(
+                (     sum(Sz_mat*cos(iorder_*phi_arr), axis=1)*dphi/(2*pi)
+                 + 1j*sum(Sz_mat*sin(iorder_*phi_arr), axis=1)*dphi/(2*pi))
+            )
+
+    QnRef1 = (vnRef1_[:, iorder_+1]).reshape(nev, 1)
+    QnRef2 = (vnRef2_[:, iorder_+1]).reshape(nev, 1)
+
+    fnSx_avg = []; fnSx_err = []
+    fnSy_avg = []; fnSy_err = []
+    fnSz_avg = []; fnSz_err = []
+    for ifile in range(len(filelist)):
+        # compute the error using the jackknife method
+        fnSxArr = array(fnSx_list[ifile])     # dimension: [nev, NPT]
+        fnSyArr = array(fnSy_list[ifile])
+        fnSzArr = array(fnSz_list[ifile])
+
+        fnSxReal = zeros([nev, NPT]); fnSxImag = zeros([nev, NPT])
+        fnSyReal = zeros([nev, NPT]); fnSyImag = zeros([nev, NPT])
+        fnSzReal = zeros([nev, NPT]); fnSzImag = zeros([nev, NPT])
+
+        for iev in range(nev):
+            array_idx = [True]*nev
+            array_idx[iev] = False
+            array_idx = array(array_idx)
+
+            fnSxReal[iev, :] = (
+                real(mean(fnSxArr[array_idx, :]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSxImag[iev, :] = (
+                imag(mean(fnSxArr[array_idx, :]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSyReal[iev, :] = (
+                real(mean(fnSyArr[array_idx, :]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSyImag[iev, :] = (
+                imag(mean(fnSyArr[array_idx, :]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSzReal[iev, :] = (
+                real(mean(fnSzArr[array_idx, :]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+            fnSzImag[iev, :] = (
+                imag(mean(fnSzArr[array_idx, :]*(  conj(QnRef1[array_idx])
+                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
+            )
+
+        fnSx_avg.append(mean(fnSxReal, axis=0) + 1j*mean(fnSxImag, axis=0))
+        fnSx_err.append(
+                sqrt((nev - 1.)/nev*sum((fnSxReal - mean(fnSxReal))**2., axis=0))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSxImag - mean(fnSxImag))**2., axis=0))
+        )
+        fnSy_avg.append(mean(fnSyReal, axis=0) + 1j*mean(fnSyImag, axis=0))
+        fnSy_err.append(
+                sqrt((nev - 1.)/nev*sum((fnSyReal - mean(fnSyReal))**2., axis=0))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSyImag - mean(fnSyImag))**2., axis=0))
+        )
+        fnSz_avg.append(mean(fnSzReal, axis=0) + 1j*mean(fnSzImag, axis=0))
+        fnSz_err.append(
+                sqrt((nev - 1.)/nev*sum((fnSzReal - mean(fnSzReal))**2., axis=0))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSzImag - mean(fnSzImag))**2., axis=0))
+        )
+
+    f = open(path.join(globalOutputFolder_, "f{}_pTdiff_C{}-{}_{}.txt".format(
+        iorder_, int(centrality_cut_list[icen_]),
+        int(centrality_cut_list[icen_+1]), vorticityType)), "w")
+
+    f.write("# pT[GeV]  Nch  Re{fn(S^x)}  Re{fn(S^x)}_err  "
+            + "Im{fn(S^x)}  Im{fn(S^x)}_err  "
+            + "Re{fn(S^y)}  Re{fn(S^y)}_err  "
+            + "Im{fn(S^y)}  Im{fn(S^y)}_err  "
+            + "Re{fn(S^z)}  Re{fn(S^z)}_err  "
+            + "Im{fn(S^z)}  Im{fn(S^z)}_err  "
+            + "({0}  {0}+SIP(BBP) {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
+    dN_avg = mean(dN_list[0], axis=0)
+    for ipT in range(NPT):
+        f.write("{0}  {1:.5e}  ".format(pT_arr[ipT, 0], dN_avg[ipT]))
+        for icol in range(len(filelist)):
+            f.write("{0:.5e}  {1:.5e}  {2:.5e}  {3:.5e}  ".format(
+                                    nan_to_num(real(fnSx_avg[icol][ipT])),
+                                    nan_to_num(real(fnSx_err[icol][ipT])),
+                                    nan_to_num(imag(fnSx_avg[icol][ipT])),
+                                    nan_to_num(imag(fnSx_err[icol][ipT]))))
+            f.write("{0:.5e}  {1:.5e}  {2:.5e}  {3:.5e}  ".format(
+                                    nan_to_num(real(fnSy_avg[icol][ipT])),
+                                    nan_to_num(real(fnSy_err[icol][ipT])),
+                                    nan_to_num(imag(fnSy_avg[icol][ipT])),
+                                    nan_to_num(imag(fnSy_err[icol][ipT]))))
+            f.write("{0:.5e}  {1:.5e}  {2:.5e}  {3:.5e}  ".format(
+                                    nan_to_num(real(fnSz_avg[icol][ipT])),
+                                    nan_to_num(real(fnSz_err[icol][ipT])),
+                                    nan_to_num(imag(fnSz_avg[icol][ipT])),
+                                    nan_to_num(imag(fnSz_err[icol][ipT]))))
         f.write("\n")
     f.close()
 
@@ -831,7 +1009,8 @@ def analyze_Rspin(hf_, eventList_, outputFolder_, pTmin_, pTmax_):
     f = open(path.join(outputFolder_,
                        "averaged_Rspin_{}.txt".format(vorticityType)), "w")
     f.write("# eta  Rspin  Rspin_err "
-            + "({0}  {0}+SIP(BBPP)  {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(vorticityType))
+            + "({0}  {0}+SIP(BBPP)  {0}+SIP(LY)  {0}+SIP+MuBIP(LY))\n".format(
+                                                                vorticityType))
     for iy in range(len(yarr)):
         f.write("%.5e  " % yarr[iy])
         for icol in range(len(filelist)):
@@ -1026,6 +1205,10 @@ for icen in range(len(centrality_cut_list) - 1):
         analyze_Smu_phi(hf, selected_events_list, avg_folder,
                         vn_alice_array, vn_alice_array_ref1,
                         vn_alice_array_ref2, iorder, avg_folder_header, icen)
+        analyze_spin_vn_pTdiff(hf, selected_events_list, avg_folder,
+                               vn_alice_array, vn_alice_array_ref1,
+                               vn_alice_array_ref2, iorder, avg_folder_header,
+                               icen)
     analyze_Rspin(hf, selected_events_list, avg_folder, 0.5, 3.0)
 
     ######################################################################
