@@ -886,49 +886,61 @@ def analyze_spin_vn_pTdiff(hf_, eventList_, outputFolder_, vnArr_,
 
             fnSxReal[iev, :] = (
                 real(mean(fnSxArr[array_idx, :]*(  conj(QnRef1[array_idx])
-                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                                                 + conj(QnRef2[array_idx]))/2.,
+                          axis=0))
                 /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
             )
             fnSxImag[iev, :] = (
                 imag(mean(fnSxArr[array_idx, :]*(  conj(QnRef1[array_idx])
-                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                                                 + conj(QnRef2[array_idx]))/2.,
+                          axis=0))
                 /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
             )
             fnSyReal[iev, :] = (
                 real(mean(fnSyArr[array_idx, :]*(  conj(QnRef1[array_idx])
-                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                                                 + conj(QnRef2[array_idx]))/2.,
+                          axis=0))
                 /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
             )
             fnSyImag[iev, :] = (
                 imag(mean(fnSyArr[array_idx, :]*(  conj(QnRef1[array_idx])
-                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                                                 + conj(QnRef2[array_idx]))/2.,
+                          axis=0))
                 /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
             )
             fnSzReal[iev, :] = (
                 real(mean(fnSzArr[array_idx, :]*(  conj(QnRef1[array_idx])
-                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                                                 + conj(QnRef2[array_idx]))/2.,
+                          axis=0))
                 /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
             )
             fnSzImag[iev, :] = (
                 imag(mean(fnSzArr[array_idx, :]*(  conj(QnRef1[array_idx])
-                                              + conj(QnRef2[array_idx]))/2., axis=0))
+                                                 + conj(QnRef2[array_idx]))/2.,
+                          axis=0))
                 /sqrt(real(mean(QnRef1[array_idx]*conj(QnRef2[array_idx]))))
             )
 
         fnSx_avg.append(mean(fnSxReal, axis=0) + 1j*mean(fnSxImag, axis=0))
         fnSx_err.append(
-                sqrt((nev - 1.)/nev*sum((fnSxReal - mean(fnSxReal))**2., axis=0))
-            +1j*sqrt((nev - 1.)/nev*sum((fnSxImag - mean(fnSxImag))**2., axis=0))
+                sqrt((nev - 1.)/nev*sum((fnSxReal - mean(fnSxReal, axis=0))**2.,
+                                        axis=0))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSxImag - mean(fnSxImag, axis=0))**2.,
+                                        axis=0))
         )
         fnSy_avg.append(mean(fnSyReal, axis=0) + 1j*mean(fnSyImag, axis=0))
         fnSy_err.append(
-                sqrt((nev - 1.)/nev*sum((fnSyReal - mean(fnSyReal))**2., axis=0))
-            +1j*sqrt((nev - 1.)/nev*sum((fnSyImag - mean(fnSyImag))**2., axis=0))
+                sqrt((nev - 1.)/nev*sum((fnSyReal - mean(fnSyReal, axis=0))**2.,
+                                        axis=0))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSyImag - mean(fnSyImag, axis=0))**2.,
+                                        axis=0))
         )
         fnSz_avg.append(mean(fnSzReal, axis=0) + 1j*mean(fnSzImag, axis=0))
         fnSz_err.append(
-                sqrt((nev - 1.)/nev*sum((fnSzReal - mean(fnSzReal))**2., axis=0))
-            +1j*sqrt((nev - 1.)/nev*sum((fnSzImag - mean(fnSzImag))**2., axis=0))
+                sqrt((nev - 1.)/nev*sum((fnSzReal - mean(fnSzReal, axis=0))**2.,
+                                        axis=0))
+            +1j*sqrt((nev - 1.)/nev*sum((fnSzImag - mean(fnSzImag, axis=0))**2.,
+                                        axis=0))
         )
 
     f = open(path.join(globalOutputFolder_, "f{}_pTdiff_C{}-{}_{}.txt".format(
