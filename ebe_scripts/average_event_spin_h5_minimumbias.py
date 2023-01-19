@@ -37,6 +37,7 @@ dNcutList = []
 
 n_order = 7
 vorticityType = "Thermal"
+rapType = "pseudorapidity"
 
 try:
     data_path = path.abspath(argv[1])
@@ -63,11 +64,11 @@ def check_an_event_is_good(h5_event):
     """This function checks the given event contains all required files"""
     required_files_list = [
         'particle_9999_vndata_eta_-0.5_0.5.dat',
-        'particle_9999_vndata_eta_-1_-0.1.dat',
-        'particle_9999_vndata_eta_0.1_1.dat',
-        "Smu_pT_Thermal_pseudorapidity_3122.dat",
-        "Smu_phi_Thermal_pseudorapidity_3122.dat",
-        "Smu_y_Thermal_pseudorapidity_3122.dat",
+        'particle_9999_vndata_eta_-1_-0.5.dat',
+        'particle_9999_vndata_eta_0.5_1.dat',
+        "Smu_pT_Thermal_{}_3122.dat".format(rapType),
+        "Smu_phi_Thermal_{}_3122.dat".format(rapType),
+        "Smu_y_Thermal_{}_3122.dat".format(rapType),
         'particle_211_vndata_diff_y_-0.5_0.5.dat',
         'particle_321_vndata_diff_y_-0.5_0.5.dat',
         'particle_2212_vndata_diff_y_-0.5_0.5.dat',
@@ -252,10 +253,10 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
         pT integated from pT_min, pT_max
         y integrated from -1 to 1
     """
-    filelist = ["Smu_pT_{}_pseudorapidity_3122.dat",
-                "Smu_pT_{}_pseudorapidity_3122_wSIP_BBPP.dat",
-                "Smu_pT_{}_pseudorapidity_3122_wSIP_LY.dat",
-                "Smu_pT_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+    filelist = ["Smu_pT_{}_{}_3122.dat",
+                "Smu_pT_{}_{}_3122_wSIP_BBPP.dat",
+                "Smu_pT_{}_{}_3122_wSIP_LY.dat",
+                "Smu_pT_{}_{}_3122_wMuIP_wSIP_LY.dat"]
 
     pT_arr = []
     dN_list = []
@@ -273,7 +274,7 @@ def analyze_Smu(hf_, eventList_, pTMin_, pTMax_, outputFolder_, icen_,
         event_group = hf_.get(eventName)
         for ifile, filename in enumerate(filelist):
             spin_data = nan_to_num(
-                    event_group.get(filename.format(vorticityType)))
+                    event_group.get(filename.format(vorticityType, rapType)))
 
             if ifile == 0:
                 pT_arr = spin_data[:, 0]
@@ -404,10 +405,10 @@ def analyze_Smu_pT(hf_, eventList_, outputFolder_):
     """
         This function compute the event-averaged S^mu(pT)
     """
-    filelist = ["Smu_pT_{}_pseudorapidity_3122.dat",
-                "Smu_pT_{}_pseudorapidity_3122_wSIP_BBPP.dat",
-                "Smu_pT_{}_pseudorapidity_3122_wSIP_LY.dat",
-                "Smu_pT_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+    filelist = ["Smu_pT_{}_{}_3122.dat",
+                "Smu_pT_{}_{}_3122_wSIP_BBPP.dat",
+                "Smu_pT_{}_{}_3122_wSIP_LY.dat",
+                "Smu_pT_{}_{}_3122_wMuIP_wSIP_LY.dat"]
 
     pT_arr = []
     dN_list = []
@@ -425,7 +426,7 @@ def analyze_Smu_pT(hf_, eventList_, outputFolder_):
         event_group = hf_.get(eventName)
         for ifile, filename in enumerate(filelist):
             spin_data = nan_to_num(
-                    event_group.get(filename.format(vorticityType)))
+                    event_group.get(filename.format(vorticityType, rapType)))
 
             if ifile == 0:
                 pT_arr = spin_data[:, 0]
@@ -475,10 +476,10 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, vnRef1_, vnRef2_,
 
         iorder_ = 0: phi_n = 0 corresponds to the reaction plane
     """
-    filelist = ["Smu_phi_{}_pseudorapidity_3122.dat",
-                "Smu_phi_{}_pseudorapidity_3122_wSIP_BBPP.dat",
-                "Smu_phi_{}_pseudorapidity_3122_wSIP_LY.dat",
-                "Smu_phi_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+    filelist = ["Smu_phi_{}_{}_3122.dat",
+                "Smu_phi_{}_{}_3122_wSIP_BBPP.dat",
+                "Smu_phi_{}_{}_3122_wSIP_LY.dat",
+                "Smu_phi_{}_{}_3122_wMuIP_wSIP_LY.dat"]
 
     vnArr_ = array(vnArr_)
     vnRef1_ = array(vnRef1_)
@@ -513,7 +514,7 @@ def analyze_Smu_phi(hf_, eventList_, outputFolder_, vnArr_, vnRef1_, vnRef2_,
         event_group = hf_.get(eventName)
         for ifile, filename in enumerate(filelist):
             spin_data = nan_to_num(
-                    event_group.get(filename.format(vorticityType)))
+                    event_group.get(filename.format(vorticityType, rapType)))
 
             if ifile == 0:
                 phi_arr = spin_data[:, 0]
@@ -728,10 +729,10 @@ def analyze_Smu_y(hf_, eventList_, outputFolder_):
     """
         This function computes the event-averaged S^mu(y)
     """
-    filelist = ["Smu_y_{}_pseudorapidity_3122.dat",
-                "Smu_y_{}_pseudorapidity_3122_wSIP_BBPP.dat",
-                "Smu_y_{}_pseudorapidity_3122_wSIP_LY.dat",
-                "Smu_y_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+    filelist = ["Smu_y_{}_{}_3122.dat",
+                "Smu_y_{}_{}_3122_wSIP_BBPP.dat",
+                "Smu_y_{}_{}_3122_wSIP_LY.dat",
+                "Smu_y_{}_{}_3122_wMuIP_wSIP_LY.dat"]
 
     y_arr = []
     dN_list = []
@@ -749,7 +750,7 @@ def analyze_Smu_y(hf_, eventList_, outputFolder_):
         event_group = hf_.get(eventName)
         for ifile, filename in enumerate(filelist):
             spin_data = nan_to_num(
-                    event_group.get(filename.format(vorticityType)))
+                    event_group.get(filename.format(vorticityType, rapType)))
             if ifile == 0:
                 y_arr = spin_data[:, 0]
 
@@ -799,10 +800,10 @@ def analyze_spin_vn_pTdiff(hf_, eventList_, outputFolder_, vnArr_,
 
         iorder_ = 0: phi_n = 0 corresponds to the reaction plane
     """
-    filelist = ["Smu_dpTdphi_{}_pseudorapidity_3122.dat",
-                "Smu_dpTdphi_{}_pseudorapidity_3122_wSIP_BBPP.dat",
-                "Smu_dpTdphi_{}_pseudorapidity_3122_wSIP_LY.dat",
-                "Smu_dpTdphi_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+    filelist = ["Smu_dpTdphi_{}_{}_3122.dat",
+                "Smu_dpTdphi_{}_{}_3122_wSIP_BBPP.dat",
+                "Smu_dpTdphi_{}_{}_3122_wSIP_LY.dat",
+                "Smu_dpTdphi_{}_{}_3122_wMuIP_wSIP_LY.dat"]
 
     vnArr_ = array(vnArr_)
     vnRef1_ = array(vnRef1_)
@@ -833,7 +834,7 @@ def analyze_spin_vn_pTdiff(hf_, eventList_, outputFolder_, vnArr_,
         event_group = hf_.get(eventName)
         for ifile, filename in enumerate(filelist):
             spin_data = nan_to_num(
-                    event_group.get(filename.format(vorticityType)))
+                    event_group.get(filename.format(vorticityType, rapType)))
 
             if ifile == 0:
                 pT_arr  = (spin_data[:, 0].reshape(NPT, NPHI))[:, 0]
@@ -982,10 +983,10 @@ def analyze_Rspin(hf_, eventList_, outputFolder_, pTmin_, pTmax_):
     """
         This function computes the event averaged R_spin(pT, y)
     """
-    filelist = ["Rspin_pTy_{}_pseudorapidity_3122.dat",
-                "Rspin_pTy_{}_pseudorapidity_3122_wSIP_BBPP.dat",
-                "Rspin_pTy_{}_pseudorapidity_3122_wSIP_LY.dat",
-                "Rspin_pTy_{}_pseudorapidity_3122_wMuIP_wSIP_LY.dat"]
+    filelist = ["Rspin_pTy_{}_{}_3122.dat",
+                "Rspin_pTy_{}_{}_3122_wSIP_BBPP.dat",
+                "Rspin_pTy_{}_{}_3122_wSIP_LY.dat",
+                "Rspin_pTy_{}_{}_3122_wMuIP_wSIP_LY.dat"]
 
     dNList = []
     RspinList = []
@@ -998,7 +999,7 @@ def analyze_Rspin(hf_, eventList_, outputFolder_, pTmin_, pTmax_):
         event_group = hf_.get(eventName)
         for ifile, filename in enumerate(filelist):
             Rspin_data = nan_to_num(
-                    event_group.get(filename.format(vorticityType)))
+                    event_group.get(filename.format(vorticityType, rapType)))
 
             if ifile == 0:
                 yarr = Rspin_data[:, 0].reshape(-1, 30)[:, 0]
@@ -1084,8 +1085,8 @@ for icen in range(len(centrality_cut_list) - 1):
         continue
 
     vnFileName     = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
-    vnRefFileName1 = 'particle_9999_vndata_diff_eta_0.1_1.dat'
-    vnRefFileName2 = 'particle_9999_vndata_diff_eta_-1_-0.1.dat'
+    vnRefFileName1 = 'particle_9999_vndata_diff_eta_0.5_1.dat'
+    vnRefFileName2 = 'particle_9999_vndata_diff_eta_-1_-0.5.dat'
 
     pT_array = []
     dN_array = []
@@ -1190,8 +1191,8 @@ for icen in range(len(centrality_cut_list) - 1):
         dN_array.append(temp_data[:, 1])
         temp_vn_array = []
         for iorder in range(1, n_order):
-            vn_real = temp_data[:, 6*iorder-3]
-            vn_imag = temp_data[:, 6*iorder-1]
+            vn_real = temp_data[:, 2*iorder+1]
+            vn_imag = temp_data[:, 2*iorder+2]
             vn = vn_real + 1j*vn_imag
             temp_vn_array.append(vn)
         vn_array.append(temp_vn_array)
