@@ -65,8 +65,8 @@ def check_an_event_is_good(h5_event):
     """This function checks the given event contains all required files"""
     required_files_list = [
         'particle_9999_vndata_eta_-0.5_0.5.dat',
-        'particle_9999_vndata_diff_eta_0.1_1.dat',
-        'particle_9999_vndata_diff_eta_-1_-0.1.dat',
+        'particle_9999_vndata_diff_eta_0.5_1.dat',
+        'particle_9999_vndata_diff_eta_-1_-0.5.dat',
         'QGP_2to2_total_Spvn_tot_ypTdiff.dat',
         'QGP_AMYcollinear_Spvn_tot_ypTdiff.dat',
         'HG_rho_spectralfun_Spvn_tot_ypTdiff.dat',
@@ -329,8 +329,8 @@ for icen in range(len(centrality_cut_list) - 1):
     print("processing photon ...")
 
     refFileName0 = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
-    refFileName1 = 'particle_9999_vndata_diff_eta_0.1_1.dat'
-    refFileName2 = 'particle_9999_vndata_diff_eta_-1_-0.1.dat'
+    refFileName1 = 'particle_9999_vndata_diff_eta_0.5_1.dat'
+    refFileName2 = 'particle_9999_vndata_diff_eta_-1_-0.5.dat'
     photonFileList = [
         'QGP_2to2_total_Spvn_tot_ypTdiff.dat',
         'QGP_AMYcollinear_Spvn_tot_ypTdiff.dat',
