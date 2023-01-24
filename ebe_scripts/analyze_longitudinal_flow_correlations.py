@@ -193,7 +193,7 @@ def calculate_rn_eta(eta_array, eta_min, eta_max, dN_array, vn_array,
 
     f = open(outputFileName, 'w')
     f.write("#eta  rn(eta)  rn_err(eta)  rnn(eta)  rnn_err(eta)\n")
-    for ieta in range(len(eta_array)-1):
+    for ieta in range(len(eta_array)):
         f.write("%.10e  " % eta_array[ieta])
         for iorder in range(nQn):
             f.write("%.10e  %.10e  %.10e  %.10e  "

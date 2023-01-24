@@ -114,6 +114,11 @@ void Analysis::FlowAnalysis() {
     // ALICE rapidity cut
     paraRdr.setVal("rap_min", -0.8); paraRdr.setVal("rap_max", 0.8);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    // STAR flow rapidity decorrelation cut
+    paraRdr.setVal("vn_rapidity_dis_pT_min", 0.4);
+    paraRdr.setVal("vn_rapidity_dis_pT_max", 4.0);
+    paraRdr.setVal("rap_min", -1.0); paraRdr.setVal("rap_max", 1.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // CMS default cut
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.3);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);

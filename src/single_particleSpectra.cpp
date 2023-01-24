@@ -2314,9 +2314,10 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
         }
 
-        if (rap_local < rapidity_dis_min) continue;
+        if (rap_local < (rapidity_dis_min - drap/2.)) continue;
 
-        int rap_idx = static_cast<int>((rap_local - rapidity_dis_min)/drap);
+        int rap_idx = static_cast<int>(
+                                (rap_local - rapidity_dis_min)/drap + 0.5);
         if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
         double px_local = particle_list->get_particle(event_id, i).px;
@@ -2403,9 +2404,10 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
         }
 
-        if (rap_local < rapidity_dis_min) continue;
+        if (rap_local < rapidity_dis_min - drap/2.) continue;
 
-        int rap_idx = static_cast<int>((rap_local - rapidity_dis_min)/drap);
+        int rap_idx = static_cast<int>(
+                                (rap_local - rapidity_dis_min)/drap + 0.5);
         if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
         // no pT cut on particle yield and E_T
