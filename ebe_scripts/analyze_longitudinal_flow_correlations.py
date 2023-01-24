@@ -314,8 +314,8 @@ for icen in range(len(centralityCutList) - 1):
             totalN_array.append(temp_data[:, -1])
             temp_vn_array = []
             for iorder in range(1, n_order):
-                vn_real = temp_data[:, 6*iorder-3]
-                vn_imag = temp_data[:, 6*iorder-1]
+                vn_real = temp_data[:, 2*iorder+1]
+                vn_imag = temp_data[:, 2*iorder+2]
                 vn = vn_real + 1j*vn_imag
                 temp_vn_array.append(vn)
             vn_array.append(temp_vn_array)
