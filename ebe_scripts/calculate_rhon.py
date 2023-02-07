@@ -420,7 +420,7 @@ for icen in range(len(centrality_cut_list) - 1):
 
         # first particle yield dN/dy
         if particle_id == '9999':
-            file_name = 'particle_%s_vndata_eta_-0.5_0.5.dat' % particle_id
+            file_name = 'particle_9999_vndata_eta_-0.5_0.5.dat'
         else:
             file_name = 'particle_%s_vndata_y_-0.5_0.5.dat' % particle_id
 
@@ -438,8 +438,8 @@ for icen in range(len(centrality_cut_list) - 1):
 
         # then <pT>, vn, dN/(2pi dy pT dpT), vn{SP}(pT)
         if particle_id == '9999':
-            #file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
-            file_name = 'particle_%s_vndata_diff_eta_-0.8_0.8.dat' % particle_id
+            #file_name = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
+            file_name = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
         else:
             file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
         file_name_ALICE = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
@@ -605,7 +605,7 @@ for icen in range(len(centrality_cut_list) - 1):
                          /sum(pT_interp*(dN_interp+dN_interp_err)))
         mean_pT_lower = (sum(pT_interp**2.*(dN_interp-dN_interp_err))
                          /sum(pT_interp*(dN_interp-dN_interp_err)))
-        mean_pT_err = max(abs(mean_pT_upper - mean_pT), 
+        mean_pT_err = max(abs(mean_pT_upper - mean_pT),
                           abs(mean_pT - mean_pT_lower))
         pT_interp = linspace(0.15, 2.95, 30)
         dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra + 1e-30)))
@@ -615,7 +615,7 @@ for icen in range(len(centrality_cut_list) - 1):
                          /sum(pT_interp*(dN_interp+dN_interp_err)))
         mean_pT_1_lower = (sum(pT_interp**2.*(dN_interp-dN_interp_err))
                          /sum(pT_interp*(dN_interp-dN_interp_err)))
-        mean_pT_1_err = max(abs(mean_pT_1_upper - mean_pT_1), 
+        mean_pT_1_err = max(abs(mean_pT_1_upper - mean_pT_1),
                           abs(mean_pT_1 - mean_pT_1_lower))
 
         ######################################################################
