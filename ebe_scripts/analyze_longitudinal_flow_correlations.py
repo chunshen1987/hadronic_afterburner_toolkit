@@ -1,17 +1,6 @@
 #! /usr/bin/env python3
 """
-     This script performs event averaging for particle 
-     spectra and anisotropic flow coefficients calculated 
-     from event-by-event simulations
-
-     v_n is analyzed up to n = 6
-
-     Format for particle_XXX_vndata.dat file:
-     n_order  real_part  real_part_err  imag_part  imag_part_err
-
-     Format for particle_XXX_vndata_diff.dat file:
-     pT(GeV)  pT_err(GeV)  dN/(2pi dy pT dpT)(GeV^-2)  dN/(2pi dy pT dpT)_err(GeV^-2)
-     vn_real  vn_real_err  vn_imag  vn_imag_err
+     This script performs event-plane decorrelation analysis
 
      All the errors are only statistic errors
 """
@@ -35,9 +24,16 @@ normal = "\033[0m"
 Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
                            60., 70., 80., 90., 100.]
 centralityCutList = Reg_centrality_cut_list
+#centralityCutList = [0, 10, 40, 80]
 
-CentralityFlag = 1   # 1: sort dNch/deta and cut centrality
+# calculate the longitudinal flow decorrelation with ATLAS cut
+#etaMin = 4.0; etaMax = 4.9   # PbPb @ 5.02 TeV
+# calculate the longitudinal flow decorrelation with STAR cut
+etaMin = 2.5; etaMax = 4.0    # AuAu @ 200 GeV
+#etaMin = 2.1; etaMax = 5.1   # AuAu @ 27 GeV
+#etaMin = 3.1; etaMax = 5.1   # RHIC isobar collisions at 200 GeV
 
+# define centrality trigger
 RapidityTrigger = 0  # 0: mid-rapidity [-0.5, 0.5]
                      # 1: PHENIX BBC trigger [-3.9, -3.1]
                      # 2: ALICE V0A trigger [-5.1, -2.8]
@@ -121,7 +117,7 @@ def calculate_rn_eta(eta_array, eta_min, eta_max, dN_array, vn_array,
     """
     nev, neta = dN_array.shape
     dN_array = dN_array.reshape((nev, 1, neta))
-    Qn_array = vn_array
+    Qn_array = dN_array*vn_array
     nQn = Qn_array.shape[1]
 
     # calculate the reference flow vector for every event
@@ -132,8 +128,6 @@ def calculate_rn_eta(eta_array, eta_min, eta_max, dN_array, vn_array,
     Qn_ref1      = []
     Qn_ref2      = []
     for iev in range(nev):
-        dN1_interp = interp(eta_ref1_tmp, eta_array, dN_array[iev, 0, :])
-        dN2_interp = interp(eta_ref2_tmp, eta_array, dN_array[iev, 0, :])
         Qn_ref1_vec = []
         Qn_ref2_vec = []
         for iorder in range(nQn):
@@ -141,10 +135,8 @@ def calculate_rn_eta(eta_array, eta_min, eta_max, dN_array, vn_array,
                                 Qn_array[iev, iorder, :])
             Qn2_interp = interp(eta_ref2_tmp, eta_array,
                                 Qn_array[iev, iorder, :])
-            Qn_ref1_vec.append(sum(dN1_interp*Qn1_interp)
-                               /(sum(dN1_interp) + 1e-15))
-            Qn_ref2_vec.append(sum(dN2_interp*Qn2_interp)
-                               /(sum(dN2_interp) + 1e-15))
+            Qn_ref1_vec.append(sum(Qn1_interp))
+            Qn_ref2_vec.append(sum(Qn2_interp))
         Qn_ref1.append(Qn_ref1_vec)
         Qn_ref2.append(Qn_ref2_vec)
     Qn_ref1 = array(Qn_ref1).reshape((nev, nQn, 1))
@@ -182,12 +174,12 @@ def calculate_rn_eta(eta_array, eta_min, eta_max, dN_array, vn_array,
     for iorder in range(1, 4):
         popt, pcov = curve_fit(LinearFunc, eta_array[idx],
                                rn_mean[iorder, idx],
-                               sigma = rn_err[iorder, idx],
+                               sigma = rn_err[iorder, idx]+1e-8,
                                method = "dogbox")
         rn_slope.append([popt[0], sqrt(pcov[0, 0])])
         popt, pcov = curve_fit(LinearFunc, eta_array[idx],
                                rnn_mean[iorder, idx],
-                               sigma = rnn_err[iorder, idx],
+                               sigma = rnn_err[iorder, idx]+1e-8,
                                method = "dogbox")
         rnn_slope.append([popt[0], sqrt(pcov[0, 0])])
 
@@ -280,7 +272,8 @@ for icen in range(len(centralityCutList) - 1):
 
         # particle rapidity distribution
         if particle_id == '9999':
-            file_name = 'particle_%s_dNdeta_pT_0.2_3.dat' % particle_id
+            #file_name = 'particle_9999_dNdeta_pT_0.2_3.dat'
+            file_name = 'particle_9999_dNdeta_pT_0.4_2.dat'
         else:
             file_name = 'particle_%s_dNdy_pT_0.2_3.dat' % particle_id
 
@@ -348,7 +341,7 @@ for icen in range(len(centralityCutList) - 1):
         output_filename = "{}_rapidity_distribution.dat".format(
                                                     particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
-        if(particle_id == '9999'):
+        if (particle_id == '9999'):
             f.write("#eta  dN/deta  dN/deta_err  vn{2}(eta)  vn{2}(eta)_err"
                     + "  Re{vn}(eta) Re{vn}(eta)_err\n")
         else:
@@ -366,8 +359,6 @@ for icen in range(len(centralityCutList) - 1):
             f.write("\n")
         f.close()
 
-        # calculate the longitudinal flow decorrelation with ATLAS cut
-        etaMin = 4.0; etaMax = 4.9
         output_filename = path.join(avg_folder, "ecc_rn_eta.dat")
         ecc_rnSlope, ecc_rnnSlope = calculate_rn_eta(
                 ecc_eta_arr, etaMin, etaMax, dEdetas_array, eccn_array,
