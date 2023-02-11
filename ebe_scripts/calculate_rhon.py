@@ -19,8 +19,8 @@ PHENIX_cen_list = [20., 40., 60., 88.]               # PHENIX dAu
 STAR_cen_list   = [0., 10., 40., 80]                 # STAR v1
 #centrality_cut_list = (Reg_centrality_cut_list + PHOBOS_cen_list
 #                       + SPS_cen_list + PHENIX_cen_list + STAR_cen_list)
-centrality_cut_list = Reg_centrality_cut_list
-#centrality_cut_list = linspace(0., 100., 21)
+#centrality_cut_list = Reg_centrality_cut_list
+centrality_cut_list = Reg_centrality_cut_list + list(linspace(0., 20., 11))
 
 try:
     data_path = path.abspath(argv[1])
@@ -50,7 +50,7 @@ particle_name_list = ['charged_hadron', 'pion_p', 'kaon_p', 'proton',
                       'Lambda', 'anti_Lambda', 'Xi_m', 'anti_Xi_p',
                       'Omega', 'anti_Omega', 'phi']
 
-n_order = 7
+n_order = 6
 
 
 def calculate_meanpT_inte_vn(pT_low, pT_high, data):
@@ -116,6 +116,18 @@ def calculate_rhon(data_arr):
     hat_delta_v3 = delta_v3 - mean(delta_v3*delta_N)/varN*delta_N
     hat_delta_v4 = delta_v4 - mean(delta_v4*delta_N)/varN*delta_N
 
+
+    varpT = mean(hat_delta_pT**2.)
+    varpTerr = std(hat_delta_pT**2.)/sqrt(nev)
+    varV2 = mean(hat_delta_v2**2.)
+    varV2err = std(hat_delta_v2**2.)/sqrt(nev)
+    covV2pT = mean(hat_delta_v2*hat_delta_pT)
+    covV2pTerr = std(hat_delta_v2*hat_delta_pT)/sqrt(nev)
+    varV3 = mean(hat_delta_v3**2.)
+    varV3err = std(hat_delta_v3**2.)/sqrt(nev)
+    covV3pT = mean(hat_delta_v3*hat_delta_pT)
+    covV3pTerr = std(hat_delta_v3*hat_delta_pT)/sqrt(nev)
+
     # compute the error using jack-knife
     rho2_array = zeros(nev)
     rho3_array = zeros(nev)
@@ -140,7 +152,10 @@ def calculate_rhon(data_arr):
     rho4_mean  = real(mean(rho4_array))
     rho4_err   = real(sqrt((nev - 1.)/nev*sum((rho4_array - rho4_mean)**2.)))
     return(array([meanN, rho2_mean, rho2_err, rho3_mean, rho3_err,
-                  rho4_mean, rho4_err]))
+                  rho4_mean, rho4_err,
+                  varpT, varpTerr, varV2, varV2err, covV2pT, covV2pTerr,
+                  varV3, varV3err, covV3pT, covV3pTerr]))
+
 
 def calculate_rhonm(data_arr):
     """
@@ -357,9 +372,8 @@ dN_dy_mb = -sort(dN_dy_mb)
 
 output_filename = "charged_hadron_meanpT_fluct_ALICE.dat"
 ch_pT_file_alice = open(path.join(avg_folder_header, output_filename), 'w')
-ch_pT_file_alice.write(
-        "# dN/deta  <pT>  <pT>_err  <(delta pT)^2>  <(delta pT)^2>_err  "
-        "<(delta pT)^3>   <(delta pT)^3>_err\n")
+ch_pT_file_alice.write("# dN/deta  <pT>  <(delta pT)^2>/<pT>  "
+                      + "<(delta pT)^3>/<(delta pT)^2>^{3/2}\n")
 output_filename = "charged_hadron_symmetric_cumulants_ALICE.dat"
 ch_SC_file_alice = open(path.join(avg_folder_header, output_filename), 'w')
 ch_SC_file_alice.write(
@@ -372,6 +386,29 @@ ch_rho_file_alice.write(
 output_filename = "charged_hadron_rho_nm_ALICE.dat"
 ch_rho_nm_file_alice = open(path.join(avg_folder_header, output_filename), 'w')
 ch_rho_nm_file_alice.write(
+        "# dN/deta  rho_23  rho_23_err  rho_24  rho_24_err\n")
+output_filename = "charged_hadron_rho_nm_ALICE.dat"
+ch_rho_nm_file_alice = open(path.join(avg_folder_header, output_filename), 'w')
+ch_rho_nm_file_alice.write(
+        "# dN/deta  rho_23  rho_23_err  rho_24  rho_24_err\n")
+output_filename = "charged_hadron_meanpT_fluct_STAR.dat"
+ch_pT_file_star = open(path.join(avg_folder_header, output_filename), 'w')
+ch_pT_file_star.write("# dN/deta  <pT>  <(delta pT)^2>/<pT>  "
+                      + "<(delta pT)^3>/<(delta pT)^2>^{3/2}\n")
+output_filename = "charged_hadron_symmetric_cumulants_STAR.dat"
+ch_SC_file_star = open(path.join(avg_folder_header, output_filename), 'w')
+ch_SC_file_star.write(
+        "# dN/deta  SC{2,3}  SC{2,3}_err  SC{2,4}  SC{2,4}_err "
+        + "NSC{2,3}  NSC{2,3}_err  NSC{2,4}  NSC{2,4}_err\n")
+output_filename = "charged_hadron_rho_n_STAR.dat"
+ch_rho_file_star = open(path.join(avg_folder_header, output_filename), 'w')
+ch_rho_file_star.write(
+        "# dN/deta  rho_2  rho_2_err  rho_3  rho_3_err  rho_4  rho_4_err  "
+        + "<(delta pT)^2>  <(delta pT)^2>_err  Var(vn^2)  Var(vn^2)_err  "
+        + "cov(vn^2, pT)  cov(vn^2, pT)_err\n")
+output_filename = "charged_hadron_rho_nm_STAR.dat"
+ch_rho_nm_file_star = open(path.join(avg_folder_header, output_filename), 'w')
+ch_rho_nm_file_star.write(
         "# dN/deta  rho_23  rho_23_err  rho_24  rho_24_err\n")
 output_filename = "charged_hadron_rho_n_ATLAS.dat"
 ch_rho_file_atlas = open(path.join(avg_folder_header, output_filename), 'w')
@@ -439,13 +476,14 @@ for icen in range(len(centrality_cut_list) - 1):
         # then <pT>, vn, dN/(2pi dy pT dpT), vn{SP}(pT)
         if particle_id == '9999':
             #file_name = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
-            file_name = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
+            #file_name = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
+            file_name = 'particle_9999_vndata_diff_eta_-1_1.dat'
         else:
             file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
         file_name_ALICE = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
         file_name_ATLAS = 'particle_9999_vndata_diff_eta_-2.5_2.5.dat'
-        ecc_filename = "eccentricities_evo_eta_-0.5_0.5.dat"
-        eccp_filename = "momentum_anisotropy_eta_-0.5_0.5.dat"
+        ecc_filename = "eccentricities_evo_ed_tau_0.4.dat"
+        eccp_filename = "momentum_anisotropy_tau_0.4.dat"
 
         pT_array = []
         dN_array = []
@@ -453,7 +491,10 @@ for icen in range(len(centrality_cut_list) - 1):
         dN_array_ALICE = []
         pT_array_ATLAS = []
         dN_array_ATLAS = []
+        pT_array_STAR = []
+        dN_array_STAR = []
         vn_alice_array = []
+        vn_star_array = []
         vn_atlas_array = []
         eccn_array = []
         eccp2_array = []
@@ -468,9 +509,9 @@ for icen in range(len(centrality_cut_list) - 1):
             pT_event = temp_data[:, 0]
 
             init_eccn = [
-                temp_ecc_data[0, 2*i-1] + 1j*temp_ecc_data[0, 2*i] for i in range(1, n_order)]
+                temp_ecc_data[2*i] + 1j*temp_ecc_data[2*i+1] for i in range(1, n_order)]
             init_eccp = [
-                temp_eccp_data[0, 2*i-1] + 1j*temp_eccp_data[0, 2*i] for i in range(1, 4)]
+                temp_eccp_data[2*i-1] + 1j*temp_eccp_data[2*i] for i in range(1, 4)]
 
             # record particle spectra
             pT_array.append(pT_event)
@@ -486,6 +527,14 @@ for icen in range(len(centrality_cut_list) - 1):
             temp_data_ALICE = nan_to_num(temp_data_ALICE)
             pT_array_ALICE.append(temp_data_ALICE[:, 0])
             dN_array_ALICE.append(temp_data_ALICE[:, 2])
+            temp_data_STAR = event_group.get(file_name_ALICE)
+            temp_data_STAR = nan_to_num(temp_data_ALICE)
+            pT_array_STAR.append(temp_data_STAR[:, 0])
+            dN_array_STAR.append(temp_data_STAR[:, 2])
+
+            # vn with STAR pT cut
+            temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0, temp_data)
+            vn_star_array.append(temp_vn_array)
 
             # vn with ALICE pT cut
             temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0, temp_data)
@@ -500,6 +549,7 @@ for icen in range(len(centrality_cut_list) - 1):
         pT_array = array(pT_array)
 
         vn_alice_array  = array(vn_alice_array)
+        vn_star_array  = array(vn_star_array)
         vn_atlas_array  = array(vn_atlas_array)
 
         rhon_atlas = calculate_rhon(vn_atlas_array)
@@ -508,6 +558,10 @@ for icen in range(len(centrality_cut_list) - 1):
         rhonm_alice = calculate_rhonm(vn_alice_array)
         SC_alice = calculate_symmetric_cumulant(vn_alice_array)
         meanpT_Cn_alice = calculate_meanpT_moments(vn_alice_array)
+        rhon_star = calculate_rhon(vn_star_array)
+        rhonm_star = calculate_rhonm(vn_star_array)
+        SC_star = calculate_symmetric_cumulant(vn_star_array)
+        meanpT_Cn_star = calculate_meanpT_moments(vn_star_array)
 
         n_pT = len(pT_array[0, :])
         pT_spectra = zeros([n_pT])
@@ -524,7 +578,7 @@ for icen in range(len(centrality_cut_list) - 1):
 
         # compute mean pT event-by-event
         sigma_pT, sigma_pT_err = calculate_meanpT_fluc(dN_array, pT_array,
-                                                       0.15, 2.0)
+                                                       0.20, 2.0)
 
         if particle_id == "9999":
             # calculate dNch (pT > 0.4 |eta| < 2.5) for ATLAS
@@ -666,12 +720,24 @@ for icen in range(len(centrality_cut_list) - 1):
             for val in rhonm_atlas:
                 ch_rho_nm_file_atlas.write("%.5e  " % val)
             ch_rho_nm_file_atlas.write("\n")
+            for val in rhon_star:
+                ch_rho_file_star.write("%.5e  " % val)
+            ch_rho_file_star.write("\n")
+            for val in rhonm_star:
+                ch_rho_nm_file_star.write("%.5e  " % val)
+            ch_rho_nm_file_star.write("\n")
             for val in SC_alice:
                 ch_SC_file_alice.write("%.5e  " % val)
             ch_SC_file_alice.write("\n")
             for val in meanpT_Cn_alice:
                 ch_pT_file_alice.write("%.5e  " % val)
             ch_pT_file_alice.write("\n")
+            for val in SC_star:
+                ch_SC_file_star.write("%.5e  " % val)
+            ch_SC_file_star.write("\n")
+            for val in meanpT_Cn_star:
+                ch_pT_file_star.write("%.5e  " % val)
+            ch_pT_file_star.write("\n")
 
         output_filename = ("%s_integrated_observables.dat"
                            % particle_name_list[ipart])
@@ -718,5 +784,9 @@ ch_rho_file_alice.close()
 ch_rho_nm_file_alice.close()
 ch_SC_file_alice.close()
 ch_pT_file_alice.close()
+ch_rho_file_star.close()
+ch_rho_nm_file_star.close()
+ch_SC_file_star.close()
+ch_pT_file_star.close()
 print("Analysis is done.")
 
