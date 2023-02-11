@@ -29,9 +29,9 @@ centralityCutList = Reg_centrality_cut_list
 # calculate the longitudinal flow decorrelation with ATLAS cut
 #etaMin = 4.0; etaMax = 4.9   # PbPb @ 5.02 TeV
 # calculate the longitudinal flow decorrelation with STAR cut
-etaMin = 2.5; etaMax = 4.0    # AuAu @ 200 GeV
+#etaMin = 2.5; etaMax = 4.0    # AuAu @ 200 GeV
 #etaMin = 2.1; etaMax = 5.1   # AuAu @ 27 GeV
-#etaMin = 3.1; etaMax = 5.1   # RHIC isobar collisions at 200 GeV
+etaMin = 3.1; etaMax = 5.1   # RHIC isobar collisions at 200 GeV
 
 # define centrality trigger
 RapidityTrigger = 0  # 0: mid-rapidity [-0.5, 0.5]
@@ -52,7 +52,8 @@ try:
     data_name = data_path.split("/")[-1]
     resultsFolderName = data_name.split(".h5")[0]
     avg_folder_header = path.join(
-        path.abspath(argv[2]), "{}_{}".format(resultsFolderName, RapTrigLabel))
+        path.abspath(argv[2]), "{}_{}_etaRef_{}_{}".format(
+            resultsFolderName, RapTrigLabel, etaMin, etaMax))
     print("output folder: %s" % avg_folder_header)
     if path.isdir(avg_folder_header):
         print("folder %s already exists!" % avg_folder_header)
