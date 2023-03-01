@@ -109,7 +109,6 @@ symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 n_order = 7
 if FastFlag:
     particle_list = particle_list[0:1]
-    n_order = 5
 
 
 def check_an_event_is_good(h5_event):
@@ -1158,7 +1157,7 @@ def calculate_symmetric_cumulant(vn_data_array, outputFileName):
     """
     vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
-    dN = real(vn_data_array[:, -1])
+    dN = real(vn_data_array[:, 0])
     Q1 = dN*vn_data_array[:, 1]
     Q2 = dN*vn_data_array[:, 2]
     Q3 = dN*vn_data_array[:, 3]
