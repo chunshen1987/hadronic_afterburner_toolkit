@@ -262,7 +262,7 @@ def calculate_chi_523(vn_array):
         chi_523_JK[iev] = num_JK/den_JK
         v523_JK[iev] = nan_to_num(num_JK/sqrt(den_JK))
         rho523_JK[iev] = v523_JK[iev]/v5_Psi5
-        v5L_JK[iev] = nan_to_num(v5_Psi5**2. - v523_JK[iev]**2.)
+        v5L_JK[iev] = nan_to_num(sqrt(v5_Psi5**2. - v523_JK[iev]**2.))
 
     chi_523_mean = mean(chi_523_JK)
     chi_523_err = sqrt((nev - 1.)/nev*sum((chi_523_JK - chi_523_mean)**2.))
