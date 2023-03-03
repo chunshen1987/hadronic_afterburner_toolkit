@@ -1,5 +1,5 @@
 echo_level = 9                # control the mount of print messages
-read_in_mode = 2              # mode for reading in particle information
+read_in_mode = 8              # mode for reading in particle information
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from zipped UrQMD outputs
