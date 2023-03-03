@@ -55,7 +55,7 @@ RapidityTrigger = 0  # 0: mid-rapidity [-0.5, 0.5]
                      # 1: PHENIX BBC trigger [-3.9, -3.1]
                      # 2: ALICE V0A trigger [-5.1, -2.8]
                      # 3: ATLAS forward trigger [-4.9, -3.1]
-FastFlag = False     # True: only analyze a subset of charged hadron obs.
+FastFlag = True      # True: only analyze a subset of charged hadron obs.
                      # False: full analysis
 
 RapTrigLabel = "CL1"
@@ -102,13 +102,14 @@ particle_name_list = ['charged_hadron', 'pion_p', 'kaon_p', 'proton',
 nonlinear_reponse_correlator_name_list = [
                 'v4_L', 'v4(Psi2)', 'rho_422', 'chi_422',
                 'v5_L', 'v5(Psi23)', 'rho_523', 'chi_523',
-                'v6_L', 'v6(Psi2)', 'v6(Psi3)',
-                'rho_6222', 'rho_633', 'chi_6222', 'chi_633']
+                'v6(Psi2)', 'v6(Psi3)', 'v6(Psi24)',
+                'rho_6222', 'rho_633', 'chi_6222', 'chi_633',
+                'v7(Psi23)', 'rho_7223', 'chi_7223']
 symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 
-n_order = 7
+n_order = 9
 if FastFlag:
-    particle_list = particle_list[0:1]
+    particle_list = particle_list[0:4]
 
 
 def check_an_event_is_good(h5_event):
@@ -164,11 +165,18 @@ def calcualte_inte_vn(pT_low, pT_high, data):
 
 
 def calculate_chi_422(vn_array):
-    """chi_422 = Re(v4*conj(v2)**2.)/|v2|^4"""
+    """chi_422 = Re(v4*conj(v2)**2.)/|v2|^4
+       v_422 = Re(v4*conj(v2)**2.)/sqrt(|v2|^4)
+       rho_422 = v_422/v4(Psi4)
+       v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)
+    """
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q4_2 = abs(Q4)**2. - dN
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
@@ -179,28 +187,52 @@ def calculate_chi_422(vn_array):
     chi_422_num = Q4*conj(Q2)*conj(Q2) - 2.*Q2*conj(Q2) - Q4*conj(Q4) + 2.*dN
 
     chi_422_JK = zeros(nev)
+    v422_JK = zeros(nev)
+    rho422_JK = zeros(nev)
+    v4L_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
-        chi_422_JK[iev] = (
-            real(mean(chi_422_num[array_idx]))/mean(N3_weight[array_idx])
-            /(real(mean(Q2_4[array_idx]))/mean(N4_weight[array_idx])))
+        num_JK = real(mean(chi_422_num[array_idx]))/mean(N3_weight[array_idx])
+        den_JK = real(mean(Q2_4[array_idx]))/mean(N4_weight[array_idx])
+
+        v4_Psi4 = nan_to_num(sqrt(mean(Q4_2[array_idx])
+                                  /mean(N2_weight[array_idx])))
+
+        chi_422_JK[iev] = num_JK/den_JK
+        v422_JK[iev] = nan_to_num(num_JK/sqrt(den_JK))
+        rho422_JK[iev] = v422_JK[iev]/v4_Psi4
+        v4L_JK[iev] = nan_to_num(sqrt(v4_Psi4**2 - v422_JK[iev]**2.))
 
     chi_422_mean = mean(chi_422_JK)
     chi_422_err = sqrt((nev - 1.)/nev*sum((chi_422_JK - chi_422_mean)**2.))
-    return(chi_422_mean, chi_422_err)
+    v422_mean = mean(v422_JK)
+    v422_err = sqrt((nev - 1.)/nev*sum((v422_JK - v422_mean)**2.))
+    rho422_mean = mean(rho422_JK)
+    rho422_err = sqrt((nev - 1.)/nev*sum((rho422_JK - rho422_mean)**2.))
+    v4L_mean = mean(v4L_JK)
+    v4L_err = sqrt((nev - 1.)/nev*sum((v4L_JK - v4L_mean)**2.))
+    return(v4L_mean, v4L_err, v422_mean, v422_err, rho422_mean, rho422_err,
+           chi_422_mean, chi_422_err)
 
 
 def calculate_chi_523(vn_array):
-    """chi_523 = Re(v5*conj(v2*v3))/|v2|^2/|v3|^2"""
+    """chi_523 = Re(v5*conj(v2*v3))/|v2|^2/|v3|^2
+       v_523 = Re(v5*conj(v2)*conj(v3))/sqrt(|v2|^2*|v3|^2)
+       rho_523 = v_523/v5(Psi5)
+       v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)
+    """
     dN = real(vn_array[:, 0])
     Q1 = dN*vn_array[:, 1]
     Q2 = dN*vn_array[:, 2]
     Q3 = dN*vn_array[:, 3]
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q5_2 = abs(Q5)**2. - dN
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
@@ -213,24 +245,49 @@ def calculate_chi_523(vn_array):
                    - Q5*conj(Q5) + 2.*dN)
 
     chi_523_JK = zeros(nev)
+    v523_JK = zeros(nev)
+    rho523_JK = zeros(nev)
+    v5L_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
-        chi_523_JK[iev] = (
-            real(mean(chi_523_num[array_idx]))/mean(N3_weight[array_idx])
-            /(real(mean(Q_32[array_idx]))/mean(N4_weight[array_idx])))
+        num_JK = real(mean(chi_523_num[array_idx]))/mean(N3_weight[array_idx])
+        den_JK = real(mean(Q_32[array_idx]))/mean(N4_weight[array_idx])
+
+        v5_Psi5 = nan_to_num(sqrt(mean(Q5_2[array_idx])
+                             /mean(N2_weight[array_idx])))
+
+        chi_523_JK[iev] = num_JK/den_JK
+        v523_JK[iev] = nan_to_num(num_JK/sqrt(den_JK))
+        rho523_JK[iev] = v523_JK[iev]/v5_Psi5
+        v5L_JK[iev] = nan_to_num(v5_Psi5**2. - v523_JK[iev]**2.)
 
     chi_523_mean = mean(chi_523_JK)
     chi_523_err = sqrt((nev - 1.)/nev*sum((chi_523_JK - chi_523_mean)**2.))
-    return(chi_523_mean, chi_523_err)
+    v523_mean = mean(v523_JK)
+    v523_err = sqrt((nev - 1.)/nev*sum((v523_JK - v523_mean)**2.))
+    rho523_mean = mean(rho523_JK)
+    rho523_err = sqrt((nev - 1.)/nev*sum((rho523_JK - rho523_mean)**2.))
+    v5L_mean = mean(v5L_JK)
+    v5L_err = sqrt((nev - 1.)/nev*sum((v5L_JK - v5L_mean)**2.))
+    return(v5L_mean, v5L_err, v523_mean, v523_err, rho523_mean, rho523_err,
+           chi_523_mean, chi_523_err)
 
 
 def calculate_chi_6222(vn_array):
-    """chi_6222 = Re(v6*conj(v2)**3.)/|v2|^6"""
+    """chi_6222 = Re(v6*conj(v2)**3.)/|v2|^6
+       chi_633 = Re(v6*conj(v3)**2.)/|v3|^4
+       v6222 = Re(v6*conj(v2)**3.)/sqrt(|v2|^6)
+       v633 = Re(v6*conj(v3)**2.)/sqrt(|v3|^4)
+       v624 = Re(v6*conj(v2)*conj(v4).)/sqrt(|v2|^2|v4|^2)
+       rho_6222 = v6(Psi2)/v6(Psi6)
+       rho_633 = v6(Psi3)/v6(Psi6)
+    """
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
+    Q3 = dN*vn_array[:, 3]
     Q4 = dN*vn_array[:, 4]
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
@@ -247,255 +304,127 @@ def calculate_chi_6222(vn_array):
             - 6.*dN*(dN - 4.)*(dN - 5.))
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
+             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
+             + 2*dN*(dN - 3.))
+    Q_42 = ((abs(Q2)**2.)*(abs(Q4)**2.) - 2.*real(Q6*conj(Q2)*conj(Q4))
+        - 2.*real(Q4*conj(Q2)*conj(Q2)) + abs(Q6)**2. + abs(Q2)**2.
+        - (dN - 4.)*(abs(Q2)**2. + abs(Q4)**2.) + dN*(dN - 6.)
+    )
     chi_6222_num = (Q6*conj(Q2)*conj(Q2)*conj(Q2) - 3.*Q6*conj(Q4)*conj(Q2)
                     - 3.*Q4*conj(Q2)*conj(Q2) + 2.*Q6*conj(Q6) + 6.*Q2*conj(Q2)
                     + 3.*Q4*conj(Q4) - 6.*dN)
 
+    N3_weight = dN*(dN - 1.)*(dN - 2.)
+    chi_633_num = Q6*conj(Q3)*conj(Q3) - 2.*Q3*conj(Q3) - Q6*conj(Q6) + 2.*dN
+    v624_num = (Q6*conj(Q2)*conj(Q4) - Q4*conj(Q4) - Q2*conj(Q2)
+                - Q6*conj(Q6) + 2.*dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q6_2 = abs(Q6)**2. - dN
+
     chi_6222_JK = zeros(nev)
+    chi_633_JK = zeros(nev)
+    v6222_JK = zeros(nev)
+    v633_JK = zeros(nev)
+    rho6222_JK = zeros(nev)
+    rho633_JK = zeros(nev)
+    v624_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
-        chi_6222_JK[iev] = (
-            real(mean(chi_6222_num[array_idx]))/mean(N4_weight[array_idx])
-            /(real(mean(Q2_6[array_idx]))/mean(N6_weight[array_idx])))
+        num_JK1 = (real(mean(chi_6222_num[array_idx]))
+                   /mean(N4_weight[array_idx]))
+        den_JK1 = real(mean(Q2_6[array_idx]))/mean(N6_weight[array_idx])
+        num_JK2 = real(mean(chi_633_num[array_idx]))/mean(N3_weight[array_idx])
+        den_JK2 = real(mean(Q3_4[array_idx]))/mean(N4_weight[array_idx])
+        v6_Psi6 = nan_to_num(sqrt(mean(Q6_2[array_idx])
+                             /mean(N2_weight[array_idx])))
+
+        chi_6222_JK[iev] = num_JK1/den_JK1
+        v6222_JK[iev] = nan_to_num(num_JK1/sqrt(den_JK1))
+        rho6222_JK[iev] = nan_to_num(v6222_JK[iev]/v6_Psi6)
+        chi_633_JK[iev] = num_JK2/den_JK2
+        v633_JK[iev] = nan_to_num(num_JK2/sqrt(den_JK2))
+        rho633_JK[iev] = nan_to_num(v633_JK[iev]/v6_Psi6)
+
+        v624_JK[iev] = (
+            real(mean(v624_num[array_idx]))/mean(N3_weight[array_idx])
+            /sqrt(real(mean(Q_42[array_idx]))/mean(N4_weight[array_idx])))
 
     chi_6222_mean = mean(chi_6222_JK)
     chi_6222_err = sqrt((nev - 1.)/nev*sum((chi_6222_JK - chi_6222_mean)**2.))
-    return(chi_6222_mean, chi_6222_err)
-
-
-def calculate_chi_633(vn_array):
-    """chi_633 = Re(v6*conj(v3)**2.)/|v3|^4"""
-    dN = real(vn_array[:, 0])
-    Q3 = dN*vn_array[:, 3]
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
-             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
-             + 2*dN*(dN - 3.))
-
-    N3_weight = dN*(dN - 1.)*(dN - 2.)
-    chi_633_num = Q6*conj(Q3)*conj(Q3) - 2.*Q3*conj(Q3) - Q6*conj(Q6) + 2.*dN
-
-    chi_633_JK = zeros(nev)
-    for iev in range(nev):
-        array_idx = [True]*nev
-        array_idx[iev] = False
-        array_idx = array(array_idx)
-
-        chi_633_JK[iev] = (
-            real(mean(chi_633_num[array_idx]))/mean(N3_weight[array_idx])
-            /(real(mean(Q3_4[array_idx]))/mean(N4_weight[array_idx])))
-
     chi_633_mean = mean(chi_633_JK)
     chi_633_err = sqrt((nev - 1.)/nev*sum((chi_633_JK - chi_633_mean)**2.))
-    return(chi_633_mean, chi_633_err)
+    v6222_mean = mean(v6222_JK)
+    v6222_err = sqrt((nev - 1.)/nev*sum((v6222_JK - v6222_mean)**2.))
+    v633_mean = mean(v633_JK)
+    v633_err = sqrt((nev - 1.)/nev*sum((v633_JK - v633_mean)**2.))
+    v624_mean = mean(v624_JK)
+    v624_err = sqrt((nev - 1.)/nev*sum((v624_JK - v624_mean)**2.))
+    rho6222_mean = mean(rho6222_JK)
+    rho6222_err = sqrt((nev - 1.)/nev*sum((rho6222_JK - rho6222_mean)**2.))
+    rho633_mean = mean(rho633_JK)
+    rho633_err = sqrt((nev - 1.)/nev*sum((rho633_JK - rho633_mean)**2.))
+    return(v6222_mean, v6222_err, v633_mean, v633_err, v624_mean, v624_err,
+           rho6222_mean, rho6222_err, rho633_mean, rho633_err,
+           chi_6222_mean, chi_6222_err, chi_633_mean, chi_633_err)
 
 
-def calculate_v4_Psi2(chi_422, chi_422_err, vn_array):
-    """v4(Psi2) = chi_422*sqrt(<abs(V2)**4>)"""
+def calculate_chi_7223(vn_array):
+    """chi_7223 = Re(v7*conj(v2*v2*v3))/|v2|^4/|v3|^2
+    """
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
+    Q3 = dN*vn_array[:, 3]
     Q4 = dN*vn_array[:, 4]
+    Q5 = dN*vn_array[:, 5]
+    Q7 = dN*vn_array[:, 7]
     nev = len(dN)
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q_7223 = (Q7*conj(Q2)*conj(Q2)*conj(Q3) - 2.*Q5*conj(Q2)*conj(Q3)
+              - Q4*conj(Q2)*conj(Q2) - Q7*conj(Q4)*conj(Q3)
+              - 2.*Q7*conj(Q2)*conj(Q5)
+              + 2*(abs(Q7)**2. + abs(Q5)**2 + abs(Q3)**2) + 4*abs(Q2)**2
+              + abs(Q4)**2 - 6*dN
+    )
     Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
              - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
              + 2*dN*(dN - 3.))
 
-    v2_factor = sqrt(mean(Q2_4)/mean(N4_weight))
-    v2_factor_err = std(Q2_4)/mean(N4_weight)/(2.*v2_factor)/sqrt(nev)
-
-    v4_Psi2 = chi_422*v2_factor
-    v4_Psi2_err = sqrt((chi_422_err*v2_factor)**2.
-                       + (chi_422*v2_factor_err)**2.)
-    return(v4_Psi2, v4_Psi2_err)
-
-
-def calculate_v5_Psi23(chi_523, chi_523_err, vn_array):
-    """v5(Psi23) = chi_523*sqrt(<abs(V2)**2*abs(V3)**2>)"""
-    dN = real(vn_array[:, 0])
-    Q1 = dN*vn_array[:, 1]
-    Q2 = dN*vn_array[:, 2]
-    Q3 = dN*vn_array[:, 3]
-    Q5 = dN*vn_array[:, 5]
-    nev = len(dN)
-
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
-        - 2.*real(Q3*conj(Q1)*conj(Q2)) + abs(Q5)**2. + abs(Q1)**2.
-        - (dN - 4.)*(abs(Q2)**2. + abs(Q3)**2.) + dN*(dN - 6.)
-    )
-
-    v23_factor = sqrt(mean(Q_32)/mean(N4_weight))
-    v23_factor_err = std(Q_32)/mean(N4_weight)/(2.*v23_factor)/sqrt(nev)
-
-    v5_Psi23 = chi_523*v23_factor
-    v5_Psi23_err = sqrt((chi_523_err*v23_factor)**2.
-                        + (chi_523*v23_factor_err)**2.)
-    return(v5_Psi23, v5_Psi23_err)
-
-
-def calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array):
-    """v6(Psi2) = chi_6222*sqrt(<abs(V2)**6>)"""
-    dN = real(vn_array[:, 0])
-    Q2 = dN*vn_array[:, 2]
-    Q4 = dN*vn_array[:, 4]
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
-    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
-            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
-            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
-            - 12.*real(Q6*conj(Q4)*conj(Q2))
-            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
-            + 4.*(abs(Q6)**2.)
-            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
-            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
-            - 6.*dN*(dN - 4.)*(dN - 5.))
-
-    v2_factor = sqrt(mean(Q2_6)/mean(N6_weight))
-    v2_factor_err = std(Q2_6)/mean(N6_weight)/(2.*v2_factor)/sqrt(nev)
-
-    v6_Psi2 = chi_6222*v2_factor
-    v6_Psi2_err = sqrt((chi_6222_err*v2_factor)**2.
-                        + (chi_6222*v2_factor_err)**2.)
-    return(v6_Psi2, v6_Psi2_err)
-
-
-def calculate_v6_Psi3(chi_633, chi_633_err, vn_array):
-    """v6(Psi3) = chi_633*sqrt(<abs(V3)**4>)"""
-    dN = real(vn_array[:, 0])
-    Q3 = dN*vn_array[:, 3]
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
-             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
-             + 2*dN*(dN - 3.))
-
-    v3_factor = sqrt(mean(Q3_4)/mean(N4_weight))
-    v3_factor_err = std(Q3_4)/mean(N4_weight)/(2.*v3_factor)/sqrt(nev)
-
-    v6_Psi3 = chi_633*v3_factor
-    v6_Psi3_err = sqrt((chi_633_err*v3_factor)**2.
-                        + (chi_633*v3_factor_err)**2.)
-    return(v6_Psi3, v6_Psi3_err)
-
-
-def calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array):
-    """rho_422 = v4(Psi2)/v4(Psi4)"""
-    dN = real(vn_array[:, 0])
-    Q4 = dN*vn_array[:, 4]
-    nev = len(dN)
-
     N2_weight = dN*(dN - 1.)
-    Q4_2 = abs(Q4)**2. - dN
+    Q3_2 = abs(Q3)**2. - dN
+    Q7_2 = abs(Q7)**2. - dN
 
-    v4_Psi4 = sqrt(mean(Q4_2)/mean(N2_weight))
-    v4_Psi4_err = std(Q4_2)/mean(N2_weight)/(2.*v4_Psi4)/sqrt(nev)
+    chi_7223_JK = zeros(nev)
+    v7223_JK = zeros(nev)
+    rho7223_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+        array_idx = array(array_idx)
 
-    rho_422 = v4_Psi2/v4_Psi4
-    rho_422_err = sqrt((v4_Psi2_err/v4_Psi4)**2.
-                       + (v4_Psi2*v4_Psi4_err/v4_Psi4**2.)**2.)
-    return(rho_422, rho_422_err)
+        num_JK = real(mean(Q_7223[array_idx]))/mean(N4_weight[array_idx])
+        den_JK = real(mean(Q2_4[array_idx]*Q3_2[array_idx])
+                      /mean(N4_weight[array_idx]*N2_weight[array_idx]))
+        v7_Psi7 = nan_to_num(sqrt(mean(Q7_2[array_idx])
+                             /mean(N2_weight[array_idx])))
 
+        chi_7223_JK[iev] = num_JK/den_JK
+        v7223_JK[iev] = nan_to_num(num_JK/sqrt(den_JK))
+        rho7223_JK[iev] = nan_to_num(v7223_JK[iev]/v7_Psi7)
 
-def calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array):
-    """rho_523 = v5(Psi23)/v5(Psi5)"""
-    dN = real(vn_array[:, 0])
-    Q5 = dN*vn_array[:, 5]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q5_2 = abs(Q5)**2. - dN
-
-    v5_Psi5 = sqrt(mean(Q5_2)/mean(N2_weight))
-    v5_Psi5_err = std(Q5_2)/mean(N2_weight)/(2.*v5_Psi5)/sqrt(nev)
-
-    rho_523 = v5_Psi23/v5_Psi5
-    rho_523_err = sqrt((v5_Psi23_err/v5_Psi5)**2.
-                       + (v5_Psi23*v5_Psi5_err/v5_Psi5**2.)**2.)
-    return(rho_523, rho_523_err)
-
-
-def calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array):
-    """rho_6222 = v6(Psi2)/v6(Psi6)"""
-    dN = real(vn_array[:, 0])
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q6_2 = abs(Q6)**2. - dN
-
-    v6_Psi6 = nan_to_num(sqrt(mean(Q6_2)/mean(N2_weight)))
-    v6_Psi6_err = nan_to_num(std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev))
-
-    rho_6222 = v6_Psi2/v6_Psi6
-    rho_6222_err = sqrt((v6_Psi2_err/v6_Psi6)**2.
-                        + (v6_Psi2*v6_Psi6_err/v6_Psi6**2.)**2.)
-    return(rho_6222, rho_6222_err)
-
-
-def calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array):
-    """rho_633 = v6(Psi3)/v6(Psi6)"""
-    dN = real(vn_array[:, 0])
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q6_2 = abs(Q6)**2. - dN
-
-    v6_Psi6 = nan_to_num(sqrt(mean(Q6_2)/mean(N2_weight)))
-    v6_Psi6_err = nan_to_num(std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev))
-
-    rho_633 = v6_Psi3/v6_Psi6
-    rho_633_err = sqrt((v6_Psi3_err/v6_Psi6)**2.
-                        + (v6_Psi3*v6_Psi6_err/v6_Psi6**2.)**2.)
-    return(rho_633, rho_633_err)
-
-
-def calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array):
-    """v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)"""
-    dN = real(vn_array[:, 0])
-    Q4 = dN*vn_array[:, 4]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q4_2 = abs(Q4)**2. - dN
-
-    v4_Psi4_sq = mean(Q4_2)/mean(N2_weight)
-    v4_Psi4_sq_err = std(Q4_2)/mean(N2_weight)/sqrt(nev)
-
-    v4_L = sqrt(v4_Psi4_sq - v4_Psi2**2.)
-    v4_L_err = (sqrt(v4_Psi4_sq_err**2. + (2.*v4_Psi2*v4_Psi2_err)**2.)
-                /(2.*v4_L))
-    return(v4_L, v4_L_err)
-
-
-def calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array):
-    """v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)"""
-    dN = real(vn_array[:, 0])
-    Q5 = dN*vn_array[:, 5]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q5_2 = abs(Q5)**2. - dN
-
-    v5_Psi5_sq = mean(Q5_2)/mean(N2_weight)
-    v5_Psi5_sq_err = std(Q5_2)/mean(N2_weight)/sqrt(nev)
-
-    v5_L = sqrt(v5_Psi5_sq - v5_Psi23**2.)
-    v5_L_err = (sqrt(v5_Psi5_sq_err**2. + (2.*v5_Psi23*v5_Psi23_err)**2.)
-                /(2.*v5_L))
-    return(v5_L, v5_L_err)
+    chi_7223_mean = mean(chi_7223_JK)
+    chi_7223_err = sqrt((nev - 1.)/nev*sum((chi_7223_JK - chi_7223_mean)**2.))
+    v7223_mean = mean(v7223_JK)
+    v7223_err = sqrt((nev - 1.)/nev*sum((v7223_JK - v7223_mean)**2.))
+    rho7223_mean = mean(rho7223_JK)
+    rho7223_err = sqrt((nev - 1.)/nev*sum((rho7223_JK - rho7223_mean)**2.))
+    return(v7223_mean, v7223_err, rho7223_mean, rho7223_err,
+           chi_7223_mean, chi_7223_err)
 
 
 def calculate_v6_L(chi_6222, chi_6222_err, chi_633, chi_633_err, vn_array):
@@ -534,33 +463,14 @@ def calculate_nonlinear_reponse(vn_array, outputFileName):
         this function computes all the nonlinear response coefficients
         proposed in the paper arXiv: 1502.02502 up to v6
     """
-    chi_422, chi_422_err = calculate_chi_422(vn_array)
-    v4_Psi2, v4_Psi2_err = calculate_v4_Psi2(chi_422, chi_422_err, vn_array)
-    rho_422, rho_422_err = calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array)
-    v4_L, v4_L_err = calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array)
+    v4coef = calculate_chi_422(vn_array)
+    v5coef = calculate_chi_523(vn_array)
+    v6coef= calculate_chi_6222(vn_array)
+    #v6_L, v6_L_err = calculate_v6_L(chi_6222, chi_6222_err,
+    #                                chi_633, chi_633_err, vn_array)
+    v7coef = calculate_chi_7223(vn_array)
 
-    chi_523, chi_523_err = calculate_chi_523(vn_array)
-    v5_Psi23, v5_Psi23_err = calculate_v5_Psi23(chi_523, chi_523_err, vn_array)
-    rho_523, rho_523_err = calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array)
-    v5_L, v5_L_err = calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array)
-
-    chi_6222, chi_6222_err = calculate_chi_6222(vn_array)
-    v6_Psi2, v6_Psi2_err = calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array)
-    rho_6222, rho_6222_err = calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array)
-
-    chi_633, chi_633_err = calculate_chi_633(vn_array)
-    v6_Psi3, v6_Psi3_err = calculate_v6_Psi3(chi_633, chi_633_err, vn_array)
-    rho_633, rho_633_err = calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array)
-    v6_L, v6_L_err = calculate_v6_L(chi_6222, chi_6222_err,
-                                    chi_633, chi_633_err, vn_array)
-
-    results = [v4_L, v4_L_err, v4_Psi2, v4_Psi2_err, rho_422, rho_422_err,
-               chi_422, chi_422_err,
-               v5_L, v5_L_err, v5_Psi23, v5_Psi23_err, rho_523, rho_523_err,
-               chi_523, chi_523_err,
-               v6_L, v6_L_err, v6_Psi2, v6_Psi2_err, v6_Psi3, v6_Psi3_err,
-               rho_6222, rho_6222_err, rho_633, rho_633_err,
-               chi_6222, chi_6222_err, chi_633, chi_633_err]
+    results = list(v4coef) + list(v5coef) + list(v6coef) + list(v7coef)
     f = open(outputFileName, 'w')
     f.write("# type  value  stat. err\n")
     for i in range(len(nonlinear_reponse_correlator_name_list)):
@@ -1768,7 +1678,8 @@ for icen in range(len(centralityCutList) - 1):
 
         # then <pT>, vn, dN/(2pi dy pT dpT), vn{SP}(pT)
         if particle_id == '9999':
-            file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
+            #file_name = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
+            file_name = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
         else:
             file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
         file_name_ref1 = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
@@ -1845,19 +1756,19 @@ for icen in range(len(centralityCutList) - 1):
             vn_star_array_sub2.append(temp_vn_array)
 
             # vn with ALICE pT cut
-            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data)
+            temp_vn_array = calcualte_inte_vn(0.2, 4.0, temp_data)
             vn_alice_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data_ref1)
+            temp_vn_array = calcualte_inte_vn(0.2, 4.0, temp_data_ref1)
             vn_alice_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data_ref2)
+            temp_vn_array = calcualte_inte_vn(0.2, 4.0, temp_data_ref2)
             vn_alice_array_sub2.append(temp_vn_array)
 
             # vn with CMS pT cut
-            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data)
+            temp_vn_array = calcualte_inte_vn(0.3, 4.0, temp_data)
             vn_cms_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data_ref1)
+            temp_vn_array = calcualte_inte_vn(0.3, 4.0, temp_data_ref1)
             vn_cms_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data_ref2)
+            temp_vn_array = calcualte_inte_vn(0.3, 4.0, temp_data_ref2)
             vn_cms_array_sub2.append(temp_vn_array)
             if particle_id == "9999" and not FastFlag:
                 temp_vn_arrays = (
@@ -1865,11 +1776,11 @@ for icen in range(len(centralityCutList) - 1):
                 vn_cms_arrays_for_rn.append(temp_vn_arrays)
 
             # vn with ATLAS pT cut
-            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data)
+            temp_vn_array = calcualte_inte_vn(0.5, 4.0, temp_data)
             vn_atlas_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data_ref1)
+            temp_vn_array = calcualte_inte_vn(0.5, 4.0, temp_data_ref1)
             vn_atlas_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data_ref2)
+            temp_vn_array = calcualte_inte_vn(0.5, 4.0, temp_data_ref2)
             vn_atlas_array_sub2.append(temp_vn_array)
 
             # pT-differential vn using scalar-product method
@@ -1886,19 +1797,19 @@ for icen in range(len(centralityCutList) - 1):
             Qnref_star.append(temp_arr[1])
 
             # vn{4}(pT) with ALICE pT cut
-            temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
+            temp_arr = calculate_diff_vn_single_event(0.20, 4.0, temp_data,
                                                       temp_data_ref1)
             QnpT_diff_alice.append(temp_arr[0])
             Qnref_alice.append(temp_arr[1])
 
             # vn{SP}(pT) with CMS pT cut
-            temp_arr = calculate_diff_vn_single_event(0.30, 3.0, temp_data,
+            temp_arr = calculate_diff_vn_single_event(0.30, 4.0, temp_data,
                                                      temp_data_ref1)
             QnpT_diff_cms.append(temp_arr[0])
             Qnref_cms.append(temp_arr[1])
 
             # vn{SP}(pT) with ATLAS pT cut
-            temp_arr = calculate_diff_vn_single_event(0.50, 3.0, temp_data,
+            temp_arr = calculate_diff_vn_single_event(0.50, 4.0, temp_data,
                                                      temp_data_ref1)
             QnpT_diff_atlas.append(temp_arr[0])
             Qnref_atlas.append(temp_arr[1])
@@ -1952,7 +1863,7 @@ for icen in range(len(centralityCutList) - 1):
                                 /(pT_spectra_ATLAS + 1e-30))
             dN_spectra_ATLAS_err = (std(pT_array_ATLAS*dN_array_ATLAS, 0)
                                     /(pT_spectra_ATLAS + 1e-30)/sqrt(nev))
-            pT_interp1 = linspace(0.4, 3.0, 30)
+            pT_interp1 = linspace(0.4, 4.0, 30)
             dpT1 = pT_interp1[1] - pT_interp1[0]
             dN_interp1 = exp(interp(pT_interp1, pT_spectra_ATLAS,
                                     log(dN_spectra_ATLAS + 1e-30)))
@@ -1981,7 +1892,7 @@ for icen in range(len(centralityCutList) - 1):
                                 /(pT_spectra_ALICE + 1e-30))
             dN_spectra_ALICE_err = (std(pT_array_ALICE*dN_array_ALICE, 0)
                                     /(pT_spectra_ALICE + 1e-30)/sqrt(nev))
-            pT_interp1 = linspace(0.2, 3.0, 30)
+            pT_interp1 = linspace(0.2, 4.0, 30)
             dpT1 = pT_interp1[1] - pT_interp1[0]
             dN_interp1 = exp(interp(pT_interp1, pT_spectra_ALICE,
                                     log(dN_spectra_ALICE + 1e-30)))
@@ -1992,7 +1903,7 @@ for icen in range(len(centralityCutList) - 1):
                                                                 dNch_ALICE))
 
             # calculate dNch (pT > 0.15 |eta| < 0.8) for ALICE
-            pT_interp1 = linspace(0.15, 3.0, 30)
+            pT_interp1 = linspace(0.15, 4.0, 30)
             dpT1 = pT_interp1[1] - pT_interp1[0]
             dN_interp1 = exp(interp(pT_interp1, pT_spectra_ALICE,
                                     log(dN_spectra_ALICE + 1e-30)))
@@ -2044,7 +1955,7 @@ for icen in range(len(centralityCutList) - 1):
         vn_atlas_2_gap, vn_atlas_2_gap_err = calcualte_vn_2_with_gap(
                                 vn_atlas_array_sub1, vn_atlas_array_sub2)
 
-        if particle_id == '9999' and not FastFlag:
+        if particle_id == '9999':
             vn_alice_array2 = array(vn_alice_array)
             vn_cms_array2 = array(vn_cms_array)
             vn_atlas_array2 = array(vn_atlas_array)
@@ -2116,6 +2027,7 @@ for icen in range(len(centralityCutList) - 1):
                 avg_folder, "charged_hadron_vn6_over_vn4_ATLAS.dat")
             calculate_vn6_over_vn4(vn_atlas_array, output_filename)
 
+        if particle_id == "9999" and not FastFlag:
             # calculate vn distribution for charged hadrons
             output_filename = path.join(
                 avg_folder, "charged_hadron_vn_distribution_PHENIX.dat")
