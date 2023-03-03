@@ -24,6 +24,7 @@ class singleParticleSpectra {
     double reconst_branching_ratio;
 
     int order_max;
+    bool ecoOutput_;
 
     int npT;
     double pT_min, pT_max, dpT;

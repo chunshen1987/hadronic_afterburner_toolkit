@@ -34,7 +34,16 @@ singleParticleSpectra::singleParticleSpectra(
         reconst_branching_ratio = 1.0;
     }
 
+    if (paraRdr.getVal("ecoOutput", 0) == 1) {
+        ecoOutput_ = true;
+    } else {
+        ecoOutput_ = false;
+    }
+
     order_max = paraRdr.getVal("order_max");
+    if (particle_monval != 9999)
+        order_max = 6;
+
     Qn_vector_real     = vector<double>(order_max, 0.);
     Qn_vector_imag     = vector<double>(order_max, 0.);
     Qn_vector_real_err = vector<double>(order_max, 0.);
@@ -702,7 +711,7 @@ void singleParticleSpectra::output_Qn_vectors() {
         dN_ev_avg_err = dN_ev_avg_err/reconst_branching_ratio;
     }
     output << scientific << setw(18) << setprecision(8) 
-           << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   " 
+           << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   "
            << 0.0 << "   " << 0.0 << endl;
     for (int iorder = 1; iorder < order_max; iorder++) {
         double vn_evavg_real = 0.0;
@@ -712,10 +721,10 @@ void singleParticleSpectra::output_Qn_vectors() {
         if (Qn_vector_real[0] > 0) {
             vn_evavg_real = Qn_vector_real[iorder]/Qn_vector_real[0];
             vn_evavg_imag = Qn_vector_imag[iorder]/Qn_vector_real[0];
-            vn_real_err = (sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] 
+            vn_real_err = (sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0]
                                 - vn_evavg_real*vn_evavg_real)
                            /sqrt(Qn_vector_real[0]));
-            vn_imag_err = (sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] 
+            vn_imag_err = (sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0]
                                 - vn_evavg_imag*vn_evavg_imag)
                            /sqrt(Qn_vector_real[0]));
             if (std::isnan(vn_real_err)) {
@@ -725,8 +734,8 @@ void singleParticleSpectra::output_Qn_vectors() {
                 vn_imag_err = 0.0;
             }
         }
-        output << scientific << setw(18) << setprecision(8) << iorder << "   " 
-               << vn_evavg_real << "   " << vn_real_err << "   " 
+        output << scientific << setw(18) << setprecision(8) << iorder << "   "
+               << vn_evavg_real << "   " << vn_real_err << "   "
                << vn_evavg_imag << "   " << vn_imag_err << endl;
     }
     // output total number of particles in the last row
@@ -769,10 +778,16 @@ void singleParticleSpectra::output_Qn_vectors() {
             mean_pT     = pT_array[ipT];
             mean_pT_err = 0.0;
         }
-        output_diff << scientific << setw(18) << setprecision(8) 
-                    << mean_pT << "   " << mean_pT_err << "   " 
-                    << dNpT_ev_avg/mean_pT/dpT/(2*M_PI)/drapidity << "   " 
-                    << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI)/drapidity;
+        if (ecoOutput_) {
+            output_diff << scientific << setw(18) << setprecision(8)
+                        << mean_pT << "   "
+                        << dNpT_ev_avg/mean_pT/dpT/(2*M_PI)/drapidity << "   ";
+        } else {
+            output_diff << scientific << setw(18) << setprecision(8)
+                        << mean_pT << "   " << mean_pT_err << "   "
+                        << dNpT_ev_avg/mean_pT/dpT/(2*M_PI)/drapidity << "   "
+                        << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI)/drapidity;
+        }
         for (int iorder = 1; iorder < order_max; iorder++) {
             if (dNpT_ev_avg > 0.) {
                 double vn_evavg_real = (Qn_diff_vector_real[iorder][ipT]
@@ -781,12 +796,12 @@ void singleParticleSpectra::output_Qn_vectors() {
                                         /Qn_diff_vector_real[0][ipT]);
                 double vn_evavg_real_err = (
                         sqrt(Qn_diff_vector_real_err[iorder][ipT]
-                                /Qn_diff_vector_real[0][ipT] 
+                                /Qn_diff_vector_real[0][ipT]
                              - vn_evavg_real*vn_evavg_real)
                         /sqrt(Qn_diff_vector_real[0][ipT]));
                 double vn_evavg_imag_err = (
                         sqrt(Qn_diff_vector_imag_err[iorder][ipT]
-                                /Qn_diff_vector_real[0][ipT] 
+                                /Qn_diff_vector_real[0][ipT]
                              - vn_evavg_imag*vn_evavg_imag)
                         /sqrt(Qn_diff_vector_real[0][ipT]));
                 if (std::isnan(vn_evavg_real_err)) {
@@ -795,15 +810,26 @@ void singleParticleSpectra::output_Qn_vectors() {
                 if (std::isnan(vn_evavg_imag_err)) {
                     vn_evavg_imag_err = 0.0;
                 }
-                output_diff << scientific << setw(18) << setprecision(8) 
-                            << vn_evavg_real << "   " 
-                            << vn_evavg_real_err << "   " 
-                            << vn_evavg_imag << "   "
-                            << vn_evavg_imag_err << "   ";
+                if (ecoOutput_) {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << vn_evavg_real << "   "
+                                << vn_evavg_imag << "   ";
+                } else {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << vn_evavg_real << "   "
+                                << vn_evavg_real_err << "   "
+                                << vn_evavg_imag << "   "
+                                << vn_evavg_imag_err << "   ";
+                }
             } else {
-                output_diff << scientific << setw(18) << setprecision(8) 
-                            << 0.0e0 << "   " << 0.0e0 << "   " 
-                            << 0.0e0 << "   " << 0.0e0 << "   ";
+                if (ecoOutput_) {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << 0.0e0 << "   " << 0.0e0 << "   ";
+                } else {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << 0.0e0 << "   " << 0.0e0 << "   "
+                                << 0.0e0 << "   " << 0.0e0 << "   ";
+                }
             }
         }
         // output total number of particles in the last column
