@@ -1139,10 +1139,30 @@ def calculate_symmetric_cumulant(vn_data_array, outputFileName):
     return
 
 
-def calculate_vn4(vn_data_array, outputFileName):
+def calculate_vn4_vn6(vn_data_array, outputFileName_vn4,
+                      outputFileName42, outputFileName64):
     """
         this funciton computes the 4 particle cumulant vn{4}
             vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+
+        this funciton also computes the ratio of
+        the 4-particle cumulant vn{4} over the 2-particle cumulant vn{2}
+        and Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))
+
+            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+            vn{2} = (<v_n*conj(v_n)>)**(1/2)
+
+        this funciton also computes the ratio of
+        the 6-particle cumulant vn{6} over the 4-particle cumulant vn{4}
+            cn{6} = <<6>> - 9<<2>><<4>> + 12<<2>>^3
+            vn{6} = (cn{6}/4)**(1/6)
+            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+        and compute skewness estimator gamma_1
+            gamma_1 = -6\sqrt{2}*vn{4}^2*(vn{4} - vn{6})
+                                         /(vn{2}^2 - vn{4}^2)^(3/2)
+
+        we will use Jackknife resampling method to estimate
+        the statistical error
     """
     vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
@@ -1156,15 +1176,15 @@ def calculate_vn4(vn_data_array, outputFileName):
 
     # two-particle correlation
     N2_weight = dN*(dN - 1.)
-    Q1_2 = abs(Q1)**2. - dN
+    #Q1_2 = abs(Q1)**2. - dN
     Q2_2 = abs(Q2)**2. - dN
     Q3_2 = abs(Q3)**2. - dN
 
     # four-particle correlation
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
-             - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
-             + 2*dN*(dN - 3.))
+    #Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
+    #         - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
+    #         + 2*dN*(dN - 3.))
     Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
              - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
              + 2*dN*(dN - 3.))
@@ -1172,27 +1192,76 @@ def calculate_vn4(vn_data_array, outputFileName):
              - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
              + 2*dN*(dN - 3.))
 
+    # six-particle correlation
+    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
+    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
+            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
+            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
+            - 12.*real(Q6*conj(Q4)*conj(Q2))
+            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
+            + 4.*(abs(Q6)**2.)
+            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
+            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
+            - 6.*dN*(dN - 4.)*(dN - 5.))
+
     # calcualte observables with Jackknife resampling method
     C1_4_array = zeros(nev)
     C2_4_array = zeros(nev)
     C3_4_array = zeros(nev)
+    r1_array = zeros(nev)
+    r2_array = zeros(nev)
+    r3_array = zeros(nev)
+    F1_array = zeros(nev)
+    F2_array = zeros(nev)
+    F3_array = zeros(nev)
+    r26_array = zeros(nev)
+    gamma1_array = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
-        # C_1{4}
-        C1_4_array[iev] = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
-                           - 2.*((mean(Q1_2[array_idx])
-                                 /mean(N2_weight[array_idx]))**2.))
-        # C_2{4}
-        C2_4_array[iev] = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                           - 2.*((mean(Q2_2[array_idx])
-                                 /mean(N2_weight[array_idx]))**2.))
-        # C_3{4}
-        C3_4_array[iev] = (mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
-                           - 2.*((mean(Q3_2[array_idx])
-                                 /mean(N2_weight[array_idx]))**2.))
+        # C_n{4}
+        #C_1_4 = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
+        #         - 2.*((mean(Q1_2[array_idx])/mean(N2_weight[array_idx]))**2.))
+        #C_1_2 = mean(Q1_2[array_idx])/mean(N2_weight[array_idx])
+        #if C_1_4 < 0. and C_1_2 > 0.:
+        #    v1_4 = (-C_1_4)**0.25
+        #    v1_2 = sqrt(C_1_2)
+        #    r1_array[iev] = v1_4/(v1_2 + 1e-15)
+        #    F1_array[iev] = sqrt((v1_2**2. - v1_4**2.)
+        #                         /(v1_2**2. + v1_4**2. + 1e-15))
+
+        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
+        C24_tmp = mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
+        C_2_4 = C24_tmp - 2.*C_2_2**2.
+        C_2_6 = (mean(Q2_6[array_idx])/mean(N6_weight[array_idx])
+                 - 9.*C_2_2*C24_tmp + 12.*(C_2_2**3.))
+        C2_4_array[iev] = C_2_4
+        if C_2_4 < 0. and C_2_2 > 0.:
+            v2_4 = (-C_2_4)**0.25
+            v2_2 = sqrt(C_2_2)
+            r2_array[iev] = v2_4/v2_2
+            F2_array[iev] = sqrt((v2_2**2. - v2_4**2.)
+                                 /(v2_2**2. + v2_4**2. + 1e-15))
+            if C_2_6 > 0.:
+                v2_6 = (C_2_6/4.)**(1./6.)
+                r26_array[iev] = v2_6/v2_4
+                gamma1_array[iev] = (-6.*sqrt(2)*(v2_4**2.)*(v2_4 - v2_6)
+                                     /(v2_2**2. - v2_4**2.)**(1.5))
+
+
+        C_3_2 = mean(Q3_2[array_idx])/mean(N2_weight[array_idx])
+        C34_tmp = mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
+        C_3_4 = C34_tmp - 2.*C_3_2**2.
+        C3_4_array[iev] = C_3_4
+        if C_3_4 < 0. and C_3_2 > 0.:
+            v3_4 = (-C_3_4)**0.25
+            v3_2 = sqrt(C_3_2)
+            r3_array[iev] = v3_4/v3_2
+            F3_array[iev] = sqrt((v3_2**2. - v3_4**2.)
+                                 /(v3_2**2. + v3_4**2. + 1e-15))
+
     C1_4_mean = mean(C1_4_array)
     C1_4_err  = sqrt((nev - 1.)/nev*sum((C1_4_array - C1_4_mean)**2.))
     C2_4_mean = mean(C2_4_array)
@@ -1217,103 +1286,18 @@ def calculate_vn4(vn_data_array, outputFileName):
     if C3_4_mean < 0:
         v3_4 = (-C3_4_mean)**0.25
         v3_4_err = 0.25*((-C3_4_mean)**(-0.75))*C3_4_err
-
     results = [v1_4, v1_4_err, C1_4_mean, C1_4_err,
                v2_4, v2_4_err, C2_4_mean, C2_4_err,
                v3_4, v3_4_err, C3_4_mean, C3_4_err,]
-    f = open(outputFileName, 'w')
+    f = open(outputFileName_vn4, 'w')
     f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
     for i in range(1, 4):
         f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                 % (i, results[4*i-4], results[4*i-3],
                    results[4*i-2], results[4*i-1]))
     f.close()
-    return
 
-
-def calculate_vn4_over_vn2(vn_data_array, outputFileName):
-    """
-        this funciton computes the ratio of
-        the 4-particle cumulant vn{4} over the 2-particle cumulant vn{2}
-        and Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))
-
-            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
-            vn{2} = (<v_n*conj(v_n)>)**(1/2)
-
-        we will use Jackknife resampling method to estimate
-        the statistical error
-    """
-    vn_data_array = array(vn_data_array)
-    nev = len(vn_data_array[:, 0])
-    dN = real(vn_data_array[:, 0])
-    Q1 = dN*vn_data_array[:, 1]
-    Q2 = dN*vn_data_array[:, 2]
-    Q3 = dN*vn_data_array[:, 3]
-    Q4 = dN*vn_data_array[:, 4]
-    Q5 = dN*vn_data_array[:, 5]
-    Q6 = dN*vn_data_array[:, 6]
-
-    # two-particle correlation
-    N2_weight = dN*(dN - 1.)
-    Q1_2 = abs(Q1)**2. - dN
-    Q2_2 = abs(Q2)**2. - dN
-    Q3_2 = abs(Q3)**2. - dN
-
-    # four-particle correlation
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
-             - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
-             + 2*dN*(dN - 3.))
-    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
-             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
-             + 2*dN*(dN - 3.))
-    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
-             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
-             + 2*dN*(dN - 3.))
-
-    # calcualte observables with Jackknife resampling method
-    r1_array = zeros(nev)
-    r2_array = zeros(nev)
-    r3_array = zeros(nev)
-    F1_array = zeros(nev)
-    F2_array = zeros(nev)
-    F3_array = zeros(nev)
-    for iev in range(nev):
-        array_idx = [True]*nev
-        array_idx[iev] = False
-        array_idx = array(array_idx)
-
-        # C_n{4}
-        C_1_4 = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*((mean(Q1_2[array_idx])/mean(N2_weight[array_idx]))**2.))
-        C_1_2 = mean(Q1_2[array_idx])/mean(N2_weight[array_idx])
-        if C_1_4 < 0. and C_1_2 > 0.:
-            v1_4 = (-C_1_4)**0.25
-            v1_2 = sqrt(C_1_2)
-            r1_array[iev] = v1_4/(v1_2 + 1e-15)
-            F1_array[iev] = sqrt((v1_2**2. - v1_4**2.)
-                                 /(v1_2**2. + v1_4**2. + 1e-15))
-
-        C_2_4 = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*((mean(Q2_2[array_idx])/mean(N2_weight[array_idx]))**2.))
-        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
-        if C_2_4 < 0. and C_2_2 > 0.:
-            v2_4 = (-C_2_4)**0.25
-            v2_2 = sqrt(C_2_2)
-            r2_array[iev] = v2_4/v2_2
-            F2_array[iev] = sqrt((v2_2**2. - v2_4**2.)
-                                 /(v2_2**2. + v2_4**2. + 1e-15))
-
-        C_3_4 = (mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*((mean(Q3_2[array_idx])/mean(N2_weight[array_idx]))**2.))
-        C_3_2 = mean(Q3_2[array_idx])/mean(N2_weight[array_idx])
-        if C_3_4 < 0. and C_3_2 > 0.:
-            v3_4 = (-C_3_4)**0.25
-            v3_2 = sqrt(C_3_2)
-            r3_array[iev] = v3_4/v3_2
-            F3_array[iev] = sqrt((v3_2**2. - v3_4**2.)
-                                 /(v3_2**2. + v3_4**2. + 1e-15))
-
+    # now the ratios
     r1_mean = mean(r1_array)
     r1_err = sqrt((nev - 1.)/nev*sum((r1_array - r1_mean)**2.))
     r2_mean = mean(r2_array)
@@ -1331,7 +1315,7 @@ def calculate_vn4_over_vn2(vn_data_array, outputFileName):
     results = [r1_mean, r1_err, F1_mean, F1_err,
                r2_mean, r2_err, F2_mean, F2_err,
                r3_mean, r3_err, F3_mean, F3_err]
-    f = open(outputFileName, 'w')
+    f = open(outputFileName42, 'w')
     f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
     f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
     for i in range(1, 4):
@@ -1339,83 +1323,12 @@ def calculate_vn4_over_vn2(vn_data_array, outputFileName):
                 % (i, results[4*i - 4], results[4*i - 3],
                    results[4*i - 2], results[4*i-1]))
     f.close()
-    return
-
-
-def calculate_vn6_over_vn4(vn_data_array, outputFileName):
-    """
-        this funciton computes the ratio of
-        the 6-particle cumulant vn{6} over the 4-particle cumulant vn{4}
-            cn{6} = <<6>> - 9<<2>><<4>> + 12<<2>>^3
-            vn{6} = (cn{6}/4)**(1/6)
-            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
-        and compute skewness estimator gamma_1
-            gamma_1 = -6\sqrt{2}*vn{4}^2*(vn{4} - vn{6})
-                                         /(vn{2}^2 - vn{4}^2)^(3/2)
-        we will use Jackknife resampling method to estimate
-        the statistical error
-    """
-    vn_data_array = array(vn_data_array)
-    nev = len(vn_data_array[:, 0])
-    dN = real(vn_data_array[:, 0])
-    Q1 = dN*vn_data_array[:, 1]
-    Q2 = dN*vn_data_array[:, 2]
-    Q3 = dN*vn_data_array[:, 3]
-    Q4 = dN*vn_data_array[:, 4]
-    Q5 = dN*vn_data_array[:, 5]
-    Q6 = dN*vn_data_array[:, 6]
-
-    # two-particle correlation
-    N2_weight = dN*(dN - 1.)
-    Q2_2 = abs(Q2)**2. - dN
-
-    # four-particle correlation
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
-             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
-             + 2*dN*(dN - 3.))
-
-    # six-particle correlation
-    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
-    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
-            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
-            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
-            - 12.*real(Q6*conj(Q4)*conj(Q2))
-            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
-            + 4.*(abs(Q6)**2.)
-            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
-            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
-            - 6.*dN*(dN - 4.)*(dN - 5.))
-
-    # calcualte observables with Jackknife resampling method
-    r2_array = zeros(nev)
-    gamma1_array = zeros(nev)
-    for iev in range(nev):
-        array_idx = [True]*nev
-        array_idx[iev] = False
-        array_idx = array(array_idx)
-
-        # C_n{4}
-        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
-        C_2_4 = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*(C_2_2**2.))
-        C_2_6 = (mean(Q2_6[array_idx])/mean(N6_weight[array_idx])
-                 - 9.*C_2_2*mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                 + 12.*(C_2_2**3.))
-        if C_2_6 > 0. and C_2_4 < 0. and C_2_2 > 0.:
-            v2_2 = sqrt(C_2_2)
-            v2_6 = (C_2_6/4.)**(1./6.)
-            v2_4 = (-C_2_4)**(1./4.)
-            r2_array[iev] = v2_6/v2_4
-            gamma1_array[iev] = (-6.*sqrt(2)*(v2_4**2.)*(v2_4 - v2_6)
-                                 /(v2_2**2. - v2_4**2.)**(1.5))
-
-    r2_mean = mean(r2_array)
-    r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
+    r26_mean = mean(r26_array)
+    r26_err = sqrt((nev - 1.)/nev*sum((r26_array - r26_mean)**2.))
     gamma1_mean = mean(gamma1_array)
     gamma1_err = sqrt((nev - 1.)/nev*sum((gamma1_array - gamma1_mean)**2.))
 
-    f = open(outputFileName, 'w')
+    f = open(outputFileName64, 'w')
     f.write(
         "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
     f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
@@ -1979,55 +1892,47 @@ for icen in range(len(centralityCutList) - 1):
                     avg_folder, "symmetric_cumulant_ALICE.dat")
             calculate_symmetric_cumulant(vn_alice_array, output_filename)
 
-            # calculate vn{4}
-            output_filename = path.join(
+            # calculate vn{4}, vn{4}/vn{2}, and vn{6}/vn{4}
+            output_filename1 = path.join(
                     avg_folder, "charged_hadron_vn4_PHENIX.dat")
-            calculate_vn4(vn_phenix_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_STAR.dat")
-            calculate_vn4(vn_star_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_ALICE.dat")
-            calculate_vn4(vn_alice_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_CMS.dat")
-            calculate_vn4(vn_cms_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_ATLAS.dat")
-            calculate_vn4(vn_atlas_array, output_filename)
-
-            # calculate vn{4}/vn{2} and vn{6}/vn{4}
-            output_filename = path.join(
+            output_filename2 = path.join(
                 avg_folder, "charged_hadron_vn4_over_vn2_PHENIX.dat")
-            calculate_vn4_over_vn2(vn_phenix_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_STAR.dat")
-            calculate_vn4_over_vn2(vn_star_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_ALICE.dat")
-            calculate_vn4_over_vn2(vn_alice_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_CMS.dat")
-            calculate_vn4_over_vn2(vn_cms_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_ATLAS.dat")
-            calculate_vn4_over_vn2(vn_atlas_array, output_filename)
-
-            output_filename = path.join(
+            output_filename3 = path.join(
                 avg_folder, "charged_hadron_vn6_over_vn4_PHENIX.dat")
-            calculate_vn6_over_vn4(vn_phenix_array, output_filename)
-            output_filename = path.join(
+            calculate_vn4_vn6(vn_phenix_array, output_filename1,
+                              output_filename2, output_filename3)
+            output_filename1 = path.join(
+                    avg_folder, "charged_hadron_vn4_STAR.dat")
+            output_filename2 = path.join(
+                avg_folder, "charged_hadron_vn4_over_vn2_STAR.dat")
+            output_filename3 = path.join(
                 avg_folder, "charged_hadron_vn6_over_vn4_STAR.dat")
-            calculate_vn6_over_vn4(vn_star_array, output_filename)
-            output_filename = path.join(
+            calculate_vn4_vn6(vn_star_array, output_filename1,
+                              output_filename2, output_filename3)
+            output_filename1 = path.join(
+                    avg_folder, "charged_hadron_vn4_ALICE.dat")
+            output_filename2 = path.join(
+                avg_folder, "charged_hadron_vn4_over_vn2_ALICE.dat")
+            output_filename3 = path.join(
                 avg_folder, "charged_hadron_vn6_over_vn4_ALICE.dat")
-            calculate_vn6_over_vn4(vn_alice_array, output_filename)
-            output_filename = path.join(
+            calculate_vn4_vn6(vn_alice_array, output_filename1,
+                              output_filename2, output_filename3)
+            output_filename1 = path.join(
+                    avg_folder, "charged_hadron_vn4_CMS.dat")
+            output_filename2 = path.join(
+                avg_folder, "charged_hadron_vn4_over_vn2_CMS.dat")
+            output_filename3 = path.join(
                 avg_folder, "charged_hadron_vn6_over_vn4_CMS.dat")
-            calculate_vn6_over_vn4(vn_cms_array, output_filename)
-            output_filename = path.join(
+            calculate_vn4_vn6(vn_cms_array, output_filename1,
+                              output_filename2, output_filename3)
+            output_filename1 = path.join(
+                    avg_folder, "charged_hadron_vn4_ATLAS.dat")
+            output_filename2 = path.join(
+                avg_folder, "charged_hadron_vn4_over_vn2_ATLAS.dat")
+            output_filename3 = path.join(
                 avg_folder, "charged_hadron_vn6_over_vn4_ATLAS.dat")
-            calculate_vn6_over_vn4(vn_atlas_array, output_filename)
+            calculate_vn4_vn6(vn_atlas_array, output_filename1,
+                              output_filename2, output_filename3)
 
         if particle_id == "9999" and not FastFlag:
             # calculate vn distribution for charged hadrons
