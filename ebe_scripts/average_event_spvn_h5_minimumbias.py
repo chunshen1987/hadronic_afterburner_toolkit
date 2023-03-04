@@ -107,7 +107,7 @@ nonlinear_reponse_correlator_name_list = [
                 'v7(Psi23)', 'rho_7223', 'chi_7223']
 symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 
-n_order = 9
+n_order = 10
 if FastFlag:
     particle_list = particle_list[0:4]
 
@@ -141,7 +141,7 @@ def calcualte_inte_vn(pT_low, pT_high, data):
     npT = 50
     pT_inte_array = linspace(pT_low, pT_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
-    dN_event = data[:, 2]
+    dN_event = data[:, 1]
     pT_event = data[:, 0]
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
     N_event = data[:, -1]
@@ -149,8 +149,8 @@ def calcualte_inte_vn(pT_low, pT_high, data):
     N = sum(N_interp)*dpT/0.1
     temp_vn_array = [N,]
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
         vn_real_interp = interp(pT_inte_array, pT_event, vn_real_event)
         vn_imag_interp = interp(pT_inte_array, pT_event, vn_imag_event)
         vn_real_inte = (
@@ -525,8 +525,8 @@ def get_vn_diff_2PC_from_single_event(data):
     temp_vn_imag_array = []
     temp_vn_denorm_array = []
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
         vn_pt = vn_real_event + 1j*vn_imag_event
         numerator_real = real(dN_event*vn_pt)
         numerator_imag = imag(dN_event*vn_pt)
@@ -554,10 +554,10 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     temp_Qn_pT_array = [dN_event,]
     temp_Qn_ref_array = [dN_ref]
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
-        vn_ref_real_event = data_ref[:, 4*iorder]
-        vn_ref_imag_event = data_ref[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
+        vn_ref_real_event = data_ref[:, 2*iorder]
+        vn_ref_imag_event = data_ref[:, 2*iorder+1]
         vn_ref_real_interp = interp(pT_inte_array, pT_ref_event,
                                     vn_ref_real_event)
         vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
@@ -1660,6 +1660,8 @@ for icen in range(len(centralityCutList) - 1):
 
     for ipart, particle_id in enumerate(particle_list):
         print("processing %s ..." % particle_name_list[ipart])
+        if particle_id != 9999:
+            n_order = 6
 
         # first particle yield dN/dy
         if particle_id == '9999':
