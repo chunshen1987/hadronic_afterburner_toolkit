@@ -32,11 +32,11 @@ red = "\033[91m"
 normal = "\033[0m"
 
 kinematicCutsDict = {
-        "PHENIX": {"pTmin": 0.2, "pTmax": 4.0},
-        "STAR"  : {"pTmin": 0.2, "pTmax": 4.0},
-        "ALICE" : {"pTmin": 0.2, "pTmax": 4.0},
-        "CMS"   : {"pTmin": 0.3, "pTmax": 4.0},
-        "ATLAS" : {"pTmin": 0.5, "pTmax": 4.0},
+        "PHENIX": {"pTmin": 0.20, "pTmax": 2.0},
+        "STAR"  : {"pTmin": 0.15, "pTmax": 2.0},
+        "ALICE" : {"pTmin": 0.20, "pTmax": 4.0},
+        "CMS"   : {"pTmin": 0.30, "pTmax": 4.0},
+        "ATLAS" : {"pTmin": 0.50, "pTmax": 4.0},
 }
 
 Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
