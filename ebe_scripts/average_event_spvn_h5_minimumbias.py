@@ -31,6 +31,14 @@ yellow = "\033[93m"
 red = "\033[91m"
 normal = "\033[0m"
 
+kinematicCutsDict = {
+        "PHENIX": {"pTmin": 0.2, "pTmax": 4.0},
+        "STAR"  : {"pTmin": 0.2, "pTmax": 4.0},
+        "ALICE" : {"pTmin": 0.2, "pTmax": 4.0},
+        "CMS"   : {"pTmin": 0.3, "pTmax": 4.0},
+        "ATLAS" : {"pTmin": 0.5, "pTmax": 4.0},
+}
+
 Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
                            60., 70., 80., 90., 100.]
 PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
@@ -716,7 +724,6 @@ def calculate_vn4_diff(QnpT_diff, Qnref):
 def calculate_vn_distribution(vn_array, outputFileName):
     """This function computes the vn distribution"""
     nbin = 20
-    vn_array = array(vn_array)
     vn_dim = len(vn_array[0, :])
     output = []
     for vn_order in range(vn_dim):
@@ -889,7 +896,6 @@ def calcualte_event_plane_correlations(vn_array, outputFileName):
         this function compute the scalar-product event plane correlations
         vn_array is a matrix [event_idx, vn_order]
     """
-    vn_array = array(vn_array)
     nev = len(vn_array[:, 0])
     v2_array = vn_array[:, 2]
     v3_array = vn_array[:, 3]
@@ -998,7 +1004,7 @@ def calculate_vn_arrays_for_rn_ratios(data):
     return(vn_arrays)
 
 
-def calculate_rn_ratios(vn_event_arrays):
+def calculate_rn_ratios(vn_event_arrays, avg_folder):
     """
         this function compute rn ratio in different pT bins
         according to the CMS measurements
@@ -1055,7 +1061,33 @@ def calculate_rn_ratios(vn_event_arrays):
                 rn_array.append([pT_trig - pT_asso, rn_mean, rn_err])
         rn_arrays.append(rn_array)
     rn_arrays = array(rn_arrays)
-    return(rn_arrays)
+
+    # output rn ratios
+    pT_trig = ['1.0', '1.5', '2.0', '2.5', '3.0']
+    ipTtrig = 0
+    output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
+                       % (particle_name_list[ipart],
+                          pT_trig[ipTtrig], pT_trig[ipTtrig+1]))
+    f = open(path.join(avg_folder, output_filename), 'w')
+    f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
+    for ipT in range(len(rn_arrays[0, :, 0])):
+        for iorder in range(len(rn_arrays[:, 0, 0])):
+            f.write("%.5e  %.5e  %.5e  "
+                    % (rn_arrays[iorder, ipT, 0],
+                       rn_arrays[iorder, ipT, 1],
+                       rn_arrays[iorder, ipT, 2]))
+        f.write("\n")
+        if rn_arrays[0, ipT, 0] == 0.0:
+            f.close()
+            ipTtrig += 1
+            if ipTtrig < (len(pT_trig) - 1):
+                output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
+                                   % (particle_name_list[ipart],
+                                      pT_trig[ipTtrig],
+                                      pT_trig[ipTtrig+1]))
+                f = open(path.join(avg_folder, output_filename), 'w')
+                f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
+    return
 
 
 def calculate_symmetric_cumulant(vn_data_array, outputFileName):
@@ -1065,7 +1097,6 @@ def calculate_symmetric_cumulant(vn_data_array, outputFileName):
                       - <v_m*conj(v_m)>*<v_n*conj(v_n)>
         we use Jackknife resampling method to estimate the statistical error
     """
-    vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
     dN = real(vn_data_array[:, 0])
     Q1 = dN*vn_data_array[:, 1]
@@ -1164,7 +1195,6 @@ def calculate_vn4_vn6(vn_data_array, outputFileName_vn4,
         we will use Jackknife resampling method to estimate
         the statistical error
     """
-    vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
     dN = real(vn_data_array[:, 0])
     Q1 = dN*vn_data_array[:, 1]
@@ -1332,7 +1362,7 @@ def calculate_vn4_vn6(vn_data_array, outputFileName_vn4,
     f.write(
         "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
     f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
-            % (2, r2_mean, r2_err, gamma1_mean, gamma1_err))
+            % (2, r26_mean, r26_err, gamma1_mean, gamma1_err))
     f.close()
     return
 
@@ -1515,7 +1545,8 @@ if CentralityFlag > 0:
         elif RapidityTrigger == 3:    # ATLAS forward Trigger
             file_name = "particle_9999_vndata_eta_-4.9_-3.1.dat"
         event_group = hf.get(event_name)
-        eventStatus = check_an_event_is_good(event_group)
+        #eventStatus = check_an_event_is_good(event_group)
+        eventStatus = True
         if eventStatus:
             temp_data   = event_group.get(file_name)
             temp_data   = nan_to_num(temp_data)
@@ -1573,14 +1604,14 @@ for icen in range(len(centralityCutList) - 1):
 
     for ipart, particle_id in enumerate(particle_list):
         print("processing %s ..." % particle_name_list[ipart])
-        if particle_id != 9999:
-            n_order = 6
 
         # first particle yield dN/dy
         if particle_id == '9999':
-            file_name = 'particle_%s_vndata_eta_-0.5_0.5.dat' % particle_id
+            n_order = 10
+            file_name = 'particle_9999_vndata_eta_-0.5_0.5.dat'
         else:
             file_name = 'particle_%s_vndata_y_-0.5_0.5.dat' % particle_id
+            n_order = 6
 
         dN_dy = zeros(len(selected_events_list))
         for ifolder, event_name in enumerate(selected_events_list):
@@ -1608,23 +1639,19 @@ for icen in range(len(centralityCutList) - 1):
         dN_array_ALICE = []
         pT_array_ATLAS = []
         dN_array_ATLAS = []
-        vn_phenix_array = []
-        vn_phenix_array_sub1 = []; vn_phenix_array_sub2 = []
-        vn_star_array = []
-        vn_star_array_sub1 = []; vn_star_array_sub2 = []
-        vn_alice_array = []
-        vn_alice_array_sub1 = []; vn_alice_array_sub2 = []
-        vn_cms_array = []
-        vn_cms_array_sub1 = []; vn_cms_array_sub2 = []
+        vn_array_list = []
+        vn_array_sub1_list = []; vn_array_sub2_list = []
+        QnpT_diff_list = []; Qnref_list = []
+        for iExp in kinematicCutsDict.keys():
+            vn_array_list.append([])
+            vn_array_sub1_list.append([])
+            vn_array_sub2_list.append([])
+            QnpT_diff_list.append([])
+            Qnref_list.append([])
+
         vn_cms_arrays_for_rn = []
-        vn_atlas_array = []
-        vn_atlas_array_sub1 = []; vn_atlas_array_sub2 = []
-        QnpT_diff_phenix = []; Qnref_phenix = []
-        QnpT_diff_star = []; Qnref_star = []
-        QnpT_diff_alice = []; Qnref_alice = []
-        QnpT_diff_cms = []; Qnref_cms = []
-        QnpT_diff_atlas = []; Qnref_atlas = []
         vn_diff_2PC_real = []; vn_diff_2PC_imag = []; vn_diff_2PC_denorm = []
+
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
@@ -1634,7 +1661,7 @@ for icen in range(len(centralityCutList) - 1):
             temp_data_ref2 = event_group.get(file_name_ref2)
             temp_data_ref2 = nan_to_num(temp_data_ref2)
 
-            dN_event = temp_data[:, 2]  # dN/(2pi dy pT dpT)
+            dN_event = temp_data[:, 1]  # dN/(2pi dy pT dpT)
             pT_event = temp_data[:, 0]
 
             # record particle spectra
@@ -1645,89 +1672,32 @@ for icen in range(len(centralityCutList) - 1):
                     temp_data1 = event_group.get(file_name_ATLAS)
                     temp_data1 = nan_to_num(temp_data1)
                     pT_array_ATLAS.append(temp_data1[:, 0])
-                    dN_array_ATLAS.append(temp_data1[:, 2])
+                    dN_array_ATLAS.append(temp_data1[:, 1])
                     temp_data1 = event_group.get(file_name_ALICE)
                     temp_data1 = nan_to_num(temp_data1)
                     pT_array_ALICE.append(temp_data1[:, 0])
-                    dN_array_ALICE.append(temp_data1[:, 2])
+                    dN_array_ALICE.append(temp_data1[:, 1])
                 except:
                     continue
 
-            # pT-integrated vn
-            # vn with PHENIX pT cut
-            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data)
-            vn_phenix_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_ref1)
-            vn_phenix_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_ref2)
-            vn_phenix_array_sub2.append(temp_vn_array)
+            for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+                pTmin = kinematicCutsDict[expKey]['pTmin']
+                pTmax = kinematicCutsDict[expKey]['pTmax']
+                temp_vn_array = calcualte_inte_vn(pTmin, pTmax, temp_data)
+                vn_array_list[iExp].append(temp_vn_array)
+                temp_vn_array = calcualte_inte_vn(pTmin, pTmax, temp_data_ref1)
+                vn_array_sub1_list[iExp].append(temp_vn_array)
+                temp_vn_array = calcualte_inte_vn(pTmin, pTmax, temp_data_ref2)
+                vn_array_sub2_list[iExp].append(temp_vn_array)
+                temp_arr = calculate_diff_vn_single_event(
+                                    pTmin, pTmax, temp_data, temp_data_ref1)
+                QnpT_diff_list[iExp].append(temp_arr[0])
+                Qnref_list[iExp].append(temp_arr[1])
 
-            # vn with STAR pT cut
-            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data)
-            vn_star_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_ref1)
-            vn_star_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_ref2)
-            vn_star_array_sub2.append(temp_vn_array)
-
-            # vn with ALICE pT cut
-            temp_vn_array = calcualte_inte_vn(0.2, 4.0, temp_data)
-            vn_alice_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 4.0, temp_data_ref1)
-            vn_alice_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 4.0, temp_data_ref2)
-            vn_alice_array_sub2.append(temp_vn_array)
-
-            # vn with CMS pT cut
-            temp_vn_array = calcualte_inte_vn(0.3, 4.0, temp_data)
-            vn_cms_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.3, 4.0, temp_data_ref1)
-            vn_cms_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.3, 4.0, temp_data_ref2)
-            vn_cms_array_sub2.append(temp_vn_array)
             if particle_id == "9999" and not FastFlag:
                 temp_vn_arrays = (
                         calculate_vn_arrays_for_rn_ratios(temp_data))
                 vn_cms_arrays_for_rn.append(temp_vn_arrays)
-
-            # vn with ATLAS pT cut
-            temp_vn_array = calcualte_inte_vn(0.5, 4.0, temp_data)
-            vn_atlas_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.5, 4.0, temp_data_ref1)
-            vn_atlas_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.5, 4.0, temp_data_ref2)
-            vn_atlas_array_sub2.append(temp_vn_array)
-
-            # pT-differential vn using scalar-product method
-            # vn{SP}(pT) with PHENIX pT cut
-            temp_arr = calculate_diff_vn_single_event(0.2, 2.0, temp_data,
-                                                      temp_data_ref1)
-            QnpT_diff_phenix.append(temp_arr[0])
-            Qnref_phenix.append(temp_arr[1])
-
-            # vn{SP}(pT) with STAR pT cut
-            temp_arr = calculate_diff_vn_single_event(0.15, 2.0, temp_data,
-                                                      temp_data_ref1)
-            QnpT_diff_star.append(temp_arr[0])
-            Qnref_star.append(temp_arr[1])
-
-            # vn{4}(pT) with ALICE pT cut
-            temp_arr = calculate_diff_vn_single_event(0.20, 4.0, temp_data,
-                                                      temp_data_ref1)
-            QnpT_diff_alice.append(temp_arr[0])
-            Qnref_alice.append(temp_arr[1])
-
-            # vn{SP}(pT) with CMS pT cut
-            temp_arr = calculate_diff_vn_single_event(0.30, 4.0, temp_data,
-                                                     temp_data_ref1)
-            QnpT_diff_cms.append(temp_arr[0])
-            Qnref_cms.append(temp_arr[1])
-
-            # vn{SP}(pT) with ATLAS pT cut
-            temp_arr = calculate_diff_vn_single_event(0.50, 4.0, temp_data,
-                                                     temp_data_ref1)
-            QnpT_diff_atlas.append(temp_arr[0])
-            Qnref_atlas.append(temp_arr[1])
 
             # pT-differential vn using 2PC method
             # vn[2](pT)
@@ -1753,10 +1723,6 @@ for icen in range(len(centralityCutList) - 1):
         # dN/(2pi dy pT dpT)
         dN_spectra = mean(pT_array*dN_array, 0)/pT_spectra
         dN_spectra_err = std(pT_array*dN_array, 0)/pT_spectra/sqrt(nev)
-
-        # compute mean pT event-by-event
-        sigma_pT, sigma_pT_err = calculate_meanpT_fluc(dN_array, pT_array,
-                                                       0.15, 2.0)
 
         if particle_id == "9999":
             # calculate dNch (pT > 0.4 |eta| < 2.5) for ATLAS
@@ -1828,7 +1794,6 @@ for icen in range(len(centralityCutList) - 1):
             print("dNch(pT > 0.15 GeV, |eta| < 0.8) = {0:.4f}".format(
                                                                 dNch_ALICE2))
 
-
         # calculate mean pT from event-averaged particle spectrum
         pT_interp = linspace(0.05, 2.95, 30)
         dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra + 1e-30)))
@@ -1851,169 +1816,129 @@ for icen in range(len(centralityCutList) - 1):
         mean_pT_1_err = max(abs(mean_pT_1_upper - mean_pT_1), 
                           abs(mean_pT_1 - mean_pT_1_lower))
 
-        # calcualte vn{2}
-        vn_phenix_2, vn_phenix_2_err = calcualte_vn_2(vn_phenix_array)
-        vn_star_2, vn_star_2_err = calcualte_vn_2(vn_star_array)
-        vn_alice_2, vn_alice_2_err = calcualte_vn_2(vn_alice_array)
-        vn_cms_2, vn_cms_2_err = calcualte_vn_2(vn_cms_array)
-        vn_atlas_2, vn_atlas_2_err = calcualte_vn_2(vn_atlas_array)
+        # loop over all kinematic cuts
+        vn_2_list = []
+        vn_2_gap_list = []
+        for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+            # calcualte vn{2}
+            vn_2, vn_2_err = calcualte_vn_2(vn_array_list[iExp])
+            vn_2_list.append(list(zip(vn_2, vn_2_err)))
 
-        # calcualte vn{2} with |\Delta \eta| > 1
-        vn_phenix_2_gap, vn_phenix_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_phenix_array_sub1, vn_phenix_array_sub2)
-        vn_star_2_gap, vn_star_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_star_array_sub1, vn_star_array_sub2)
-        vn_alice_2_gap, vn_alice_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_alice_array_sub1, vn_alice_array_sub2)
-        vn_cms_2_gap, vn_cms_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_cms_array_sub1, vn_cms_array_sub2)
-        vn_atlas_2_gap, vn_atlas_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_atlas_array_sub1, vn_atlas_array_sub2)
+            # calculate vn{2} with |\Delta \eta| > 1
+            vn_2_gap, vn_2_gap_err = calcualte_vn_2_with_gap(
+                    vn_array_sub1_list[iExp], vn_array_sub2_list[iExp])
+            vn_2_gap_list.append(list(zip(vn_2_gap, vn_2_gap_err)))
 
-        if particle_id == '9999':
-            vn_alice_array2 = array(vn_alice_array)
-            vn_cms_array2 = array(vn_cms_array)
-            vn_atlas_array2 = array(vn_atlas_array)
-            # calculate non-linear response coefficents with ALICE pT cut
-            output_filename = path.join(
-                    avg_folder, "non_linear_response_coefficients_ALICE.dat")
-            calculate_nonlinear_reponse(vn_alice_array2, output_filename)
-            # calculate non-linear response coefficents with CMS pT cut
-            output_filename = path.join(
-                    avg_folder, "non_linear_response_coefficients_CMS.dat")
-            calculate_nonlinear_reponse(vn_cms_array2, output_filename)
-            # calculate non-linear response coefficents with ATLAS pT cut
-            output_filename = path.join(
-                    avg_folder, "non_linear_response_coefficients_ATLAS.dat")
-            calculate_nonlinear_reponse(vn_atlas_array2, output_filename)
+            # calcualte and output vn{SP}(pT)
+            vndiff_SP = calculate_vn_diff_SP(QnpT_diff_list[iExp],
+                                             Qnref_list[iExp])
+            output_filename = "{}_differential_observables_{}.dat".format(
+                                            particle_name_list[ipart], expKey)
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                    "vn{SP}  vn{SP}_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (pT_spectra[ipT], dN_spectra[ipT],
+                           dN_spectra_err[ipT]))
+                for iorder in range(1, n_order):
+                    f.write("%.10e  %.10e  " % (vndiff_SP[2*iorder-2][ipT],
+                                                vndiff_SP[2*iorder-1][ipT]))
+                f.write("\n")
+            f.close()
 
-            # calculate symmetric cumulant coefficents with ALICE pT cut
-            output_filename = path.join(
-                    avg_folder, "symmetric_cumulant_ALICE.dat")
-            calculate_symmetric_cumulant(vn_alice_array, output_filename)
+            if particle_id == '9999':
+                vn_array2 = array(vn_array_list[iExp])
+                # calculate non-linear response coefficents
+                output_filename = path.join(
+                    avg_folder,
+                    "non_linear_response_coefficients_{}.dat".format(expKey)
+                )
+                calculate_nonlinear_reponse(vn_array2, output_filename)
 
-            # calculate vn{4}, vn{4}/vn{2}, and vn{6}/vn{4}
-            output_filename1 = path.join(
-                    avg_folder, "charged_hadron_vn4_PHENIX.dat")
-            output_filename2 = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_PHENIX.dat")
-            output_filename3 = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_PHENIX.dat")
-            calculate_vn4_vn6(vn_phenix_array, output_filename1,
-                              output_filename2, output_filename3)
-            output_filename1 = path.join(
-                    avg_folder, "charged_hadron_vn4_STAR.dat")
-            output_filename2 = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_STAR.dat")
-            output_filename3 = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_STAR.dat")
-            calculate_vn4_vn6(vn_star_array, output_filename1,
-                              output_filename2, output_filename3)
-            output_filename1 = path.join(
-                    avg_folder, "charged_hadron_vn4_ALICE.dat")
-            output_filename2 = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_ALICE.dat")
-            output_filename3 = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_ALICE.dat")
-            calculate_vn4_vn6(vn_alice_array, output_filename1,
-                              output_filename2, output_filename3)
-            output_filename1 = path.join(
-                    avg_folder, "charged_hadron_vn4_CMS.dat")
-            output_filename2 = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_CMS.dat")
-            output_filename3 = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_CMS.dat")
-            calculate_vn4_vn6(vn_cms_array, output_filename1,
-                              output_filename2, output_filename3)
-            output_filename1 = path.join(
-                    avg_folder, "charged_hadron_vn4_ATLAS.dat")
-            output_filename2 = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_ATLAS.dat")
-            output_filename3 = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_ATLAS.dat")
-            calculate_vn4_vn6(vn_atlas_array, output_filename1,
-                              output_filename2, output_filename3)
+                # calculate symmetric cumulant coefficents with ALICE pT cut
+                output_filename = path.join(
+                    avg_folder, "symmetric_cumulant_{}.dat".format(expKey))
+                calculate_symmetric_cumulant(vn_array2, output_filename)
 
-        if particle_id == "9999" and not FastFlag:
-            # calculate vn distribution for charged hadrons
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_PHENIX.dat")
-            calculate_vn_distribution(vn_phenix_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_STAR.dat")
-            calculate_vn_distribution(vn_star_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_ALICE.dat")
-            calculate_vn_distribution(vn_alice_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_CMS.dat")
-            calculate_vn_distribution(vn_cms_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_ATLAS.dat")
-            calculate_vn_distribution(vn_atlas_array, output_filename)
+                # calculate vn{4}, vn{4}/vn{2}, and vn{6}/vn{4}
+                output_filename1 = path.join(
+                    avg_folder, "charged_hadron_vn4_{}.dat".format(expKey))
+                output_filename2 = path.join(
+                    avg_folder,
+                    "charged_hadron_vn4_over_vn2_{}.dat".format(expKey))
+                output_filename3 = path.join(
+                    avg_folder,
+                    "charged_hadron_vn6_over_vn4_{}.dat".format(expKey))
+                calculate_vn4_vn6(vn_array2, output_filename1,
+                                  output_filename2, output_filename3)
 
-            # calculate rn ratios
-            rn_cms = calculate_rn_ratios(vn_cms_arrays_for_rn)
+                if not FastFlag:
+                    # calculate vn distribution for charged hadrons
+                    output_filename = path.join(
+                        avg_folder,
+                        "charged_hadron_vn_distribution_{}.dat".format(expKey)
+                    )
+                    calculate_vn_distribution(vn_array2, output_filename)
 
-            # calculate flow event-plane correlation
-            output_filename = path.join(
-                avg_folder, "charged_hadron_event_plane_correlation_ALICE.dat")
-            calcualte_event_plane_correlations(vn_alice_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_event_plane_correlation_ATLAS.dat")
-            calcualte_event_plane_correlations(vn_atlas_array, output_filename)
+                    # calculate rn ratios
+                    rn_cms = calculate_rn_ratios(vn_cms_arrays_for_rn,
+                                                 avg_folder)
 
-            # calculate three-particle correlations
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_ALICE.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_alice_array, vn_alice_array_sub1, vn_alice_array_sub2,
-                    output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_ATLAS.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_atlas_array, vn_atlas_array_sub1, vn_atlas_array_sub2,
-                    output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_CMS.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_cms_array, vn_cms_array_sub1, vn_cms_array_sub2,
-                    output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_PHENIX.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_phenix_array, vn_phenix_array_sub1,
-                    vn_phenix_array_sub2, output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_STAR.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_star_array, vn_star_array_sub1, vn_star_array_sub2,
-                    output_filename)
+                    # calculate flow event-plane correlation
+                    output_filename = path.join(
+                        avg_folder,
+                        "charged_hadron_event_plane_correlation_{}.dat".format(
+                                                                        expKey)
+                    )
+                    calcualte_event_plane_correlations(vn_array2,
+                                                       output_filename)
 
-        # calcualte vn{SP}(pT)
-        vn_diff_SP_phenix = calculate_vn_diff_SP(QnpT_diff_phenix,
-                                                 Qnref_phenix)
-        vn_diff_SP_star = calculate_vn_diff_SP(QnpT_diff_star, Qnref_star)
-        vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice, Qnref_alice)
-        vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_cms)
-        vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_atlas)
+                    # calculate three-particle correlations
+                    output_filename = path.join(avg_folder,
+                        "{}_three_particle_correlation_{}.dat".format(
+                                            particle_name_list[ipart], expKey)
+                    )
+                    calcualte_event_plane_correlations_3sub(
+                        vn_array_list[iExp], vn_array_sub1_list[iExp],
+                        vn_array_sub2_list[iExp], output_filename)
 
-        if not FastFlag:
-            vn4_diff_phenix = calculate_vn4_diff(QnpT_diff_phenix,
-                                                 Qnref_phenix)
-            vn4_diff_star = calculate_vn4_diff(QnpT_diff_star, Qnref_star)
-            vn4_diff_alice = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
-            vn4_diff_cms = calculate_vn4_diff(QnpT_diff_cms, Qnref_cms)
-            vn4_diff_atlas = calculate_vn4_diff(QnpT_diff_atlas, Qnref_atlas)
+                    vn4_pTdiff = calculate_vn4_diff(QnpT_diff_list[iExp],
+                                                    Qnref_list[iExp])
+                    # output vn{4}(pT)
+                    output_filename = (
+                        "{}_differential_observables_4particle_{}.dat".format(
+                                            particle_name_list[ipart], expKey)
+                    )
+                    f = open(path.join(avg_folder, output_filename), 'w')
+                    f.write("#pT  vn{4}  vn{4}_err\n")
+                    for ipT in range(len(pT_spectra)):
+                        f.write("%.10e  " % (pT_spectra[ipT]))
+                        for iorder in range(1, 4):
+                            f.write("%.10e  %.10e  " % (
+                                        vn4_pTdiff[2*iorder-2][ipT],
+                                        vn4_pTdiff[2*iorder-1][ipT]))
+                        f.write("\n")
+                    f.close()
 
-            # calcualte vn[2](pT)
-            vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
-                    vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
+                    # calcualte vn[2](pT)
+                    vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
+                        vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
+                    output_filename = ("%s_differential_observables_2PC.dat"
+                                       % particle_name_list[ipart])
+                    f = open(path.join(avg_folder, output_filename), 'w')
+                    f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                            "vn[2]  vn[2]_err\n")
+                    for ipT in range(len(pT_spectra)):
+                        f.write("%.10e  %.10e  %.10e  "
+                                % (pT_spectra[ipT], dN_spectra[ipT],
+                                   dN_spectra_err[ipT]))
+                        for iorder in range(1, n_order):
+                            f.write("%.10e  %.10e  " % (
+                                vn_diff_2PC[iorder-1, ipT],
+                                vn_diff_2PC_err[iorder-1, ipT]))
+                        f.write("\n")
+                    f.close()
 
         # then particle rapidity distribution
         if particle_id == '9999':
@@ -2071,7 +1996,6 @@ for icen in range(len(centralityCutList) - 1):
         ######################################################################
         # finally, output all the results
         ######################################################################
-
         output_filename = ("%s_integrated_observables.dat"
                            % particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
@@ -2082,21 +2006,14 @@ for icen in range(len(centralityCutList) - 1):
             f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
         f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
         f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
-        f.write("sigma_pT/<pT>= %.5e +/- %.5e\n"% (sigma_pT, sigma_pT_err))
-        for iorder in range(1, n_order):
-            f.write("v_%d{2}(phenix)= %.5e +/- %.5e\n"
-                    % (iorder, vn_phenix_2[iorder-1],
-                       vn_phenix_2_err[iorder-1]))
-            f.write("v_%d{2}(STAR)= %.5e +/- %.5e\n"
-                    % (iorder, vn_star_2[iorder-1], vn_star_2_err[iorder-1]))
-            f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
-                    % (iorder, vn_alice_2[iorder-1], vn_alice_2_err[iorder-1]))
-            f.write("v_%d{2}(CMS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_cms_2[iorder-1], vn_cms_2_err[iorder-1]))
-            f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_atlas_2[iorder-1], vn_atlas_2_err[iorder-1]))
+        for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+            for iorder in range(len(vn_2_list[iExp])):
+                f.write("v_%d{2}(%s)= %.5e +/- %.5e\n"
+                        % (iorder+1, expKey,
+                           vn_2_list[iExp][iorder][0],
+                           vn_2_list[iExp][iorder][1])
+                )
         f.close()
-
         output_filename = ("%s_integrated_observables_with_rapidity_gap.dat"
                            % particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
@@ -2107,178 +2024,14 @@ for icen in range(len(centralityCutList) - 1):
             f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
         f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
         f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
-        f.write("sigma_pT/<pT>= %.5e +/- %.5e\n"% (sigma_pT, sigma_pT_err))
-        for iorder in range(1, n_order):
-            f.write("v_%d{2}(phenix)= %.5e +/- %.5e\n"
-                    % (iorder, vn_phenix_2_gap[iorder-1],
-                       vn_phenix_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(STAR)= %.5e +/- %.5e\n"
-                    % (iorder, vn_star_2_gap[iorder-1],
-                       vn_star_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
-                    % (iorder, vn_alice_2_gap[iorder-1],
-                       vn_alice_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(CMS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_cms_2_gap[iorder-1],
-                       vn_cms_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_atlas_2_gap[iorder-1],
-                       vn_atlas_2_gap_err[iorder-1]))
+        for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+            for iorder in range(len(vn_2_list[iExp])):
+                f.write("v_%d{2}(%s)= %.5e +/- %.5e\n"
+                        % (iorder+1, expKey,
+                           vn_2_gap_list[iExp][iorder][0],
+                           vn_2_gap_list[iExp][iorder][1])
+                )
         f.close()
-
-        output_filename = ("%s_differential_observables_PHENIX.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_phenix[2*iorder-2][ipT],
-                                            vn_diff_SP_phenix[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_STAR.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_star[2*iorder-2][ipT],
-                                            vn_diff_SP_star[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_ALICE.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_alice[2*iorder-2][ipT],
-                                            vn_diff_SP_alice[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_CMS.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_cms[2*iorder-2][ipT],
-                                            vn_diff_SP_cms[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_ATLAS.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_atlas[2*iorder-2][ipT],
-                                            vn_diff_SP_atlas[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        if not FastFlag:
-            output_filename = ("%s_differential_observables_2PC.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                    "vn[2]  vn[2]_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  %.10e  %.10e  "
-                        % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-                for iorder in range(1, n_order):
-                    f.write("%.10e  %.10e  " % (vn_diff_2PC[iorder-1, ipT],
-                                                vn_diff_2PC_err[iorder-1, ipT]))
-                f.write("\n")
-            f.close()
-
-            # output vn{4}(pT)
-            output_filename = (
-                    "%s_differential_observables_4particle_PHENIX.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_phenix[2*iorder-2][ipT],
-                        vn4_diff_phenix[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = (
-                    "%s_differential_observables_4particle_STAR.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_star[2*iorder-2][ipT],
-                        vn4_diff_star[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = (
-                    "%s_differential_observables_4particle_ALICE.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_alice[2*iorder-2][ipT],
-                        vn4_diff_alice[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = ("%s_differential_observables_4particle_CMS.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (vn4_diff_cms[2*iorder-2][ipT],
-                                                vn4_diff_cms[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = (
-                    "%s_differential_observables_4particle_ATLAS.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_atlas[2*iorder-2][ipT],
-                        vn4_diff_atlas[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
 
         output_filename = "{}_rapidity_distribution.dat".format(
                                                     particle_name_list[ipart])
@@ -2300,33 +2053,6 @@ for icen in range(len(centralityCutList) - 1):
                            vn_SP_eta_mid_err[iorder-1, ieta]))
             f.write("\n")
         f.close()
-
-        if particle_id == '9999' and not FastFlag:
-            # output rn ratios
-            pT_trig = ['1.0', '1.5', '2.0', '2.5', '3.0']
-            ipTtrig = 0
-            output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
-                               % (particle_name_list[ipart],
-                                  pT_trig[ipTtrig], pT_trig[ipTtrig+1]))
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
-            for ipT in range(len(rn_cms[0, :, 0])):
-                for iorder in range(len(rn_cms[:, 0, 0])):
-                    f.write("%.5e  %.5e  %.5e  "
-                            % (rn_cms[iorder, ipT, 0],
-                               rn_cms[iorder, ipT, 1],
-                               rn_cms[iorder, ipT, 2]))
-                f.write("\n")
-                if rn_cms[0, ipT, 0] == 0.0:
-                    f.close()
-                    ipTtrig += 1
-                    if ipTtrig < (len(pT_trig) - 1):
-                        output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
-                                           % (particle_name_list[ipart],
-                                              pT_trig[ipTtrig],
-                                              pT_trig[ipTtrig+1]))
-                        f = open(path.join(avg_folder, output_filename), 'w')
-                        f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
 
 print("Analysis is done.")
 
