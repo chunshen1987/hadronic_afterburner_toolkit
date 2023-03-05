@@ -111,7 +111,7 @@ nonlinear_reponse_correlator_name_list = [
                 'v4_L', 'v4(Psi2)', 'rho_422', 'chi_422',
                 'v5_L', 'v5(Psi23)', 'rho_523', 'chi_523',
                 'v6(Psi2)', 'v6(Psi3)', 'v6(Psi24)',
-                'rho_6222', 'rho_633', 'chi_6222', 'chi_633',
+                'rho_6222', 'rho_633', 'chi_6222', 'chi_633', 'chi_624',
                 'v7(Psi23)', 'rho_7223', 'chi_7223']
 symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 
@@ -285,7 +285,8 @@ def calculate_chi_523(vn_array):
 
 
 def calculate_chi_6222(vn_array):
-    """chi_6222 = Re(v6*conj(v2)**3.)/|v2|^6
+    """arXiv: 2002.00633
+       chi_6222 = Re(v6*conj(v2)**3.)/|v2|^6
        chi_633 = Re(v6*conj(v3)**2.)/|v3|^4
        v6222 = Re(v6*conj(v2)**3.)/sqrt(|v2|^6)
        v633 = Re(v6*conj(v3)**2.)/sqrt(|v3|^4)
@@ -312,6 +313,9 @@ def calculate_chi_6222(vn_array):
             - 6.*dN*(dN - 4.)*(dN - 5.))
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
+             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
+             + 2*dN*(dN - 3.))
     Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
              - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
              + 2*dN*(dN - 3.))
@@ -327,8 +331,11 @@ def calculate_chi_6222(vn_array):
     chi_633_num = Q6*conj(Q3)*conj(Q3) - 2.*Q3*conj(Q3) - Q6*conj(Q6) + 2.*dN
     v624_num = (Q6*conj(Q2)*conj(Q4) - Q4*conj(Q4) - Q2*conj(Q2)
                 - Q6*conj(Q6) + 2.*dN)
+    Q422 = Q4*conj(Q2)*conj(Q2) - 2.*Q2*conj(Q2) - Q4*conj(Q4) + 2.*dN
 
     N2_weight = dN*(dN - 1.)
+    Q2_2 = abs(Q2)**2. - dN
+    Q4_2 = abs(Q4)**2. - dN
     Q6_2 = abs(Q6)**2. - dN
 
     chi_6222_JK = zeros(nev)
@@ -338,6 +345,7 @@ def calculate_chi_6222(vn_array):
     rho6222_JK = zeros(nev)
     rho633_JK = zeros(nev)
     v624_JK = zeros(nev)
+    chi_624_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
@@ -348,6 +356,11 @@ def calculate_chi_6222(vn_array):
         den_JK1 = real(mean(Q2_6[array_idx]))/mean(N6_weight[array_idx])
         num_JK2 = real(mean(chi_633_num[array_idx]))/mean(N3_weight[array_idx])
         den_JK2 = real(mean(Q3_4[array_idx]))/mean(N4_weight[array_idx])
+        num_JK3 = real(mean(v624_num[array_idx]))/mean(N3_weight[array_idx])
+        v22 = real(mean(Q2_2[array_idx]))/mean(N2_weight[array_idx])
+        v24 = real(mean(Q2_4[array_idx]))/mean(N4_weight[array_idx])
+        v422 = real(mean(Q422[array_idx]))/mean(N3_weight[array_idx])
+        v42 = real(mean(Q4_2[array_idx]))/mean(N2_weight[array_idx])
         v6_Psi6 = nan_to_num(sqrt(mean(Q6_2[array_idx])
                              /mean(N2_weight[array_idx])))
 
@@ -357,15 +370,18 @@ def calculate_chi_6222(vn_array):
         chi_633_JK[iev] = num_JK2/den_JK2
         v633_JK[iev] = nan_to_num(num_JK2/sqrt(den_JK2))
         rho633_JK[iev] = nan_to_num(v633_JK[iev]/v6_Psi6)
-
+        chi_624_JK[iev] = real((num_JK3*v24 - num_JK1*v422)
+                               /((v24*v42 - v422**2)*v22))
         v624_JK[iev] = (
-            real(mean(v624_num[array_idx]))/mean(N3_weight[array_idx])
-            /sqrt(real(mean(Q_42[array_idx]))/mean(N4_weight[array_idx])))
+            num_JK3/sqrt(real(mean(Q_42[array_idx]))/mean(N4_weight[array_idx]))
+        )
 
     chi_6222_mean = mean(chi_6222_JK)
     chi_6222_err = sqrt((nev - 1.)/nev*sum((chi_6222_JK - chi_6222_mean)**2.))
     chi_633_mean = mean(chi_633_JK)
     chi_633_err = sqrt((nev - 1.)/nev*sum((chi_633_JK - chi_633_mean)**2.))
+    chi_624_mean = mean(chi_624_JK)
+    chi_624_err = sqrt((nev - 1.)/nev*sum((chi_624_JK - chi_624_mean)**2.))
     v6222_mean = mean(v6222_JK)
     v6222_err = sqrt((nev - 1.)/nev*sum((v6222_JK - v6222_mean)**2.))
     v633_mean = mean(v633_JK)
@@ -378,7 +394,8 @@ def calculate_chi_6222(vn_array):
     rho633_err = sqrt((nev - 1.)/nev*sum((rho633_JK - rho633_mean)**2.))
     return(v6222_mean, v6222_err, v633_mean, v633_err, v624_mean, v624_err,
            rho6222_mean, rho6222_err, rho633_mean, rho633_err,
-           chi_6222_mean, chi_6222_err, chi_633_mean, chi_633_err)
+           chi_6222_mean, chi_6222_err, chi_633_mean, chi_633_err,
+           chi_624_mean, chi_624_err)
 
 
 def calculate_chi_7223(vn_array):
