@@ -95,11 +95,10 @@ def calculate_meanpT_inte_vn(pT_low, pT_high, data, fileType):
     pT_inte_array = linspace(pT_low, pT_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
     pT_event = data[:, 0]
+    dN_event = data[:, 1]
     if fileType == 0:
-        dN_event = data[:, 2]
         N_event = data[:, -1]
     else:
-        dN_event = data[:, 1]
         N_event = data[:, 1]
     # dN/(pT*dpT*dy)
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
@@ -108,12 +107,8 @@ def calculate_meanpT_inte_vn(pT_low, pT_high, data, fileType):
     N = sum(N_interp)*dpT/0.1
     temp_vn_array = [N, meanpT,]
     for iorder in range(1, n_order):
-        if fileType == 0:
-            vn_real_event = data[:, 4*iorder]
-            vn_imag_event = data[:, 4*iorder+2]
-        else:
-            vn_real_event = data[:, 2*iorder]
-            vn_imag_event = data[:, 2*iorder+1]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
         vn_real_interp = interp(pT_inte_array, pT_event, vn_real_event)
         vn_imag_interp = interp(pT_inte_array, pT_event, vn_imag_event)
         vn_real_inte = (
@@ -191,18 +186,18 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high,
         vn_real_event = data[:, 2*iorder]      # photon cos
         vn_imag_event = data[:, 2*iorder+1]    # photon sin
         vn_ref_real_interp = interp(pT_inte_array, data_ref1[:, 0],
-                                    data_ref1[:, 4*iorder])
+                                    data_ref1[:, 2*iorder])
         vn_ref_imag_interp = interp(pT_inte_array, data_ref1[:, 0],
-                                    data_ref1[:, 4*iorder+2])
+                                    data_ref1[:, 2*iorder+1])
         vn_ref_real_inte = (
             sum(vn_ref_real_interp*dN_ref1_interp)/sum(dN_ref1_interp))
         vn_ref_imag_inte = (
             sum(vn_ref_imag_interp*dN_ref1_interp)/sum(dN_ref1_interp))
         Qn_ref1 = dN_ref1*(vn_ref_real_inte + 1j*vn_ref_imag_inte)
         vn_ref_real_interp = interp(pT_inte_array, data_ref2[:, 0],
-                                    data_ref2[:, 4*iorder])
+                                    data_ref2[:, 2*iorder])
         vn_ref_imag_interp = interp(pT_inte_array, data_ref2[:, 0],
-                                    data_ref2[:, 4*iorder+2])
+                                    data_ref2[:, 2*iorder+1])
         vn_ref_real_inte = (
             sum(vn_ref_real_interp*dN_ref2_interp)/sum(dN_ref2_interp))
         vn_ref_imag_inte = (
