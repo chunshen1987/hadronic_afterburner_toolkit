@@ -167,6 +167,19 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 3.1); paraRdr_.setVal("rap_max", 5.1);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    // STAR UPC flow cut
+    paraRdr_.setVal("rap_min", -1.5); paraRdr_.setVal("rap_max", -1.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 1.0); paraRdr_.setVal("rap_max", 1.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", -3.5); paraRdr_.setVal("rap_max", -2.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 2.5); paraRdr_.setVal("rap_max", 3.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", -5.0); paraRdr_.setVal("rap_max", -4.5);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", 4.5); paraRdr_.setVal("rap_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     
     // now identified particle
     int rap_type_for_pid = paraRdr_.getVal("rap_type_for_pid");
