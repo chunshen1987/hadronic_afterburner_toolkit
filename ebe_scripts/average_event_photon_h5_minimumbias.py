@@ -326,9 +326,11 @@ for icen in range(len(centrality_cut_list) - 1):
     refFileName0 = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
     refFileName1 = 'particle_9999_vndata_diff_eta_0.5_1.dat'
     refFileName2 = 'particle_9999_vndata_diff_eta_-1_-0.5.dat'
-    photonFileList = [
+    QGPphotonFileList = [
         'QGP_2to2_total_Spvn_tot_ypTdiff.dat',
         'QGP_AMYcollinear_Spvn_tot_ypTdiff.dat',
+    ]
+    photonFileList = QGPphotonFileList + [
         'HG_rho_spectralfun_Spvn_tot_ypTdiff.dat',
         'HG_pipi_bremsstrahlung_Spvn_tot_ypTdiff.dat',
         'HG_omega_Spvn_tot_ypTdiff.dat',
@@ -343,14 +345,18 @@ for icen in range(len(centrality_cut_list) - 1):
     y_array = temp[:, 0].reshape(-1, NPT)[:, 0]
 
     NcollList = []
+    QGPphotonResfull = []
+    photonResfull = []
     for iy, yrap in enumerate(list(y_array)):
         dN_array = []
-        vn_phenix_array = []
+        vn_phenix_array = []; QGPvn_phenix_array = []
         vn_phenix_array_ref1 = []; vn_phenix_array_ref2 = []
-        vn_alice_array = []
+        vn_alice_array = []; QGPvn_alice_array = []
         vn_alice_array_ref1 = []; vn_alice_array_ref2 = []
         QnpT_diff_phenix = []; Qnref1_phenix = []; Qnref2_phenix = []
         QnpT_diff_alice = []; Qnref1_alice = []; Qnref2_alice = []
+        QGPQnpT_diff_phenix = []; QGPQnref1_phenix = []; QGPQnref2_phenix = []
+        QGPQnpT_diff_alice = []; QGPQnref1_alice = []; QGPQnref2_alice = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_id = event_name.split("_")[-1]
             event_id = ''.join([n for n in event_id if n.isdigit()])
@@ -366,22 +372,37 @@ for icen in range(len(centrality_cut_list) - 1):
                 Ncoll = int(header.split()[10])
                 NcollList.append(Ncoll)
 
-            photonRes = []
-            for iphoton, photonFilename in enumerate(photonFileList):
-                temp_data = nan_to_num(event_group.get(photonFilename))
-                nrow, ncol = temp_data.shape
+                for iphoton, photonFilename in enumerate(QGPphotonFileList):
+                    temp_data = nan_to_num(event_group.get(photonFilename))
+                    nrow, ncol = temp_data.shape
 
-                if iphoton == 0:
-                    photonRes = temp_data
-                    photonRes[:, 3:] = (temp_data[:, 3:]
-                                        *temp_data[:, 2].reshape(nrow, 1))
-                else:
-                    photonRes[:, 2] += temp_data[:, 2]
-                    photonRes[:, 3:] += (temp_data[:, 3:]
-                                         *temp_data[:, 2].reshape(nrow, 1))
-            photonRes[:, 3:] /= photonRes[:, 2].reshape(nrow, 1)
+                    if iphoton == 0:
+                        QGPphotonResfull = temp_data
+                        QGPphotonResfull[:, 3:] = (
+                            temp_data[:, 3:]*temp_data[:, 2].reshape(nrow, 1))
+                    else:
+                        QGPphotonResfull[:, 2]  += temp_data[:, 2]
+                        QGPphotonResfull[:, 3:] += (
+                            temp_data[:, 3:]*temp_data[:, 2].reshape(nrow, 1))
+                QGPphotonResfull[:, 3:] /= QGPphotonResfull[:, 2].reshape(nrow, 1)
 
-            photonRes = photonRes[iy*NPT:(iy+1)*NPT, 1:]
+                for iphoton, photonFilename in enumerate(photonFileList):
+                    temp_data = nan_to_num(event_group.get(photonFilename))
+                    nrow, ncol = temp_data.shape
+
+                    if iphoton == 0:
+                        photonResfull = temp_data
+                        photonResfull[:, 3:] = (
+                            temp_data[:, 3:]*temp_data[:, 2].reshape(nrow, 1))
+                    else:
+                        photonResfull[:, 2]  += temp_data[:, 2]
+                        photonResfull[:, 3:] += (
+                            temp_data[:, 3:]*temp_data[:, 2].reshape(nrow, 1))
+                photonResfull[:, 3:] /= photonResfull[:, 2].reshape(nrow, 1)
+
+            QGPphotonRes = QGPphotonResfull[iy*NPT:(iy+1)*NPT, 1:]
+            photonRes = photonResfull[iy*NPT:(iy+1)*NPT, 1:]
+
             dN_event = photonRes[:, 1]   # dN/(dy pT dpT)
 
             # record particle spectra
@@ -391,6 +412,8 @@ for icen in range(len(centrality_cut_list) - 1):
             # vn with PHENIX pT cut
             temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0, photonRes, 1)
             vn_phenix_array.append(temp_vn_array)
+            temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0, QGPphotonRes, 1)
+            QGPvn_phenix_array.append(temp_vn_array)
             temp_vn_array = calculate_meanpT_inte_vn(0.2, 2.0,
                                                      temp_data_ref1, 0)
             vn_phenix_array_ref1.append(temp_vn_array)
@@ -401,6 +424,8 @@ for icen in range(len(centrality_cut_list) - 1):
             # vn with ALICE pT cut
             temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0, photonRes, 1)
             vn_alice_array.append(temp_vn_array)
+            temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0, QGPphotonRes, 1)
+            QGPvn_alice_array.append(temp_vn_array)
             temp_vn_array = calculate_meanpT_inte_vn(0.2, 3.0,
                                                      temp_data_ref1, 0)
             vn_alice_array_ref1.append(temp_vn_array)
@@ -416,6 +441,12 @@ for icen in range(len(centrality_cut_list) - 1):
             QnpT_diff_phenix.append(temp_arr[0])
             Qnref1_phenix.append(temp_arr[1])
             Qnref2_phenix.append(temp_arr[2])
+            temp_arr = calculate_diff_vn_single_event(0.2, 2.0, QGPphotonRes,
+                                                      temp_data_ref1,
+                                                      temp_data_ref2)
+            QGPQnpT_diff_phenix.append(temp_arr[0])
+            QGPQnref1_phenix.append(temp_arr[1])
+            QGPQnref2_phenix.append(temp_arr[2])
 
             # vn{SP}(pT) with ALICE pT cut
             temp_arr = calculate_diff_vn_single_event(0.20, 3.0, photonRes,
@@ -424,6 +455,12 @@ for icen in range(len(centrality_cut_list) - 1):
             QnpT_diff_alice.append(temp_arr[0])
             Qnref1_alice.append(temp_arr[1])
             Qnref2_alice.append(temp_arr[2])
+            temp_arr = calculate_diff_vn_single_event(0.20, 3.0, QGPphotonRes,
+                                                      temp_data_ref1,
+                                                      temp_data_ref2)
+            QGPQnpT_diff_alice.append(temp_arr[0])
+            QGPQnref1_alice.append(temp_arr[1])
+            QGPQnref2_alice.append(temp_arr[2])
 
         # now we perform event average
         dN_array = array(dN_array)
@@ -434,6 +471,8 @@ for icen in range(len(centrality_cut_list) - 1):
         # calcualte dN/dy and <pT>
         vn_phenix_array = array(vn_phenix_array)
         vn_alice_array = array(vn_alice_array)
+        QGPvn_phenix_array = array(QGPvn_phenix_array)
+        QGPvn_alice_array = array(QGPvn_alice_array)
         dNdy_avg_phenix     = real(mean(vn_phenix_array[:, 0]))
         dNdy_avg_phenix_err = real(std(vn_phenix_array[:, 0]))/sqrt(nev)
         meanpT_phenix       = real(mean(vn_phenix_array[:, 1]))
@@ -448,6 +487,10 @@ for icen in range(len(centrality_cut_list) - 1):
                 vn_phenix_array, vn_phenix_array_ref1, vn_phenix_array_ref2)
         vn_alice_2_gap, vn_alice_2_gap_err = calcualte_vn_2_with_gap(
                 vn_alice_array, vn_alice_array_ref1, vn_alice_array_ref2)
+        QGPvn_phenix_2_gap, QGPvn_phenix_2_gap_err = calcualte_vn_2_with_gap(
+                QGPvn_phenix_array, vn_phenix_array_ref1, vn_phenix_array_ref2)
+        QGPvn_alice_2_gap, QGPvn_alice_2_gap_err = calcualte_vn_2_with_gap(
+                QGPvn_alice_array, vn_alice_array_ref1, vn_alice_array_ref2)
 
         # calcualte vn{SP}(pT)
         output_filename = (
@@ -458,6 +501,18 @@ for icen in range(len(centrality_cut_list) - 1):
         output_filename = (
             "photon_differential_observables_ALICE_y_{}.dat".format(yrap))
         calculate_vn_diff_SP(QnpT_diff_alice, Qnref1_alice, Qnref2_alice,
+                             avg_folder, output_filename,
+                             pT_array, dN_spectra, dN_spectra_err)
+        output_filename = (
+            "QGPphoton_differential_observables_PHENIX_y_{}.dat".format(yrap))
+        calculate_vn_diff_SP(QGPQnpT_diff_phenix, QGPQnref1_phenix,
+                             QGPQnref2_phenix,
+                             avg_folder, output_filename,
+                             pT_array, dN_spectra, dN_spectra_err)
+        output_filename = (
+            "QGPphoton_differential_observables_ALICE_y_{}.dat".format(yrap))
+        calculate_vn_diff_SP(QGPQnpT_diff_alice, QGPQnref1_alice,
+                             QGPQnref2_alice,
                              avg_folder, output_filename,
                              pT_array, dN_spectra, dN_spectra_err)
 
@@ -482,6 +537,12 @@ for icen in range(len(centrality_cut_list) - 1):
             f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
                     % (iorder, vn_alice_2_gap[iorder-1],
                        vn_alice_2_gap_err[iorder-1]))
+            f.write("v_%d{2}_QGP(phenix)= %.5e +/- %.5e\n"
+                    % (iorder, QGPvn_phenix_2_gap[iorder-1],
+                       QGPvn_phenix_2_gap_err[iorder-1]))
+            f.write("v_%d{2}_QGP(ALICE)= %.5e +/- %.5e\n"
+                    % (iorder, QGPvn_alice_2_gap[iorder-1],
+                       QGPvn_alice_2_gap_err[iorder-1]))
         f.close()
 
     # output Ncoll for the centrality bin
