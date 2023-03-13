@@ -348,7 +348,7 @@ for icen in range(len(centrality_cut_list) - 1):
     QGPphotonResfull = []
     photonResfull = []
     for iy, yrap in enumerate(list(y_array)):
-        dN_array = []
+        dN_array = []; QGPdN_array = []
         vn_phenix_array = []; QGPvn_phenix_array = []
         vn_phenix_array_ref1 = []; vn_phenix_array_ref2 = []
         vn_alice_array = []; QGPvn_alice_array = []
@@ -406,6 +406,7 @@ for icen in range(len(centrality_cut_list) - 1):
             dN_event = photonRes[:, 1]   # dN/(dy pT dpT)
 
             # record particle spectra
+            QGPdN_array.append(QGPphotonRes[:, 1])
             dN_array.append(dN_event)
 
             # pT-integrated vn
@@ -464,9 +465,12 @@ for icen in range(len(centrality_cut_list) - 1):
 
         # now we perform event average
         dN_array = array(dN_array)
+        QGPdN_array = array(QGPdN_array)
         # dN/(2pi dy pT dpT)
         dN_spectra = mean(dN_array, 0)/(2.*pi)
         dN_spectra_err = std(dN_array, 0)/(2.*pi)/sqrt(nev)
+        QGPdN_spectra = mean(QGPdN_array, 0)/(2.*pi)
+        QGPdN_spectra_err = std(QGPdN_array, 0)/(2.*pi)/sqrt(nev)
 
         # calcualte dN/dy and <pT>
         vn_phenix_array = array(vn_phenix_array)
@@ -508,13 +512,13 @@ for icen in range(len(centrality_cut_list) - 1):
         calculate_vn_diff_SP(QGPQnpT_diff_phenix, QGPQnref1_phenix,
                              QGPQnref2_phenix,
                              avg_folder, output_filename,
-                             pT_array, dN_spectra, dN_spectra_err)
+                             pT_array, QGPdN_spectra, QGPdN_spectra_err)
         output_filename = (
             "QGPphoton_differential_observables_ALICE_y_{}.dat".format(yrap))
         calculate_vn_diff_SP(QGPQnpT_diff_alice, QGPQnref1_alice,
                              QGPQnref2_alice,
                              avg_folder, output_filename,
-                             pT_array, dN_spectra, dN_spectra_err)
+                             pT_array, QGPdN_spectra, QGPdN_spectra_err)
 
         ######################################################################
         # finally, output all the results
