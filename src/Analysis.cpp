@@ -204,6 +204,18 @@ void Analysis::FlowAnalysis() {
         spvn.push_back(new singleParticleSpectra(paraRdr, path_,
                                                  ran_gen_ptr_));
     }
+    if (paraRdr.getVal("collect_neutral_particles", 0) == 1) {
+        paraRdr.setVal("particle_monval", 111);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("particle_monval", 311);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("particle_monval", -311);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("particle_monval", 2112);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("particle_monval", -2112);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    }
     paraRdr.setVal("rap_type", 0);
     paraRdr.setVal("particle_monval", 2212);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
