@@ -33,7 +33,7 @@ resonance_weak_feed_down_Sigma_to_Lambda_flag = 0  # include weak feed down cont
 select_resonances_flag = 0    # perform resonance decays only for selected
                               # particle species
 net_particle_flag = 0         # flag to collect net particle yield distribution
-neutral_particles = 0         # flag to collect neutral particles
+collect_neutral_particles = 0 # flag to collect neutral particles
 
 event_buffer_size = 1000000   # the number of particles read in at once
 rapidity_shift = 0.
