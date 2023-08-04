@@ -36,7 +36,9 @@ BalanceFunction::BalanceFunction(
     Bphi_min = -M_PI/2.;
     events   = paraRdr_.getVal("events");     // to normalize single-particle densities 
     rap_type_ = paraRdr_.getVal("rap_type");
-
+    abs_y_max = paraRdr.getVal("abs_y_max"); // single particle density (Norm_b, Norm_bbar rapidity upper limit
+    abs_y_min = paraRdr.getVal("abs_y_min"); // lower limit
+  
     C_ab.resize(Bnpts);
     C_abarbbar.resize(Bnpts);
     C_abarb.resize(Bnpts);
@@ -251,7 +253,7 @@ int BalanceFunction::get_normalization_balance(
     for (auto const& ev_i: (*plist_b)) {
         for (auto const& part_b: (*ev_i)) {
             if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
-            if (part_b.rap_y < Brap_min || part_b.rap_y > Brap_max) continue; // applying rapidity cut to single-particle density count
+            if (part_b.rap_y < abs_y_min || part_b.rap_y > abs_y_max) continue; // applying rapidity cut to single-particle density count
             normal_number += 1;
         }
     }

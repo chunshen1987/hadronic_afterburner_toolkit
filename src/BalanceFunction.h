@@ -29,7 +29,9 @@ class BalanceFunction {
 
     long int N_b, N_bbar;
     long int Normal_b, Normal_bbar; // particle count declarations for single particle density (before applying normalization with #events)
-
+    
+    int abs_y_max; // rapiidty cut upper limit for getting Normal_b, Normal_bbar
+    int abs_y_min;
     int events; // number of total events in parallel
     int rap_type_;
     int Bnpts;

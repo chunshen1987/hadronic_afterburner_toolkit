@@ -121,4 +121,5 @@ Bnpts = 21                           # number of bins for the balance function
 Brap_max = 2.0                       # the maximum \Delta y rapidity for balance function
 BpT_min = 0.2                        # the minimum pT cut for particles used in balance function
 BpT_max = 3.0                        # the maximum pT cut for particles used in balance function
-
+abs_y_max = 0.4                      # maximum for y cut for single particle density count
+abs_y_min = -0.4                     # minimum for y cut
