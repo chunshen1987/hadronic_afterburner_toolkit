@@ -1,5 +1,5 @@
 echo_level = 9                # control the mount of print messages
-read_in_mode = 2              # mode for reading in particle information
+read_in_mode = 8              # mode for reading in particle information
                               # 0: reads outputs from OSCAR outputs
                               # 1: reads outputs from UrQMD outputs
                               # 2: reads outputs from zipped UrQMD outputs
@@ -12,9 +12,9 @@ read_in_mode = 2              # mode for reading in particle information
                               # 9: reads outputs from binary outputs (iSS)
                               # 10: reads outputs from gzip outputs (iSS)
 
-analyze_flow = 1              # 0/1: flag to perform flow analysis
+analyze_flow = 0              # 0/1: flag to perform flow analysis
 analyze_HBT = 0               # 0/1: flag to perform HBT analysis
-analyze_balance_function = 0  # 0/1: flag to analyze Balance function
+analyze_balance_function = 1  # 0/1: flag to analyze Balance function
 analyze_ebe_yield = 0         # 0/1: flag to analyze ebe dis. of particle yield
 
 randomSeed = -1
@@ -113,9 +113,10 @@ q_min = -0.15                        # minimum value for momentum q (GeV)
 q_max = 0.15                         # maximum value for momentum q (GeV)
 
 # options for calculting Balance function
-particle_alpha = 9998                 # monte carlo number for particle alpha
-particle_beta = -9998                 # monte carlo number for particle beta
+particle_alpha = 211                 # monte carlo number for particle alpha
+particle_beta = -211                 # monte carlo number for particle beta
 
+events = 300000                      # total event count for purposes of normalizing single-particle density 
 Bnpts = 21                           # number of bins for the balance function
 Brap_max = 2.0                       # the maximum \Delta y rapidity for balance function
 BpT_min = 0.2                        # the minimum pT cut for particles used in balance function

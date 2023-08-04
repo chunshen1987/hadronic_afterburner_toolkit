@@ -28,7 +28,9 @@ class BalanceFunction {
     bool same_species;
 
     long int N_b, N_bbar;
+    long int Normal_b, Normal_bbar; // particle count declarations for single particle density (before applying normalization with #events)
 
+    int events; // number of total events in parallel
     int rap_type_;
     int Bnpts;
     int Bnphi;
@@ -47,6 +49,12 @@ class BalanceFunction {
     std::vector<std::vector<double>> C_mixed_abarbbar;
     std::vector<std::vector<double>> C_mixed_abbar;
     std::vector<std::vector<double>> C_mixed_abarb;
+    
+    // delcaring R arrays 
+    std::vector<std::vector<double>> R_ab;
+    std::vector<std::vector<double>> R_abarbbar;
+    std::vector<std::vector<double>> R_abbar;
+    std::vector<std::vector<double>> R_abarb;
 
  public:
     BalanceFunction(const ParameterReader &paraRdr,
@@ -71,6 +79,8 @@ class BalanceFunction {
                 const std::vector< std::vector<particle_info>* >* plist_b);
     int get_number_of_particles(
                 const std::vector< std::vector<particle_info>* >* plist_b);
+    int get_normalization_balance( // declaring function for getting Normal_b Normal_bbar particle counts
+		const std::vector< std::vector<particle_info>* >* plist_b);
     void output_balance_function();
 };
 

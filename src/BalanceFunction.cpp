@@ -34,7 +34,7 @@ BalanceFunction::BalanceFunction(
     Bnphi    = 20;
     dphi     = 2.*M_PI/Bnphi;
     Bphi_min = -M_PI/2.;
-
+    events   = paraRdr_.getVal("events");     // to normalize single-particle densities 
     rap_type_ = paraRdr_.getVal("rap_type");
 
     C_ab.resize(Bnpts);
@@ -45,6 +45,13 @@ BalanceFunction::BalanceFunction(
     C_mixed_abarbbar.resize(Bnpts);
     C_mixed_abarb.resize(Bnpts);
     C_mixed_abbar.resize(Bnpts);
+
+    // delcaring R2 two-particle corr functions
+    R_ab.resize(Bnpts);
+    R_abarbbar.resize(Bnpts);
+    R_abarb.resize(Bnpts);
+    R_abbar.resize(Bnpts);
+    
     for (int i = 0; i < Bnpts; i++) {
         C_ab[i].assign(Bnphi, 0.);
         C_abarbbar[i].assign(Bnphi, 0.);
@@ -54,10 +61,21 @@ BalanceFunction::BalanceFunction(
         C_mixed_abarbbar[i].assign(Bnphi, 0.);
         C_mixed_abarb[i].assign(Bnphi, 0.);
         C_mixed_abbar[i].assign(Bnphi, 0.);
+
+
+	// filling R2's with initial values
+        R_ab[i].assign(Bnphi, 0.);
+        R_abarbbar[i].assign(Bnphi, 0.);
+        R_abarb[i].assign(Bnphi, 0.);
+        R_abbar[i].assign(Bnphi, 0.);
     }
 
     N_b    = 0;
     N_bbar = 0;
+    
+    // declaring single-particle density counts 
+    Normal_b = 0;
+    Normal_bbar = 0;
 }
 
 
@@ -71,7 +89,13 @@ void BalanceFunction::calculate_balance_function(
 
     N_b    += get_number_of_particles(plist_b);
     N_bbar += get_number_of_particles(plist_bbar);
-    messager.info("calculating C_ab ... ");
+
+    // calling function defined below to get single-particle counts
+    Normal_b += get_normalization_balance(plist_b);
+    Normal_bbar += get_normalization_balance(plist_bbar);
+
+
+    messager.info("calculating C_ab TEST CHECK ... ");
     combine_and_bin_particle_pairs(C_ab, plist_a, plist_b);
     messager.info("calculating C_abarbbar ... ");
     combine_and_bin_particle_pairs(C_abarbbar, plist_abar, plist_bbar);
@@ -93,7 +117,20 @@ void BalanceFunction::calculate_balance_function(
     combine_and_bin_mixed_particle_pairs(
                     C_mixed_abbar, plist_a, plist_bbar_mixed_event);
     combine_and_bin_mixed_particle_pairs(
-                    C_mixed_abbar, plist_abar, plist_b_mixed_event);
+                    C_mixed_abarb, plist_abar, plist_b_mixed_event);
+
+    // using nested loop to assign values to R's according to eqn 2.16 in thesis 
+    for (int i=0; i < Bnpts; i++) {
+      for (int j=0; j < Bnphi; j++) {
+      
+          R_ab[i][j] = (C_ab[i][j] / C_mixed_ab[i][j]) - 1;
+          R_abarbbar[i][j] = (C_abarbbar[i][j] / C_mixed_abarbbar[i][j]) - 1;
+          R_abarb[i][j] = (C_abarb[i][j] / C_mixed_abarb[i][j]) - 1;
+          R_abbar[i][j] = (C_abbar[i][j] / C_mixed_abbar[i][j]) - 1;
+        
+      }
+    
+    }
 }
 
 
@@ -208,38 +245,83 @@ int BalanceFunction::get_number_of_particles(
 }
 
 
+int BalanceFunction::get_normalization_balance(
+	       	const std::vector< std::vector<particle_info>* >* plist_b) {
+    int normal_number = 0;
+    for (auto const& ev_i: (*plist_b)) {
+        for (auto const& part_b: (*ev_i)) {
+            if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
+            if (part_b.rap_y < Brap_min || part_b.rap_y > Brap_max) continue; // applying rapidity cut to single-particle density count
+            normal_number += 1;
+        }
+    }
+    return(normal_number);
+}
+
 void BalanceFunction::output_balance_function() {
     double N_OS       = 0.;
     double N_OS_mixed = 0.;
     double N_SS       = 0.;
     double N_SS_mixed = 0.;
+
+    int Norm_b = Normal_b/events; // Norm_b and Norm_bbar are the final counts used in computing the balance function
+    int Norm_bbar = Normal_bbar/events;
+ 
     std::vector<double> C2_OS_delta_y(Bnpts, 0.);
     std::vector<double> C2_SS_delta_y(Bnpts, 0.);
     std::vector<double> C2_OS_delta_y_mixed(Bnpts, 0.);
     std::vector<double> C2_SS_delta_y_mixed(Bnpts, 0.);
+    
+    // delcaring R2 arrays for y and phi (below) just as with C2's
+    std::vector<double> R2_ab_delta_y(Bnpts, 0.);
+    std::vector<double> R2_abarbbar_delta_y(Bnpts, 0.);
+    std::vector<double> R2_abarb_delta_y(Bnpts, 0.);
+    std::vector<double> R2_abbar_delta_y(Bnpts, 0.);
+    
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
             C2_OS_delta_y[i]       += C_ab[i][j] + C_abarbbar[i][j];
             C2_SS_delta_y[i]       += C_abbar[i][j] + C_abarb[i][j];
             C2_OS_delta_y_mixed[i] += C_mixed_ab[i][j] + C_mixed_abarbbar[i][j];
             C2_SS_delta_y_mixed[i] += C_mixed_abbar[i][j] + C_mixed_abarb[i][j];
+            
+            // "integrating out" dependance on phi by applying sum
+	    R2_ab_delta_y[i]       += R_ab[i][j];
+            R2_abarbbar_delta_y[i] += R_abarbbar[i][j];
+            R2_abarb_delta_y[i]    += R_abarb[i][j];
+            R2_abbar_delta_y[i]    += R_abbar[i][j];
         }
+      
         N_OS += C2_OS_delta_y[i];
         N_SS += C2_SS_delta_y[i];
         N_OS_mixed += C2_OS_delta_y_mixed[i];
         N_SS_mixed += C2_SS_delta_y_mixed[i];
     }
+    std::cout << "R2_ab = " << R2_ab_delta_y[2]; // just a test print to screen when I wanted to make sure the program was edited 
 
     std::vector<double> C2_OS_delta_phi(Bnphi, 0.);
     std::vector<double> C2_SS_delta_phi(Bnphi, 0.);
     std::vector<double> C2_OS_delta_phi_mixed(Bnphi, 0.);
     std::vector<double> C2_SS_delta_phi_mixed(Bnphi, 0.);
+
+
+    std::vector<double> R2_ab_delta_phi(Bnphi, 0.);
+    std::vector<double> R2_abarbbar_delta_phi(Bnphi, 0.);
+    std::vector<double> R2_abarb_delta_phi(Bnphi, 0.);
+    std::vector<double> R2_abbar_delta_phi(Bnphi, 0.);
+    
     for (int j = 0; j < Bnphi; j++) {
         for (int i = 0; i < Bnpts; i++) {
             C2_OS_delta_phi[j]       += C_ab[i][j] + C_abarbbar[i][j];
             C2_SS_delta_phi[j]       += C_abbar[i][j] + C_abarb[i][j];
             C2_OS_delta_phi_mixed[j] += C_mixed_ab[i][j] + C_mixed_abarbbar[i][j];
             C2_SS_delta_phi_mixed[j] += C_mixed_abbar[i][j] + C_mixed_abarb[i][j];
+            
+            // "integrating out" dependance on y by applying sum 
+	    R2_ab_delta_phi[j]       += R_ab[i][j];
+            R2_abarbbar_delta_phi[j] += R_abarbbar[i][j];
+            R2_abarb_delta_phi[j]    += R_abarb[i][j];
+            R2_abbar_delta_phi[j]    += R_abbar[i][j];
         }
     }
 
@@ -251,17 +333,26 @@ void BalanceFunction::output_balance_function() {
     filename << path_ << "/Balance_function_" << particle_monval_a << "_"
              << particle_monval_b << "_Delta_y.dat";
     std::ofstream output(filename.str().c_str(), std::ios::out);
+
     output << "# DeltaY  Delta_C2  C2(OS)  rho2(OS)  rho1^2(OS)  "
-           << "C2(SS) rho2(SS)  rho1^2(SS)" << endl;
+           << "C2(SS) rho2(SS)  rho1^2(SS)  R2_ab  R2_abarbbar  R2_abarb  " 
+           << "R2_abbar  N_b  N_bbar  B  " << endl; // additional output histograms, note N_b N_bbar is the text on screen but the output below them is according to Norm_b Norm_bbar above
     for (int i = 0; i < Bnpts; i++) {
         double C2_OS = C2_OS_delta_y[i]/C2_OS_delta_y_mixed[i]*N_OS_mixed/N_OS;
-        double C2_SS = C2_SS_delta_y[i]/C2_SS_delta_y_mixed[i]*N_SS_mixed/N_SS;
-        output << std::scientific << std::setw(18) << std::setprecision(8)
+        double C2_SS = C2_SS_delta_y[i]/C2_SS_delta_y_mixed[i]*N_SS_mixed/N_SS; 
+        
+        // computing balance function according to eqn 2.32 in thesis
+        double B = 0.5 * ((Norm_b * R2_ab_delta_y[i]) - (Norm_bbar * R2_abbar_delta_y[i]) + (Norm_bbar * R2_abarbbar_delta_y[i]) - (Norm_b * R2_abarb_delta_y[i]));
+        
+        output << std::scientific << std::setw(38) << std::setprecision(8)
                << Delta_y[i] << "   " << C2_OS - C2_SS << "  "
-               << C2_OS << "  " << C2_OS_delta_y[i] << "  "
+               << C2_OS << "  " << C2_OS_delta_y[i] << "  " 
                << C2_OS_delta_y_mixed[i] << "  "
                << C2_SS << "  " << C2_SS_delta_y[i] << "  "
-               << C2_SS_delta_y_mixed[i] << endl;
+               << C2_SS_delta_y_mixed[i] << "  " << R2_ab_delta_y[i] << "  " 
+               << R2_abarbbar_delta_y[i] << "  " << R2_abarb_delta_y[i] 
+               << "  " << R2_abbar_delta_y[i] << "  " << Norm_b << "  "
+	       << Norm_bbar << "  " << B << endl; // outputting additional histograms
     }
     output.close();
 
@@ -273,19 +364,28 @@ void BalanceFunction::output_balance_function() {
     filename2 << path_ << "/Balance_function_" << particle_monval_a << "_"
               << particle_monval_b << "_Delta_phi.dat";
     std::ofstream output2(filename2.str().c_str(), std::ios::out);
+
     output2 << "# Delta_phi  Delta_C2  C2(OS)  rho2(OS)  rho1^2(OS)  "
-            << "C2(SS) rho2(SS)  rho1^2(SS)" << endl;
-    for (int j = 0; j < Bnphi; j++) {
+            << "C2(SS) rho2(SS)  rho1^2(SS)  R2_ab  R2_abarbbar  R2_abarb  "
+            << "R_abbar  N_b  N_bbar  B  " << endl;
+    for (int j = 0; j < Bnphi; j++) { // summing out dependence on y
         double C2_OS = (C2_OS_delta_phi[j]/C2_OS_delta_phi_mixed[j]
                         *N_OS_mixed/N_OS);
         double C2_SS = (C2_SS_delta_phi[j]/C2_SS_delta_phi_mixed[j]
                         *N_SS_mixed/N_SS);
+                        
+        double B = 0.5 * ((Norm_b * R2_ab_delta_phi[j]) - (Norm_bbar * R2_abbar_delta_phi[j]) + (Norm_bbar * R2_abarbbar_delta_phi[j]) - (Norm_b * R2_abarb_delta_phi[j]));
+        
         output2 << std::scientific << std::setw(18) << std::setprecision(8)
                 << Delta_phi[j] << "   " << C2_OS - C2_SS << "  "
                 << C2_OS << "  " << C2_OS_delta_phi[j] << "  "
                 << C2_OS_delta_phi_mixed[j] << "  "
                 << C2_SS << "  " << C2_SS_delta_phi[j] << "  "
-                << C2_SS_delta_phi_mixed[j] << endl;
+                << C2_SS_delta_phi_mixed[j] << "  " << R2_ab_delta_phi[j] << "  " 
+                << R2_abarbbar_delta_phi[j] << "  " << R2_abarb_delta_phi[j] 
+                << "  " << R2_abbar_delta_phi[j] << "  " << Norm_b << "  " 
+                << Norm_bbar << "  " << B << endl;
+    
     }
     output2.close();
 
@@ -294,14 +394,19 @@ void BalanceFunction::output_balance_function() {
     filename5 << path_ << "/Correlation_function_" << particle_monval_a << "_"
               << particle_monval_b << "_2D.dat";
     std::ofstream output3(filename5.str().c_str(), std::ios::out);
+
     output3 << "# DY  Dphi  C2(OS)  rho2(OS)  rho1^2(OS)  "
-            << "C2(SS)  rho2(SS)  rho1^2(SS)" << endl;
-    for (int i = 0; i < Bnpts; i++) {
+            << "C2(SS)  rho2(SS)  rho1^2(SS)  R2_ab  R2_abarbbar  R2_abarb " 
+            << "R2_abbar  N_b  N_bbar  B  " << endl;
+    for (int i = 0; i < Bnpts; i++) { 
         for (int j = 0; j < Bnphi; j++) {
             double C2_OS = ( (C_ab[i][j] + C_abarbbar[i][j])
                             /(C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] + 1e-15));
             double C2_SS = ( (C_abbar[i][j] + C_abarb[i][j])
                             /(C_mixed_abbar[i][j] + C_mixed_abarb[i][j] + 1e-15));
+            
+            double B = 0.5 * ((Norm_b * R_ab[i][j]) - (Norm_bbar * R_abbar[i][j]) + (Norm_bbar * R_abarbbar[i][j]) - (Norm_b * R_abarb[i][j]));
+            
             output3 << std::scientific << std::setw(18) << std::setprecision(8)
                     << Delta_y[i] << "  " << Delta_phi[j] << "  "
                     << C2_OS*N_OS_mixed/N_OS << "  "
@@ -309,8 +414,11 @@ void BalanceFunction::output_balance_function() {
                     << C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] << "  "
                     << C2_SS*N_SS_mixed/N_SS << "  "
                     << C_abbar[i][j] + C_abarb[i][j] << "  "
-                    << C_mixed_abbar[i][j] + C_mixed_abarb[i][j] << endl;
-        }
+                    << C_mixed_abbar[i][j] + C_mixed_abarb[i][j] << R_ab[i][j] << "  " 
+                    << R_abarbbar[i][j] << "  " << R_abarb[i][j] 
+                    << "  " << R_abbar[i][j] << "  " << Norm_b << "  " 
+                    << Norm_bbar << "  " << B << endl;
+	}
     }
     output3.close();
 }
