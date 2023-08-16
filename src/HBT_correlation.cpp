@@ -349,7 +349,7 @@ void HBT_correlation::combine_and_bin_particle_pairs(
 
             if (invariant_radius_flag_ == 1) {
                 if (local_q_inv > (q_min - delta_q/2. + 1e-8)
-                    && local_q_inv > (q_max + delta_q/2. - 1e-8)) {
+                    && local_q_inv < (q_max + delta_q/2. - 1e-8)) {
                     int qinv_idx = static_cast<int>(
                         (local_q_inv - (q_min - delta_q/2.))/delta_q);
                     if (qinv_idx < qnpts
