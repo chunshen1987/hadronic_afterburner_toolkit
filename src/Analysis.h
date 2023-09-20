@@ -28,6 +28,8 @@ class Analysis {
     void PerformAnalysis();
     void FlowAnalysis();
     void FlowAnalysis_3D();
+    void FlowAnalysis_RHIC();
+    void FlowAnalysis_LHC();
     void FlowAnalysis_multistrange_particles();
     void HBTAnalysis();
     void ParticleYieldDistributionAnalysis();

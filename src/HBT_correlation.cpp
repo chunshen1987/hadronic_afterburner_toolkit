@@ -857,7 +857,7 @@ void HBT_correlation::create_a_3D_array(T ***&arr3D, int nx, int ny, int nz) {
 template <typename T>
 void HBT_correlation::delete_a_3D_array(T ***&arr3D, int nx, int ny) {
     for (int i = 0; i < nx; i++) {
-        for (int j = 0; j < nx; j++)
+        for (int j = 0; j < ny; j++)
             delete[] arr3D[i][j];
         delete[] arr3D[i];
     }
