@@ -2504,7 +2504,7 @@ void singleParticleSpectra::outputRapidityPTDistribution() {
            << endl;
 
     for (int i = 0; i < N_rap; i++) {
-        double rap_bin_mid = rap_min + i*drap;
+        double rap_bin_mid = rapidity_array[i];
         for (int j = 0; j < npT; j++) {
             double pT_bin_mid = pT_array[j];
             if (Qn_pTrapdiff_vector[i][j][2] > 0) {
