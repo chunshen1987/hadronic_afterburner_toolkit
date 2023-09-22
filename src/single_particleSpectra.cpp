@@ -56,8 +56,9 @@ singleParticleSpectra::singleParticleSpectra(
     pT_array          = vector<double>(npT, 0.);
     pT_mean_array     = vector<double>(npT, 0.);
     pT_mean_array_err = vector<double>(npT, 0.);
-    for (int i = 0; i < npT; i++)
-        pT_array[i] = pT_min + dpT*i;
+    for (int i = 0; i < npT; i++) {
+        pT_array[i] = pT_min + dpT*(i + 0.5);
+    }
 
     resize2DVector(Qn_diff_vector_real, order_max, npT, 0);
     resize2DVector(Qn_diff_vector_imag, order_max, npT, 0);
@@ -517,7 +518,11 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
             double p_phi = atan2(py_local, px_local);
             if (p_perp > pT_min_selected && p_perp < pT_max_selected) {
-                for (int iorder = 0; iorder < order_max; iorder++) {
+                event_Qn_real[0] += 1;
+                event_Qn_real_err[0] += 1;
+                event_Qn_imag[0] += p_perp;
+                event_Qn_imag_err[0] += p_perp*p_perp;
+                for (int iorder = 1; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
                     event_Qn_real[iorder] += cos_nphi;
@@ -537,8 +542,8 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
                     event_Qn_diff_real[iorder][p_idx] += cos_nphi;
-                    event_Qn_diff_imag[iorder][p_idx] += sin_nphi;
                     event_Qn_diff_real_err[iorder][p_idx] += cos_nphi*cos_nphi;
+                    event_Qn_diff_imag[iorder][p_idx] += sin_nphi;
                     event_Qn_diff_imag_err[iorder][p_idx] += sin_nphi*sin_nphi;
                 }
             }
@@ -699,10 +704,14 @@ void singleParticleSpectra::output_Qn_vectors() {
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
+    output << "# n  Qn_real  Qn_real_err  Qn_imag  Qn_imag_err" << endl;
 
     double total_N       = Qn_vector_real[0];
     double dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
     double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
+    double pT_avg     = Qn_vector_imag[0]/total_N;
+    double pT_avg_err = (sqrt(Qn_vector_imag_err[0]/total_N - pT_avg*pT_avg)
+                         /sqrt(total_number_of_events));
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
         // reconstruction branching ratio
@@ -712,7 +721,7 @@ void singleParticleSpectra::output_Qn_vectors() {
     }
     output << scientific << setw(18) << setprecision(8) 
            << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   "
-           << 0.0 << "   " << 0.0 << endl;
+           << pT_avg << "   " << pT_avg_err << endl;
     for (int iorder = 1; iorder < order_max; iorder++) {
         double vn_evavg_real = 0.0;
         double vn_evavg_imag = 0.0;
@@ -741,7 +750,8 @@ void singleParticleSpectra::output_Qn_vectors() {
     // output total number of particles in the last row
     // this quantities is useful when one wants to reconst the Qn vectors
     output << scientific << setw(18) << setprecision(8) << 99 << "   "
-           << total_N << "   " << 0.0 << "   " << 0.0 << "   " << 0.0 << endl;
+           << total_N << "   " << total_number_of_events << "   "
+           << 0.0 << "   " << 0.0 << endl;
     output.close();
 
     // pT-differential flow
@@ -756,6 +766,14 @@ void singleParticleSpectra::output_Qn_vectors() {
                       << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output_diff(filename_diff.str().c_str());
+    if (ecoOutput_) {
+        output_diff << "# pT  EdN/d^3p  Qn_real(pT)  Qn_imag(pT) (n=1-"
+                    << order_max-1 << ")" << endl;
+    } else {
+        output_diff << "# pT  pT_err EdN/d^3p  dN_err  "
+                    << "Qn_real(pT)  Qn_real_err  Qn_imag(pT)  Qn_imag_err"
+                    << "(n=1-" << order_max-1 << ")" << endl;
+    }
 
     for (int ipT = 0; ipT < npT - 1; ipT++) {
         double total_NpT = Qn_diff_vector_real[0][ipT];
@@ -2488,7 +2506,7 @@ void singleParticleSpectra::outputRapidityPTDistribution() {
     for (int i = 0; i < N_rap; i++) {
         double rap_bin_mid = rap_min + i*drap;
         for (int j = 0; j < npT; j++) {
-            double pT_bin_mid = pT_min + j*dpT;
+            double pT_bin_mid = pT_array[j];
             if (Qn_pTrapdiff_vector[i][j][2] > 0) {
                 rap_bin_mid = (Qn_pTrapdiff_vector[i][j][0]
                                /Qn_pTrapdiff_vector[i][j][2]);

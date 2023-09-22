@@ -45,8 +45,8 @@ order_max = 10                # the maximum harmonic order of anisotropic flow
                               #order_max = 6 for identified particles
 npT = 41                      # number of pT points for pT-differential 
                               # spectra and vn
-pT_min = 0.05                 # the minimum value of transverse momentum (GeV)
-pT_max = 4.05                 # the maximum value of transverse momentum (GeV)
+pT_min = 0.0                  # the minimum value of transverse momentum (GeV)
+pT_max = 4.0                  # the maximum value of transverse momentum (GeV)
 rap_min = -0.5                # minimum value of rapidity integration 
                               # range for mid-rapidity observables 
 rap_max = 0.5                 # maximum value of rapidity integration
