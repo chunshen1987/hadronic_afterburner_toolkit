@@ -184,6 +184,9 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("rap_min", -2.29); paraRdr_.setVal("rap_max", 0.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", 0.0); paraRdr_.setVal("rap_max", 2.29);
+    paraRdr_.setVal("rap_min", -2.2945); paraRdr_.setVal("rap_max", 0.705);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", -0.705); paraRdr_.setVal("rap_max", 2.2945);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -2.2); paraRdr_.setVal("rap_max", -1.2);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));

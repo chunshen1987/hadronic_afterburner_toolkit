@@ -328,7 +328,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
     vector<double> event_pT_mean_err(npT, 0.);
     vector<double> event_Qn_real    (order_max + 1, 0.);
     vector<double> event_Qn_real_err(order_max, 0.);
-    vector<double> event_Qn_imag    (order_max, 0.);
+    vector<double> event_Qn_imag    (order_max + 1, 0.);
     vector<double> event_Qn_imag_err(order_max, 0.);
 
     vector<vector<double>> event_Qn_diff_real(order_max);
@@ -433,6 +433,7 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
             }
         }
         Qn_vector_real[order_max] += event_Qn_real[order_max];
+        Qn_vector_imag[order_max] += event_Qn_imag[order_max];
 
 
         if (flag_correlation == 1) {
@@ -600,7 +601,7 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
             event_Qn_diff_imag_err[i][j] = 0.0;
         }
     }
-    event_Qn_real[order_max] = 0.0;
+    event_Qn_real[order_max] = 0.0; event_Qn_imag[order_max] = 0.0; 
     int number_of_particles = particle_list->get_number_of_particles(event_id);
     for (int i = 0; i < number_of_particles; i++) {
         double pz_local = particle_list->get_particle(event_id, i).pz;
@@ -619,6 +620,7 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
             double px_local = particle_list->get_particle(event_id, i).px;
             double py_local = particle_list->get_particle(event_id, i).py;
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
+            double pmag2 = p_perp * p_perp + particle_list->get_particle(event_id, i).pz * particle_list->get_particle(event_id, i).pz;
             double p_phi = atan2(py_local, px_local);
             if (p_perp > pT_min_selected && p_perp < pT_max_selected) {
                 for (int iorder = 0; iorder < order_max; iorder++) {
@@ -631,7 +633,8 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                 }
                 // the ET
                 event_Qn_real[order_max] += sqrt( mass * mass + p_perp * p_perp );
-                
+                // the E
+                event_Qn_imag[order_max] += sqrt( mass * mass + pmag2);
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 if (p_idx < 0 || p_idx >= npT) continue;
                 event_pT_mean[p_idx]     += p_perp;
@@ -805,13 +808,16 @@ void singleParticleSpectra::output_Qn_vectors() {
 
     //ATLAS use the ET to cut the centrality bins
     double total_N, dN_ev_avg;
-    double total_ET, dET_ev_avg;
+    double total_ET, dET_ev_avg, total_E, dE_ev_avg;
     total_ET      = Qn_vector_real[order_max];
+    total_E       = Qn_vector_imag[order_max];
     dET_ev_avg    = Qn_vector_real[order_max]/total_number_of_events/drapidity;
+    dE_ev_avg     = Qn_vector_imag[order_max]/total_number_of_events/drapidity;
     total_N       = Qn_vector_real[0];
     dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
     double dN_ev_avg_err  = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
     double dET_ev_avg_err = sqrt(dET_ev_avg/total_number_of_events)/drapidity;
+    double dE_ev_avg_err  = sqrt(dE_ev_avg/total_number_of_events)/drapidity;
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
         // reconstruction branching ratio
@@ -820,11 +826,14 @@ void singleParticleSpectra::output_Qn_vectors() {
         dN_ev_avg_err = dN_ev_avg_err/reconst_branching_ratio;
         
         total_ET = total_ET/reconst_branching_ratio;
+        total_E  = total_E/reconst_branching_ratio;
         dET_ev_avg = dET_ev_avg/reconst_branching_ratio;
         dET_ev_avg_err = dET_ev_avg_err/reconst_branching_ratio;
+        dE_ev_avg = dE_ev_avg/reconst_branching_ratio;
+        dE_ev_avg_err = dE_ev_avg_err/reconst_branching_ratio;
     }
     output << scientific << setw(18) << setprecision(8) 
-           << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   " 
+           << dE_ev_avg << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   " 
            << dET_ev_avg << "   " << dET_ev_avg_err << endl;
     for (int iorder = 1; iorder < order_max; iorder++) {
         double vn_evavg_real = 0.0;
@@ -854,7 +863,7 @@ void singleParticleSpectra::output_Qn_vectors() {
     // output total number of particles in the last row
     // this quantities is useful when one wants to reconst the Qn vectors
     output << scientific << setw(18) << setprecision(8) << 99 << "   "
-           << total_N << "   " << total_ET << "   " << 0.0 << "   " << 0.0 << endl;
+           << total_N << "   " << total_ET << "   " << total_E << "   " << 0.0 << endl;
     output.close();
 
     // pT-differential flow
