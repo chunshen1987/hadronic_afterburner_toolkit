@@ -33,7 +33,7 @@ singleParticleSpectra::singleParticleSpectra(
 
     order_max = paraRdr.getVal("order_max");
     Qn_vector_real     = vector<double>(order_max + 1, 0.);
-    Qn_vector_imag     = vector<double>(order_max, 0.);
+    Qn_vector_imag     = vector<double>(order_max + 1, 0.);
     Qn_vector_real_err = vector<double>(order_max, 0.);
     Qn_vector_imag_err = vector<double>(order_max, 0.);
     Qn_diff_vector_real = new double* [order_max];
