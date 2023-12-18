@@ -29,8 +29,8 @@ BalanceFunction::BalanceFunction(
     BpT_max  = paraRdr_.getVal("BpT_max");
     Bnpts    = paraRdr_.getVal("Bnpts");
     Brap_max = paraRdr_.getVal("Brap_max");
-    Brap_min = -Brap_max;
-    drap     = (Brap_max - Brap_min)/(Bnpts - 1);
+    drap     = 2.*std::abs(Brap_max)/(Bnpts - 1);
+    Brap_min = - std::abs(Brap_max) - 0.5*drap;
     Bnphi    = 20;
     dphi     = 2.*M_PI/Bnphi;
     Bphi_min = -M_PI/2.;
@@ -93,7 +93,7 @@ void BalanceFunction::calculate_balance_function(
     combine_and_bin_mixed_particle_pairs(
                     C_mixed_abbar, plist_a, plist_bbar_mixed_event);
     combine_and_bin_mixed_particle_pairs(
-                    C_mixed_abbar, plist_abar, plist_b_mixed_event);
+                    C_mixed_abarb, plist_abar, plist_b_mixed_event);
 }
 
 
