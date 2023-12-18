@@ -34,7 +34,16 @@ singleParticleSpectra::singleParticleSpectra(
         reconst_branching_ratio = 1.0;
     }
 
+    if (paraRdr.getVal("ecoOutput", 0) == 1) {
+        ecoOutput_ = true;
+    } else {
+        ecoOutput_ = false;
+    }
+
     order_max = paraRdr.getVal("order_max");
+    if (particle_monval != 9999)
+        order_max = 6;
+
     Qn_vector_real     = vector<double>(order_max, 0.);
     Qn_vector_imag     = vector<double>(order_max, 0.);
     Qn_vector_real_err = vector<double>(order_max, 0.);
@@ -47,8 +56,9 @@ singleParticleSpectra::singleParticleSpectra(
     pT_array          = vector<double>(npT, 0.);
     pT_mean_array     = vector<double>(npT, 0.);
     pT_mean_array_err = vector<double>(npT, 0.);
-    for (int i = 0; i < npT; i++)
-        pT_array[i] = pT_min + dpT*i;
+    for (int i = 0; i < npT; i++) {
+        pT_array[i] = pT_min + dpT*(i + 0.5);
+    }
 
     resize2DVector(Qn_diff_vector_real, order_max, npT, 0);
     resize2DVector(Qn_diff_vector_imag, order_max, npT, 0);
@@ -72,27 +82,14 @@ singleParticleSpectra::singleParticleSpectra(
         drap = (rapidity_dis_max - rapidity_dis_min)/(N_rap - 1.);
         rapidity_array = vector<double>(N_rap, 0.);
         dNdy_array     = vector<double>(N_rap, 0.);
+        dETdy_array    = vector<double>(N_rap, 0.);
         for (int i = 0; i < N_rap; i++)
             rapidity_array[i] = rapidity_dis_min + i*drap;
 
         vn_rapidity_dis_pT_min = paraRdr.getVal("vn_rapidity_dis_pT_min");
         vn_rapidity_dis_pT_max = paraRdr.getVal("vn_rapidity_dis_pT_max");
-        vn_real_rapidity_dis_array     = new double* [N_rap];
-        vn_imag_rapidity_dis_array     = new double* [N_rap];
-        vn_real_rapidity_dis_array_err = new double* [N_rap];
-        vn_imag_rapidity_dis_array_err = new double* [N_rap];
-        for (int i = 0; i < N_rap; i++) {
-            vn_real_rapidity_dis_array[i]     = new double [order_max];
-            vn_imag_rapidity_dis_array[i]     = new double [order_max];
-            vn_real_rapidity_dis_array_err[i] = new double [order_max];
-            vn_imag_rapidity_dis_array_err[i] = new double [order_max];
-            for (int j = 0; j < order_max; j++) {
-                vn_real_rapidity_dis_array[i][j]     = 0.0;
-                vn_imag_rapidity_dis_array[i][j]     = 0.0;
-                vn_real_rapidity_dis_array_err[i][j] = 0.0;
-                vn_imag_rapidity_dis_array_err[i][j] = 0.0;
-            }
-        }
+        resize2DVector(vn_real_rapidity_dis_array, N_rap, order_max, 0);
+        resize2DVector(vn_imag_rapidity_dis_array, N_rap, order_max, 0);
         rapidityPTDistributionFlag_ = paraRdr.getVal(
                                           "rapidityPTDistributionFlag", 0);
         if (rapidityPTDistributionFlag_ != 0) {
@@ -225,19 +222,6 @@ singleParticleSpectra::singleParticleSpectra(
 }
 
 singleParticleSpectra::~singleParticleSpectra() {
-    if (rapidity_distribution_flag == 1) {
-        for (int i = 0; i < N_rap; i++) {
-            delete [] vn_real_rapidity_dis_array[i];
-            delete [] vn_imag_rapidity_dis_array[i];
-            delete [] vn_real_rapidity_dis_array_err[i];
-            delete [] vn_imag_rapidity_dis_array_err[i];
-        }
-        delete [] vn_real_rapidity_dis_array;
-        delete [] vn_imag_rapidity_dis_array;
-        delete [] vn_real_rapidity_dis_array_err;
-        delete [] vn_imag_rapidity_dis_array_err;
-    }
-
     if (check_spatial_flag == 1) {
         delete [] tau_array;
         delete [] dNdtau_array;
@@ -301,28 +285,22 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
         resize2DVector(event_Qn_m_diff_imag_err, order_max, npT, 0.);
     }
 
-    vector<vector<double>> event_Qn_rap_real, event_Qn_rap_real_err;
-    vector<vector<double>> event_Qn_rap_imag, event_Qn_rap_imag_err;
+    vector<vector<double>> event_Qn_rap_real;
+    vector<vector<double>> event_Qn_rap_imag;
     if (rapidity_distribution_flag == 1) {
         resize2DVector(event_Qn_rap_real, N_rap, order_max, 0.);
-        resize2DVector(event_Qn_rap_real_err, N_rap, order_max, 0.);
         resize2DVector(event_Qn_rap_imag, N_rap, order_max, 0.);
-        resize2DVector(event_Qn_rap_imag_err, N_rap, order_max, 0.);
     }
 
-    vector<vector<double>> event_Qn_p_rap_real, event_Qn_p_rap_real_err;
-    vector<vector<double>> event_Qn_p_rap_imag, event_Qn_p_rap_imag_err;
-    vector<vector<double>> event_Qn_m_rap_real, event_Qn_m_rap_real_err;
-    vector<vector<double>> event_Qn_m_rap_imag, event_Qn_m_rap_imag_err;
+    vector<vector<double>> event_Qn_p_rap_real;
+    vector<vector<double>> event_Qn_p_rap_imag;
+    vector<vector<double>> event_Qn_m_rap_real;
+    vector<vector<double>> event_Qn_m_rap_imag;
     if (flag_charge_dependence == 1) {
         resize2DVector(event_Qn_p_rap_real, N_rap, order_max, 0.);
-        resize2DVector(event_Qn_p_rap_real_err, N_rap, order_max, 0.);
         resize2DVector(event_Qn_p_rap_imag, N_rap, order_max, 0.);
-        resize2DVector(event_Qn_p_rap_imag_err, N_rap, order_max, 0.);
         resize2DVector(event_Qn_m_rap_real, N_rap, order_max, 0.);
-        resize2DVector(event_Qn_m_rap_real_err, N_rap, order_max, 0.);
         resize2DVector(event_Qn_m_rap_imag, N_rap, order_max, 0.);
-        resize2DVector(event_Qn_m_rap_imag_err, N_rap, order_max, 0.);
     }
 
     // start the loop
@@ -406,19 +384,14 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
         }
 
         if (rapidity_distribution_flag == 1) {
-            calculate_rapidity_distribution(iev,
-                    event_Qn_rap_real, event_Qn_rap_real_err,
-                    event_Qn_rap_imag, event_Qn_rap_imag_err, 0);
+            calculate_rapidity_distribution(iev, event_Qn_rap_real,
+                                            event_Qn_rap_imag, 0);
             for (int i = 0; i < N_rap; i++) {
                 for (int j = 0; j < order_max; j++) {
                     vn_real_rapidity_dis_array[i][j] += (
                                             event_Qn_rap_real[i][j]);
-                    vn_real_rapidity_dis_array_err[i][j] += (
-                                            event_Qn_rap_real_err[i][j]);
                     vn_imag_rapidity_dis_array[i][j] += (
                                             event_Qn_rap_imag[i][j]);
-                    vn_imag_rapidity_dis_array_err[i][j] += (
-                                            event_Qn_rap_imag_err[i][j]);
                 }
             }
             if (rapidityPTDistributionFlag_ == 1) {
@@ -439,13 +412,9 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
                         C_nmk_eta13, C_nmk_eta13_err);
                 if (flag_charge_dependence == 1) {
                     calculate_rapidity_distribution(iev,
-                            event_Qn_p_rap_real, event_Qn_p_rap_real_err,
-                            event_Qn_p_rap_imag, event_Qn_p_rap_imag_err,
-                            1);
+                            event_Qn_p_rap_real, event_Qn_p_rap_imag, 1);
                     calculate_rapidity_distribution(iev,
-                            event_Qn_m_rap_real, event_Qn_m_rap_real_err,
-                            event_Qn_m_rap_imag, event_Qn_m_rap_imag_err,
-                            2);
+                            event_Qn_m_rap_real, event_Qn_m_rap_imag, 2);
 
                     calculate_two_particle_correlation_deltaeta_chdep(
                             event_Qn_p_rap_real, event_Qn_p_rap_imag,
@@ -549,7 +518,11 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
             double p_perp = sqrt(px_local*px_local + py_local*py_local);
             double p_phi = atan2(py_local, px_local);
             if (p_perp > pT_min_selected && p_perp < pT_max_selected) {
-                for (int iorder = 0; iorder < order_max; iorder++) {
+                event_Qn_real[0] += 1;
+                event_Qn_real_err[0] += 1;
+                event_Qn_imag[0] += p_perp;
+                event_Qn_imag_err[0] += p_perp*p_perp;
+                for (int iorder = 1; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
                     event_Qn_real[iorder] += cos_nphi;
@@ -557,16 +530,20 @@ void singleParticleSpectra::calculate_Qn_vector(int event_id,
                     event_Qn_real_err[iorder] += cos_nphi*cos_nphi;
                     event_Qn_imag_err[iorder] += sin_nphi*sin_nphi;
                 }
+
+                if (p_perp < pT_min) continue;
+
                 int p_idx = static_cast<int>((p_perp - pT_min)/dpT);
                 if (p_idx < 0 || p_idx >= npT) continue;
+
                 event_pT_mean[p_idx]     += p_perp;
                 event_pT_mean_err[p_idx] += p_perp*p_perp;
                 for (int iorder = 0; iorder < order_max; iorder++) {
                     double cos_nphi = cos(iorder*p_phi);
                     double sin_nphi = sin(iorder*p_phi);
                     event_Qn_diff_real[iorder][p_idx] += cos_nphi;
-                    event_Qn_diff_imag[iorder][p_idx] += sin_nphi;
                     event_Qn_diff_real_err[iorder][p_idx] += cos_nphi*cos_nphi;
+                    event_Qn_diff_imag[iorder][p_idx] += sin_nphi;
                     event_Qn_diff_imag_err[iorder][p_idx] += sin_nphi*sin_nphi;
                 }
             }
@@ -727,10 +704,14 @@ void singleParticleSpectra::output_Qn_vectors() {
                  << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output(filename.str().c_str());
+    output << "# n  Qn_real  Qn_real_err  Qn_imag  Qn_imag_err" << endl;
 
     double total_N       = Qn_vector_real[0];
     double dN_ev_avg     = Qn_vector_real[0]/total_number_of_events/drapidity;
     double dN_ev_avg_err = sqrt(dN_ev_avg/total_number_of_events)/drapidity;
+    double pT_avg     = Qn_vector_imag[0]/total_N;
+    double pT_avg_err = (sqrt(Qn_vector_imag_err[0]/total_N - pT_avg*pT_avg)
+                         /sqrt(total_number_of_events));
     if (particle_monval == 333) {
         // for phi(1020) need to rescale the yield by
         // reconstruction branching ratio
@@ -739,8 +720,8 @@ void singleParticleSpectra::output_Qn_vectors() {
         dN_ev_avg_err = dN_ev_avg_err/reconst_branching_ratio;
     }
     output << scientific << setw(18) << setprecision(8) 
-           << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   " 
-           << 0.0 << "   " << 0.0 << endl;
+           << 0 << "   " << dN_ev_avg << "   " << dN_ev_avg_err << "   "
+           << pT_avg << "   " << pT_avg_err << endl;
     for (int iorder = 1; iorder < order_max; iorder++) {
         double vn_evavg_real = 0.0;
         double vn_evavg_imag = 0.0;
@@ -749,10 +730,10 @@ void singleParticleSpectra::output_Qn_vectors() {
         if (Qn_vector_real[0] > 0) {
             vn_evavg_real = Qn_vector_real[iorder]/Qn_vector_real[0];
             vn_evavg_imag = Qn_vector_imag[iorder]/Qn_vector_real[0];
-            vn_real_err = (sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0] 
+            vn_real_err = (sqrt(Qn_vector_real_err[iorder]/Qn_vector_real[0]
                                 - vn_evavg_real*vn_evavg_real)
                            /sqrt(Qn_vector_real[0]));
-            vn_imag_err = (sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0] 
+            vn_imag_err = (sqrt(Qn_vector_imag_err[iorder]/Qn_vector_real[0]
                                 - vn_evavg_imag*vn_evavg_imag)
                            /sqrt(Qn_vector_real[0]));
             if (std::isnan(vn_real_err)) {
@@ -762,14 +743,15 @@ void singleParticleSpectra::output_Qn_vectors() {
                 vn_imag_err = 0.0;
             }
         }
-        output << scientific << setw(18) << setprecision(8) << iorder << "   " 
-               << vn_evavg_real << "   " << vn_real_err << "   " 
+        output << scientific << setw(18) << setprecision(8) << iorder << "   "
+               << vn_evavg_real << "   " << vn_real_err << "   "
                << vn_evavg_imag << "   " << vn_imag_err << endl;
     }
     // output total number of particles in the last row
     // this quantities is useful when one wants to reconst the Qn vectors
     output << scientific << setw(18) << setprecision(8) << 99 << "   "
-           << total_N << "   " << 0.0 << "   " << 0.0 << "   " << 0.0 << endl;
+           << total_N << "   " << total_number_of_events << "   "
+           << 0.0 << "   " << 0.0 << endl;
     output.close();
 
     // pT-differential flow
@@ -784,6 +766,14 @@ void singleParticleSpectra::output_Qn_vectors() {
                       << "_y_" << rap_min << "_" << rap_max << ".dat";
     }
     ofstream output_diff(filename_diff.str().c_str());
+    if (ecoOutput_) {
+        output_diff << "# pT  EdN/d^3p  Qn_real(pT)  Qn_imag(pT) (n=1-"
+                    << order_max-1 << ")" << endl;
+    } else {
+        output_diff << "# pT  pT_err EdN/d^3p  dN_err  "
+                    << "Qn_real(pT)  Qn_real_err  Qn_imag(pT)  Qn_imag_err"
+                    << "(n=1-" << order_max-1 << ")" << endl;
+    }
 
     for (int ipT = 0; ipT < npT - 1; ipT++) {
         double total_NpT = Qn_diff_vector_real[0][ipT];
@@ -806,10 +796,16 @@ void singleParticleSpectra::output_Qn_vectors() {
             mean_pT     = pT_array[ipT];
             mean_pT_err = 0.0;
         }
-        output_diff << scientific << setw(18) << setprecision(8) 
-                    << mean_pT << "   " << mean_pT_err << "   " 
-                    << dNpT_ev_avg/mean_pT/dpT/(2*M_PI)/drapidity << "   " 
-                    << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI)/drapidity;
+        if (ecoOutput_) {
+            output_diff << scientific << setw(18) << setprecision(8)
+                        << mean_pT << "   "
+                        << dNpT_ev_avg/mean_pT/dpT/(2*M_PI)/drapidity << "   ";
+        } else {
+            output_diff << scientific << setw(18) << setprecision(8)
+                        << mean_pT << "   " << mean_pT_err << "   "
+                        << dNpT_ev_avg/mean_pT/dpT/(2*M_PI)/drapidity << "   "
+                        << dNpT_ev_avg_err/mean_pT/dpT/(2*M_PI)/drapidity;
+        }
         for (int iorder = 1; iorder < order_max; iorder++) {
             if (dNpT_ev_avg > 0.) {
                 double vn_evavg_real = (Qn_diff_vector_real[iorder][ipT]
@@ -818,12 +814,12 @@ void singleParticleSpectra::output_Qn_vectors() {
                                         /Qn_diff_vector_real[0][ipT]);
                 double vn_evavg_real_err = (
                         sqrt(Qn_diff_vector_real_err[iorder][ipT]
-                                /Qn_diff_vector_real[0][ipT] 
+                                /Qn_diff_vector_real[0][ipT]
                              - vn_evavg_real*vn_evavg_real)
                         /sqrt(Qn_diff_vector_real[0][ipT]));
                 double vn_evavg_imag_err = (
                         sqrt(Qn_diff_vector_imag_err[iorder][ipT]
-                                /Qn_diff_vector_real[0][ipT] 
+                                /Qn_diff_vector_real[0][ipT]
                              - vn_evavg_imag*vn_evavg_imag)
                         /sqrt(Qn_diff_vector_real[0][ipT]));
                 if (std::isnan(vn_evavg_real_err)) {
@@ -832,15 +828,26 @@ void singleParticleSpectra::output_Qn_vectors() {
                 if (std::isnan(vn_evavg_imag_err)) {
                     vn_evavg_imag_err = 0.0;
                 }
-                output_diff << scientific << setw(18) << setprecision(8) 
-                            << vn_evavg_real << "   " 
-                            << vn_evavg_real_err << "   " 
-                            << vn_evavg_imag << "   "
-                            << vn_evavg_imag_err << "   ";
+                if (ecoOutput_) {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << vn_evavg_real << "   "
+                                << vn_evavg_imag << "   ";
+                } else {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << vn_evavg_real << "   "
+                                << vn_evavg_real_err << "   "
+                                << vn_evavg_imag << "   "
+                                << vn_evavg_imag_err << "   ";
+                }
             } else {
-                output_diff << scientific << setw(18) << setprecision(8) 
-                            << 0.0e0 << "   " << 0.0e0 << "   " 
-                            << 0.0e0 << "   " << 0.0e0 << "   ";
+                if (ecoOutput_) {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << 0.0e0 << "   " << 0.0e0 << "   ";
+                } else {
+                    output_diff << scientific << setw(18) << setprecision(8)
+                                << 0.0e0 << "   " << 0.0e0 << "   "
+                                << 0.0e0 << "   " << 0.0e0 << "   ";
+                }
             }
         }
         // output total number of particles in the last column
@@ -2351,12 +2358,18 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
         }
 
-        int rap_idx = static_cast<int>((rap_local - rapidity_dis_min)/drap);
+        if (rap_local < (rapidity_dis_min - drap/2.)) continue;
+
+        int rap_idx = static_cast<int>(
+                                (rap_local - rapidity_dis_min)/drap + 0.5);
         if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
         double px_local = particle_list->get_particle(event_id, i).px;
         double py_local = particle_list->get_particle(event_id, i).py;
         double p_perp = sqrt(px_local*px_local + py_local*py_local);
+
+        if (p_perp < pT_min) continue;
+
         int pT_idx = static_cast<int>((p_perp - pT_min)/dpT);
         if (pT_idx < 0 || pT_idx >= npT) continue;
 
@@ -2381,16 +2394,12 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
 //! rapidity in one event
 void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         vector<vector<double>> &event_Qn_real,
-        vector<vector<double>> &event_Qn_real_err,
-        vector<vector<double>> &event_Qn_imag,
-        vector<vector<double>> &event_Qn_imag_err, int flag) {
+        vector<vector<double>> &event_Qn_imag, int flag) {
     // first clean the results arrays
     for (int i = 0; i < N_rap; i++) {
         for (int j = 0; j < order_max; j++) {
             event_Qn_real[i][j] = 0.0;
-            event_Qn_real_err[i][j] = 0.0;
             event_Qn_imag[i][j] = 0.0;
-            event_Qn_imag_err[i][j] = 0.0;
         }
     }
 
@@ -2439,38 +2448,40 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
         }
 
-        if (rap_local > rapidity_dis_min && rap_local < rapidity_dis_max) {
-            int rap_idx = static_cast<int>(
-                    (rap_local - rapidity_dis_min)/drap);
-            if (flag == 0) {
-                rapidity_array[rap_idx] += rap_local;
-                dNdy_array[rap_idx]++;
-            }
-            // calcualte vn
-            double px_local = 0.0;
-            double py_local = 0.0;
-            if (flag == 0) {
-                px_local = particle_list->get_particle(event_id, i).px;
-                py_local = particle_list->get_particle(event_id, i).py;
-            } else if (flag == 1) {
-                px_local = particle_list->get_positive_particle(event_id, i).px;
-                py_local = particle_list->get_positive_particle(event_id, i).py;
-            } else if (flag == 2) {
-                px_local = particle_list->get_negative_particle(event_id, i).px;
-                py_local = particle_list->get_negative_particle(event_id, i).py;
-            }
-            double p_perp = sqrt(px_local*px_local + py_local*py_local);
-            if (p_perp > vn_rapidity_dis_pT_min
-                && p_perp < vn_rapidity_dis_pT_max) {
-                double p_phi = atan2(py_local, px_local);
-                for (int iorder = 0; iorder < order_max; iorder++) {
-                    double cos_nphi = cos(iorder*p_phi);
-                    double sin_nphi = sin(iorder*p_phi);
-                    event_Qn_real[rap_idx][iorder] += cos_nphi;
-                    event_Qn_imag[rap_idx][iorder] += sin_nphi;
-                    event_Qn_real_err[rap_idx][iorder] += cos_nphi*cos_nphi;
-                    event_Qn_imag_err[rap_idx][iorder] += sin_nphi*sin_nphi;
-                }
+        if (rap_local < rapidity_dis_min - drap/2.) continue;
+
+        int rap_idx = static_cast<int>(
+                                (rap_local - rapidity_dis_min)/drap + 0.5);
+        if (rap_idx < 0 || rap_idx >= N_rap) continue;
+
+        // no pT cut on particle yield and E_T
+        if (flag == 0) {
+            rapidity_array[rap_idx] += rap_local;
+            dNdy_array[rap_idx]++;
+            dETdy_array[rap_idx] += sqrt(E_local*E_local - pz_local*pz_local);
+        }
+        // calcualte vn
+        double px_local = 0.0;
+        double py_local = 0.0;
+        if (flag == 0) {
+            px_local = particle_list->get_particle(event_id, i).px;
+            py_local = particle_list->get_particle(event_id, i).py;
+        } else if (flag == 1) {
+            px_local = particle_list->get_positive_particle(event_id, i).px;
+            py_local = particle_list->get_positive_particle(event_id, i).py;
+        } else if (flag == 2) {
+            px_local = particle_list->get_negative_particle(event_id, i).px;
+            py_local = particle_list->get_negative_particle(event_id, i).py;
+        }
+        double p_perp = sqrt(px_local*px_local + py_local*py_local);
+        if (p_perp > vn_rapidity_dis_pT_min
+            && p_perp < vn_rapidity_dis_pT_max) {
+            double p_phi = atan2(py_local, px_local);
+            for (int iorder = 0; iorder < order_max; iorder++) {
+                double cos_nphi = cos(iorder*p_phi);
+                double sin_nphi = sin(iorder*p_phi);
+                event_Qn_real[rap_idx][iorder] += cos_nphi;
+                event_Qn_imag[rap_idx][iorder] += sin_nphi;
             }
         }
     }
@@ -2493,9 +2504,9 @@ void singleParticleSpectra::outputRapidityPTDistribution() {
            << endl;
 
     for (int i = 0; i < N_rap; i++) {
-        double rap_bin_mid = rap_min + i*drap;
+        double rap_bin_mid = rapidity_array[i];
         for (int j = 0; j < npT; j++) {
-            double pT_bin_mid = pT_min + j*dpT;
+            double pT_bin_mid = pT_array[j];
             if (Qn_pTrapdiff_vector[i][j][2] > 0) {
                 rap_bin_mid = (Qn_pTrapdiff_vector[i][j][0]
                                /Qn_pTrapdiff_vector[i][j][2]);
@@ -2534,65 +2545,38 @@ void singleParticleSpectra::output_rapidity_distribution() {
                  << vn_rapidity_dis_pT_max << ".dat";
     }
     ofstream output(filename.str().c_str());
-    output << "#y  dN/dy  dN/dy_err  vn_real  vn_real_err  " 
-           << "vn_imag  vn_imag_err  vn_rms   vn_rms_err"
-           << endl;
+    output << "# y  dN/dy  dET/dy  vn_real  vn_imag  "
+           << "total event = " << total_number_of_events << endl;
     for (int i = 0; i < N_rap; i++) {
         rapidity_array[i] = rapidity_array[i]/(dNdy_array[i] + 1.);
-        double total_Nrap = dNdy_array[i];
         dNdy_array[i] = dNdy_array[i]/total_number_of_events;
-        double dNdy_err = sqrt(dNdy_array[i]/total_number_of_events);
-
-        if (particle_monval == 333) {
-            total_Nrap = total_Nrap/reconst_branching_ratio;
+        if (particle_monval == 333)
             dNdy_array[i] = dNdy_array[i]/reconst_branching_ratio;
-            dNdy_err = dNdy_err/reconst_branching_ratio;
-        }
+        dETdy_array[i] = dETdy_array[i]/total_number_of_events;
 
         output << scientific << setw(18) << setprecision(8)
-               << rapidity_array[i] << "   " << dNdy_array[i]/drap << "   " 
-               << dNdy_err/drap << "   ";
+               << rapidity_array[i] << "   " << dNdy_array[i]/drap << "   "
+               << dETdy_array[i]/drap;
 
+        double total_Nrap = std::max(1e-30, vn_real_rapidity_dis_array[i][0]);
         for (int iorder = 1; iorder < order_max; iorder++) {
             double vn_evavg_real = (vn_real_rapidity_dis_array[i][iorder]
-                              /(vn_real_rapidity_dis_array[i][0] + 1e-30));
+                                    /total_Nrap);
             double vn_evavg_imag = (vn_imag_rapidity_dis_array[i][iorder]
-                              /(vn_real_rapidity_dis_array[i][0] + 1e-30));
-            double vn_real_err = (
-                sqrt(vn_real_rapidity_dis_array_err[i][iorder]
-                     /(vn_real_rapidity_dis_array[i][0] + 1e-30)
-                     - vn_evavg_real*vn_evavg_real)
-                /sqrt(vn_real_rapidity_dis_array[i][0] + 1e-30));
-            double vn_imag_err = (
-                sqrt(vn_imag_rapidity_dis_array_err[i][iorder]
-                     /(vn_real_rapidity_dis_array[i][0] + 1e-30)
-                     - vn_evavg_imag*vn_evavg_imag)
-                /sqrt(vn_real_rapidity_dis_array[i][0] + 1e-30));
-            if (std::isnan(vn_real_err)) {
-                vn_real_err = 0.0;
-            }
-            if (std::isnan(vn_imag_err)) {
-                vn_imag_err = 0.0;
-            }
+                                    /total_Nrap);
 
-            double vn_rms = sqrt(vn_evavg_real*vn_evavg_real 
-                                 + vn_evavg_imag*vn_evavg_imag);
-            double vn_rms_err = (sqrt(pow(vn_evavg_real*vn_real_err, 2)
-                                      + pow(vn_evavg_imag*vn_imag_err, 2))
-                                 /(vn_rms + 1e-30));
-
-            output << scientific << setw(18) << setprecision(8) 
-                   << vn_evavg_real << "   " << vn_real_err << "   " 
-                   << vn_evavg_imag << "   " << vn_imag_err << "   "
-                   << vn_rms << "   " << vn_rms_err << "   ";
+            output << scientific << setw(18) << setprecision(8) << "   "
+                   << vn_evavg_real << "   " << vn_evavg_imag;
         }
         // output total number of particles in the last column
         // this quantities is useful when one wants to reconst the Qn vectors
-        output << scientific << setw(18) << setprecision(8) << total_Nrap;
+        output << scientific << setw(18) << setprecision(8)
+               << "   " << total_Nrap;
         output << endl;
     }
     output.close();
 }
+
 
 void singleParticleSpectra::check_dNdSV(int event_id) {
     int number_of_particles = particle_list->get_number_of_particles(event_id);

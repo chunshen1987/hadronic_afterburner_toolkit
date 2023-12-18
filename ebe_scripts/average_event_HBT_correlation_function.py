@@ -34,14 +34,14 @@ except IndexError:
 
 file_folder_list = glob(path.join(working_folder, 'UrQMD*'))
 results_folder_name = 'UrQMD_results'
-KT_values = ['0_0.2', '0.2_0.4', '0.4_0.6', '0.6_0.8', '0.8_1']
+KT_values = ['0.15_0.25', '0.25_0.35', '0.35_0.45', '0.45_0.55']
 
 nev = len(file_folder_list)
 for iKT in range(len(KT_values)):
     file_name = 'HBT_correlation_function_KT_%s.dat' % KT_values[iKT]
     event_avg_data = loadtxt(path.join(
         file_folder_list[0], results_folder_name,
-        'HBT_correlation_function_KT_0_0.2.dat'))*0.0
+        'HBT_correlation_function_KT_{}.dat'.format(KT_values[0])))*0.0
     num = zeros(len(event_avg_data[:, 0]))
     sigma_num = zeros(len(event_avg_data[:, 0]))
     Npair_num = 0

@@ -41,8 +41,6 @@ class particleSamples {
     bool analyze_BF;
     bool analyze_ebedis;
 
-    int rap_type_;
-
     //! the monte-carlo number of the particle of interest
     int particle_monval;
 
@@ -91,8 +89,6 @@ class particleSamples {
     //! particle list to store the selected particle sample from a mix event
     //! (used when run_mode == 1 for HBT calculation)
     std::vector< std::vector<particle_info>* >* particle_list_mixed_event;
-
-    std::vector< std::vector<particle_info>* >* resonance_list;
 
     //! particle list to store the resonance particles (Sigma0)
     //! (used when resonance_weak_feed_down_Sigma_to_Lambda_flag == 1)

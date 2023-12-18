@@ -31,6 +31,14 @@ yellow = "\033[93m"
 red = "\033[91m"
 normal = "\033[0m"
 
+kinematicCutsDict = {
+        "PHENIX": {"pTmin": 0.20, "pTmax": 2.0},
+        "STAR"  : {"pTmin": 0.15, "pTmax": 2.0},
+        "ALICE" : {"pTmin": 0.20, "pTmax": 4.0},
+        "CMS"   : {"pTmin": 0.30, "pTmax": 4.0},
+        "ATLAS" : {"pTmin": 0.50, "pTmax": 4.0},
+}
+
 Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
                            60., 70., 80., 90., 100.]
 PHOBOS_cen_list = [0., 6., 15., 25., 35., 45., 55.]  # PHOBOS AuAu 200
@@ -55,7 +63,7 @@ RapidityTrigger = 0  # 0: mid-rapidity [-0.5, 0.5]
                      # 1: PHENIX BBC trigger [-3.9, -3.1]
                      # 2: ALICE V0A trigger [-5.1, -2.8]
                      # 3: ATLAS forward trigger [-4.9, -3.1]
-FastFlag = False     # True: only analyze a subset of charged hadron obs.
+FastFlag = True      # True: only analyze a subset of charged hadron obs.
                      # False: full analysis
 
 RapTrigLabel = "CL1"
@@ -102,14 +110,14 @@ particle_name_list = ['charged_hadron', 'pion_p', 'kaon_p', 'proton',
 nonlinear_reponse_correlator_name_list = [
                 'v4_L', 'v4(Psi2)', 'rho_422', 'chi_422',
                 'v5_L', 'v5(Psi23)', 'rho_523', 'chi_523',
-                'v6_L', 'v6(Psi2)', 'v6(Psi3)',
-                'rho_6222', 'rho_633', 'chi_6222', 'chi_633']
+                'v6(Psi2)', 'v6(Psi3)', 'v6(Psi24)',
+                'rho_6222', 'rho_633', 'chi_6222', 'chi_633', 'chi_624',
+                'v7(Psi23)', 'rho_7223', 'chi_7223']
 symmetric_cumulant_name_list = ['SC_32', 'SC_42']
 
-n_order = 7
+n_order = 10
 if FastFlag:
-    particle_list = particle_list[0:1]
-    n_order = 5
+    particle_list = particle_list[0:4]
 
 
 def check_an_event_is_good(h5_event):
@@ -141,7 +149,7 @@ def calcualte_inte_vn(pT_low, pT_high, data):
     npT = 50
     pT_inte_array = linspace(pT_low, pT_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
-    dN_event = data[:, 2]
+    dN_event = data[:, 1]
     pT_event = data[:, 0]
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
     N_event = data[:, -1]
@@ -149,8 +157,8 @@ def calcualte_inte_vn(pT_low, pT_high, data):
     N = sum(N_interp)*dpT/0.1
     temp_vn_array = [N,]
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
         vn_real_interp = interp(pT_inte_array, pT_event, vn_real_event)
         vn_imag_interp = interp(pT_inte_array, pT_event, vn_imag_event)
         vn_real_inte = (
@@ -165,11 +173,18 @@ def calcualte_inte_vn(pT_low, pT_high, data):
 
 
 def calculate_chi_422(vn_array):
-    """chi_422 = Re(v4*conj(v2)**2.)/|v2|^4"""
+    """chi_422 = Re(v4*conj(v2)**2.)/|v2|^4
+       v_422 = Re(v4*conj(v2)**2.)/sqrt(|v2|^4)
+       rho_422 = v_422/v4(Psi4)
+       v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)
+    """
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
     Q4 = dN*vn_array[:, 4]
     nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q4_2 = abs(Q4)**2. - dN
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
@@ -180,28 +195,52 @@ def calculate_chi_422(vn_array):
     chi_422_num = Q4*conj(Q2)*conj(Q2) - 2.*Q2*conj(Q2) - Q4*conj(Q4) + 2.*dN
 
     chi_422_JK = zeros(nev)
+    v422_JK = zeros(nev)
+    rho422_JK = zeros(nev)
+    v4L_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
-        chi_422_JK[iev] = (
-            real(mean(chi_422_num[array_idx]))/mean(N3_weight[array_idx])
-            /(real(mean(Q2_4[array_idx]))/mean(N4_weight[array_idx])))
+        num_JK = real(mean(chi_422_num[array_idx]))/mean(N3_weight[array_idx])
+        den_JK = real(mean(Q2_4[array_idx]))/mean(N4_weight[array_idx])
+
+        v4_Psi4 = nan_to_num(sqrt(mean(Q4_2[array_idx])
+                                  /mean(N2_weight[array_idx])))
+
+        chi_422_JK[iev] = num_JK/den_JK
+        v422_JK[iev] = nan_to_num(num_JK/sqrt(den_JK))
+        rho422_JK[iev] = v422_JK[iev]/v4_Psi4
+        v4L_JK[iev] = nan_to_num(sqrt(v4_Psi4**2 - v422_JK[iev]**2.))
 
     chi_422_mean = mean(chi_422_JK)
     chi_422_err = sqrt((nev - 1.)/nev*sum((chi_422_JK - chi_422_mean)**2.))
-    return(chi_422_mean, chi_422_err)
+    v422_mean = mean(v422_JK)
+    v422_err = sqrt((nev - 1.)/nev*sum((v422_JK - v422_mean)**2.))
+    rho422_mean = mean(rho422_JK)
+    rho422_err = sqrt((nev - 1.)/nev*sum((rho422_JK - rho422_mean)**2.))
+    v4L_mean = mean(v4L_JK)
+    v4L_err = sqrt((nev - 1.)/nev*sum((v4L_JK - v4L_mean)**2.))
+    return(v4L_mean, v4L_err, v422_mean, v422_err, rho422_mean, rho422_err,
+           chi_422_mean, chi_422_err)
 
 
 def calculate_chi_523(vn_array):
-    """chi_523 = Re(v5*conj(v2*v3))/|v2|^2/|v3|^2"""
+    """chi_523 = Re(v5*conj(v2*v3))/|v2|^2/|v3|^2
+       v_523 = Re(v5*conj(v2)*conj(v3))/sqrt(|v2|^2*|v3|^2)
+       rho_523 = v_523/v5(Psi5)
+       v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)
+    """
     dN = real(vn_array[:, 0])
     Q1 = dN*vn_array[:, 1]
     Q2 = dN*vn_array[:, 2]
     Q3 = dN*vn_array[:, 3]
     Q5 = dN*vn_array[:, 5]
     nev = len(dN)
+
+    N2_weight = dN*(dN - 1.)
+    Q5_2 = abs(Q5)**2. - dN
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
@@ -214,24 +253,50 @@ def calculate_chi_523(vn_array):
                    - Q5*conj(Q5) + 2.*dN)
 
     chi_523_JK = zeros(nev)
+    v523_JK = zeros(nev)
+    rho523_JK = zeros(nev)
+    v5L_JK = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
-        chi_523_JK[iev] = (
-            real(mean(chi_523_num[array_idx]))/mean(N3_weight[array_idx])
-            /(real(mean(Q_32[array_idx]))/mean(N4_weight[array_idx])))
+        num_JK = real(mean(chi_523_num[array_idx]))/mean(N3_weight[array_idx])
+        den_JK = real(mean(Q_32[array_idx]))/mean(N4_weight[array_idx])
+
+        v5_Psi5 = nan_to_num(sqrt(mean(Q5_2[array_idx])
+                             /mean(N2_weight[array_idx])))
+
+        chi_523_JK[iev] = num_JK/den_JK
+        v523_JK[iev] = nan_to_num(num_JK/sqrt(den_JK))
+        rho523_JK[iev] = v523_JK[iev]/v5_Psi5
+        v5L_JK[iev] = nan_to_num(sqrt(v5_Psi5**2. - v523_JK[iev]**2.))
 
     chi_523_mean = mean(chi_523_JK)
     chi_523_err = sqrt((nev - 1.)/nev*sum((chi_523_JK - chi_523_mean)**2.))
-    return(chi_523_mean, chi_523_err)
+    v523_mean = mean(v523_JK)
+    v523_err = sqrt((nev - 1.)/nev*sum((v523_JK - v523_mean)**2.))
+    rho523_mean = mean(rho523_JK)
+    rho523_err = sqrt((nev - 1.)/nev*sum((rho523_JK - rho523_mean)**2.))
+    v5L_mean = mean(v5L_JK)
+    v5L_err = sqrt((nev - 1.)/nev*sum((v5L_JK - v5L_mean)**2.))
+    return(v5L_mean, v5L_err, v523_mean, v523_err, rho523_mean, rho523_err,
+           chi_523_mean, chi_523_err)
 
 
 def calculate_chi_6222(vn_array):
-    """chi_6222 = Re(v6*conj(v2)**3.)/|v2|^6"""
+    """arXiv: 2002.00633
+       chi_6222 = Re(v6*conj(v2)**3.)/|v2|^6
+       chi_633 = Re(v6*conj(v3)**2.)/|v3|^4
+       v6222 = Re(v6*conj(v2)**3.)/sqrt(|v2|^6)
+       v633 = Re(v6*conj(v3)**2.)/sqrt(|v3|^4)
+       v624 = Re(v6*conj(v2)*conj(v4).)/sqrt(|v2|^2|v4|^2)
+       rho_6222 = v6(Psi2)/v6(Psi6)
+       rho_633 = v6(Psi3)/v6(Psi6)
+    """
     dN = real(vn_array[:, 0])
     Q2 = dN*vn_array[:, 2]
+    Q3 = dN*vn_array[:, 3]
     Q4 = dN*vn_array[:, 4]
     Q6 = dN*vn_array[:, 6]
     nev = len(dN)
@@ -246,257 +311,145 @@ def calculate_chi_6222(vn_array):
             - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
             + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
             - 6.*dN*(dN - 4.)*(dN - 5.))
-
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    chi_6222_num = (Q6*conj(Q2)*conj(Q2)*conj(Q2) - 3.*Q6*conj(Q4)*conj(Q2)
-                    - 3.*Q4*conj(Q2)*conj(Q2) + 2.*Q6*conj(Q6) + 6.*Q2*conj(Q2)
-                    + 3.*Q4*conj(Q4) - 6.*dN)
-
-    chi_6222_JK = zeros(nev)
-    for iev in range(nev):
-        array_idx = [True]*nev
-        array_idx[iev] = False
-        array_idx = array(array_idx)
-
-        chi_6222_JK[iev] = (
-            real(mean(chi_6222_num[array_idx]))/mean(N4_weight[array_idx])
-            /(real(mean(Q2_6[array_idx]))/mean(N6_weight[array_idx])))
-
-    chi_6222_mean = mean(chi_6222_JK)
-    chi_6222_err = sqrt((nev - 1.)/nev*sum((chi_6222_JK - chi_6222_mean)**2.))
-    return(chi_6222_mean, chi_6222_err)
-
-
-def calculate_chi_633(vn_array):
-    """chi_633 = Re(v6*conj(v3)**2.)/|v3|^4"""
-    dN = real(vn_array[:, 0])
-    Q3 = dN*vn_array[:, 3]
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
-             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
-             + 2*dN*(dN - 3.))
-
-    N3_weight = dN*(dN - 1.)*(dN - 2.)
-    chi_633_num = Q6*conj(Q3)*conj(Q3) - 2.*Q3*conj(Q3) - Q6*conj(Q6) + 2.*dN
-
-    chi_633_JK = zeros(nev)
-    for iev in range(nev):
-        array_idx = [True]*nev
-        array_idx[iev] = False
-        array_idx = array(array_idx)
-
-        chi_633_JK[iev] = (
-            real(mean(chi_633_num[array_idx]))/mean(N3_weight[array_idx])
-            /(real(mean(Q3_4[array_idx]))/mean(N4_weight[array_idx])))
-
-    chi_633_mean = mean(chi_633_JK)
-    chi_633_err = sqrt((nev - 1.)/nev*sum((chi_633_JK - chi_633_mean)**2.))
-    return(chi_633_mean, chi_633_err)
-
-
-def calculate_v4_Psi2(chi_422, chi_422_err, vn_array):
-    """v4(Psi2) = chi_422*sqrt(<abs(V2)**4>)"""
-    dN = real(vn_array[:, 0])
-    Q2 = dN*vn_array[:, 2]
-    Q4 = dN*vn_array[:, 4]
-    nev = len(dN)
 
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
              - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
              + 2*dN*(dN - 3.))
-
-    v2_factor = sqrt(mean(Q2_4)/mean(N4_weight))
-    v2_factor_err = std(Q2_4)/mean(N4_weight)/(2.*v2_factor)/sqrt(nev)
-
-    v4_Psi2 = chi_422*v2_factor
-    v4_Psi2_err = sqrt((chi_422_err*v2_factor)**2.
-                       + (chi_422*v2_factor_err)**2.)
-    return(v4_Psi2, v4_Psi2_err)
-
-
-def calculate_v5_Psi23(chi_523, chi_523_err, vn_array):
-    """v5(Psi23) = chi_523*sqrt(<abs(V2)**2*abs(V3)**2>)"""
-    dN = real(vn_array[:, 0])
-    Q1 = dN*vn_array[:, 1]
-    Q2 = dN*vn_array[:, 2]
-    Q3 = dN*vn_array[:, 3]
-    Q5 = dN*vn_array[:, 5]
-    nev = len(dN)
-
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q_32 = ((abs(Q2)**2.)*(abs(Q3)**2.) - 2.*real(Q5*conj(Q2)*conj(Q3))
-        - 2.*real(Q3*conj(Q1)*conj(Q2)) + abs(Q5)**2. + abs(Q1)**2.
-        - (dN - 4.)*(abs(Q2)**2. + abs(Q3)**2.) + dN*(dN - 6.)
-    )
-
-    v23_factor = sqrt(mean(Q_32)/mean(N4_weight))
-    v23_factor_err = std(Q_32)/mean(N4_weight)/(2.*v23_factor)/sqrt(nev)
-
-    v5_Psi23 = chi_523*v23_factor
-    v5_Psi23_err = sqrt((chi_523_err*v23_factor)**2.
-                        + (chi_523*v23_factor_err)**2.)
-    return(v5_Psi23, v5_Psi23_err)
-
-
-def calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array):
-    """v6(Psi2) = chi_6222*sqrt(<abs(V2)**6>)"""
-    dN = real(vn_array[:, 0])
-    Q2 = dN*vn_array[:, 2]
-    Q4 = dN*vn_array[:, 4]
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
-    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
-            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
-            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
-            - 12.*real(Q6*conj(Q4)*conj(Q2))
-            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
-            + 4.*(abs(Q6)**2.)
-            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
-            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
-            - 6.*dN*(dN - 4.)*(dN - 5.))
-
-    v2_factor = sqrt(mean(Q2_6)/mean(N6_weight))
-    v2_factor_err = std(Q2_6)/mean(N6_weight)/(2.*v2_factor)/sqrt(nev)
-
-    v6_Psi2 = chi_6222*v2_factor
-    v6_Psi2_err = sqrt((chi_6222_err*v2_factor)**2.
-                        + (chi_6222*v2_factor_err)**2.)
-    return(v6_Psi2, v6_Psi2_err)
-
-
-def calculate_v6_Psi3(chi_633, chi_633_err, vn_array):
-    """v6(Psi3) = chi_633*sqrt(<abs(V3)**4>)"""
-    dN = real(vn_array[:, 0])
-    Q3 = dN*vn_array[:, 3]
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
     Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
              - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
              + 2*dN*(dN - 3.))
+    Q_42 = ((abs(Q2)**2.)*(abs(Q4)**2.) - 2.*real(Q6*conj(Q2)*conj(Q4))
+        - 2.*real(Q4*conj(Q2)*conj(Q2)) + abs(Q6)**2. + abs(Q2)**2.
+        - (dN - 4.)*(abs(Q2)**2. + abs(Q4)**2.) + dN*(dN - 6.)
+    )
+    chi_6222_num = (Q6*conj(Q2)*conj(Q2)*conj(Q2) - 3.*Q6*conj(Q4)*conj(Q2)
+                    - 3.*Q4*conj(Q2)*conj(Q2) + 2.*Q6*conj(Q6) + 6.*Q2*conj(Q2)
+                    + 3.*Q4*conj(Q4) - 6.*dN)
 
-    v3_factor = sqrt(mean(Q3_4)/mean(N4_weight))
-    v3_factor_err = std(Q3_4)/mean(N4_weight)/(2.*v3_factor)/sqrt(nev)
-
-    v6_Psi3 = chi_633*v3_factor
-    v6_Psi3_err = sqrt((chi_633_err*v3_factor)**2.
-                        + (chi_633*v3_factor_err)**2.)
-    return(v6_Psi3, v6_Psi3_err)
-
-
-def calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array):
-    """rho_422 = v4(Psi2)/v4(Psi4)"""
-    dN = real(vn_array[:, 0])
-    Q4 = dN*vn_array[:, 4]
-    nev = len(dN)
+    N3_weight = dN*(dN - 1.)*(dN - 2.)
+    chi_633_num = Q6*conj(Q3)*conj(Q3) - 2.*Q3*conj(Q3) - Q6*conj(Q6) + 2.*dN
+    v624_num = (Q6*conj(Q2)*conj(Q4) - Q4*conj(Q4) - Q2*conj(Q2)
+                - Q6*conj(Q6) + 2.*dN)
+    Q422 = Q4*conj(Q2)*conj(Q2) - 2.*Q2*conj(Q2) - Q4*conj(Q4) + 2.*dN
 
     N2_weight = dN*(dN - 1.)
+    Q2_2 = abs(Q2)**2. - dN
     Q4_2 = abs(Q4)**2. - dN
-
-    v4_Psi4 = sqrt(mean(Q4_2)/mean(N2_weight))
-    v4_Psi4_err = std(Q4_2)/mean(N2_weight)/(2.*v4_Psi4)/sqrt(nev)
-
-    rho_422 = v4_Psi2/v4_Psi4
-    rho_422_err = sqrt((v4_Psi2_err/v4_Psi4)**2.
-                       + (v4_Psi2*v4_Psi4_err/v4_Psi4**2.)**2.)
-    return(rho_422, rho_422_err)
-
-
-def calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array):
-    """rho_523 = v5(Psi23)/v5(Psi5)"""
-    dN = real(vn_array[:, 0])
-    Q5 = dN*vn_array[:, 5]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q5_2 = abs(Q5)**2. - dN
-
-    v5_Psi5 = sqrt(mean(Q5_2)/mean(N2_weight))
-    v5_Psi5_err = std(Q5_2)/mean(N2_weight)/(2.*v5_Psi5)/sqrt(nev)
-
-    rho_523 = v5_Psi23/v5_Psi5
-    rho_523_err = sqrt((v5_Psi23_err/v5_Psi5)**2.
-                       + (v5_Psi23*v5_Psi5_err/v5_Psi5**2.)**2.)
-    return(rho_523, rho_523_err)
-
-
-def calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array):
-    """rho_6222 = v6(Psi2)/v6(Psi6)"""
-    dN = real(vn_array[:, 0])
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
     Q6_2 = abs(Q6)**2. - dN
 
-    v6_Psi6 = nan_to_num(sqrt(mean(Q6_2)/mean(N2_weight)))
-    v6_Psi6_err = nan_to_num(std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev))
+    chi_6222_JK = zeros(nev)
+    chi_633_JK = zeros(nev)
+    v6222_JK = zeros(nev)
+    v633_JK = zeros(nev)
+    rho6222_JK = zeros(nev)
+    rho633_JK = zeros(nev)
+    v624_JK = zeros(nev)
+    chi_624_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+        array_idx = array(array_idx)
 
-    rho_6222 = v6_Psi2/v6_Psi6
-    rho_6222_err = sqrt((v6_Psi2_err/v6_Psi6)**2.
-                        + (v6_Psi2*v6_Psi6_err/v6_Psi6**2.)**2.)
-    return(rho_6222, rho_6222_err)
+        num_JK1 = (real(mean(chi_6222_num[array_idx]))
+                   /mean(N4_weight[array_idx]))
+        den_JK1 = real(mean(Q2_6[array_idx]))/mean(N6_weight[array_idx])
+        num_JK2 = real(mean(chi_633_num[array_idx]))/mean(N3_weight[array_idx])
+        den_JK2 = real(mean(Q3_4[array_idx]))/mean(N4_weight[array_idx])
+        num_JK3 = real(mean(v624_num[array_idx]))/mean(N3_weight[array_idx])
+        v22 = real(mean(Q2_2[array_idx]))/mean(N2_weight[array_idx])
+        v24 = real(mean(Q2_4[array_idx]))/mean(N4_weight[array_idx])
+        v422 = real(mean(Q422[array_idx]))/mean(N3_weight[array_idx])
+        v42 = real(mean(Q4_2[array_idx]))/mean(N2_weight[array_idx])
+        v6_Psi6 = nan_to_num(sqrt(mean(Q6_2[array_idx])
+                             /mean(N2_weight[array_idx])))
+
+        chi_6222_JK[iev] = num_JK1/den_JK1
+        v6222_JK[iev] = nan_to_num(num_JK1/sqrt(den_JK1))
+        rho6222_JK[iev] = nan_to_num(v6222_JK[iev]/v6_Psi6)
+        chi_633_JK[iev] = num_JK2/den_JK2
+        v633_JK[iev] = nan_to_num(num_JK2/sqrt(den_JK2))
+        rho633_JK[iev] = nan_to_num(v633_JK[iev]/v6_Psi6)
+        chi_624_JK[iev] = real((num_JK3*v24 - num_JK1*v422)
+                               /((v24*v42 - v422**2)*v22))
+        v624_JK[iev] = (
+            num_JK3/sqrt(real(mean(Q_42[array_idx]))/mean(N4_weight[array_idx]))
+        )
+
+    chi_6222_mean = mean(chi_6222_JK)
+    chi_6222_err = sqrt((nev - 1.)/nev*sum((chi_6222_JK - chi_6222_mean)**2.))
+    chi_633_mean = mean(chi_633_JK)
+    chi_633_err = sqrt((nev - 1.)/nev*sum((chi_633_JK - chi_633_mean)**2.))
+    chi_624_mean = mean(chi_624_JK)
+    chi_624_err = sqrt((nev - 1.)/nev*sum((chi_624_JK - chi_624_mean)**2.))
+    v6222_mean = mean(v6222_JK)
+    v6222_err = sqrt((nev - 1.)/nev*sum((v6222_JK - v6222_mean)**2.))
+    v633_mean = mean(v633_JK)
+    v633_err = sqrt((nev - 1.)/nev*sum((v633_JK - v633_mean)**2.))
+    v624_mean = mean(v624_JK)
+    v624_err = sqrt((nev - 1.)/nev*sum((v624_JK - v624_mean)**2.))
+    rho6222_mean = mean(rho6222_JK)
+    rho6222_err = sqrt((nev - 1.)/nev*sum((rho6222_JK - rho6222_mean)**2.))
+    rho633_mean = mean(rho633_JK)
+    rho633_err = sqrt((nev - 1.)/nev*sum((rho633_JK - rho633_mean)**2.))
+    return(v6222_mean, v6222_err, v633_mean, v633_err, v624_mean, v624_err,
+           rho6222_mean, rho6222_err, rho633_mean, rho633_err,
+           chi_6222_mean, chi_6222_err, chi_633_mean, chi_633_err,
+           chi_624_mean, chi_624_err)
 
 
-def calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array):
-    """rho_633 = v6(Psi3)/v6(Psi6)"""
+def calculate_chi_7223(vn_array):
+    """chi_7223 = Re(v7*conj(v2*v2*v3))/|v2|^4/|v3|^2
+    """
     dN = real(vn_array[:, 0])
-    Q6 = dN*vn_array[:, 6]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q6_2 = abs(Q6)**2. - dN
-
-    v6_Psi6 = nan_to_num(sqrt(mean(Q6_2)/mean(N2_weight)))
-    v6_Psi6_err = nan_to_num(std(Q6_2)/mean(N2_weight)/(2.*v6_Psi6)/sqrt(nev))
-
-    rho_633 = v6_Psi3/v6_Psi6
-    rho_633_err = sqrt((v6_Psi3_err/v6_Psi6)**2.
-                        + (v6_Psi3*v6_Psi6_err/v6_Psi6**2.)**2.)
-    return(rho_633, rho_633_err)
-
-
-def calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array):
-    """v4_L = sqrt(v4(Psi4)^2 - v4(Psi2)^2)"""
-    dN = real(vn_array[:, 0])
+    Q2 = dN*vn_array[:, 2]
+    Q3 = dN*vn_array[:, 3]
     Q4 = dN*vn_array[:, 4]
-    nev = len(dN)
-
-    N2_weight = dN*(dN - 1.)
-    Q4_2 = abs(Q4)**2. - dN
-
-    v4_Psi4_sq = mean(Q4_2)/mean(N2_weight)
-    v4_Psi4_sq_err = std(Q4_2)/mean(N2_weight)/sqrt(nev)
-
-    v4_L = sqrt(v4_Psi4_sq - v4_Psi2**2.)
-    v4_L_err = (sqrt(v4_Psi4_sq_err**2. + (2.*v4_Psi2*v4_Psi2_err)**2.)
-                /(2.*v4_L))
-    return(v4_L, v4_L_err)
-
-
-def calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array):
-    """v5_L = sqrt(v5(Psi5)^2 - v5(Psi23)^2)"""
-    dN = real(vn_array[:, 0])
     Q5 = dN*vn_array[:, 5]
+    Q7 = dN*vn_array[:, 7]
     nev = len(dN)
 
+    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
+    Q_7223 = (Q7*conj(Q2)*conj(Q2)*conj(Q3) - 2.*Q5*conj(Q2)*conj(Q3)
+              - Q4*conj(Q2)*conj(Q2) - Q7*conj(Q4)*conj(Q3)
+              - 2.*Q7*conj(Q2)*conj(Q5)
+              + 2*(abs(Q7)**2. + abs(Q5)**2 + abs(Q3)**2) + 4*abs(Q2)**2
+              + abs(Q4)**2 - 6*dN
+    )
+    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
+             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
+             + 2*dN*(dN - 3.))
+
     N2_weight = dN*(dN - 1.)
-    Q5_2 = abs(Q5)**2. - dN
+    Q3_2 = abs(Q3)**2. - dN
+    Q7_2 = abs(Q7)**2. - dN
 
-    v5_Psi5_sq = mean(Q5_2)/mean(N2_weight)
-    v5_Psi5_sq_err = std(Q5_2)/mean(N2_weight)/sqrt(nev)
+    chi_7223_JK = zeros(nev)
+    v7223_JK = zeros(nev)
+    rho7223_JK = zeros(nev)
+    for iev in range(nev):
+        array_idx = [True]*nev
+        array_idx[iev] = False
+        array_idx = array(array_idx)
 
-    v5_L = sqrt(v5_Psi5_sq - v5_Psi23**2.)
-    v5_L_err = (sqrt(v5_Psi5_sq_err**2. + (2.*v5_Psi23*v5_Psi23_err)**2.)
-                /(2.*v5_L))
-    return(v5_L, v5_L_err)
+        num_JK = real(mean(Q_7223[array_idx]))/mean(N4_weight[array_idx])
+        den_JK = real(mean(Q2_4[array_idx]*Q3_2[array_idx])
+                      /mean(N4_weight[array_idx]*N2_weight[array_idx]))
+        v7_Psi7 = nan_to_num(sqrt(mean(Q7_2[array_idx])
+                             /mean(N2_weight[array_idx])))
+
+        chi_7223_JK[iev] = num_JK/den_JK
+        v7223_JK[iev] = nan_to_num(num_JK/sqrt(den_JK))
+        rho7223_JK[iev] = nan_to_num(v7223_JK[iev]/v7_Psi7)
+
+    chi_7223_mean = mean(chi_7223_JK)
+    chi_7223_err = sqrt((nev - 1.)/nev*sum((chi_7223_JK - chi_7223_mean)**2.))
+    v7223_mean = mean(v7223_JK)
+    v7223_err = sqrt((nev - 1.)/nev*sum((v7223_JK - v7223_mean)**2.))
+    rho7223_mean = mean(rho7223_JK)
+    rho7223_err = sqrt((nev - 1.)/nev*sum((rho7223_JK - rho7223_mean)**2.))
+    return(v7223_mean, v7223_err, rho7223_mean, rho7223_err,
+           chi_7223_mean, chi_7223_err)
 
 
 def calculate_v6_L(chi_6222, chi_6222_err, chi_633, chi_633_err, vn_array):
@@ -535,33 +488,14 @@ def calculate_nonlinear_reponse(vn_array, outputFileName):
         this function computes all the nonlinear response coefficients
         proposed in the paper arXiv: 1502.02502 up to v6
     """
-    chi_422, chi_422_err = calculate_chi_422(vn_array)
-    v4_Psi2, v4_Psi2_err = calculate_v4_Psi2(chi_422, chi_422_err, vn_array)
-    rho_422, rho_422_err = calculate_rho_422(v4_Psi2, v4_Psi2_err, vn_array)
-    v4_L, v4_L_err = calculate_v4_L(v4_Psi2, v4_Psi2_err, vn_array)
+    v4coef = calculate_chi_422(vn_array)
+    v5coef = calculate_chi_523(vn_array)
+    v6coef= calculate_chi_6222(vn_array)
+    #v6_L, v6_L_err = calculate_v6_L(chi_6222, chi_6222_err,
+    #                                chi_633, chi_633_err, vn_array)
+    v7coef = calculate_chi_7223(vn_array)
 
-    chi_523, chi_523_err = calculate_chi_523(vn_array)
-    v5_Psi23, v5_Psi23_err = calculate_v5_Psi23(chi_523, chi_523_err, vn_array)
-    rho_523, rho_523_err = calculate_rho_523(v5_Psi23, v5_Psi23_err, vn_array)
-    v5_L, v5_L_err = calculate_v5_L(v5_Psi23, v5_Psi23_err, vn_array)
-
-    chi_6222, chi_6222_err = calculate_chi_6222(vn_array)
-    v6_Psi2, v6_Psi2_err = calculate_v6_Psi2(chi_6222, chi_6222_err, vn_array)
-    rho_6222, rho_6222_err = calculate_rho_6222(v6_Psi2, v6_Psi2_err, vn_array)
-
-    chi_633, chi_633_err = calculate_chi_633(vn_array)
-    v6_Psi3, v6_Psi3_err = calculate_v6_Psi3(chi_633, chi_633_err, vn_array)
-    rho_633, rho_633_err = calculate_rho_633(v6_Psi3, v6_Psi3_err, vn_array)
-    v6_L, v6_L_err = calculate_v6_L(chi_6222, chi_6222_err,
-                                    chi_633, chi_633_err, vn_array)
-
-    results = [v4_L, v4_L_err, v4_Psi2, v4_Psi2_err, rho_422, rho_422_err,
-               chi_422, chi_422_err,
-               v5_L, v5_L_err, v5_Psi23, v5_Psi23_err, rho_523, rho_523_err,
-               chi_523, chi_523_err,
-               v6_L, v6_L_err, v6_Psi2, v6_Psi2_err, v6_Psi3, v6_Psi3_err,
-               rho_6222, rho_6222_err, rho_633, rho_633_err,
-               chi_6222, chi_6222_err, chi_633, chi_633_err]
+    results = list(v4coef) + list(v5coef) + list(v6coef) + list(v7coef)
     f = open(outputFileName, 'w')
     f.write("# type  value  stat. err\n")
     for i in range(len(nonlinear_reponse_correlator_name_list)):
@@ -616,8 +550,8 @@ def get_vn_diff_2PC_from_single_event(data):
     temp_vn_imag_array = []
     temp_vn_denorm_array = []
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
         vn_pt = vn_real_event + 1j*vn_imag_event
         numerator_real = real(dN_event*vn_pt)
         numerator_imag = imag(dN_event*vn_pt)
@@ -645,10 +579,10 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     temp_Qn_pT_array = [dN_event,]
     temp_Qn_ref_array = [dN_ref]
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
-        vn_ref_real_event = data_ref[:, 4*iorder]
-        vn_ref_imag_event = data_ref[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
+        vn_ref_real_event = data_ref[:, 2*iorder]
+        vn_ref_imag_event = data_ref[:, 2*iorder+1]
         vn_ref_real_interp = interp(pT_inte_array, pT_ref_event,
                                     vn_ref_real_event)
         vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
@@ -807,7 +741,6 @@ def calculate_vn4_diff(QnpT_diff, Qnref):
 def calculate_vn_distribution(vn_array, outputFileName):
     """This function computes the vn distribution"""
     nbin = 20
-    vn_array = array(vn_array)
     vn_dim = len(vn_array[0, :])
     output = []
     for vn_order in range(vn_dim):
@@ -980,7 +913,6 @@ def calcualte_event_plane_correlations(vn_array, outputFileName):
         this function compute the scalar-product event plane correlations
         vn_array is a matrix [event_idx, vn_order]
     """
-    vn_array = array(vn_array)
     nev = len(vn_array[:, 0])
     v2_array = vn_array[:, 2]
     v3_array = vn_array[:, 3]
@@ -1089,7 +1021,7 @@ def calculate_vn_arrays_for_rn_ratios(data):
     return(vn_arrays)
 
 
-def calculate_rn_ratios(vn_event_arrays):
+def calculate_rn_ratios(vn_event_arrays, avg_folder):
     """
         this function compute rn ratio in different pT bins
         according to the CMS measurements
@@ -1146,7 +1078,33 @@ def calculate_rn_ratios(vn_event_arrays):
                 rn_array.append([pT_trig - pT_asso, rn_mean, rn_err])
         rn_arrays.append(rn_array)
     rn_arrays = array(rn_arrays)
-    return(rn_arrays)
+
+    # output rn ratios
+    pT_trig = ['1.0', '1.5', '2.0', '2.5', '3.0']
+    ipTtrig = 0
+    output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
+                       % (particle_name_list[ipart],
+                          pT_trig[ipTtrig], pT_trig[ipTtrig+1]))
+    f = open(path.join(avg_folder, output_filename), 'w')
+    f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
+    for ipT in range(len(rn_arrays[0, :, 0])):
+        for iorder in range(len(rn_arrays[:, 0, 0])):
+            f.write("%.5e  %.5e  %.5e  "
+                    % (rn_arrays[iorder, ipT, 0],
+                       rn_arrays[iorder, ipT, 1],
+                       rn_arrays[iorder, ipT, 2]))
+        f.write("\n")
+        if rn_arrays[0, ipT, 0] == 0.0:
+            f.close()
+            ipTtrig += 1
+            if ipTtrig < (len(pT_trig) - 1):
+                output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
+                                   % (particle_name_list[ipart],
+                                      pT_trig[ipTtrig],
+                                      pT_trig[ipTtrig+1]))
+                f = open(path.join(avg_folder, output_filename), 'w')
+                f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
+    return
 
 
 def calculate_symmetric_cumulant(vn_data_array, outputFileName):
@@ -1156,9 +1114,8 @@ def calculate_symmetric_cumulant(vn_data_array, outputFileName):
                       - <v_m*conj(v_m)>*<v_n*conj(v_n)>
         we use Jackknife resampling method to estimate the statistical error
     """
-    vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
-    dN = real(vn_data_array[:, -1])
+    dN = real(vn_data_array[:, 0])
     Q1 = dN*vn_data_array[:, 1]
     Q2 = dN*vn_data_array[:, 2]
     Q3 = dN*vn_data_array[:, 3]
@@ -1230,12 +1187,31 @@ def calculate_symmetric_cumulant(vn_data_array, outputFileName):
     return
 
 
-def calculate_vn4(vn_data_array, outputFileName):
+def calculate_vn4_vn6(vn_data_array, outputFileName_vn4,
+                      outputFileName42, outputFileName64):
     """
         this funciton computes the 4 particle cumulant vn{4}
             vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+
+        this funciton also computes the ratio of
+        the 4-particle cumulant vn{4} over the 2-particle cumulant vn{2}
+        and Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))
+
+            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+            vn{2} = (<v_n*conj(v_n)>)**(1/2)
+
+        this funciton also computes the ratio of
+        the 6-particle cumulant vn{6} over the 4-particle cumulant vn{4}
+            cn{6} = <<6>> - 9<<2>><<4>> + 12<<2>>^3
+            vn{6} = (cn{6}/4)**(1/6)
+            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
+        and compute skewness estimator gamma_1
+            gamma_1 = -6\sqrt{2}*vn{4}^2*(vn{4} - vn{6})
+                                         /(vn{2}^2 - vn{4}^2)^(3/2)
+
+        we will use Jackknife resampling method to estimate
+        the statistical error
     """
-    vn_data_array = array(vn_data_array)
     nev = len(vn_data_array[:, 0])
     dN = real(vn_data_array[:, 0])
     Q1 = dN*vn_data_array[:, 1]
@@ -1247,15 +1223,15 @@ def calculate_vn4(vn_data_array, outputFileName):
 
     # two-particle correlation
     N2_weight = dN*(dN - 1.)
-    Q1_2 = abs(Q1)**2. - dN
+    #Q1_2 = abs(Q1)**2. - dN
     Q2_2 = abs(Q2)**2. - dN
     Q3_2 = abs(Q3)**2. - dN
 
     # four-particle correlation
     N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
-             - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
-             + 2*dN*(dN - 3.))
+    #Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
+    #         - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
+    #         + 2*dN*(dN - 3.))
     Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
              - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
              + 2*dN*(dN - 3.))
@@ -1263,27 +1239,76 @@ def calculate_vn4(vn_data_array, outputFileName):
              - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
              + 2*dN*(dN - 3.))
 
+    # six-particle correlation
+    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
+    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
+            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
+            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
+            - 12.*real(Q6*conj(Q4)*conj(Q2))
+            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
+            + 4.*(abs(Q6)**2.)
+            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
+            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
+            - 6.*dN*(dN - 4.)*(dN - 5.))
+
     # calcualte observables with Jackknife resampling method
     C1_4_array = zeros(nev)
     C2_4_array = zeros(nev)
     C3_4_array = zeros(nev)
+    r1_array = zeros(nev)
+    r2_array = zeros(nev)
+    r3_array = zeros(nev)
+    F1_array = zeros(nev)
+    F2_array = zeros(nev)
+    F3_array = zeros(nev)
+    r26_array = zeros(nev)
+    gamma1_array = zeros(nev)
     for iev in range(nev):
         array_idx = [True]*nev
         array_idx[iev] = False
         array_idx = array(array_idx)
 
-        # C_1{4}
-        C1_4_array[iev] = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
-                           - 2.*((mean(Q1_2[array_idx])
-                                 /mean(N2_weight[array_idx]))**2.))
-        # C_2{4}
-        C2_4_array[iev] = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                           - 2.*((mean(Q2_2[array_idx])
-                                 /mean(N2_weight[array_idx]))**2.))
-        # C_3{4}
-        C3_4_array[iev] = (mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
-                           - 2.*((mean(Q3_2[array_idx])
-                                 /mean(N2_weight[array_idx]))**2.))
+        # C_n{4}
+        #C_1_4 = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
+        #         - 2.*((mean(Q1_2[array_idx])/mean(N2_weight[array_idx]))**2.))
+        #C_1_2 = mean(Q1_2[array_idx])/mean(N2_weight[array_idx])
+        #if C_1_4 < 0. and C_1_2 > 0.:
+        #    v1_4 = (-C_1_4)**0.25
+        #    v1_2 = sqrt(C_1_2)
+        #    r1_array[iev] = v1_4/(v1_2 + 1e-15)
+        #    F1_array[iev] = sqrt((v1_2**2. - v1_4**2.)
+        #                         /(v1_2**2. + v1_4**2. + 1e-15))
+
+        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
+        C24_tmp = mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
+        C_2_4 = C24_tmp - 2.*C_2_2**2.
+        C_2_6 = (mean(Q2_6[array_idx])/mean(N6_weight[array_idx])
+                 - 9.*C_2_2*C24_tmp + 12.*(C_2_2**3.))
+        C2_4_array[iev] = C_2_4
+        if C_2_4 < 0. and C_2_2 > 0.:
+            v2_4 = (-C_2_4)**0.25
+            v2_2 = sqrt(C_2_2)
+            r2_array[iev] = v2_4/v2_2
+            F2_array[iev] = sqrt((v2_2**2. - v2_4**2.)
+                                 /(v2_2**2. + v2_4**2. + 1e-15))
+            if C_2_6 > 0.:
+                v2_6 = (C_2_6/4.)**(1./6.)
+                r26_array[iev] = v2_6/v2_4
+                gamma1_array[iev] = (-6.*sqrt(2)*(v2_4**2.)*(v2_4 - v2_6)
+                                     /(v2_2**2. - v2_4**2.)**(1.5))
+
+
+        C_3_2 = mean(Q3_2[array_idx])/mean(N2_weight[array_idx])
+        C34_tmp = mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
+        C_3_4 = C34_tmp - 2.*C_3_2**2.
+        C3_4_array[iev] = C_3_4
+        if C_3_4 < 0. and C_3_2 > 0.:
+            v3_4 = (-C_3_4)**0.25
+            v3_2 = sqrt(C_3_2)
+            r3_array[iev] = v3_4/v3_2
+            F3_array[iev] = sqrt((v3_2**2. - v3_4**2.)
+                                 /(v3_2**2. + v3_4**2. + 1e-15))
+
     C1_4_mean = mean(C1_4_array)
     C1_4_err  = sqrt((nev - 1.)/nev*sum((C1_4_array - C1_4_mean)**2.))
     C2_4_mean = mean(C2_4_array)
@@ -1308,103 +1333,18 @@ def calculate_vn4(vn_data_array, outputFileName):
     if C3_4_mean < 0:
         v3_4 = (-C3_4_mean)**0.25
         v3_4_err = 0.25*((-C3_4_mean)**(-0.75))*C3_4_err
-
     results = [v1_4, v1_4_err, C1_4_mean, C1_4_err,
                v2_4, v2_4_err, C2_4_mean, C2_4_err,
                v3_4, v3_4_err, C3_4_mean, C3_4_err,]
-    f = open(outputFileName, 'w')
+    f = open(outputFileName_vn4, 'w')
     f.write("# n  vn{4}  vn{4}_err  Cn{4}  Cn{4}_err\n")
     for i in range(1, 4):
         f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
                 % (i, results[4*i-4], results[4*i-3],
                    results[4*i-2], results[4*i-1]))
     f.close()
-    return
 
-
-def calculate_vn4_over_vn2(vn_data_array, outputFileName):
-    """
-        this funciton computes the ratio of
-        the 4-particle cumulant vn{4} over the 2-particle cumulant vn{2}
-        and Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))
-
-            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
-            vn{2} = (<v_n*conj(v_n)>)**(1/2)
-
-        we will use Jackknife resampling method to estimate
-        the statistical error
-    """
-    vn_data_array = array(vn_data_array)
-    nev = len(vn_data_array[:, 0])
-    dN = real(vn_data_array[:, 0])
-    Q1 = dN*vn_data_array[:, 1]
-    Q2 = dN*vn_data_array[:, 2]
-    Q3 = dN*vn_data_array[:, 3]
-    Q4 = dN*vn_data_array[:, 4]
-    Q5 = dN*vn_data_array[:, 5]
-    Q6 = dN*vn_data_array[:, 6]
-
-    # two-particle correlation
-    N2_weight = dN*(dN - 1.)
-    Q1_2 = abs(Q1)**2. - dN
-    Q2_2 = abs(Q2)**2. - dN
-    Q3_2 = abs(Q3)**2. - dN
-
-    # four-particle correlation
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q1_4 = ((abs(Q1)**4.) - 2.*real(Q2*conj(Q1)*conj(Q1))
-             - 4.*(dN - 2.)*(abs(Q1)**2.) + abs(Q2)**2.
-             + 2*dN*(dN - 3.))
-    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
-             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
-             + 2*dN*(dN - 3.))
-    Q3_4 = ((abs(Q3)**4.) - 2.*real(Q6*conj(Q3)*conj(Q3))
-             - 4.*(dN - 2.)*(abs(Q3)**2.) + abs(Q6)**2.
-             + 2*dN*(dN - 3.))
-
-    # calcualte observables with Jackknife resampling method
-    r1_array = zeros(nev)
-    r2_array = zeros(nev)
-    r3_array = zeros(nev)
-    F1_array = zeros(nev)
-    F2_array = zeros(nev)
-    F3_array = zeros(nev)
-    for iev in range(nev):
-        array_idx = [True]*nev
-        array_idx[iev] = False
-        array_idx = array(array_idx)
-
-        # C_n{4}
-        C_1_4 = (mean(Q1_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*((mean(Q1_2[array_idx])/mean(N2_weight[array_idx]))**2.))
-        C_1_2 = mean(Q1_2[array_idx])/mean(N2_weight[array_idx])
-        if C_1_4 < 0. and C_1_2 > 0.:
-            v1_4 = (-C_1_4)**0.25
-            v1_2 = sqrt(C_1_2)
-            r1_array[iev] = v1_4/(v1_2 + 1e-15)
-            F1_array[iev] = sqrt((v1_2**2. - v1_4**2.)
-                                 /(v1_2**2. + v1_4**2. + 1e-15))
-
-        C_2_4 = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*((mean(Q2_2[array_idx])/mean(N2_weight[array_idx]))**2.))
-        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
-        if C_2_4 < 0. and C_2_2 > 0.:
-            v2_4 = (-C_2_4)**0.25
-            v2_2 = sqrt(C_2_2)
-            r2_array[iev] = v2_4/v2_2
-            F2_array[iev] = sqrt((v2_2**2. - v2_4**2.)
-                                 /(v2_2**2. + v2_4**2. + 1e-15))
-
-        C_3_4 = (mean(Q3_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*((mean(Q3_2[array_idx])/mean(N2_weight[array_idx]))**2.))
-        C_3_2 = mean(Q3_2[array_idx])/mean(N2_weight[array_idx])
-        if C_3_4 < 0. and C_3_2 > 0.:
-            v3_4 = (-C_3_4)**0.25
-            v3_2 = sqrt(C_3_2)
-            r3_array[iev] = v3_4/v3_2
-            F3_array[iev] = sqrt((v3_2**2. - v3_4**2.)
-                                 /(v3_2**2. + v3_4**2. + 1e-15))
-
+    # now the ratios
     r1_mean = mean(r1_array)
     r1_err = sqrt((nev - 1.)/nev*sum((r1_array - r1_mean)**2.))
     r2_mean = mean(r2_array)
@@ -1422,7 +1362,7 @@ def calculate_vn4_over_vn2(vn_data_array, outputFileName):
     results = [r1_mean, r1_err, F1_mean, F1_err,
                r2_mean, r2_err, F2_mean, F2_err,
                r3_mean, r3_err, F3_mean, F3_err]
-    f = open(outputFileName, 'w')
+    f = open(outputFileName42, 'w')
     f.write("# n  vn{4}/vn{2}  (vn{4}/vn{2})_err  Fn  Fn_err\n")
     f.write("# Fn = sqrt((vn{2}^2 - vn{4}^2)/(vn{2}^2 + vn{4}^2))\n")
     for i in range(1, 4):
@@ -1430,141 +1370,63 @@ def calculate_vn4_over_vn2(vn_data_array, outputFileName):
                 % (i, results[4*i - 4], results[4*i - 3],
                    results[4*i - 2], results[4*i-1]))
     f.close()
-    return
-
-
-def calculate_vn6_over_vn4(vn_data_array, outputFileName):
-    """
-        this funciton computes the ratio of
-        the 6-particle cumulant vn{6} over the 4-particle cumulant vn{4}
-            cn{6} = <<6>> - 9<<2>><<4>> + 12<<2>>^3
-            vn{6} = (cn{6}/4)**(1/6)
-            vn{4} = (2 <v_n*conj(v_n)>**2 - <(v_n*conj(v_n))**2.>)**(1/4)
-        and compute skewness estimator gamma_1
-            gamma_1 = -6\sqrt{2}*vn{4}^2*(vn{4} - vn{6})
-                                         /(vn{2}^2 - vn{4}^2)^(3/2)
-        we will use Jackknife resampling method to estimate
-        the statistical error
-    """
-    vn_data_array = array(vn_data_array)
-    nev = len(vn_data_array[:, 0])
-    dN = real(vn_data_array[:, 0])
-    Q1 = dN*vn_data_array[:, 1]
-    Q2 = dN*vn_data_array[:, 2]
-    Q3 = dN*vn_data_array[:, 3]
-    Q4 = dN*vn_data_array[:, 4]
-    Q5 = dN*vn_data_array[:, 5]
-    Q6 = dN*vn_data_array[:, 6]
-
-    # two-particle correlation
-    N2_weight = dN*(dN - 1.)
-    Q2_2 = abs(Q2)**2. - dN
-
-    # four-particle correlation
-    N4_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)
-    Q2_4 = ((abs(Q2)**4.) - 2.*real(Q4*conj(Q2)*conj(Q2))
-             - 4.*(dN - 2.)*(abs(Q2)**2.) + abs(Q4)**2.
-             + 2*dN*(dN - 3.))
-
-    # six-particle correlation
-    N6_weight = dN*(dN - 1.)*(dN - 2.)*(dN - 3.)*(dN - 4.)*(dN - 5.)
-    Q2_6 = (abs(Q2)**6. + 9*(abs(Q4)**2.)*(abs(Q2)**2.)
-            - 6.*real(Q4*Q2*conj(Q2)*conj(Q2)*conj(Q2))
-            + 4.*real(Q6*conj(Q2)*conj(Q2)*conj(Q2))
-            - 12.*real(Q6*conj(Q4)*conj(Q2))
-            + 18.*(dN - 4.)*real(Q4*conj(Q2)*conj(Q2))
-            + 4.*(abs(Q6)**2.)
-            - 9.*(dN - 4.)*((abs(Q2)**4.) + (abs(Q4)**2.))
-            + 18.*(dN - 5.)*(dN - 2.)*(abs(Q2)**2.)
-            - 6.*dN*(dN - 4.)*(dN - 5.))
-
-    # calcualte observables with Jackknife resampling method
-    r2_array = zeros(nev)
-    gamma1_array = zeros(nev)
-    for iev in range(nev):
-        array_idx = [True]*nev
-        array_idx[iev] = False
-        array_idx = array(array_idx)
-
-        # C_n{4}
-        C_2_2 = mean(Q2_2[array_idx])/mean(N2_weight[array_idx])
-        C_2_4 = (mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                 - 2.*(C_2_2**2.))
-        C_2_6 = (mean(Q2_6[array_idx])/mean(N6_weight[array_idx])
-                 - 9.*C_2_2*mean(Q2_4[array_idx])/mean(N4_weight[array_idx])
-                 + 12.*(C_2_2**3.))
-        if C_2_6 > 0. and C_2_4 < 0. and C_2_2 > 0.:
-            v2_2 = sqrt(C_2_2)
-            v2_6 = (C_2_6/4.)**(1./6.)
-            v2_4 = (-C_2_4)**(1./4.)
-            r2_array[iev] = v2_6/v2_4
-            gamma1_array[iev] = (-6.*sqrt(2)*(v2_4**2.)*(v2_4 - v2_6)
-                                 /(v2_2**2. - v2_4**2.)**(1.5))
-
-    r2_mean = mean(r2_array)
-    r2_err = sqrt((nev - 1.)/nev*sum((r2_array - r2_mean)**2.))
+    r26_mean = mean(r26_array)
+    r26_err = sqrt((nev - 1.)/nev*sum((r26_array - r26_mean)**2.))
     gamma1_mean = mean(gamma1_array)
     gamma1_err = sqrt((nev - 1.)/nev*sum((gamma1_array - gamma1_mean)**2.))
 
-    f = open(outputFileName, 'w')
+    f = open(outputFileName64, 'w')
     f.write(
         "# n  vn{6}/vn{4}  (vn{6}/vn{4})_err  gamma_1  gamma_1_err\n")
     f.write("%d  %.10e  %.10e  %.10e  %.10e\n"
-            % (2, r2_mean, r2_err, gamma1_mean, gamma1_err))
+            % (2, r26_mean, r26_err, gamma1_mean, gamma1_err))
     f.close()
     return
 
 
-def calculate_vn_eta(eta_array, dN_array, vn_array, eta_min, eta_max):
+def calculate_vn_eta(eta_array, Qn_rap_array, eta_min, eta_max):
     """
         This function computes vn(eta).
         eta_min and eta_max specify the rapidity range of reference flow vector
     """
-    nev, neta   = dN_array.shape
-    dN_array    = dN_array.reshape((nev, 1, neta))
-    idx         = (eta_array > eta_min) & (eta_array < eta_max)
-    vn_ref      = (sum(dN_array[:, :, idx]*vn_array[:, :, idx], axis=2)
-                   /(sum(dN_array[:, :, idx], axis=2) + 1e-15))
-    vnshape     = vn_ref.shape
-    nvn         = vnshape[1]
-    vn_ref      = vn_ref.reshape((vnshape[0], vnshape[1], 1))
-    vn_SP_ev    = real(vn_array*conj(vn_ref))
+    nev, nvn, neta = Qn_rap_array[:, 1:, :].shape
+    dN_array = Qn_rap_array[:, 0, :].reshape((nev, 1, neta))
+    idx = (eta_array > eta_min) & (eta_array < eta_max)
+    Qn_ref = sum(Qn_rap_array[:, 1:, idx], axis=2)
+    Qn_ref = Qn_ref.reshape((nev, nvn, 1))
+    vn_SP_ev    = real(Qn_rap_array[:, 1:, :]*conj(Qn_ref))
     vn_SP_array = zeros([nev, nvn, neta])
     for iev in range(nev):
         array_idx      = [True]*nev
         array_idx[iev] = False
         array_idx      = array(array_idx)
-        vn_den         = mean((absolute(vn_ref[array_idx, :, :]))**2., axis=0)
+        vn_den         = mean((absolute(Qn_ref[array_idx, :, :]))**2., axis=0)
         vn_SP          = (mean(vn_SP_ev[array_idx, :, :], axis=0)
-                          /(sqrt(vn_den) + 1e-16))
+                          /((sqrt(vn_den) + 1e-16)
+                             *mean(dN_array[array_idx, :, :], axis=0)))
         vn_SP_array[iev, :, :] = vn_SP
     vn_SP_mean = mean(vn_SP_array, axis=0)
     vn_SP_err  = sqrt((nev - 1.)/nev*sum((vn_SP_array - vn_SP_mean)**2., axis=0))
     return([vn_SP_mean, vn_SP_err])
 
 
-def calculate_rn_eta(eta_array, dN_array, vn_array, outputFileName):
+def calculate_rn_eta(eta_array, Qn_rap_array, outputFileName):
     """
         This function computes the longitudinal factorization breaking ratios
         for all n passed from vn_array
             eta, rn(eta)
     """
-    nev, neta = dN_array.shape
-    dN_array  = dN_array.reshape((nev, 1, neta))
-    Qn_array  = vn_array
-    Qnshape   = Qn_array.shape
-    nQn       = Qnshape[1]
+    nev, nQn, neta = Qn_rap_array[:, 1:, :].shape
+    Qn_array = Qn_rap_array[:, 1:, :]
 
     # calculate the reference flow vector for every event
     eta_b_min    = 2.5
     eta_b_max    = 4.0
     eta_ref1_tmp = linspace(eta_b_min, eta_b_max, 16)
     eta_ref2_tmp = linspace(-eta_b_max, -eta_b_min, 16)
-    Qn_ref1      = [] 
-    Qn_ref2      = [] 
+    Qn_ref1      = []
+    Qn_ref2      = []
     for iev in range(nev):
-        dN1_interp = interp(eta_ref1_tmp, eta_array, dN_array[iev, 0, :])
-        dN2_interp = interp(eta_ref2_tmp, eta_array, dN_array[iev, 0, :])
         Qn_ref1_vec = []
         Qn_ref2_vec = []
         for iorder in range(nQn):
@@ -1572,10 +1434,8 @@ def calculate_rn_eta(eta_array, dN_array, vn_array, outputFileName):
                                 Qn_array[iev, iorder, :])
             Qn2_interp = interp(eta_ref2_tmp, eta_array,
                                 Qn_array[iev, iorder, :])
-            Qn_ref1_vec.append(sum(dN1_interp*Qn1_interp)
-                               /(sum(dN1_interp) + 1e-15))
-            Qn_ref2_vec.append(sum(dN2_interp*Qn2_interp)
-                               /(sum(dN2_interp) + 1e-15))
+            Qn_ref1_vec.append(sum(Qn1_interp))
+            Qn_ref2_vec.append(sum(Qn2_interp))
         Qn_ref1.append(Qn_ref1_vec)
         Qn_ref2.append(Qn_ref2_vec)
     Qn_ref1 = array(Qn_ref1).reshape((nev, nQn, 1))
@@ -1702,7 +1562,8 @@ if CentralityFlag > 0:
         elif RapidityTrigger == 3:    # ATLAS forward Trigger
             file_name = "particle_9999_vndata_eta_-4.9_-3.1.dat"
         event_group = hf.get(event_name)
-        eventStatus = check_an_event_is_good(event_group)
+        #eventStatus = check_an_event_is_good(event_group)
+        eventStatus = True
         if eventStatus:
             temp_data   = event_group.get(file_name)
             temp_data   = nan_to_num(temp_data)
@@ -1763,9 +1624,11 @@ for icen in range(len(centralityCutList) - 1):
 
         # first particle yield dN/dy
         if particle_id == '9999':
-            file_name = 'particle_%s_vndata_eta_-0.5_0.5.dat' % particle_id
+            n_order = 10
+            file_name = 'particle_9999_vndata_eta_-0.5_0.5.dat'
         else:
             file_name = 'particle_%s_vndata_y_-0.5_0.5.dat' % particle_id
+            n_order = 6
 
         dN_dy = zeros(len(selected_events_list))
         for ifolder, event_name in enumerate(selected_events_list):
@@ -1778,7 +1641,8 @@ for icen in range(len(centralityCutList) - 1):
 
         # then <pT>, vn, dN/(2pi dy pT dpT), vn{SP}(pT)
         if particle_id == '9999':
-            file_name = 'particle_%s_vndata_diff_eta_-0.5_0.5.dat' % particle_id
+            #file_name = 'particle_9999_vndata_diff_eta_-0.5_0.5.dat'
+            file_name = 'particle_9999_vndata_diff_eta_-0.8_0.8.dat'
         else:
             file_name = 'particle_%s_vndata_diff_y_-0.5_0.5.dat' % particle_id
         file_name_ref1 = 'particle_9999_vndata_diff_eta_0.5_2.5.dat'
@@ -1792,23 +1656,19 @@ for icen in range(len(centralityCutList) - 1):
         dN_array_ALICE = []
         pT_array_ATLAS = []
         dN_array_ATLAS = []
-        vn_phenix_array = []
-        vn_phenix_array_sub1 = []; vn_phenix_array_sub2 = []
-        vn_star_array = []
-        vn_star_array_sub1 = []; vn_star_array_sub2 = []
-        vn_alice_array = []
-        vn_alice_array_sub1 = []; vn_alice_array_sub2 = []
-        vn_cms_array = []
-        vn_cms_array_sub1 = []; vn_cms_array_sub2 = []
+        vn_array_list = []
+        vn_array_sub1_list = []; vn_array_sub2_list = []
+        QnpT_diff_list = []; Qnref_list = []
+        for iExp in kinematicCutsDict.keys():
+            vn_array_list.append([])
+            vn_array_sub1_list.append([])
+            vn_array_sub2_list.append([])
+            QnpT_diff_list.append([])
+            Qnref_list.append([])
+
         vn_cms_arrays_for_rn = []
-        vn_atlas_array = []
-        vn_atlas_array_sub1 = []; vn_atlas_array_sub2 = []
-        QnpT_diff_phenix = []; Qnref_phenix = []
-        QnpT_diff_star = []; Qnref_star = []
-        QnpT_diff_alice = []; Qnref_alice = []
-        QnpT_diff_cms = []; Qnref_cms = []
-        QnpT_diff_atlas = []; Qnref_atlas = []
         vn_diff_2PC_real = []; vn_diff_2PC_imag = []; vn_diff_2PC_denorm = []
+
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
@@ -1818,7 +1678,7 @@ for icen in range(len(centralityCutList) - 1):
             temp_data_ref2 = event_group.get(file_name_ref2)
             temp_data_ref2 = nan_to_num(temp_data_ref2)
 
-            dN_event = temp_data[:, 2]  # dN/(2pi dy pT dpT)
+            dN_event = temp_data[:, 1]  # dN/(2pi dy pT dpT)
             pT_event = temp_data[:, 0]
 
             # record particle spectra
@@ -1829,89 +1689,32 @@ for icen in range(len(centralityCutList) - 1):
                     temp_data1 = event_group.get(file_name_ATLAS)
                     temp_data1 = nan_to_num(temp_data1)
                     pT_array_ATLAS.append(temp_data1[:, 0])
-                    dN_array_ATLAS.append(temp_data1[:, 2])
+                    dN_array_ATLAS.append(temp_data1[:, 1])
                     temp_data1 = event_group.get(file_name_ALICE)
                     temp_data1 = nan_to_num(temp_data1)
                     pT_array_ALICE.append(temp_data1[:, 0])
-                    dN_array_ALICE.append(temp_data1[:, 2])
+                    dN_array_ALICE.append(temp_data1[:, 1])
                 except:
                     continue
 
-            # pT-integrated vn
-            # vn with PHENIX pT cut
-            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data)
-            vn_phenix_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_ref1)
-            vn_phenix_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 2.0, temp_data_ref2)
-            vn_phenix_array_sub2.append(temp_vn_array)
+            for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+                pTmin = kinematicCutsDict[expKey]['pTmin']
+                pTmax = kinematicCutsDict[expKey]['pTmax']
+                temp_vn_array = calcualte_inte_vn(pTmin, pTmax, temp_data)
+                vn_array_list[iExp].append(temp_vn_array)
+                temp_vn_array = calcualte_inte_vn(pTmin, pTmax, temp_data_ref1)
+                vn_array_sub1_list[iExp].append(temp_vn_array)
+                temp_vn_array = calcualte_inte_vn(pTmin, pTmax, temp_data_ref2)
+                vn_array_sub2_list[iExp].append(temp_vn_array)
+                temp_arr = calculate_diff_vn_single_event(
+                                    pTmin, pTmax, temp_data, temp_data_ref1)
+                QnpT_diff_list[iExp].append(temp_arr[0])
+                Qnref_list[iExp].append(temp_arr[1])
 
-            # vn with STAR pT cut
-            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data)
-            vn_star_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_ref1)
-            vn_star_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.15, 2.0, temp_data_ref2)
-            vn_star_array_sub2.append(temp_vn_array)
-
-            # vn with ALICE pT cut
-            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data)
-            vn_alice_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data_ref1)
-            vn_alice_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.2, 3.0, temp_data_ref2)
-            vn_alice_array_sub2.append(temp_vn_array)
-
-            # vn with CMS pT cut
-            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data)
-            vn_cms_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data_ref1)
-            vn_cms_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.3, 3.0, temp_data_ref2)
-            vn_cms_array_sub2.append(temp_vn_array)
             if particle_id == "9999" and not FastFlag:
                 temp_vn_arrays = (
                         calculate_vn_arrays_for_rn_ratios(temp_data))
                 vn_cms_arrays_for_rn.append(temp_vn_arrays)
-
-            # vn with ATLAS pT cut
-            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data)
-            vn_atlas_array.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data_ref1)
-            vn_atlas_array_sub1.append(temp_vn_array)
-            temp_vn_array = calcualte_inte_vn(0.5, 3.0, temp_data_ref2)
-            vn_atlas_array_sub2.append(temp_vn_array)
-
-            # pT-differential vn using scalar-product method
-            # vn{SP}(pT) with PHENIX pT cut
-            temp_arr = calculate_diff_vn_single_event(0.2, 2.0, temp_data,
-                                                      temp_data_ref1)
-            QnpT_diff_phenix.append(temp_arr[0])
-            Qnref_phenix.append(temp_arr[1])
-
-            # vn{SP}(pT) with STAR pT cut
-            temp_arr = calculate_diff_vn_single_event(0.15, 2.0, temp_data,
-                                                      temp_data_ref1)
-            QnpT_diff_star.append(temp_arr[0])
-            Qnref_star.append(temp_arr[1])
-
-            # vn{4}(pT) with ALICE pT cut
-            temp_arr = calculate_diff_vn_single_event(0.20, 3.0, temp_data,
-                                                      temp_data_ref1)
-            QnpT_diff_alice.append(temp_arr[0])
-            Qnref_alice.append(temp_arr[1])
-
-            # vn{SP}(pT) with CMS pT cut
-            temp_arr = calculate_diff_vn_single_event(0.30, 3.0, temp_data,
-                                                     temp_data_ref1)
-            QnpT_diff_cms.append(temp_arr[0])
-            Qnref_cms.append(temp_arr[1])
-
-            # vn{SP}(pT) with ATLAS pT cut
-            temp_arr = calculate_diff_vn_single_event(0.50, 3.0, temp_data,
-                                                     temp_data_ref1)
-            QnpT_diff_atlas.append(temp_arr[0])
-            Qnref_atlas.append(temp_arr[1])
 
             # pT-differential vn using 2PC method
             # vn[2](pT)
@@ -1938,10 +1741,6 @@ for icen in range(len(centralityCutList) - 1):
         dN_spectra = mean(pT_array*dN_array, 0)/pT_spectra
         dN_spectra_err = std(pT_array*dN_array, 0)/pT_spectra/sqrt(nev)
 
-        # compute mean pT event-by-event
-        sigma_pT, sigma_pT_err = calculate_meanpT_fluc(dN_array, pT_array,
-                                                       0.15, 2.0)
-
         if particle_id == "9999":
             # calculate dNch (pT > 0.4 |eta| < 2.5) for ATLAS
             dN_array_ATLAS = array(dN_array_ATLAS)
@@ -1962,7 +1761,7 @@ for icen in range(len(centralityCutList) - 1):
                                 /(pT_spectra_ATLAS + 1e-30))
             dN_spectra_ATLAS_err = (std(pT_array_ATLAS*dN_array_ATLAS, 0)
                                     /(pT_spectra_ATLAS + 1e-30)/sqrt(nev))
-            pT_interp1 = linspace(0.4, 3.0, 30)
+            pT_interp1 = linspace(0.4, 4.0, 30)
             dpT1 = pT_interp1[1] - pT_interp1[0]
             dN_interp1 = exp(interp(pT_interp1, pT_spectra_ATLAS,
                                     log(dN_spectra_ATLAS + 1e-30)))
@@ -1991,7 +1790,7 @@ for icen in range(len(centralityCutList) - 1):
                                 /(pT_spectra_ALICE + 1e-30))
             dN_spectra_ALICE_err = (std(pT_array_ALICE*dN_array_ALICE, 0)
                                     /(pT_spectra_ALICE + 1e-30)/sqrt(nev))
-            pT_interp1 = linspace(0.2, 3.0, 30)
+            pT_interp1 = linspace(0.2, 4.0, 30)
             dpT1 = pT_interp1[1] - pT_interp1[0]
             dN_interp1 = exp(interp(pT_interp1, pT_spectra_ALICE,
                                     log(dN_spectra_ALICE + 1e-30)))
@@ -2002,7 +1801,7 @@ for icen in range(len(centralityCutList) - 1):
                                                                 dNch_ALICE))
 
             # calculate dNch (pT > 0.15 |eta| < 0.8) for ALICE
-            pT_interp1 = linspace(0.15, 3.0, 30)
+            pT_interp1 = linspace(0.15, 4.0, 30)
             dpT1 = pT_interp1[1] - pT_interp1[0]
             dN_interp1 = exp(interp(pT_interp1, pT_spectra_ALICE,
                                     log(dN_spectra_ALICE + 1e-30)))
@@ -2011,7 +1810,6 @@ for icen in range(len(centralityCutList) - 1):
             dNch_ALICE2 = sum(pT_interp1*dN_interp1)*dpT1*2*pi*1.6
             print("dNch(pT > 0.15 GeV, |eta| < 0.8) = {0:.4f}".format(
                                                                 dNch_ALICE2))
-
 
         # calculate mean pT from event-averaged particle spectrum
         pT_interp = linspace(0.05, 2.95, 30)
@@ -2035,176 +1833,129 @@ for icen in range(len(centralityCutList) - 1):
         mean_pT_1_err = max(abs(mean_pT_1_upper - mean_pT_1), 
                           abs(mean_pT_1 - mean_pT_1_lower))
 
-        # calcualte vn{2}
-        vn_phenix_2, vn_phenix_2_err = calcualte_vn_2(vn_phenix_array)
-        vn_star_2, vn_star_2_err = calcualte_vn_2(vn_star_array)
-        vn_alice_2, vn_alice_2_err = calcualte_vn_2(vn_alice_array)
-        vn_cms_2, vn_cms_2_err = calcualte_vn_2(vn_cms_array)
-        vn_atlas_2, vn_atlas_2_err = calcualte_vn_2(vn_atlas_array)
+        # loop over all kinematic cuts
+        vn_2_list = []
+        vn_2_gap_list = []
+        for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+            # calcualte vn{2}
+            vn_2, vn_2_err = calcualte_vn_2(vn_array_list[iExp])
+            vn_2_list.append(list(zip(vn_2, vn_2_err)))
 
-        # calcualte vn{2} with |\Delta \eta| > 1
-        vn_phenix_2_gap, vn_phenix_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_phenix_array_sub1, vn_phenix_array_sub2)
-        vn_star_2_gap, vn_star_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_star_array_sub1, vn_star_array_sub2)
-        vn_alice_2_gap, vn_alice_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_alice_array_sub1, vn_alice_array_sub2)
-        vn_cms_2_gap, vn_cms_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_cms_array_sub1, vn_cms_array_sub2)
-        vn_atlas_2_gap, vn_atlas_2_gap_err = calcualte_vn_2_with_gap(
-                                vn_atlas_array_sub1, vn_atlas_array_sub2)
+            # calculate vn{2} with |\Delta \eta| > 1
+            vn_2_gap, vn_2_gap_err = calcualte_vn_2_with_gap(
+                    vn_array_sub1_list[iExp], vn_array_sub2_list[iExp])
+            vn_2_gap_list.append(list(zip(vn_2_gap, vn_2_gap_err)))
 
-        if particle_id == '9999' and not FastFlag:
-            vn_alice_array2 = array(vn_alice_array)
-            vn_cms_array2 = array(vn_cms_array)
-            vn_atlas_array2 = array(vn_atlas_array)
-            # calculate non-linear response coefficents with ALICE pT cut
-            output_filename = path.join(
-                    avg_folder, "non_linear_response_coefficients_ALICE.dat")
-            calculate_nonlinear_reponse(vn_alice_array2, output_filename)
-            # calculate non-linear response coefficents with CMS pT cut
-            output_filename = path.join(
-                    avg_folder, "non_linear_response_coefficients_CMS.dat")
-            calculate_nonlinear_reponse(vn_cms_array2, output_filename)
-            # calculate non-linear response coefficents with ATLAS pT cut
-            output_filename = path.join(
-                    avg_folder, "non_linear_response_coefficients_ATLAS.dat")
-            calculate_nonlinear_reponse(vn_atlas_array2, output_filename)
+            # calcualte and output vn{SP}(pT)
+            vndiff_SP = calculate_vn_diff_SP(QnpT_diff_list[iExp],
+                                             Qnref_list[iExp])
+            output_filename = "{}_differential_observables_{}.dat".format(
+                                            particle_name_list[ipart], expKey)
+            f = open(path.join(avg_folder, output_filename), 'w')
+            f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                    "vn{SP}  vn{SP}_err\n")
+            for ipT in range(len(pT_spectra)):
+                f.write("%.10e  %.10e  %.10e  "
+                        % (pT_spectra[ipT], dN_spectra[ipT],
+                           dN_spectra_err[ipT]))
+                for iorder in range(1, n_order):
+                    f.write("%.10e  %.10e  " % (vndiff_SP[2*iorder-2][ipT],
+                                                vndiff_SP[2*iorder-1][ipT]))
+                f.write("\n")
+            f.close()
 
-            # calculate symmetric cumulant coefficents with ALICE pT cut
-            output_filename = path.join(
-                    avg_folder, "symmetric_cumulant_ALICE.dat")
-            calculate_symmetric_cumulant(vn_alice_array, output_filename)
+            if particle_id == '9999':
+                vn_array2 = array(vn_array_list[iExp])
+                # calculate non-linear response coefficents
+                output_filename = path.join(
+                    avg_folder,
+                    "non_linear_response_coefficients_{}.dat".format(expKey)
+                )
+                calculate_nonlinear_reponse(vn_array2, output_filename)
 
-            # calculate vn{4}
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_PHENIX.dat")
-            calculate_vn4(vn_phenix_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_STAR.dat")
-            calculate_vn4(vn_star_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_ALICE.dat")
-            calculate_vn4(vn_alice_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_CMS.dat")
-            calculate_vn4(vn_cms_array, output_filename)
-            output_filename = path.join(
-                    avg_folder, "charged_hadron_vn4_ATLAS.dat")
-            calculate_vn4(vn_atlas_array, output_filename)
+                # calculate symmetric cumulant coefficents with ALICE pT cut
+                output_filename = path.join(
+                    avg_folder, "symmetric_cumulant_{}.dat".format(expKey))
+                calculate_symmetric_cumulant(vn_array2, output_filename)
 
-            # calculate vn{4}/vn{2} and vn{6}/vn{4}
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_PHENIX.dat")
-            calculate_vn4_over_vn2(vn_phenix_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_STAR.dat")
-            calculate_vn4_over_vn2(vn_star_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_ALICE.dat")
-            calculate_vn4_over_vn2(vn_alice_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_CMS.dat")
-            calculate_vn4_over_vn2(vn_cms_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn4_over_vn2_ATLAS.dat")
-            calculate_vn4_over_vn2(vn_atlas_array, output_filename)
+                # calculate vn{4}, vn{4}/vn{2}, and vn{6}/vn{4}
+                output_filename1 = path.join(
+                    avg_folder, "charged_hadron_vn4_{}.dat".format(expKey))
+                output_filename2 = path.join(
+                    avg_folder,
+                    "charged_hadron_vn4_over_vn2_{}.dat".format(expKey))
+                output_filename3 = path.join(
+                    avg_folder,
+                    "charged_hadron_vn6_over_vn4_{}.dat".format(expKey))
+                calculate_vn4_vn6(vn_array2, output_filename1,
+                                  output_filename2, output_filename3)
 
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_PHENIX.dat")
-            calculate_vn6_over_vn4(vn_phenix_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_STAR.dat")
-            calculate_vn6_over_vn4(vn_star_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_ALICE.dat")
-            calculate_vn6_over_vn4(vn_alice_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_CMS.dat")
-            calculate_vn6_over_vn4(vn_cms_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn6_over_vn4_ATLAS.dat")
-            calculate_vn6_over_vn4(vn_atlas_array, output_filename)
+                if not FastFlag:
+                    # calculate vn distribution for charged hadrons
+                    output_filename = path.join(
+                        avg_folder,
+                        "charged_hadron_vn_distribution_{}.dat".format(expKey)
+                    )
+                    calculate_vn_distribution(vn_array2, output_filename)
 
-            # calculate vn distribution for charged hadrons
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_PHENIX.dat")
-            calculate_vn_distribution(vn_phenix_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_STAR.dat")
-            calculate_vn_distribution(vn_star_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_ALICE.dat")
-            calculate_vn_distribution(vn_alice_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_CMS.dat")
-            calculate_vn_distribution(vn_cms_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_vn_distribution_ATLAS.dat")
-            calculate_vn_distribution(vn_atlas_array, output_filename)
+                    # calculate rn ratios
+                    rn_cms = calculate_rn_ratios(vn_cms_arrays_for_rn,
+                                                 avg_folder)
 
-            # calculate rn ratios
-            rn_cms = calculate_rn_ratios(vn_cms_arrays_for_rn)
+                    # calculate flow event-plane correlation
+                    output_filename = path.join(
+                        avg_folder,
+                        "charged_hadron_event_plane_correlation_{}.dat".format(
+                                                                        expKey)
+                    )
+                    calcualte_event_plane_correlations(vn_array2,
+                                                       output_filename)
 
-            # calculate flow event-plane correlation
-            output_filename = path.join(
-                avg_folder, "charged_hadron_event_plane_correlation_ALICE.dat")
-            calcualte_event_plane_correlations(vn_alice_array, output_filename)
-            output_filename = path.join(
-                avg_folder, "charged_hadron_event_plane_correlation_ATLAS.dat")
-            calcualte_event_plane_correlations(vn_atlas_array, output_filename)
+                    # calculate three-particle correlations
+                    output_filename = path.join(avg_folder,
+                        "{}_three_particle_correlation_{}.dat".format(
+                                            particle_name_list[ipart], expKey)
+                    )
+                    calcualte_event_plane_correlations_3sub(
+                        vn_array_list[iExp], vn_array_sub1_list[iExp],
+                        vn_array_sub2_list[iExp], output_filename)
 
-            # calculate three-particle correlations
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_ALICE.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_alice_array, vn_alice_array_sub1, vn_alice_array_sub2,
-                    output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_ATLAS.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_atlas_array, vn_atlas_array_sub1, vn_atlas_array_sub2,
-                    output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_CMS.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_cms_array, vn_cms_array_sub1, vn_cms_array_sub2,
-                    output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_PHENIX.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_phenix_array, vn_phenix_array_sub1,
-                    vn_phenix_array_sub2, output_filename)
-            output_filename = path.join(avg_folder,
-                "{}_three_particle_correlation_STAR.dat".format(
-                    particle_name_list[ipart]))
-            calcualte_event_plane_correlations_3sub(
-                    vn_star_array, vn_star_array_sub1, vn_star_array_sub2,
-                    output_filename)
+                    vn4_pTdiff = calculate_vn4_diff(QnpT_diff_list[iExp],
+                                                    Qnref_list[iExp])
+                    # output vn{4}(pT)
+                    output_filename = (
+                        "{}_differential_observables_4particle_{}.dat".format(
+                                            particle_name_list[ipart], expKey)
+                    )
+                    f = open(path.join(avg_folder, output_filename), 'w')
+                    f.write("#pT  vn{4}  vn{4}_err\n")
+                    for ipT in range(len(pT_spectra)):
+                        f.write("%.10e  " % (pT_spectra[ipT]))
+                        for iorder in range(1, 4):
+                            f.write("%.10e  %.10e  " % (
+                                        vn4_pTdiff[2*iorder-2][ipT],
+                                        vn4_pTdiff[2*iorder-1][ipT]))
+                        f.write("\n")
+                    f.close()
 
-        # calcualte vn{SP}(pT)
-        vn_diff_SP_phenix = calculate_vn_diff_SP(QnpT_diff_phenix,
-                                                 Qnref_phenix)
-        vn_diff_SP_star = calculate_vn_diff_SP(QnpT_diff_star, Qnref_star)
-        vn_diff_SP_alice = calculate_vn_diff_SP(QnpT_diff_alice, Qnref_alice)
-        vn_diff_SP_cms = calculate_vn_diff_SP(QnpT_diff_cms, Qnref_cms)
-        vn_diff_SP_atlas = calculate_vn_diff_SP(QnpT_diff_atlas, Qnref_atlas)
-
-        if not FastFlag:
-            vn4_diff_phenix = calculate_vn4_diff(QnpT_diff_phenix,
-                                                 Qnref_phenix)
-            vn4_diff_star = calculate_vn4_diff(QnpT_diff_star, Qnref_star)
-            vn4_diff_alice = calculate_vn4_diff(QnpT_diff_alice, Qnref_alice)
-            vn4_diff_cms = calculate_vn4_diff(QnpT_diff_cms, Qnref_cms)
-            vn4_diff_atlas = calculate_vn4_diff(QnpT_diff_atlas, Qnref_atlas)
-
-            # calcualte vn[2](pT)
-            vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
-                    vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
+                    # calcualte vn[2](pT)
+                    vn_diff_2PC, vn_diff_2PC_err = calculate_vn_diff_2PC(
+                        vn_diff_2PC_real, vn_diff_2PC_imag, vn_diff_2PC_denorm)
+                    output_filename = ("%s_differential_observables_2PC.dat"
+                                       % particle_name_list[ipart])
+                    f = open(path.join(avg_folder, output_filename), 'w')
+                    f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
+                            "vn[2]  vn[2]_err\n")
+                    for ipT in range(len(pT_spectra)):
+                        f.write("%.10e  %.10e  %.10e  "
+                                % (pT_spectra[ipT], dN_spectra[ipT],
+                                   dN_spectra_err[ipT]))
+                        for iorder in range(1, n_order):
+                            f.write("%.10e  %.10e  " % (
+                                vn_diff_2PC[iorder-1, ipT],
+                                vn_diff_2PC_err[iorder-1, ipT]))
+                        f.write("\n")
+                    f.close()
 
         # then particle rapidity distribution
         if particle_id == '9999':
@@ -2214,7 +1965,7 @@ for icen in range(len(centralityCutList) - 1):
 
         eta_array = []
         dN_array = []
-        vn_array = []
+        Qn_rap_array = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
             temp_data = event_group.get(file_name)
@@ -2222,44 +1973,46 @@ for icen in range(len(centralityCutList) - 1):
 
             eta_array.append(temp_data[:, 0])
             dN_array.append(temp_data[:, 1])
-            temp_vn_array = []
-            for iorder in range(1, n_order):
-                vn_real = temp_data[:, 6*iorder-3]
-                vn_imag = temp_data[:, 6*iorder-1]
-                vn = vn_real + 1j*vn_imag
-                temp_vn_array.append(vn)
-            vn_array.append(temp_vn_array)
+            temp_Qn_array = []
+            for iorder in range(0, n_order):
+                Qn_real = temp_data[:, 2*iorder+1]*temp_data[:, -1]
+                Qn_imag = temp_data[:, 2*iorder+2]*temp_data[:, -1]
+                if iorder == 0:
+                    Qn = temp_data[:, -1]
+                else:
+                    Qn = Qn_real + 1j*Qn_imag
+                temp_Qn_array.append(Qn)
+            Qn_rap_array.append(temp_Qn_array)
 
         eta_array = array(eta_array)
         dN_array = array(dN_array)
-        vn_array = array(vn_array)
+        Qn_rap_array = array(Qn_rap_array)
 
         eta_point = mean(eta_array, 0)
         dNdeta = mean(dN_array, 0)
         dNdeta_err = std(dN_array, 0)/sqrt(nev)
         if RapidityTrigger == 0:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -3.0, 3.0)
+                                        eta_point, Qn_rap_array, -3.0, 3.0)
         elif RapidityTrigger == 1:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -3.9, -3.1)
+                                        eta_point, Qn_rap_array, -3.9, -3.1)
         elif RapidityTrigger == 2:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -5.1, -2.8)
+                                        eta_point, Qn_rap_array, -5.1, -2.8)
         elif RapidityTrigger == 3:
             vn_SP_eta, vn_SP_eta_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -4.9, -3.1)
+                                        eta_point, Qn_rap_array, -4.9, -3.1)
         vn_SP_eta_mid, vn_SP_eta_mid_err = calculate_vn_eta(
-                                eta_point, dN_array, vn_array, -0.8, 0.8)
+                                        eta_point, Qn_rap_array, -0.8, 0.8)
 
         output_filename = path.join(avg_folder, "{}_rn_eta.dat".format(
                                                     particle_name_list[ipart]))
-        calculate_rn_eta(eta_point, dN_array, vn_array, output_filename)
+        calculate_rn_eta(eta_point, Qn_rap_array, output_filename)
 
         ######################################################################
         # finally, output all the results
         ######################################################################
-
         output_filename = ("%s_integrated_observables.dat"
                            % particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
@@ -2270,21 +2023,14 @@ for icen in range(len(centralityCutList) - 1):
             f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
         f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
         f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
-        f.write("sigma_pT/<pT>= %.5e +/- %.5e\n"% (sigma_pT, sigma_pT_err))
-        for iorder in range(1, n_order):
-            f.write("v_%d{2}(phenix)= %.5e +/- %.5e\n"
-                    % (iorder, vn_phenix_2[iorder-1],
-                       vn_phenix_2_err[iorder-1]))
-            f.write("v_%d{2}(STAR)= %.5e +/- %.5e\n"
-                    % (iorder, vn_star_2[iorder-1], vn_star_2_err[iorder-1]))
-            f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
-                    % (iorder, vn_alice_2[iorder-1], vn_alice_2_err[iorder-1]))
-            f.write("v_%d{2}(CMS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_cms_2[iorder-1], vn_cms_2_err[iorder-1]))
-            f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_atlas_2[iorder-1], vn_atlas_2_err[iorder-1]))
+        for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+            for iorder in range(len(vn_2_list[iExp])):
+                f.write("v_%d{2}(%s)= %.5e +/- %.5e\n"
+                        % (iorder+1, expKey,
+                           vn_2_list[iExp][iorder][0],
+                           vn_2_list[iExp][iorder][1])
+                )
         f.close()
-
         output_filename = ("%s_integrated_observables_with_rapidity_gap.dat"
                            % particle_name_list[ipart])
         f = open(path.join(avg_folder, output_filename), 'w')
@@ -2295,178 +2041,14 @@ for icen in range(len(centralityCutList) - 1):
             f.write("dN/dy(pT>0.4,|eta|<2.5)= %.5e \n" % (dNch_ATLAS))
         f.write("<pT>= %.5e +/- %.5e\n" % (mean_pT, mean_pT_err))
         f.write("<pT(>0.15)>= %.5e +/- %.5e\n" % (mean_pT_1, mean_pT_1_err))
-        f.write("sigma_pT/<pT>= %.5e +/- %.5e\n"% (sigma_pT, sigma_pT_err))
-        for iorder in range(1, n_order):
-            f.write("v_%d{2}(phenix)= %.5e +/- %.5e\n"
-                    % (iorder, vn_phenix_2_gap[iorder-1],
-                       vn_phenix_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(STAR)= %.5e +/- %.5e\n"
-                    % (iorder, vn_star_2_gap[iorder-1],
-                       vn_star_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(ALICE)= %.5e +/- %.5e\n"
-                    % (iorder, vn_alice_2_gap[iorder-1],
-                       vn_alice_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(CMS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_cms_2_gap[iorder-1],
-                       vn_cms_2_gap_err[iorder-1]))
-            f.write("v_%d{2}(ATLAS)= %.5e +/- %.5e\n"
-                    % (iorder, vn_atlas_2_gap[iorder-1],
-                       vn_atlas_2_gap_err[iorder-1]))
+        for iExp, expKey in enumerate(kinematicCutsDict.keys()):
+            for iorder in range(len(vn_2_list[iExp])):
+                f.write("v_%d{2}(%s)= %.5e +/- %.5e\n"
+                        % (iorder+1, expKey,
+                           vn_2_gap_list[iExp][iorder][0],
+                           vn_2_gap_list[iExp][iorder][1])
+                )
         f.close()
-
-        output_filename = ("%s_differential_observables_PHENIX.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_phenix[2*iorder-2][ipT],
-                                            vn_diff_SP_phenix[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_STAR.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_star[2*iorder-2][ipT],
-                                            vn_diff_SP_star[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_ALICE.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_alice[2*iorder-2][ipT],
-                                            vn_diff_SP_alice[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_CMS.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_cms[2*iorder-2][ipT],
-                                            vn_diff_SP_cms[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        output_filename = ("%s_differential_observables_ATLAS.dat"
-                           % particle_name_list[ipart])
-        f = open(path.join(avg_folder, output_filename), 'w')
-        f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                "vn{SP}  vn{SP}_err\n")
-        for ipT in range(len(pT_spectra)):
-            f.write("%.10e  %.10e  %.10e  "
-                    % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-            for iorder in range(1, n_order):
-                f.write("%.10e  %.10e  " % (vn_diff_SP_atlas[2*iorder-2][ipT],
-                                            vn_diff_SP_atlas[2*iorder-1][ipT]))
-            f.write("\n")
-        f.close()
-
-        if not FastFlag:
-            output_filename = ("%s_differential_observables_2PC.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  dN/(2pi dy pT dpT)  dN/(2pi dy pT dpT)_err  "
-                    "vn[2]  vn[2]_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  %.10e  %.10e  "
-                        % (pT_spectra[ipT], dN_spectra[ipT], dN_spectra_err[ipT]))
-                for iorder in range(1, n_order):
-                    f.write("%.10e  %.10e  " % (vn_diff_2PC[iorder-1, ipT],
-                                                vn_diff_2PC_err[iorder-1, ipT]))
-                f.write("\n")
-            f.close()
-
-            # output vn{4}(pT)
-            output_filename = (
-                    "%s_differential_observables_4particle_PHENIX.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_phenix[2*iorder-2][ipT],
-                        vn4_diff_phenix[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = (
-                    "%s_differential_observables_4particle_STAR.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_star[2*iorder-2][ipT],
-                        vn4_diff_star[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = (
-                    "%s_differential_observables_4particle_ALICE.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_alice[2*iorder-2][ipT],
-                        vn4_diff_alice[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = ("%s_differential_observables_4particle_CMS.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (vn4_diff_cms[2*iorder-2][ipT],
-                                                vn4_diff_cms[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
-
-            output_filename = (
-                    "%s_differential_observables_4particle_ATLAS.dat"
-                               % particle_name_list[ipart])
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT  vn{4}  vn{4}_err\n")
-            for ipT in range(len(pT_spectra)):
-                f.write("%.10e  " % (pT_spectra[ipT]))
-                for iorder in range(1, 4):
-                    f.write("%.10e  %.10e  " % (
-                        vn4_diff_atlas[2*iorder-2][ipT],
-                        vn4_diff_atlas[2*iorder-1][ipT]))
-                f.write("\n")
-            f.close()
 
         output_filename = "{}_rapidity_distribution.dat".format(
                                                     particle_name_list[ipart])
@@ -2488,33 +2070,6 @@ for icen in range(len(centralityCutList) - 1):
                            vn_SP_eta_mid_err[iorder-1, ieta]))
             f.write("\n")
         f.close()
-
-        if particle_id == '9999' and not FastFlag:
-            # output rn ratios
-            pT_trig = ['1.0', '1.5', '2.0', '2.5', '3.0']
-            ipTtrig = 0
-            output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
-                               % (particle_name_list[ipart],
-                                  pT_trig[ipTtrig], pT_trig[ipTtrig+1]))
-            f = open(path.join(avg_folder, output_filename), 'w')
-            f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
-            for ipT in range(len(rn_cms[0, :, 0])):
-                for iorder in range(len(rn_cms[:, 0, 0])):
-                    f.write("%.5e  %.5e  %.5e  "
-                            % (rn_cms[iorder, ipT, 0],
-                               rn_cms[iorder, ipT, 1],
-                               rn_cms[iorder, ipT, 2]))
-                f.write("\n")
-                if rn_cms[0, ipT, 0] == 0.0:
-                    f.close()
-                    ipTtrig += 1
-                    if ipTtrig < (len(pT_trig) - 1):
-                        output_filename = ("%s_rn_ratios_CMS_pTtrig_%s_%s.dat"
-                                           % (particle_name_list[ipart],
-                                              pT_trig[ipTtrig],
-                                              pT_trig[ipTtrig+1]))
-                        f = open(path.join(avg_folder, output_filename), 'w')
-                        f.write("#pT_mid  rn  rn_err (n = 2, 3, 4)\n")
 
 print("Analysis is done.")
 

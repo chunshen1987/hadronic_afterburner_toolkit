@@ -1130,7 +1130,6 @@ int particleSamples::read_in_particle_samples_SMASH_binary(
         if (smash_format_version_ > 6) {
           SMASH_inputfile.read(&empty, sizeof(char));
         }
-        ievent++;
         continue;
       }
       if (block_type != 'p') {
@@ -1188,7 +1187,8 @@ int particleSamples::read_in_particle_samples_SMASH_binary(
         (*resulting_particle_list)[ievent]->push_back(temp_particle_info);
       }
       num_particles += n_part_lines;
-      std::cout << "Read in " << n_part_lines << " particles" << std::endl;
+      //std::cout << "Read in " << n_part_lines << " particles" << std::endl;
+      ievent++;
     }
     return 0;
 }

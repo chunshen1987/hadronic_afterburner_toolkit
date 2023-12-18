@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.5)
 project (hadronic_afterburner_toolkit LANGUAGES CXX)
 
 set(libname "hadronic_afterburner_tools")
