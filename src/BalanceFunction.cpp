@@ -131,10 +131,10 @@ void BalanceFunction::combine_and_bin_particle_pairs(
             for (auto const& part_b: (*(*plist_b)[iev])) {
                 if (part_b.pT < BpT_min || part_b.pT > BpT_max) continue;
 
-                if (same_species) {
-                    bool flag = check_same_particle(part_a, part_b);
-                    if (flag) continue;
-                }
+                //if (same_species) {
+                //    bool flag = check_same_particle(part_a, part_b);
+                //    if (flag) continue;
+                //}
 
                 auto delta_phi_local = part_a.phi_p - part_b.phi_p;
                 int phi_idx = ((static_cast<int>(
@@ -144,6 +144,7 @@ void BalanceFunction::combine_and_bin_particle_pairs(
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
                 if (rap_type_ == 0)
                     delta_y_local = part_a.rap_eta - part_b.rap_eta;
+                if (std::abs(delta_y_local) < 1e-10) continue;
                 if (delta_y_local < Brap_min) continue;
 
                 int y_bin_idx = static_cast<int>(
@@ -182,6 +183,7 @@ void BalanceFunction::combine_and_bin_mixed_particle_pairs(
                 auto delta_y_local = part_a.rap_y - part_b.rap_y;
                 if (rap_type_ == 0)
                     delta_y_local = part_a.rap_eta - part_b.rap_eta;
+                if (std::abs(delta_y_local) < 1e-10) continue;
                 if (delta_y_local < Brap_min) continue;
 
                 int y_bin_idx = static_cast<int>(
