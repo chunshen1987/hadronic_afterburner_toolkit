@@ -2454,11 +2454,10 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
                                 (rap_local - rapidity_dis_min)/drap + 0.5);
         if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
-        // no pT cut on particle yield and E_T
+        // no pT cut on particle yield
         if (flag == 0) {
             rapidity_array[rap_idx] += rap_local;
             dNdy_array[rap_idx]++;
-            dETdy_array[rap_idx] += sqrt(E_local*E_local - pz_local*pz_local);
         }
         // calcualte vn
         double px_local = 0.0;
@@ -2476,8 +2475,11 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         double p_perp = sqrt(px_local*px_local + py_local*py_local);
         if (p_perp > vn_rapidity_dis_pT_min
             && p_perp < vn_rapidity_dis_pT_max) {
+            dETdy_array[rap_idx] += sqrt(E_local*E_local - pz_local*pz_local);
             double p_phi = atan2(py_local, px_local);
-            for (int iorder = 0; iorder < order_max; iorder++) {
+            event_Qn_real[rap_idx][0] += 1.;
+            event_Qn_imag[rap_idx][0] += p_perp;    // record mean pT
+            for (int iorder = 1; iorder < order_max; iorder++) {
                 double cos_nphi = cos(iorder*p_phi);
                 double sin_nphi = sin(iorder*p_phi);
                 event_Qn_real[rap_idx][iorder] += cos_nphi;
@@ -2545,7 +2547,7 @@ void singleParticleSpectra::output_rapidity_distribution() {
                  << vn_rapidity_dis_pT_max << ".dat";
     }
     ofstream output(filename.str().c_str());
-    output << "# y  dN/dy  dET/dy  vn_real  vn_imag  "
+    output << "# y  dN/dy  meanpT  vn_real  vn_imag  dET/dy"
            << "total event = " << total_number_of_events << endl;
     for (int i = 0; i < N_rap; i++) {
         rapidity_array[i] = rapidity_array[i]/(dNdy_array[i] + 1.);
@@ -2554,24 +2556,23 @@ void singleParticleSpectra::output_rapidity_distribution() {
             dNdy_array[i] = dNdy_array[i]/reconst_branching_ratio;
         dETdy_array[i] = dETdy_array[i]/total_number_of_events;
 
-        output << scientific << setw(18) << setprecision(8)
-               << rapidity_array[i] << "   " << dNdy_array[i]/drap << "   "
-               << dETdy_array[i]/drap;
-
         double total_Nrap = std::max(1e-30, vn_real_rapidity_dis_array[i][0]);
+        double meanpT = vn_imag_rapidity_dis_array[i][0]/total_Nrap;
+        output << scientific << setw(18) << setprecision(8)
+               << rapidity_array[i] << "   "
+               << dNdy_array[i]/drap << "   " << meanpT << "   ";
         for (int iorder = 1; iorder < order_max; iorder++) {
             double vn_evavg_real = (vn_real_rapidity_dis_array[i][iorder]
                                     /total_Nrap);
             double vn_evavg_imag = (vn_imag_rapidity_dis_array[i][iorder]
                                     /total_Nrap);
-
-            output << scientific << setw(18) << setprecision(8) << "   "
-                   << vn_evavg_real << "   " << vn_evavg_imag;
+            output << scientific << setw(18) << setprecision(8)
+                   << vn_evavg_real << "   " << vn_evavg_imag << "   ";
         }
-        // output total number of particles in the last column
+        // output dET/dy and total number of particles in the last column
         // this quantities is useful when one wants to reconst the Qn vectors
         output << scientific << setw(18) << setprecision(8)
-               << "   " << total_Nrap;
+               << dETdy_array[i]/drap << "   " << total_Nrap;
         output << endl;
     }
     output.close();
