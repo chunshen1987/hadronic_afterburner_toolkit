@@ -137,8 +137,8 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
         filename << path_ << "/particle_samples.gz";
         filename_mixed_event << path_ << "/particle_samples_mixed_event.gz";
     } else if (read_in_mode_ == 9) {
-        filename << path_ << "/particle_samples.bin";
-        filename_mixed_event << path_ << "/particle_samples_mixed_event.bin";
+        filename << path_ << "/particle_list.bin";
+        filename_mixed_event << path_ << "/particle_list_mixed_event.bin";
     } else if (read_in_mode_ == 21) {
         filename << path_ << "/particle_list.bin";
         filename_mixed_event << path_ << "/particle_list_mixed_event.bin";
@@ -152,7 +152,8 @@ particleSamples::particleSamples(ParameterReader &paraRdr, std::string path,
        if (read_mixed_events) {
            open_SMASH_binary(filename_mixed_event.str(), inputfile_mixed_event);
        }
-    } else if (read_in_mode_ != 2 && read_in_mode_ != 7 && read_in_mode_ != 10) {
+    } else if (read_in_mode_ != 2 && read_in_mode_ != 7
+               && read_in_mode_ != 10) {
         inputfile.open(filename.str().c_str());
         if (!inputfile.is_open()) {
             messager << "particleSamples:: Error: input file: "
