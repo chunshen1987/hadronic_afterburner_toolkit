@@ -26,6 +26,10 @@ singleParticleSpectra::singleParticleSpectra(
     ran_gen_ptr = ran_gen;
 
     particle_monval = paraRdr.getVal("particle_monval");
+    bWeakFeedDown_ = false;
+    if (paraRdr.getVal("resonance_weak_feed_down_flag") == 1) {
+        bWeakFeedDown_ = true;
+    }
 
     if (particle_monval == 333) {
         // phi(1020) is reconstructed from (K^+, K^-) pairs
@@ -696,13 +700,16 @@ void singleParticleSpectra::output_Qn_vectors() {
     double drapidity = rap_max - rap_min;
     // pT-integrated flow
     ostringstream filename;
+    filename << path_ << "/particle_" << particle_monval << "_vndata";
     if (rap_type == 0) {
-        filename << path_ << "/particle_" << particle_monval << "_vndata"
-                 << "_eta_" << rap_min << "_" << rap_max << ".dat";
+        filename << "_eta_";
     } else {
-        filename << path_ << "/particle_" << particle_monval << "_vndata"
-                 << "_y_" << rap_min << "_" << rap_max << ".dat";
+        filename << "_y_";
     }
+    filename << rap_min << "_" << rap_max;
+    if (bWeakFeedDown_)
+        filename << "_weakFD";
+    filename << ".dat";
     ofstream output(filename.str().c_str());
     output << "# n  Qn_real  Qn_real_err  Qn_imag  Qn_imag_err" << endl;
 
@@ -756,15 +763,18 @@ void singleParticleSpectra::output_Qn_vectors() {
 
     // pT-differential flow
     ostringstream filename_diff;
+    filename_diff << path_ << "/particle_" << particle_monval
+                  << "_vndata_diff";
     if (rap_type == 0) {
-        filename_diff << path_ 
-                      << "/particle_" << particle_monval << "_vndata_diff"
-                      << "_eta_" << rap_min << "_" << rap_max << ".dat";
+        filename_diff << "_eta_";
     } else {
-        filename_diff << path_ 
-                      << "/particle_" << particle_monval << "_vndata_diff"
-                      << "_y_" << rap_min << "_" << rap_max << ".dat";
+        filename_diff << "_y_";
     }
+    filename_diff << rap_min << "_" << rap_max;
+    if (bWeakFeedDown_)
+        filename_diff << "_weakFD";
+    filename_diff << ".dat";
+
     ofstream output_diff(filename_diff.str().c_str());
     if (ecoOutput_) {
         output_diff << "# pT  EdN/d^3p  Qn_real(pT)  Qn_imag(pT) (n=1-"
@@ -2497,7 +2507,10 @@ void singleParticleSpectra::outputRapidityPTDistribution() {
     }
     ostringstream filename;
     filename << path_ << "/particle_" << particle_monval
-             << "_pT" << rapName << "_distribution.dat";
+             << "_pT" << rapName << "_distribution";
+    if (bWeakFeedDown_)
+        filename << "_weakFD";
+    filename << ".dat";
     ofstream output(filename.str().c_str());
     output << "# y  pT  N  E_T"
            << "  Qn_real  Qn_imag (n = 1 -" << order_max - 1 << ")" << endl;
@@ -2537,15 +2550,16 @@ void singleParticleSpectra::outputRapidityPTDistribution() {
 
 void singleParticleSpectra::output_rapidity_distribution() {
     ostringstream filename;
+    filename << path_ << "/particle_" << particle_monval;
     if (rap_type == 0) {
-        filename << path_ << "/particle_" << particle_monval << "_dNdeta"
-                 << "_pT_" << vn_rapidity_dis_pT_min << "_"
-                 << vn_rapidity_dis_pT_max << ".dat";
+        filename << "_dNdeta";
     } else {
-        filename << path_ << "/particle_" << particle_monval << "_dNdy"
-                 << "_pT_" << vn_rapidity_dis_pT_min << "_"
-                 << vn_rapidity_dis_pT_max << ".dat";
+        filename << "_dNdy";
     }
+    filename << "_pT_" << vn_rapidity_dis_pT_min << "_" << vn_rapidity_dis_pT_max;
+    if (bWeakFeedDown_)
+        filename << "_weakFD";
+    filename << ".dat";
     ofstream output(filename.str().c_str());
     output << "# y  dN/dy  meanpT  vn_real  vn_imag  dET/dy"
            << "total event = " << total_number_of_events << endl;

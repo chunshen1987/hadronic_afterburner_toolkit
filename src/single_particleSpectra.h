@@ -20,6 +20,7 @@ class singleParticleSpectra {
     pretty_ostream messager;
 
     int particle_monval;
+    bool bWeakFeedDown_;
 
     double reconst_branching_ratio;
 

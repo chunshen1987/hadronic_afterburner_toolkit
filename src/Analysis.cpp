@@ -57,7 +57,15 @@ void Analysis::PerformAnalysis() {
             paraRdr_.setVal("resonance_weak_feed_down_flag", 0);
             particle_list_ = std::make_shared<particleSamples> (
                                                 paraRdr_, path_, ran_gen_ptr_);
-            FlowAnalysis_multistrange_particles();
+            if (paraRdr_.getVal("analyze_flow") == 1) {
+                FlowAnalysis();
+            } else if (paraRdr_.getVal("analyze_flow") == 2) {
+                FlowAnalysis_3D();
+            } else if (paraRdr_.getVal("analyze_flow") == 3) {
+                FlowAnalysis_RHIC();
+            } else if (paraRdr_.getVal("analyze_flow") == 4) {
+                FlowAnalysis_LHC();
+            }
             particle_list_.reset();
         }
     }
