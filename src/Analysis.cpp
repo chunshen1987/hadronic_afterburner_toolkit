@@ -105,6 +105,12 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.30); 
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.40); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 2.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
+    paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.50); 
+    paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));// the STAR pT cut1 for pPb
     paraRdr_.setVal("vn_rapidity_dis_pT_min", 0.0); // the ALICE pT cut2 for pPb
     paraRdr_.setVal("vn_rapidity_dis_pT_max", 5.0);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
