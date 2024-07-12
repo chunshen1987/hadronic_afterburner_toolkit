@@ -136,6 +136,8 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -2.5); paraRdr_.setVal("rap_max", 2.5); // The ATLAS cut 
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min", -2.5); paraRdr_.setVal("rap_max", -1.6);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -1.6); paraRdr_.setVal("rap_max", -0.8);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -0.8); paraRdr_.setVal("rap_max", 0.0);
@@ -143,6 +145,8 @@ void Analysis::FlowAnalysis() {
     paraRdr_.setVal("rap_min", -0.0); paraRdr_.setVal("rap_max", 0.8);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min",  0.8); paraRdr_.setVal("rap_max", 1.6);
+    spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
+    paraRdr_.setVal("rap_min",  1.6); paraRdr_.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
     paraRdr_.setVal("rap_min", -0.8); paraRdr_.setVal("rap_max", 0.8);
     spvn.push_back(new singleParticleSpectra(paraRdr_, path_, ran_gen_ptr_));
