@@ -93,15 +93,15 @@ def calculate_meanpT_inte_vn(pT_low, pT_high, data):
     pT_inte_array = linspace(pT_low, pT_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
     pT_event = data[:, 0]
-    dN_event = data[:, 2]
+    dN_event = data[:, 1]
     # dN/(2pi*pT*dpT*dy)
     dN_interp = exp(interp(pT_inte_array, pT_event, log(dN_event+1e-30)))
     N = sum(dN_interp*pT_inte_array)*dpT*2.*pi
     meanpT = sum(dN_interp*pT_inte_array**2.)/sum(dN_interp*pT_inte_array)
     temp_vn_array = [N, meanpT,]
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 4*iorder]
-        vn_imag_event = data[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
         vn_real_interp = interp(pT_inte_array, pT_event, vn_real_event)
         vn_imag_interp = interp(pT_inte_array, pT_event, vn_imag_event)
         vn_real_inte = (
@@ -147,8 +147,8 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     npT = 50
     pT_inte_array = linspace(pT_ref_low, pT_ref_high, npT)
     dpT = pT_inte_array[1] - pT_inte_array[0]
-    dN_event = data[:, 1]  # photon
-    dN_ref_event = data_ref[:, 2]
+    dN_event = data[:, 1]
+    dN_ref_event = data_ref[:, 1]
     pT_ref_event = data_ref[:, 0]
     dN_ref_interp = exp(interp(pT_inte_array, pT_ref_event,
                                log(dN_ref_event + 1e-30)))
@@ -156,10 +156,10 @@ def calculate_diff_vn_single_event(pT_ref_low, pT_ref_high, data, data_ref):
     temp_Qn_pT_array = [dN_event,]
     temp_Qn_ref_array = [dN_ref,]
     for iorder in range(1, n_order):
-        vn_real_event = data[:, 3*iorder-1]  # photon
-        vn_imag_event = data[:, 3*iorder]    # photon
-        vn_ref_real_event = data_ref[:, 4*iorder]
-        vn_ref_imag_event = data_ref[:, 4*iorder+2]
+        vn_real_event = data[:, 2*iorder]
+        vn_imag_event = data[:, 2*iorder+1]
+        vn_ref_real_event = data_ref[:, 2*iorder]
+        vn_ref_imag_event = data_ref[:, 2*iorder+1]
         vn_ref_real_interp = interp(pT_inte_array, pT_ref_event,
                                     vn_ref_real_event)
         vn_ref_imag_interp = interp(pT_inte_array, pT_ref_event,
