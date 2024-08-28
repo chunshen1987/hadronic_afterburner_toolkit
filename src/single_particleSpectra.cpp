@@ -2361,7 +2361,7 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
         int baryon = particle_local.baryon;
         double pmag = sqrt(E_local*E_local - mass*mass);
 
-        double sin_theta = pz_local/pmag;
+        double sin_theta = sqrt(1. - pz_local*pz_local/(pmag*pmag));
         double E_trans = 0.;
         if (baryon == 1) {
             E_trans = (E_local - mass)*sin_theta;
@@ -2483,7 +2483,7 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
             // compute the transverse energy
             // ALICE https://arxiv.org/pdf/1603.04775
             // PHENIX https://arxiv.org/pdf/nucl-ex/0409015
-            double sin_theta = pz_local/pmag;
+            double sin_theta = sqrt(1. - pz_local*pz_local/(pmag*pmag));
             if (baryon == 1) {
                 dETdy_array[rap_idx] += (E_local - mass)*sin_theta;
             } else if (baryon == -1) {
