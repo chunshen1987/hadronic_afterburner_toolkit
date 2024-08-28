@@ -434,6 +434,8 @@ int particleSamples::read_in_particle_samples() {
 
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list);
+    addParticleQuantumNumber(full_particle_list);
+
     return(full_particle_list->size());
 }
 
@@ -456,6 +458,17 @@ void particleSamples::boostParticles(
                                    /(part_i.E - part_i.pz));
             double p_mag = sqrt(part_i.pT*part_i.pT + part_i.pz*part_i.pz);
             part_i.rap_eta = 0.5*log((p_mag + part_i.pz)/(p_mag - part_i.pz));
+        }
+    }
+}
+
+
+void particleSamples::addParticleQuantumNumber(
+        vector< vector<particle_info>* >* input_particle_list) {
+    for (auto &ev_i: (*input_particle_list)) {
+        for (auto &part_i: (*ev_i)) {
+            part_i.baryon = (
+                decayer_ptr->get_particle_baryon_number(part_i.monval));
         }
     }
 }
@@ -504,7 +517,7 @@ int particleSamples::read_in_particle_samples_mixed_event() {
 
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list_mixed_event);
-
+    addParticleQuantumNumber(full_particle_list_mixed_event);
     return(full_particle_list_mixed_event->size());
 }
 
@@ -612,37 +625,47 @@ int particleSamples::decide_to_pick_reconst(int monval) {
 
 bool particleSamples::decide_to_pick_OSCAR(int POI, int monval) {
     bool pick_flag = false;
-    if (POI == 9999) {
+    if (POI == 99999) {
+        // all particles
+        pick_flag = true;
+    } else if (POI == 9999) {
+        // charged particles
         int charge = decayer_ptr->get_particle_charge(monval);
         if (charge != 0) {
             pick_flag = true;
         }
     } else if (POI == 9998) {
+        // positive charged particles
         int charge = decayer_ptr->get_particle_charge(monval);
         if (charge > 0) {
             pick_flag = true;
         }
     } else if (POI == -9998) {
+        // negative charged particles
         int charge = decayer_ptr->get_particle_charge(monval);
         if (charge < 0) {
             pick_flag = true;
         }
     } else if (POI == 9997) {
+        // baryons
         int baryon = decayer_ptr->get_particle_baryon_number(monval);
         if (baryon > 0) {
             pick_flag = true;
         }
     } else if (POI == -9997) {
+        // anti-baryons
         int baryon = decayer_ptr->get_particle_baryon_number(monval);
         if (baryon < 0) {
             pick_flag = true;
         }
     } else if (POI == 9996) {
+        // strangeness
         int strange = decayer_ptr->get_particle_strange_number(monval);
         if (strange > 0) {
             pick_flag = true;
         }
     } else if (POI == -9996) {
+        // anti-strangeness
         int strange = decayer_ptr->get_particle_strange_number(monval);
         if (strange < 0) {
             pick_flag = true;
@@ -734,6 +757,7 @@ int particleSamples::read_in_particle_samples_JAM() {
                 + temp_particle_info.px*temp_particle_info.px
                 + temp_particle_info.py*temp_particle_info.py
                 + temp_particle_info.pz*temp_particle_info.pz);
+            temp_particle_info.monval = temp_monval;
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
         num_particles += n_particle;
@@ -824,6 +848,7 @@ int particleSamples::read_in_particle_samples_JAM_mixed_event() {
                 + temp_particle_info.px*temp_particle_info.px
                 + temp_particle_info.py*temp_particle_info.py
                 + temp_particle_info.pz*temp_particle_info.pz);
+            temp_particle_info.monval = temp_monval;
             (*full_particle_list_mixed_event)[ievent]->push_back(
                                                     temp_particle_info);
         }
@@ -1340,8 +1365,9 @@ void particleSamples::filter_particles(
         for (auto &part_i: (*ev_i)) {
             bool pick_flag = decide_to_pick_OSCAR(PoI_monval,
                                                   part_i.monval);
-            if (pick_flag)
+            if (pick_flag) {
                 (*filted_list)[i]->push_back(part_i);
+            }
         }
         i++;
     }
@@ -1421,8 +1447,9 @@ void particleSamples::filter_particles_into_lists(
         for (auto &part_i: (*ev_i)) {
             bool pick_flag = decide_to_pick_OSCAR(particle_monval,
                                                   part_i.monval);
-            if (pick_flag)
+            if (pick_flag) {
                 (*particle_list)[iev]->push_back(part_i);
+            }
 
             if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1) {
                 int resonance_pick_flag = decide_to_pick_resonance(

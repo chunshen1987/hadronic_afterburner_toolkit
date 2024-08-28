@@ -178,6 +178,9 @@ class particleSamples {
             std::vector< std::vector<particle_info>* >* input_particle_list,
             const double rap_shift);
 
+    void addParticleQuantumNumber(
+        std::vector< std::vector<particle_info>* >* input_particle_list);
+
     void filter_particles_from_events(const int PoI_monval);
 
     void filter_particles(const int PoI_monval,

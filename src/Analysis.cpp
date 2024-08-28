@@ -108,10 +108,20 @@ void Analysis::FlowAnalysis() {
     // first define all the analysis sets
     std::vector<singleParticleSpectra*> spvn;
 
+    // all hadrons (99999) first (collect E_T)
+    paraRdr.setVal("particle_monval", 99999);
+    paraRdr.setVal("rap_type", 0);
+    paraRdr.setVal("rapidity_distribution", 1);
+    paraRdr.setVal("vn_rapidity_dis_pT_min", 0.);
+    paraRdr.setVal("vn_rapidity_dis_pT_max", 4.);
+    paraRdr.setVal("rapidityPTDistributionFlag", 1);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+
     // charged hadron first
     paraRdr.setVal("particle_monval", 9999);
     paraRdr.setVal("rap_type", 0);
     paraRdr.setVal("rapidity_distribution", 1);
+    paraRdr.setVal("rapidityPTDistributionFlag", 0);
     paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.15);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 2.0);
@@ -346,12 +356,22 @@ void Analysis::FlowAnalysis_3D() {
     // first define all the analysis sets
     std::vector<singleParticleSpectra*> spvn;
 
+    // all hadrons (99999) first (collect E_T)
+    paraRdr.setVal("particle_monval", 99999);
+    paraRdr.setVal("rap_type", 0);
+    paraRdr.setVal("rapidity_distribution", 1);
+    paraRdr.setVal("vn_rapidity_dis_pT_min", 0.);
+    paraRdr.setVal("vn_rapidity_dis_pT_max", 4.);
+    paraRdr.setVal("rapidityPTDistributionFlag", 1);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+
     // charged hadron first
     paraRdr.setVal("particle_monval", 9999);
     paraRdr.setVal("rap_type", 0);
     paraRdr.setVal("rapidity_distribution", 1);
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
+    paraRdr.setVal("rapidityPTDistributionFlag", 0);
     paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 2.5);
@@ -435,6 +455,15 @@ void Analysis::FlowAnalysis_RHIC() {
 
     // first define all the analysis sets
     std::vector<singleParticleSpectra*> spvn;
+
+    // all hadrons (99999) first (collect E_T)
+    paraRdr.setVal("particle_monval", 99999);
+    paraRdr.setVal("rap_type", 0);
+    paraRdr.setVal("rapidity_distribution", 1);
+    paraRdr.setVal("vn_rapidity_dis_pT_min", 0.);
+    paraRdr.setVal("vn_rapidity_dis_pT_max", 4.);
+    paraRdr.setVal("rapidityPTDistributionFlag", 1);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
     // charged hadron first
     paraRdr.setVal("particle_monval", 9999);
@@ -549,12 +578,22 @@ void Analysis::FlowAnalysis_LHC() {
     // first define all the analysis sets
     std::vector<singleParticleSpectra*> spvn;
 
+    // all hadrons (99999) first (collect E_T)
+    paraRdr.setVal("particle_monval", 99999);
+    paraRdr.setVal("rap_type", 0);
+    paraRdr.setVal("rapidity_distribution", 1);
+    paraRdr.setVal("vn_rapidity_dis_pT_min", 0.);
+    paraRdr.setVal("vn_rapidity_dis_pT_max", 4.);
+    paraRdr.setVal("rapidityPTDistributionFlag", 1);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+
     // charged hadron first
     paraRdr.setVal("particle_monval", 9999);
     paraRdr.setVal("rap_type", 0);
     paraRdr.setVal("rapidity_distribution", 1);
-
     paraRdr.setVal("rapidityPTDistributionFlag", 1);
+    paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
+    paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
     // special trigger follows

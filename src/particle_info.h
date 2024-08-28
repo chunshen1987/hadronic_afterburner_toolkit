@@ -5,6 +5,7 @@
 typedef struct {
     int monval;
     double mass;
+    int baryon;
     double px, py, pz, E;
     double x, y, z, t;
     double rap_y, rap_eta, pT, phi_p;

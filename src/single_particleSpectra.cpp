@@ -2354,15 +2354,25 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
                                                     const int event_id) {
     int number_of_particles = particle_list->get_number_of_particles(event_id);
     for (int i = 0; i < number_of_particles; i++) {
-        double pz_local = particle_list->get_particle(event_id, i).pz;
-        double E_local = particle_list->get_particle(event_id, i).E;
+        auto particle_local = particle_list->get_particle(event_id, i);
+        double pz_local = particle_local.pz;
+        double E_local = particle_local.E;
+        double mass = particle_local.mass;
+        int baryon = particle_local.baryon;
+        double pmag = sqrt(E_local*E_local - mass*mass);
 
-        double E_trans = sqrt(E_local*E_local - pz_local*pz_local);
+        double sin_theta = pz_local/pmag;
+        double E_trans = 0.;
+        if (baryon == 1) {
+            E_trans = (E_local - mass)*sin_theta;
+        } else if (baryon == -1) {
+            E_trans = (E_local + mass)*sin_theta;
+        } else {
+            E_trans = E_local*sin_theta;
+        }
 
         double rap_local = 0.0;
         if (rap_type == 0) {
-            double mass = particle_list->get_particle(event_id, i).mass;
-            double pmag = sqrt(E_local*E_local - mass*mass);
             rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
         } else {
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
@@ -2374,8 +2384,8 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
                                 (rap_local - rapidity_dis_min)/drap + 0.5);
         if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
-        double px_local = particle_list->get_particle(event_id, i).px;
-        double py_local = particle_list->get_particle(event_id, i).py;
+        double px_local = particle_local.px;
+        double py_local = particle_local.py;
         double p_perp = sqrt(px_local*px_local + py_local*py_local);
 
         if (p_perp < pT_min) continue;
@@ -2431,28 +2441,29 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
     for (int i = 0; i < number_of_particles; i++) {
         double pz_local = 0.0;
         double E_local = 0.0;
+        double mass = 0.0;
+        int baryon = 0;
         if (flag == 0) {
-            pz_local = particle_list->get_particle(event_id, i).pz;
-            E_local = particle_list->get_particle(event_id, i).E;
+            auto particle_local = particle_list->get_particle(event_id, i);
+            pz_local = particle_local.pz;
+            E_local = particle_local.E;
+            mass = particle_local.mass;
+            baryon = particle_local.baryon;
         } else if (flag == 1) {
             pz_local = particle_list->get_positive_particle(event_id, i).pz;
             E_local = particle_list->get_positive_particle(event_id, i).E;
+            mass = particle_list->get_positive_particle(event_id, i).mass;
+            baryon = particle_list->get_positive_particle(event_id, i).baryon;
         } else if (flag == 2) {
             pz_local = particle_list->get_negative_particle(event_id, i).pz;
             E_local = particle_list->get_negative_particle(event_id, i).E;
+            mass = particle_list->get_negative_particle(event_id, i).mass;
+            baryon = particle_list->get_negative_particle(event_id, i).baryon;
         }
+        double pmag = sqrt(E_local*E_local - mass*mass);
 
         double rap_local = 0.0;
         if (rap_type == 0) {
-            double mass = 0.0;
-            if (flag == 0) {
-                mass = particle_list->get_particle(event_id, i).mass;
-            } else if (flag == 1) {
-                mass = particle_list->get_positive_particle(event_id, i).mass;
-            } else if (flag == 2) {
-                mass = particle_list->get_negative_particle(event_id, i).mass;
-            }
-            double pmag = sqrt(E_local*E_local - mass*mass);
             rap_local = 0.5*log((pmag + pz_local)/(pmag - pz_local));
         } else {
             rap_local = 0.5*log((E_local + pz_local)/(E_local - pz_local));
@@ -2468,6 +2479,18 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         if (flag == 0) {
             rapidity_array[rap_idx] += rap_local;
             dNdy_array[rap_idx]++;
+
+            // compute the transverse energy
+            // ALICE https://arxiv.org/pdf/1603.04775
+            // PHENIX https://arxiv.org/pdf/nucl-ex/0409015
+            double sin_theta = pz_local/pmag;
+            if (baryon == 1) {
+                dETdy_array[rap_idx] += (E_local - mass)*sin_theta;
+            } else if (baryon == -1) {
+                dETdy_array[rap_idx] += (E_local + mass)*sin_theta;
+            } else {
+                dETdy_array[rap_idx] += E_local*sin_theta;
+            }
         }
         // calcualte vn
         double px_local = 0.0;
@@ -2485,7 +2508,6 @@ void singleParticleSpectra::calculate_rapidity_distribution(int event_id,
         double p_perp = sqrt(px_local*px_local + py_local*py_local);
         if (p_perp > vn_rapidity_dis_pT_min
             && p_perp < vn_rapidity_dis_pT_max) {
-            dETdy_array[rap_idx] += sqrt(E_local*E_local - pz_local*pz_local);
             double p_phi = atan2(py_local, px_local);
             event_Qn_real[rap_idx][0] += 1.;
             event_Qn_imag[rap_idx][0] += p_perp;    // record mean pT
