@@ -699,7 +699,7 @@ void HBT_correlation::output_correlation_function_inv() {
             }
 
             if (q_out[iqinv] > 0.) {
-                if (parrRdr_.getVal("ecoOutput", 0) == 1) {
+                if (paraRdr_.getVal("ecoOutput", 0) == 1) {
                     output << std::scientific << std::setw(18)
                               << std::setprecision(8)
                               << correl_fun_num << "    "
@@ -755,7 +755,7 @@ void HBT_correlation::output_correlation_function() {
                             *correl_3d_denorm[iK][iqout][iqside][iqlong]);
                     }
 
-                    if (parrRdr_.getVal("ecoOutput", 0) == 1) {
+                    if (paraRdr_.getVal("ecoOutput", 0) == 1) {
                         output << std::scientific << std::setw(18)
                                << std::setprecision(8)
                                << correl_fun_num << "    "
@@ -818,7 +818,7 @@ void HBT_correlation::output_correlation_function_Kphi_differential() {
                                 *correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong]);
                         }
 
-                        if (parrRdr_.getVal("ecoOutput", 0) == 1) {
+                        if (paraRdr_.getVal("ecoOutput", 0) == 1) {
                             output << std::scientific << std::setw(18)
                                    << std::setprecision(8)
                                    << correl_fun_num << "    "
