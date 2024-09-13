@@ -41,6 +41,8 @@ class HBT_correlation {
     unsigned long long int number_pairs_num, number_pairs_denorm;
     std::vector<unsigned long long int> number_of_pairs_numerator_KTdiff;
     std::vector<unsigned long long int> number_of_pairs_denormenator_KTdiff;
+    std::vector<unsigned long long int> number_of_pairs_numerator_KTdiff_qinv_;
+    std::vector<unsigned long long int> number_of_pairs_denormenator_KTdiff_qinv_;
     unsigned long long int **number_of_pairs_numerator_KTKphidiff;
     unsigned long long int **number_of_pairs_denormenator_KTKphidiff;
 

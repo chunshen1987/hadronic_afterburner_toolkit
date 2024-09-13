@@ -51,6 +51,8 @@ HBT_correlation::HBT_correlation(
         KT_array_.push_back(KT_min + i*dKT);
         number_of_pairs_numerator_KTdiff.push_back(0);
         number_of_pairs_denormenator_KTdiff.push_back(0);
+        number_of_pairs_numerator_KTdiff_qinv_.push_back(0);
+        number_of_pairs_denormenator_KTdiff_qinv_.push_back(0);
     }
 
     for (int i = 0; i < n_Kphi; i++) {
@@ -339,14 +341,13 @@ void HBT_correlation::combine_and_bin_particle_pairs(
             double z_diff = particle_1_z - particle_2_z;
 
             if (invariant_radius_flag_ == 1) {
-                if (local_q_inv > (q_min - delta_q/2. + 1e-8)
-                    && local_q_inv < (q_max + delta_q/2. - 1e-8)) {
-                    int qinv_idx = static_cast<int>(
-                        (local_q_inv - (q_min - delta_q/2.))/delta_q);
-                    if (qinv_idx < qnpts
-                        && number_of_pairs_numerator_KTdiff[Kperp_idx]
-                                    > needed_number_of_pairs) {
-                        number_of_pairs_numerator_KTdiff[Kperp_idx]++;
+                if (number_of_pairs_numerator_KTdiff_qinv_[Kperp_idx]
+                    < needed_number_of_pairs) {
+                    if (local_q_inv > (q_min - delta_q/2. + 1e-8)
+                        && local_q_inv < (q_max + delta_q/2. - 1e-8)) {
+                        int qinv_idx = static_cast<int>(
+                            (local_q_inv - (q_min - delta_q/2.))/delta_q);
+                        number_of_pairs_numerator_KTdiff_qinv_[Kperp_idx]++;
                         double cos_qx = cos(hbarC_inv*(
                             q_E*t_diff - q_x*x_diff - q_y*y_diff - q_z*z_diff));
                         correl_1d_inv_num_count[Kperp_idx][qinv_idx]++;
@@ -581,9 +582,9 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                     int qinv_idx = static_cast<int>(
                         (local_q_inv - (q_min - delta_q/2.))/delta_q);
                     if (qinv_idx < qnpts
-                        && number_of_pairs_numerator_KTdiff[Kperp_idx]
+                        && number_of_pairs_denormenator_KTdiff_qinv_[Kperp_idx]
                                 > needed_number_of_pairs) {
-                        number_of_pairs_denormenator_KTdiff[Kperp_idx]++;
+                        number_of_pairs_denormenator_KTdiff_qinv_[Kperp_idx]++;
                         correl_1d_inv_denorm[Kperp_idx][qinv_idx] += 1.0;
                     }
                 }
@@ -676,8 +677,8 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
 void HBT_correlation::output_correlation_function_inv() {
     for (int iK = 0; iK < n_KT - 1; iK++) {
         double npair_ratio = (
-                static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
-                /static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
+                static_cast<double>(number_of_pairs_numerator_KTdiff_qinv_[iK])
+                /static_cast<double>(number_of_pairs_denormenator_KTdiff_qinv_[iK]));
         std::ostringstream filename;
         filename << path_ << "/HBT_correlation_function_inv_KT_"
                  << KT_array_[iK] << "_" << KT_array_[iK+1] << ".dat";
@@ -686,27 +687,30 @@ void HBT_correlation::output_correlation_function_inv() {
             int npart_num = correl_1d_inv_num_count[iK][iqinv];
             int npart_denorm = correl_1d_inv_denorm[iK][iqinv];
             double q_inv_local;
-            double correl_fun_num, correl_fun_denorm, correl_fun_val;
+            double correl_fun_num, correl_fun_denorm;
             if (npart_num < 2 || npart_denorm < 2) {
                 q_inv_local = q_out[iqinv];
                 correl_fun_num = 0.0;
                 correl_fun_denorm = npart_denorm;
-                correl_fun_val = 0.0;
             } else {
                 q_inv_local = q_inv_mean[iK][iqinv]/npart_num;
                 correl_fun_num = correl_1d_inv_num[iK][iqinv];
-                correl_fun_denorm = correl_1d_inv_denorm[iK][iqinv];
-                correl_fun_val = (correl_fun_num
-                                  /(correl_fun_denorm*npair_ratio));
+                correl_fun_denorm = correl_1d_inv_denorm[iK][iqinv]*npair_ratio;
             }
 
             if (q_out[iqinv] > 0.) {
-                output << std::scientific << std::setw(18)
-                       << std::setprecision(8) 
-                       << q_inv_local << "    "
-                       << npart_num << "    " << correl_fun_num << "    "
-                       << correl_fun_denorm << "    "
-                       << correl_fun_val << "    " << 0.0 << std::endl;
+                if (parrRdr_.getVal("ecoOutput", 0) == 1) {
+                    output << std::scientific << std::setw(18)
+                              << std::setprecision(8)
+                              << correl_fun_num << "    "
+                              << correl_fun_denorm << std::endl;
+                } else {
+                    output << std::scientific << std::setw(18)
+                              << std::setprecision(8)
+                              << q_inv_local << "    "
+                              << correl_fun_num << "    "
+                              << correl_fun_denorm << std::endl;
+                }
             }
         }
         output.close();
@@ -725,19 +729,18 @@ void HBT_correlation::output_correlation_function() {
         for (int iqlong = 0; iqlong < qnpts; iqlong++) {
             for (int iqout = 0; iqout < qnpts; iqout++) {
                 for (int iqside = 0; iqside < qnpts; iqside++) {
-                    int npart_num = 
+                    int npart_num =
                         correl_3d_num_count[iK][iqout][iqside][iqlong];
-                    int npart_denorm = 
+                    int npart_denorm =
                         correl_3d_denorm[iK][iqout][iqside][iqlong];
                     double q_out_local, q_side_local, q_long_local;
-                    double correl_fun_num, correl_fun_denorm, correl_fun_val;
+                    double correl_fun_num, correl_fun_denorm;
                     if (npart_num < 2 || npart_denorm < 2) {
                         q_out_local = q_out[iqout];
                         q_side_local = q_side[iqside];
                         q_long_local = q_long[iqlong];
                         correl_fun_num = 0.0;
                         correl_fun_denorm = npart_denorm;
-                        correl_fun_val = 0.0;
                     } else {
                         q_out_local = (q_out_mean[iK][iqout][iqside][iqlong]
                                        /npart_num);
@@ -747,20 +750,25 @@ void HBT_correlation::output_correlation_function() {
                             q_long_mean[iK][iqout][iqside][iqlong]/npart_num);
 
                         correl_fun_num = (
-                                correl_3d_num[iK][iqout][iqside][iqlong]);
-                        correl_fun_denorm = (
-                                correl_3d_denorm[iK][iqout][iqside][iqlong]);
-                        correl_fun_val = (correl_fun_num
-                                          /(correl_fun_denorm*npair_ratio));
+                            correl_3d_num[iK][iqout][iqside][iqlong]);
+                        correl_fun_denorm = (npair_ratio
+                            *correl_3d_denorm[iK][iqout][iqside][iqlong]);
                     }
 
-                    output << std::scientific << std::setw(18)
-                           << std::setprecision(8) 
-                           << q_out_local << "    " << q_side_local << "    "
-                           << q_long_local << "    "
-                           << npart_num << "    " << correl_fun_num << "    "
-                           << correl_fun_denorm << "    "
-                           << correl_fun_val << "    " << 0.0 << std::endl;
+                    if (parrRdr_.getVal("ecoOutput", 0) == 1) {
+                        output << std::scientific << std::setw(18)
+                               << std::setprecision(8)
+                               << correl_fun_num << "    "
+                               << correl_fun_denorm << std::endl;
+                    } else {
+                        output << std::scientific << std::setw(18)
+                               << std::setprecision(8) 
+                               << q_out_local << "    "
+                               << q_side_local << "    "
+                               << q_long_local << "    "
+                               << correl_fun_num << "    "
+                               << correl_fun_denorm << std::endl;
+                    }
                 }
             }
         }
@@ -788,14 +796,12 @@ void HBT_correlation::output_correlation_function_Kphi_differential() {
                             correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
                         double q_out_local, q_side_local, q_long_local;
                         double correl_fun_num, correl_fun_denorm;
-                        double correl_fun_val;
                         if (npart_num < 2 || npart_denorm < 2) {
                             q_out_local = q_out[iqout];
                             q_side_local = q_side[iqside];
                             q_long_local = q_long[iqlong];
                             correl_fun_num = 0.0;
                             correl_fun_denorm = npart_denorm;
-                            correl_fun_val = 0.0;
                         } else {
                             q_out_local = (
                                 q_out_diff_mean[iK][iKphi][iqout][iqside][iqlong]
@@ -808,20 +814,24 @@ void HBT_correlation::output_correlation_function_Kphi_differential() {
                                 /npart_num);
 
                             correl_fun_num = correl_3d_Kphi_diff_num[iK][iKphi][iqout][iqside][iqlong];
-                            correl_fun_denorm = correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong];
-                            correl_fun_val = (correl_fun_num
-                                              /correl_fun_denorm/npair_ratio);
+                            correl_fun_denorm = (npair_ratio
+                                *correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside][iqlong]);
                         }
 
-                        output << std::scientific << std::setw(18)
-                               << std::setprecision(8)
-                               << q_out_local << "    "
-                               << q_side_local << "    "
-                               << q_long_local << "    "
-                               << npart_num << "    "
-                               << correl_fun_num << "    "
-                               << correl_fun_denorm << "    "
-                               << correl_fun_val << "    " << 0.0 << std::endl;
+                        if (parrRdr_.getVal("ecoOutput", 0) == 1) {
+                            output << std::scientific << std::setw(18)
+                                   << std::setprecision(8)
+                                   << correl_fun_num << "    "
+                                   << correl_fun_denorm << std::endl;
+                        } else {
+                            output << std::scientific << std::setw(18)
+                                   << std::setprecision(8)
+                                   << q_out_local << "    "
+                                   << q_side_local << "    "
+                                   << q_long_local << "    "
+                                   << correl_fun_num << "    "
+                                   << correl_fun_denorm << std::endl;
+                        }
                     }
                 }
             }
