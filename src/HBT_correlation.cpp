@@ -342,7 +342,7 @@ void HBT_correlation::combine_and_bin_particle_pairs(
 
             if (invariant_radius_flag_ == 1) {
                 if (number_of_pairs_numerator_KTdiff_qinv_[Kperp_idx]
-                    < needed_number_of_pairs) {
+                    < 50*needed_number_of_pairs) {
                     if (local_q_inv > (q_min - delta_q/2. + 1e-8)
                         && local_q_inv < (q_max + delta_q/2. - 1e-8)) {
                         int qinv_idx = static_cast<int>(
@@ -583,7 +583,7 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                         (local_q_inv - (q_min - delta_q/2.))/delta_q);
                     if (qinv_idx < qnpts
                         && number_of_pairs_denormenator_KTdiff_qinv_[Kperp_idx]
-                                > needed_number_of_pairs) {
+                                < 50*needed_number_of_pairs) {
                         number_of_pairs_denormenator_KTdiff_qinv_[Kperp_idx]++;
                         correl_1d_inv_denorm[Kperp_idx][qinv_idx] += 1.0;
                     }
@@ -684,33 +684,23 @@ void HBT_correlation::output_correlation_function_inv() {
                  << KT_array_[iK] << "_" << KT_array_[iK+1] << ".dat";
         std::ofstream output(filename.str().c_str());
         for (int iqinv = 0; iqinv < qnpts; iqinv++) {
-            int npart_num = correl_1d_inv_num_count[iK][iqinv];
-            int npart_denorm = correl_1d_inv_denorm[iK][iqinv];
-            double q_inv_local;
-            double correl_fun_num, correl_fun_denorm;
-            if (npart_num < 2 || npart_denorm < 2) {
-                q_inv_local = q_out[iqinv];
-                correl_fun_num = 0.0;
-                correl_fun_denorm = npart_denorm;
-            } else {
-                q_inv_local = q_inv_mean[iK][iqinv]/npart_num;
-                correl_fun_num = correl_1d_inv_num[iK][iqinv];
-                correl_fun_denorm = correl_1d_inv_denorm[iK][iqinv]*npair_ratio;
-            }
+            double q_inv_local = (
+                q_inv_mean[iK][iqinv]/correl_1d_inv_num_count[iK][iqinv]);
+            double correl_fun_num = correl_1d_inv_num[iK][iqinv];
+            double correl_fun_denorm = (
+                correl_1d_inv_denorm[iK][iqinv]*npair_ratio);
 
-            if (q_out[iqinv] > 0.) {
-                if (paraRdr_.getVal("ecoOutput", 0) == 1) {
-                    output << std::scientific << std::setw(18)
-                              << std::setprecision(8)
-                              << correl_fun_num << "    "
-                              << correl_fun_denorm << std::endl;
-                } else {
-                    output << std::scientific << std::setw(18)
-                              << std::setprecision(8)
-                              << q_inv_local << "    "
-                              << correl_fun_num << "    "
-                              << correl_fun_denorm << std::endl;
-                }
+            if (paraRdr_.getVal("ecoOutput", 0) == 1) {
+                output << std::scientific << std::setw(18)
+                          << std::setprecision(8)
+                          << correl_fun_num << "    "
+                          << correl_fun_denorm << std::endl;
+            } else {
+                output << std::scientific << std::setw(18)
+                          << std::setprecision(8)
+                          << q_inv_local << "    "
+                          << correl_fun_num << "    "
+                          << correl_fun_denorm << std::endl;
             }
         }
         output.close();
