@@ -13,7 +13,6 @@ from sys import argv, exit
 from os import path, makedirs
 from glob import glob
 import numpy as np
-import shutil
 
 try:
     working_folder = path.abspath(argv[1])
@@ -24,33 +23,26 @@ except IndexError:
     exit(1)
 
 
-ecoOuput = 1
-numIdx = 3*(1 - ecoOuput)
-denIdx = 3*(1 - ecoOuput) + 1
-
 file_folder_list = glob(path.join(working_folder, 'UrQMD*'))
 results_folder_name = 'UrQMD_results'
-HBTFileName = 'HBT_correlation_function_KT_{}.dat'
-KT_values = ['0.15_0.25', '0.25_0.35', '0.35_0.45', '0.45_0.55']
+hbtFileList = [
+    ifile.split("/")[-1] for ifile in glob(
+                path.join(file_folder_list[0], results_folder_name, "HBT*"))]
 
 nev = len(file_folder_list)
-for iKT in range(len(KT_values)):
-    file_name = 'HBT_correlation_function_KT_%s.dat' % KT_values[iKT]
+for hbtFile_i in hbtFileList:
     event_avg_data = 0.*np.loadtxt(
-        path.join(file_folder_list[0], results_folder_name,
-                  HBTFileName.format(KT_values[0]))
-    )
+        path.join(file_folder_list[0], results_folder_name, hbtFile_i))
     for folder_i in file_folder_list:
         results_folder = path.abspath(path.join(folder_i, results_folder_name))
-        print(f"processing {results_folder}/{file_name} ...")
-        temp_data = np.loadtxt(path.join(results_folder, file_name))
+        print(f"processing {results_folder}/{hbtFile_i} ...")
+        temp_data = np.loadtxt(path.join(results_folder, hbtFile_i))
         event_avg_data += temp_data
 
     event_avg_data = event_avg_data/nev
 
-    savetxt(file_name, event_avg_data, fmt='%.10e', delimiter='  ')
-
-    shutil.move(file_name, avg_folder)
+    np.savetxt(path.join(avg_folder, hbtFile_i), event_avg_data,
+               fmt='%.10e', delimiter='  ')
 
 print("Analysis is done.")
 
