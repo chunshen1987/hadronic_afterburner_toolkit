@@ -1,10 +1,11 @@
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <cstring>
-#include "zlib.h"
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include "zlib.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ string gzreadline(gzFile gzfp) {
         line << buffer[0];
         len = gzread(gzfp, buffer, 1);
     }
-    return(line.str());
+    return (line.str());
 }
 
 int main(int argc, char *argv[]) {
@@ -35,24 +36,24 @@ int main(int argc, char *argv[]) {
     test_line = gzreadline(fp_gz);
     cout << test_line << endl;
 
-    //char buffer[sizeof(int)];
-    //int len = gzread(fp_gz, buffer, sizeof(int));
-    //int N = strtol(buffer, NULL, 10);
-    //cout << len << " " << N << "  " << buffer << endl;
-    //for (int i = 0; i < 8; i++) {
-    //    char buffer1[sizeof(int)];
-    //    int len2 = gzread(fp_gz, buffer1, sizeof(int));
-    //    int N1 = strtol(buffer1, NULL, 10);
-    //    cout << len2 << "  " << N1 << "  " << buffer1 << endl;
-    //}
-    //while (!urqmd_file.eof()) {
-    //    // get total number of particles
-    //    getline(urqmd_file, temp_string); 
-    //    stringstream temp1(temp_string);
-    //    int n_particles[1];
-    //    temp1 >> n_particles[0];
-    //    fwrite(n_particles, sizeof(int), 1, binary_file);
-    //    gzwrite(fp_gz, &n_particles, sizeof(int));
+    // char buffer[sizeof(int)];
+    // int len = gzread(fp_gz, buffer, sizeof(int));
+    // int N = strtol(buffer, NULL, 10);
+    // cout << len << " " << N << "  " << buffer << endl;
+    // for (int i = 0; i < 8; i++) {
+    //     char buffer1[sizeof(int)];
+    //     int len2 = gzread(fp_gz, buffer1, sizeof(int));
+    //     int N1 = strtol(buffer1, NULL, 10);
+    //     cout << len2 << "  " << N1 << "  " << buffer1 << endl;
+    // }
+    // while (!urqmd_file.eof()) {
+    //     // get total number of particles
+    //     getline(urqmd_file, temp_string);
+    //     stringstream temp1(temp_string);
+    //     int n_particles[1];
+    //     temp1 >> n_particles[0];
+    //     fwrite(n_particles, sizeof(int), 1, binary_file);
+    //     gzwrite(fp_gz, &n_particles, sizeof(int));
 
     //    // get some information
     //    int n_info[8];

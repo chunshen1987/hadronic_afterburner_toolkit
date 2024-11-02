@@ -3,18 +3,18 @@
 #ifndef BALANCEFUNCTION_H_
 #define BALANCEFUNCTION_H_
 
-#include <string>
-#include <vector>
 #include <array>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "ParameterReader.h"
-#include "particleSamples.h"
 #include "Random.h"
+#include "particleSamples.h"
 #include "pretty_ostream.h"
 
 class BalanceFunction {
- private:
+  private:
     const ParameterReader paraRdr_;
     const std::string path_;
     std::shared_ptr<particleSamples> particle_list;
@@ -48,29 +48,29 @@ class BalanceFunction {
     std::vector<std::vector<double>> C_mixed_abbar;
     std::vector<std::vector<double>> C_mixed_abarb;
 
- public:
-    BalanceFunction(const ParameterReader &paraRdr,
-                    const std::string path,
-                    std::shared_ptr<RandomUtil::Random> ran_gen);
+  public:
+    BalanceFunction(
+        const ParameterReader& paraRdr, const std::string path,
+        std::shared_ptr<RandomUtil::Random> ran_gen);
     ~BalanceFunction() {};
 
     void set_particle_list(std::shared_ptr<particleSamples> particle_list_in) {
         particle_list = particle_list_in;
     }
-    bool check_same_particle(const particle_info &lhs,
-                             const particle_info &rhs);
+    bool check_same_particle(
+        const particle_info& lhs, const particle_info& rhs);
     void calculate_balance_function(
-                std::shared_ptr<particleSamples> particle_list_in);
+        std::shared_ptr<particleSamples> particle_list_in);
     void combine_and_bin_particle_pairs(
-                std::vector<std::vector<double>> &hist,
-                const std::vector< std::vector<particle_info>* >* plist_a,
-                const std::vector< std::vector<particle_info>* >* plist_b);
+        std::vector<std::vector<double>>& hist,
+        const std::vector<std::vector<particle_info>*>* plist_a,
+        const std::vector<std::vector<particle_info>*>* plist_b);
     void combine_and_bin_mixed_particle_pairs(
-                std::vector<std::vector<double>> &hist,
-                const std::vector< std::vector<particle_info>* >* plist_a,
-                const std::vector< std::vector<particle_info>* >* plist_b);
+        std::vector<std::vector<double>>& hist,
+        const std::vector<std::vector<particle_info>*>* plist_a,
+        const std::vector<std::vector<particle_info>*>* plist_b);
     int get_number_of_particles(
-                const std::vector< std::vector<particle_info>* >* plist_b);
+        const std::vector<std::vector<particle_info>*>* plist_b);
     void output_balance_function();
 };
 

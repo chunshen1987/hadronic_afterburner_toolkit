@@ -10,11 +10,11 @@
 //
 //=============================================================================
 
-#include<iostream>
-#include<string>
+#include <iostream>
+#include <string>
 
-#include "Stopwatch.h"
 #include "Analysis.h"
+#include "Stopwatch.h"
 
 using namespace std;
 
@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
          << "               iHBT_afterbuner         " << endl
          << endl
          << "  Ver 1.0   ----- Chun Shen, 10/2014   " << endl;
-    cout << endl << "*********************************************************"
-         << endl;
+    cout << endl
+         << "*********************************************************" << endl;
 
-    const std::string path="results";
+    const std::string path = "results";
 
     Stopwatch sw;
     Stopwatch sw_total;

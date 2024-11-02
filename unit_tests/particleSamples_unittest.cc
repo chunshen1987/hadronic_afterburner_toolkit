@@ -1,11 +1,12 @@
 
 #include "../src/particleSamples.h"
-#include "../src/Random.h"
-#include "gtest/gtest.h"
-#include "zlib.h"
 
 #include <memory>
 #include <string>
+
+#include "../src/Random.h"
+#include "gtest/gtest.h"
+#include "zlib.h"
 
 using std::string;
 
@@ -15,15 +16,14 @@ TEST(particleSamples, DefaultConstructor) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 0);
-    string path="test_reader_files";
+    string path = "test_reader_files";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
 
     EXPECT_EQ(0, 0);
 }
-
 
 TEST(particleSamples, filter_particles_from_events) {
     ParameterReader paraRdr;
@@ -31,10 +31,10 @@ TEST(particleSamples, filter_particles_from_events) {
     paraRdr.setVal("run_mode", 0);
     paraRdr.setVal("read_in_mode", 0);
     paraRdr.setVal("particle_monval", 321);
-    string path="test_reader_files";
+    string path = "test_reader_files";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples();
     particle_list.filter_particles_from_events(321);
@@ -57,17 +57,16 @@ TEST(particleSamples, filter_particles_from_events) {
     EXPECT_EQ(n_particles, 3);
 }
 
-
 TEST(particleSamples, read_in_particle_samples_OSCAR) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 0);
     paraRdr.setVal("read_in_mode", 0);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_reader_files";
+    string path = "test_reader_files";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples_and_filter();
     int nev = particle_list.get_number_of_events();
@@ -78,7 +77,6 @@ TEST(particleSamples, read_in_particle_samples_OSCAR) {
     n_particles = particle_list.get_number_of_particles(1);
     EXPECT_EQ(n_particles, 27);
 }
-
 
 TEST(particleSamples, read_in_particle_samples_OSCAR_mixed_event) {
     ParameterReader paraRdr;
@@ -86,10 +84,10 @@ TEST(particleSamples, read_in_particle_samples_OSCAR_mixed_event) {
     paraRdr.setVal("run_mode", 1);
     paraRdr.setVal("read_in_mode", 0);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_reader_files";
+    string path = "test_reader_files";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
@@ -101,17 +99,16 @@ TEST(particleSamples, read_in_particle_samples_OSCAR_mixed_event) {
     EXPECT_EQ(n_particles, 27);
 }
 
-
 TEST(particleSamples, read_in_particle_samples_UrQMD) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 0);
     paraRdr.setVal("read_in_mode", 1);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_reader_files";
+    string path = "test_reader_files";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples();
     particle_list.filter_particles_from_events(211);
@@ -123,7 +120,6 @@ TEST(particleSamples, read_in_particle_samples_UrQMD) {
     n_particles = particle_list.get_number_of_particles(1);
     EXPECT_EQ(n_particles, 97);
 }
-
 
 TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event) {
     ParameterReader paraRdr;
@@ -131,10 +127,10 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event) {
     paraRdr.setVal("run_mode", 1);
     paraRdr.setVal("read_in_mode", 1);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_reader_files";
+    string path = "test_reader_files";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
@@ -146,17 +142,16 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event) {
     EXPECT_EQ(n_particles, 97);
 }
 
-
 TEST(particleSamples, read_in_particle_samples_UrQMD_zipped) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 0);
     paraRdr.setVal("read_in_mode", 2);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples();
     particle_list.filter_particles_from_events(211);
@@ -169,17 +164,16 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_zipped) {
     EXPECT_EQ(n_particles, 97);
 }
 
-
 TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event_zipped) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 1);
     paraRdr.setVal("read_in_mode", 2);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
@@ -191,17 +185,16 @@ TEST(particleSamples, read_in_particle_samples_UrQMD_mixed_event_zipped) {
     EXPECT_EQ(n_particles, 97);
 }
 
-
 TEST(particleSamples, read_in_particle_samples_gzipped) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 0);
     paraRdr.setVal("read_in_mode", 10);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples_and_filter();
     int nev = particle_list.get_number_of_events();
@@ -213,17 +206,16 @@ TEST(particleSamples, read_in_particle_samples_gzipped) {
     EXPECT_EQ(n_particles, 635);
 }
 
-
 TEST(particleSamples, read_in_particle_samples_mixed_event_gzipped) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 1);
     paraRdr.setVal("read_in_mode", 10);
     paraRdr.setVal("particle_monval", 211);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples_mixed_event_and_filter();
     int nev = particle_list.get_number_of_mixed_events();
@@ -234,7 +226,6 @@ TEST(particleSamples, read_in_particle_samples_mixed_event_gzipped) {
     n_particles = particle_list.get_number_of_particles_mixed_event(1);
     EXPECT_EQ(n_particles, 635);
 }
-
 
 TEST(particleSamples, perform_resonance_feed_down) {
     ParameterReader paraRdr;
@@ -243,10 +234,10 @@ TEST(particleSamples, perform_resonance_feed_down) {
     paraRdr.setVal("read_in_mode", 10);
     paraRdr.setVal("particle_monval", 211);
     paraRdr.setVal("resonance_feed_down_flag", 1);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     particle_list.read_in_particle_samples_and_filter();
     int nev = particle_list.get_number_of_events();
@@ -258,15 +249,14 @@ TEST(particleSamples, perform_resonance_feed_down) {
     EXPECT_EQ(n_particles, 780);
 }
 
-
 TEST(particleSamples, map_urqmd_to_pdg) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 0);
-    string path="test_reader_files";
+    string path = "test_reader_files";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     particleSamples particle_list(paraRdr, path, ran_gen_ptr);
     EXPECT_EQ(particle_list.get_pdg_id(1, 1), 2212);
     EXPECT_EQ(particle_list.get_pdg_id(101, 2), 211);

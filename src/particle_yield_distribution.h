@@ -8,7 +8,7 @@
 #include "pretty_ostream.h"
 
 class particle_yield_distribution {
- private:
+  private:
     const ParameterReader paraRdr_;
     const std::string path_;
     std::shared_ptr<particleSamples> particle_list;
@@ -29,7 +29,7 @@ class particle_yield_distribution {
     int n_max;
     int *number_of_events;
 
- public:
+  public:
     particle_yield_distribution(ParameterReader &paraRdr, std::string path);
     ~particle_yield_distribution();
 
@@ -37,7 +37,7 @@ class particle_yield_distribution {
         particle_list = particle_list_in;
     }
     void collect_particle_yield_distribution(
-                        std::shared_ptr<particleSamples> particle_list_in);
+        std::shared_ptr<particleSamples> particle_list_in);
     void collect_particle_yield(int event_id);
     void output_particle_yield_distribution();
 };

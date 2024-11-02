@@ -4,15 +4,16 @@
 Change logs: see arsenal.h
 ============================================================================*/
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <stdlib.h>
-#include <vector>
-#include <iomanip>
-#include <cstdarg>
-
 #include "arsenal.h"
+
+#include <stdlib.h>
+
+#include <cstdarg>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace AfterburnerUtil {
 
@@ -21,7 +22,7 @@ std::vector<double> stringToDoubles(std::string str) {
     // Return a vector of doubles from the string "str". "str" should
     // be a string containing a line of data.
     // add a blank at the end so the last data will be read
-    std::stringstream sst(str+" "); 
+    std::stringstream sst(str + " ");
     std::vector<double> valueList;
     double val;
     sst >> val;
@@ -32,28 +33,25 @@ std::vector<double> stringToDoubles(std::string str) {
     return valueList;
 }
 
-
 //**********************************************************************
 double stringToDouble(std::string str) {
-    // Return the 1st doubles number read from the string "str". 
+    // Return the 1st doubles number read from the string "str".
     // "str" should be a string containing a line of data.
     // add a blank at the end so the last data will be read
-    std::stringstream sst(str+" "); 
+    std::stringstream sst(str + " ");
     double val;
     sst >> val;
     return val;
 }
 
-
 //**********************************************************************
 std::string toLower(std::string str) {
     // Convert all character in string to lower case
     std::string tmp = str;
-    for (std::string::iterator it=tmp.begin(); it<=tmp.end(); it++)
+    for (std::string::iterator it = tmp.begin(); it <= tmp.end(); it++)
         *it = tolower(*it);
     return tmp;
 }
-
 
 //**********************************************************************
 std::string trim(std::string str) {
@@ -62,7 +60,7 @@ std::string trim(std::string str) {
     long number_of_char = 0;
     for (size_t ii = 0; ii < str.size(); ii++) {
         if (str[ii] != ' ' && str[ii] != '\t') {
-            tmp[number_of_char]=str[ii];
+            tmp[number_of_char] = str[ii];
             number_of_char++;
         }
     }
@@ -70,9 +68,9 @@ std::string trim(std::string str) {
     return tmp;
 }
 
-
-void resize2DVector(std::vector<std::vector<double>> &vec2D,
-                    const int nx, const int ny, const double val) {
+void resize2DVector(
+    std::vector<std::vector<double>> &vec2D, const int nx, const int ny,
+    const double val) {
     for (unsigned int i = 0; i < vec2D.size(); i++) {
         vec2D[i].clear();
     }
@@ -83,10 +81,9 @@ void resize2DVector(std::vector<std::vector<double>> &vec2D,
     }
 }
 
-
-void resize3DVector(std::vector<std::vector<std::vector<double>>> &vec3D,
-                    const int nx, const int ny, const int nz,
-                    const double val) {
+void resize3DVector(
+    std::vector<std::vector<std::vector<double>>> &vec3D, const int nx,
+    const int ny, const int nz, const double val) {
     for (unsigned int i = 0; i < vec3D.size(); i++) {
         for (unsigned int j = 0; j < vec3D[i].size(); j++) {
             vec3D[i][j].clear();
@@ -104,4 +101,4 @@ void resize3DVector(std::vector<std::vector<std::vector<double>>> &vec3D,
     }
 }
 
-}
+}  // namespace AfterburnerUtil

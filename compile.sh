@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+bash ./formatCode.sh
+
 mkdir -p build
 cd build
 rm -fr *

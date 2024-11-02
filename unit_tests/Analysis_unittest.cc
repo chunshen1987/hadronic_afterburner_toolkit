@@ -1,8 +1,9 @@
 
 #include "Analysis.h"
-#include "gtest/gtest.h"
 
 #include <string>
+
+#include "gtest/gtest.h"
 
 namespace {
 
@@ -12,14 +13,12 @@ TEST(Analysis, Constructor) {
     EXPECT_EQ(0, 0);
 }
 
-
 TEST(Analysis, ReadInParameters) {
     std::string path = "results";
     Analysis test_analysis(path);
     test_analysis.UpdateParameterDict("parameters.dat");
     EXPECT_EQ(0, 0);
 }
-
 
 TEST(Analysis, InitializeAnalysis) {
     std::string path = "test_gzip_reader";
@@ -28,7 +27,6 @@ TEST(Analysis, InitializeAnalysis) {
     test_analysis.InitializeAnalysis();
     EXPECT_EQ(0, 0);
 }
-
 
 TEST(Analysis, FlowAnalysis) {
     std::string path = "test_gzip_reader";

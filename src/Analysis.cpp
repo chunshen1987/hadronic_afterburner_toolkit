@@ -1,28 +1,28 @@
 // Copyright Chun Shen @ 2020
 
+#include "Analysis.h"
+
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <map>
-#include "Analysis.h"
-#include "single_particleSpectra.h"
+
+#include "BalanceFunction.h"
 #include "HBT_correlation.h"
 #include "particle_yield_distribution.h"
-#include "BalanceFunction.h"
+#include "single_particleSpectra.h"
 
 using std::vector;
 
 Analysis::Analysis(std::string path) : path_(path) {}
-
 
 void Analysis::UpdateParameterDict(std::string param_filename) {
     paraRdr_.readFromFile(param_filename);
     paraRdr_.echo();
 }
 
-
-void Analysis::UpdateParameterDict(std::string param_filename,
-                                   int argc, char *argv[]) {
+void Analysis::UpdateParameterDict(
+    std::string param_filename, int argc, char *argv[]) {
     paraRdr_.readFromFile(param_filename);
     paraRdr_.readFromArguments(argc, argv);
 
@@ -33,7 +33,6 @@ void Analysis::UpdateParameterDict(std::string param_filename,
     paraRdr_.echo();
 }
 
-
 void Analysis::setRapiditySfhitFromFile() {
     std::ifstream infile("rapidity_shift.dat");
     if (!infile) {
@@ -42,24 +41,22 @@ void Analysis::setRapiditySfhitFromFile() {
     }
 
     double rapidity_shift, dummy;
-    infile >> dummy >> dummy >>rapidity_shift;
+    infile >> dummy >> dummy >> rapidity_shift;
     infile.close();
     paraRdr_.setVal("rapidity_shift", rapidity_shift);
 }
 
-
 void Analysis::InitializeAnalysis() {
     int randomSeed = paraRdr_.getVal("randomSeed", -1);
-    ran_gen_ptr_   = std::make_shared<RandomUtil::Random> (randomSeed);
+    ran_gen_ptr_ = std::make_shared<RandomUtil::Random>(randomSeed);
 }
-
 
 void Analysis::PerformAnalysis() {
     InitializeAnalysis();
     if (paraRdr_.getVal("analyze_flow") != 0) {
         messager.info("Analyze flow observables ...");
-        particle_list_ = std::make_shared<particleSamples> (
-                                                paraRdr_, path_, ran_gen_ptr_);
+        particle_list_ =
+            std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
         if (paraRdr_.getVal("analyze_flow") == 1) {
             FlowAnalysis();
         } else if (paraRdr_.getVal("analyze_flow") == 2) {
@@ -74,8 +71,8 @@ void Analysis::PerformAnalysis() {
         if (paraRdr_.getVal("resonance_weak_feed_down_flag") == 1) {
             // analysis multi-strange particles
             paraRdr_.setVal("resonance_weak_feed_down_flag", 0);
-            particle_list_ = std::make_shared<particleSamples> (
-                                                paraRdr_, path_, ran_gen_ptr_);
+            particle_list_ = std::make_shared<particleSamples>(
+                paraRdr_, path_, ran_gen_ptr_);
             if (paraRdr_.getVal("analyze_flow") == 1) {
                 FlowAnalysis();
             } else if (paraRdr_.getVal("analyze_flow") == 2) {
@@ -91,41 +88,39 @@ void Analysis::PerformAnalysis() {
 
     if (paraRdr_.getVal("analyze_HBT") == 1) {
         messager.info("Analyze HBT ...");
-        particle_list_ = std::make_shared<particleSamples> (
-                                                paraRdr_, path_, ran_gen_ptr_);
+        particle_list_ =
+            std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
         HBTAnalysis();
         particle_list_.reset();
     }
 
     if (paraRdr_.getVal("analyze_balance_function") == 1) {
         messager.info("Analyze balance functions ...");
-        particle_list_ = std::make_shared<particleSamples> (
-                                                paraRdr_, path_, ran_gen_ptr_);
+        particle_list_ =
+            std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
         BalanceFunctionAnalysis();
         particle_list_.reset();
     }
 
     if (paraRdr_.getVal("analyze_ebe_yield") == 1) {
         messager.info("Analyze event-by-event particle yield distriution ...");
-        particle_list_ = std::make_shared<particleSamples> (
-                                                paraRdr_, path_, ran_gen_ptr_);
+        particle_list_ =
+            std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
         ParticleYieldDistributionAnalysis();
         particle_list_.reset();
     }
 }
 
-
 void Analysis::FlowAnalysis() {
     ParameterReader paraRdr = paraRdr_;
     int compute_correlation = paraRdr.getVal("compute_correlation");
-    if (compute_correlation == 1)
-        paraRdr.setVal("compute_correlation", 0);
+    if (compute_correlation == 1) paraRdr.setVal("compute_correlation", 0);
     int flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
     if (flag_charge_dependence == 1)
         paraRdr.setVal("flag_charge_dependence", 0);
 
     // first define all the analysis sets
-    std::vector<singleParticleSpectra*> spvn;
+    std::vector<singleParticleSpectra *> spvn;
 
     // all hadrons (99999) first (collect E_T)
     paraRdr.setVal("particle_monval", 99999);
@@ -141,7 +136,8 @@ void Analysis::FlowAnalysis() {
     paraRdr.setVal("rap_type", 0);
     paraRdr.setVal("rapidity_distribution", 1);
     paraRdr.setVal("rapidityPTDistributionFlag", 0);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.15);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 2.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
@@ -149,62 +145,80 @@ void Analysis::FlowAnalysis() {
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // STAR rapidity cut
-    paraRdr.setVal("rap_min", -1.0); paraRdr.setVal("rap_max", -0.5);
+    paraRdr.setVal("rap_min", -1.0);
+    paraRdr.setVal("rap_max", -0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 1.0);
+    paraRdr.setVal("rap_min", 0.5);
+    paraRdr.setVal("rap_max", 1.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -1.0); paraRdr.setVal("rap_max", 1.0);
+    paraRdr.setVal("rap_min", -1.0);
+    paraRdr.setVal("rap_max", 1.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ALICE rapidity cut
-    paraRdr.setVal("rap_min", -0.8); paraRdr.setVal("rap_max", 0.8);
+    paraRdr.setVal("rap_min", -0.8);
+    paraRdr.setVal("rap_max", 0.8);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // STAR flow rapidity decorrelation cut
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.4);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 4.0);
-    paraRdr.setVal("rap_min", -1.0); paraRdr.setVal("rap_max", 1.0);
+    paraRdr.setVal("rap_min", -1.0);
+    paraRdr.setVal("rap_max", 1.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // CMS default cut
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.3);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
-    paraRdr.setVal("rap_min", -2.4); paraRdr.setVal("rap_max", 2.4);
+    paraRdr.setVal("rap_min", -2.4);
+    paraRdr.setVal("rap_max", 2.4);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ATLAS UPC cut
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.4);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 2.0);
-    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", 2.5);
+    paraRdr.setVal("rap_min", -2.5);
+    paraRdr.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ATLAS default cut
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.5);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 5.0);
-    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", 2.5);
+    paraRdr.setVal("rap_min", -2.5);
+    paraRdr.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 2.5);
+    paraRdr.setVal("rap_min", 0.5);
+    paraRdr.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", -0.5);
+    paraRdr.setVal("rap_min", -2.5);
+    paraRdr.setVal("rap_max", -0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ATLAS forward
-    paraRdr.setVal("rap_min", -4.9); paraRdr.setVal("rap_max", -3.1);
+    paraRdr.setVal("rap_min", -4.9);
+    paraRdr.setVal("rap_max", -3.1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 3.1); paraRdr.setVal("rap_max", 4.9);
+    paraRdr.setVal("rap_min", 3.1);
+    paraRdr.setVal("rap_max", 4.9);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ALICE V0A
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
-    paraRdr.setVal("rap_min", -5.1); paraRdr.setVal("rap_max", -2.8);
+    paraRdr.setVal("rap_min", -5.1);
+    paraRdr.setVal("rap_max", -2.8);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 2.8); paraRdr.setVal("rap_max", 5.1);
+    paraRdr.setVal("rap_min", 2.8);
+    paraRdr.setVal("rap_max", 5.1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ALICE V0C
-    paraRdr.setVal("rap_min", 1.7); paraRdr.setVal("rap_max", 3.7);
+    paraRdr.setVal("rap_min", 1.7);
+    paraRdr.setVal("rap_max", 3.7);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -3.7); paraRdr.setVal("rap_max", -1.7);
+    paraRdr.setVal("rap_min", -3.7);
+    paraRdr.setVal("rap_max", -1.7);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // PHENIX BBC
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 2.0);
-    paraRdr.setVal("rap_min", -3.9); paraRdr.setVal("rap_max", -3.1);
+    paraRdr.setVal("rap_min", -3.9);
+    paraRdr.setVal("rap_max", -3.1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 3.1); paraRdr.setVal("rap_max", 3.9);
+    paraRdr.setVal("rap_min", 3.1);
+    paraRdr.setVal("rap_max", 3.9);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
     // now identified particle
@@ -212,7 +226,8 @@ void Analysis::FlowAnalysis() {
     paraRdr.setVal("rapidity_distribution", 1);
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("particle_monval", 211);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     paraRdr.setVal("particle_monval", -211);
@@ -227,26 +242,19 @@ void Analysis::FlowAnalysis() {
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     if (paraRdr.getVal("resonance_weak_feed_down_flag") == 0) {
         paraRdr.setVal("particle_monval", 3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 333);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     }
     if (paraRdr.getVal("collect_neutral_particles", 0) == 1) {
         paraRdr.setVal("particle_monval", 111);
@@ -285,12 +293,12 @@ void Analysis::FlowAnalysis() {
         }
         paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
         paraRdr.setVal("vn_rapidity_dis_pT_max", 2.0);
-        paraRdr.setVal("rap_min", -1.0); paraRdr.setVal("rap_max", 1.0);
-        spvn.push_back(
-                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-        paraRdr.setVal("rap_min", -2.0); paraRdr.setVal("rap_max", 2.0);
-        spvn.push_back(
-                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("rap_min", -1.0);
+        paraRdr.setVal("rap_max", 1.0);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("rap_min", -2.0);
+        paraRdr.setVal("rap_max", 2.0);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     }
 
     // start the loop
@@ -310,11 +318,9 @@ void Analysis::FlowAnalysis() {
         messager.info("done!");
         event_id += nev;
     }
-    for (auto &ipart : spvn)
-        ipart->output_spectra_and_Qn_results();
+    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
     spvn.clear();
 }
-
 
 void Analysis::FlowAnalysis_multistrange_particles() {
     ParameterReader paraRdr = paraRdr_;
@@ -323,12 +329,13 @@ void Analysis::FlowAnalysis_multistrange_particles() {
     paraRdr.setVal("rap_type", 1);
     paraRdr.setVal("rapidity_distribution", 1);
     paraRdr.setVal("rapidityPTDistributionFlag", 0);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
 
     // first define all the analysis sets
-    std::vector<singleParticleSpectra*> spvn;
+    std::vector<singleParticleSpectra *> spvn;
     paraRdr.setVal("particle_monval", 3122);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     paraRdr.setVal("particle_monval", -3122);
@@ -361,11 +368,9 @@ void Analysis::FlowAnalysis_multistrange_particles() {
         messager.info("done!");
         event_id += nev;
     }
-    for (auto &ipart : spvn)
-        ipart->output_spectra_and_Qn_results();
+    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
     spvn.clear();
 }
-
 
 void Analysis::FlowAnalysis_3D() {
     ParameterReader paraRdr = paraRdr_;
@@ -373,7 +378,7 @@ void Analysis::FlowAnalysis_3D() {
     paraRdr.setVal("flag_charge_dependence", 0);
 
     // first define all the analysis sets
-    std::vector<singleParticleSpectra*> spvn;
+    std::vector<singleParticleSpectra *> spvn;
 
     // all hadrons (99999) first (collect E_T)
     paraRdr.setVal("particle_monval", 99999);
@@ -391,13 +396,17 @@ void Analysis::FlowAnalysis_3D() {
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
     paraRdr.setVal("rapidityPTDistributionFlag", 0);
-    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", 2.5);
+    paraRdr.setVal("rap_min", -2.5);
+    paraRdr.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 2.5);
+    paraRdr.setVal("rap_min", 0.5);
+    paraRdr.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", -0.5);
+    paraRdr.setVal("rap_min", -2.5);
+    paraRdr.setVal("rap_max", -0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("rapidityPTDistributionFlag", 1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
@@ -418,26 +427,19 @@ void Analysis::FlowAnalysis_3D() {
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     if (paraRdr.getVal("resonance_weak_feed_down_flag") == 0) {
         paraRdr.setVal("particle_monval", 3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 333);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     }
 
     // start the loop
@@ -457,23 +459,20 @@ void Analysis::FlowAnalysis_3D() {
         messager.info("done!");
         event_id += nev;
     }
-    for (auto &ipart : spvn)
-        ipart->output_spectra_and_Qn_results();
+    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
     spvn.clear();
 }
-
 
 void Analysis::FlowAnalysis_RHIC() {
     ParameterReader paraRdr = paraRdr_;
     int compute_correlation = paraRdr.getVal("compute_correlation");
-    if (compute_correlation == 1)
-        paraRdr.setVal("compute_correlation", 0);
+    if (compute_correlation == 1) paraRdr.setVal("compute_correlation", 0);
     int flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
     if (flag_charge_dependence == 1)
         paraRdr.setVal("flag_charge_dependence", 0);
 
     // first define all the analysis sets
-    std::vector<singleParticleSpectra*> spvn;
+    std::vector<singleParticleSpectra *> spvn;
 
     // all hadrons (99999) first (collect E_T)
     paraRdr.setVal("particle_monval", 99999);
@@ -495,17 +494,22 @@ void Analysis::FlowAnalysis_RHIC() {
 
     // speical triggers follows
     paraRdr.setVal("rapidityPTDistributionFlag", 0);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // STAR rapidity cut
-    paraRdr.setVal("rap_min", -1.0); paraRdr.setVal("rap_max", -0.5);
+    paraRdr.setVal("rap_min", -1.0);
+    paraRdr.setVal("rap_max", -0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 1.0);
+    paraRdr.setVal("rap_min", 0.5);
+    paraRdr.setVal("rap_max", 1.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // PHENIX BBC
-    paraRdr.setVal("rap_min", -3.9); paraRdr.setVal("rap_max", -3.1);
+    paraRdr.setVal("rap_min", -3.9);
+    paraRdr.setVal("rap_max", -3.1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 3.1); paraRdr.setVal("rap_max", 3.9);
+    paraRdr.setVal("rap_min", 3.1);
+    paraRdr.setVal("rap_max", 3.9);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
     // now identified particle
@@ -529,7 +533,8 @@ void Analysis::FlowAnalysis_RHIC() {
     }
     paraRdr.setVal("rap_type", 1);
     paraRdr.setVal("rapidity_distribution", 1);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("particle_monval", 211);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     paraRdr.setVal("particle_monval", -211);
@@ -544,26 +549,19 @@ void Analysis::FlowAnalysis_RHIC() {
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     if (paraRdr.getVal("resonance_weak_feed_down_flag") == 0) {
         paraRdr.setVal("particle_monval", 3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 333);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     }
     if (paraRdr.getVal("collect_neutral_particles", 0) == 1) {
         paraRdr.setVal("particle_monval", 111);
@@ -595,23 +593,20 @@ void Analysis::FlowAnalysis_RHIC() {
         messager.info("done!");
         event_id += nev;
     }
-    for (auto &ipart : spvn)
-        ipart->output_spectra_and_Qn_results();
+    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
     spvn.clear();
 }
-
 
 void Analysis::FlowAnalysis_LHC() {
     ParameterReader paraRdr = paraRdr_;
     int compute_correlation = paraRdr.getVal("compute_correlation");
-    if (compute_correlation == 1)
-        paraRdr.setVal("compute_correlation", 0);
+    if (compute_correlation == 1) paraRdr.setVal("compute_correlation", 0);
     int flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
     if (flag_charge_dependence == 1)
         paraRdr.setVal("flag_charge_dependence", 0);
 
     // first define all the analysis sets
-    std::vector<singleParticleSpectra*> spvn;
+    std::vector<singleParticleSpectra *> spvn;
 
     // all hadrons (99999) first (collect E_T)
     paraRdr.setVal("particle_monval", 99999);
@@ -633,45 +628,59 @@ void Analysis::FlowAnalysis_LHC() {
 
     // special trigger follows
     paraRdr.setVal("rapidityPTDistributionFlag", 0);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ALICE rapidity cut
-    paraRdr.setVal("rap_min", -0.8); paraRdr.setVal("rap_max", -0.4);
+    paraRdr.setVal("rap_min", -0.8);
+    paraRdr.setVal("rap_max", -0.4);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 0.4); paraRdr.setVal("rap_max", 0.8);
+    paraRdr.setVal("rap_min", 0.4);
+    paraRdr.setVal("rap_max", 0.8);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -0.4); paraRdr.setVal("rap_max", 0.4);
+    paraRdr.setVal("rap_min", -0.4);
+    paraRdr.setVal("rap_max", 0.4);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ALICE V0A
-    paraRdr.setVal("rap_min", -5.1); paraRdr.setVal("rap_max", -2.8);
+    paraRdr.setVal("rap_min", -5.1);
+    paraRdr.setVal("rap_max", -2.8);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 2.8); paraRdr.setVal("rap_max", 5.1);
+    paraRdr.setVal("rap_min", 2.8);
+    paraRdr.setVal("rap_max", 5.1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ALICE V0C
-    paraRdr.setVal("rap_min", 1.7); paraRdr.setVal("rap_max", 3.7);
+    paraRdr.setVal("rap_min", 1.7);
+    paraRdr.setVal("rap_max", 3.7);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -3.7); paraRdr.setVal("rap_max", -1.7);
+    paraRdr.setVal("rap_min", -3.7);
+    paraRdr.setVal("rap_max", -1.7);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // CMS default cut
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.3);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
-    paraRdr.setVal("rap_min", -2.4); paraRdr.setVal("rap_max", -0.5);
+    paraRdr.setVal("rap_min", -2.4);
+    paraRdr.setVal("rap_max", -0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 2.4);
+    paraRdr.setVal("rap_min", 0.5);
+    paraRdr.setVal("rap_max", 2.4);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ATLAS default cut
     paraRdr.setVal("vn_rapidity_dis_pT_min", 0.5);
     paraRdr.setVal("vn_rapidity_dis_pT_max", 5.0);
-    paraRdr.setVal("rap_min", 0.5); paraRdr.setVal("rap_max", 2.5);
+    paraRdr.setVal("rap_min", 0.5);
+    paraRdr.setVal("rap_max", 2.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", -2.5); paraRdr.setVal("rap_max", -0.5);
+    paraRdr.setVal("rap_min", -2.5);
+    paraRdr.setVal("rap_max", -0.5);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     // ATLAS forward
-    paraRdr.setVal("rap_min", -4.9); paraRdr.setVal("rap_max", -3.1);
+    paraRdr.setVal("rap_min", -4.9);
+    paraRdr.setVal("rap_max", -3.1);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-    paraRdr.setVal("rap_min", 3.1); paraRdr.setVal("rap_max", 4.9);
+    paraRdr.setVal("rap_min", 3.1);
+    paraRdr.setVal("rap_max", 4.9);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
     // now identified particle
@@ -697,7 +706,8 @@ void Analysis::FlowAnalysis_LHC() {
     if (paraRdr.getVal("pidwithPseudoRapCuts", 0) == 1) {
         paraRdr.setVal("rap_type", 0);
         paraRdr.setVal("rapidity_distribution", 1);
-        paraRdr.setVal("rap_min", -0.8); paraRdr.setVal("rap_max", 0.8);
+        paraRdr.setVal("rap_min", -0.8);
+        paraRdr.setVal("rap_max", 0.8);
         paraRdr.setVal("particle_monval", 211);
         spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -211);
@@ -713,7 +723,8 @@ void Analysis::FlowAnalysis_LHC() {
     }
     paraRdr.setVal("rap_type", 1);
     paraRdr.setVal("rapidity_distribution", 1);
-    paraRdr.setVal("rap_min", -0.5); paraRdr.setVal("rap_max", 0.5);
+    paraRdr.setVal("rap_min", -0.5);
+    paraRdr.setVal("rap_max", 0.5);
     paraRdr.setVal("particle_monval", 211);
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     paraRdr.setVal("particle_monval", -211);
@@ -728,26 +739,19 @@ void Analysis::FlowAnalysis_LHC() {
     spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     if (paraRdr.getVal("resonance_weak_feed_down_flag") == 0) {
         paraRdr.setVal("particle_monval", 3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3122);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3312);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", -3334);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
         paraRdr.setVal("particle_monval", 333);
-        spvn.push_back(new singleParticleSpectra(paraRdr, path_,
-                                                 ran_gen_ptr_));
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     }
     if (paraRdr.getVal("collect_neutral_particles", 0) == 1) {
         paraRdr.setVal("particle_monval", 111);
@@ -781,12 +785,12 @@ void Analysis::FlowAnalysis_LHC() {
         }
         paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
         paraRdr.setVal("vn_rapidity_dis_pT_max", 2.0);
-        paraRdr.setVal("rap_min", -1.0); paraRdr.setVal("rap_max", 1.0);
-        spvn.push_back(
-                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
-        paraRdr.setVal("rap_min", -2.0); paraRdr.setVal("rap_max", 2.0);
-        spvn.push_back(
-                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("rap_min", -1.0);
+        paraRdr.setVal("rap_max", 1.0);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+        paraRdr.setVal("rap_min", -2.0);
+        paraRdr.setVal("rap_max", 2.0);
+        spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     }
 
     // start the loop
@@ -806,11 +810,9 @@ void Analysis::FlowAnalysis_LHC() {
         messager.info("done!");
         event_id += nev;
     }
-    for (auto &ipart : spvn)
-        ipart->output_spectra_and_Qn_results();
+    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
     spvn.clear();
 }
-
 
 void Analysis::HBTAnalysis() {
     HBT_correlation HBT_analysis(paraRdr_, path_, ran_gen_ptr_);
@@ -832,7 +834,6 @@ void Analysis::HBTAnalysis() {
     HBT_analysis.output_HBTcorrelation();
 }
 
-
 void Analysis::ParticleYieldDistributionAnalysis() {
     particle_yield_distribution partN_dis(paraRdr_, path_);
     // start the loop
@@ -851,7 +852,6 @@ void Analysis::ParticleYieldDistributionAnalysis() {
     }
     partN_dis.output_particle_yield_distribution();
 }
-
 
 void Analysis::BalanceFunctionAnalysis() {
     BalanceFunction BF_analysis(paraRdr_, path_, ran_gen_ptr_);

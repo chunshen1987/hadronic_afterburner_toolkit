@@ -1,7 +1,7 @@
+#include <string>
+
 #include "../src/HBT_correlation.h"
 #include "gtest/gtest.h"
-
-#include <string>
 
 using std::string;
 
@@ -12,10 +12,10 @@ TEST(HBT_correlation, DefaultConstructor) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 1);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
+        new RandomUtil::Random(randomSeed));
     HBT_correlation test(paraRdr, path, ran_gen_ptr);
     EXPECT_EQ(0, 0);
 }
@@ -24,12 +24,12 @@ TEST(HBT_correlation, calculate_flow_event_plane_angle) {
     ParameterReader paraRdr;
     paraRdr.readFromFile("parameters.dat");
     paraRdr.setVal("run_mode", 1);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
-    auto particle_list = std::make_shared<particleSamples> (paraRdr, path,
-                                                            ran_gen_ptr);
+        new RandomUtil::Random(randomSeed));
+    auto particle_list =
+        std::make_shared<particleSamples>(paraRdr, path, ran_gen_ptr);
     particle_list->read_in_particle_samples_and_filter();
 
     HBT_correlation test(paraRdr, path, ran_gen_ptr);
@@ -54,12 +54,12 @@ TEST(HBT_correlation, calculate_HBT_correlation_function_inv) {
     paraRdr.setVal("number_of_oversample_events", 2);
     paraRdr.setVal("number_of_mixed_events", 1);
     paraRdr.setVal("invariant_radius_flag", 1);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
-    auto particle_list = std::make_shared<particleSamples> (paraRdr, path,
-                                                            ran_gen_ptr);
+        new RandomUtil::Random(randomSeed));
+    auto particle_list =
+        std::make_shared<particleSamples>(paraRdr, path, ran_gen_ptr);
     particle_list->read_in_particle_samples_and_filter();
     particle_list->read_in_particle_samples_mixed_event_and_filter();
     HBT_correlation test(paraRdr, path, ran_gen_ptr);
@@ -75,12 +75,12 @@ TEST(HBT_correlation, calculate_HBT_correlation_function) {
     paraRdr.setVal("number_of_mixed_events", 1);
     paraRdr.setVal("invariant_radius_flag", 0);
     paraRdr.setVal("azimuthal_flag", 0);
-    string path="test_gzip_reader";
+    string path = "test_gzip_reader";
     int randomSeed = 0;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr(
-                                    new RandomUtil::Random(randomSeed));
-    auto particle_list = std::make_shared<particleSamples> (paraRdr, path,
-                                                            ran_gen_ptr);
+        new RandomUtil::Random(randomSeed));
+    auto particle_list =
+        std::make_shared<particleSamples>(paraRdr, path, ran_gen_ptr);
     particle_list->read_in_particle_samples_and_filter();
     particle_list->read_in_particle_samples_mixed_event_and_filter();
     HBT_correlation test(paraRdr, path, ran_gen_ptr);
