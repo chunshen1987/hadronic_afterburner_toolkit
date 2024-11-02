@@ -25,7 +25,26 @@ void Analysis::UpdateParameterDict(std::string param_filename,
                                    int argc, char *argv[]) {
     paraRdr_.readFromFile(param_filename);
     paraRdr_.readFromArguments(argc, argv);
+
+    // rapidity shift from file
+    if (paraRdr_.getVal("readRapidityShiftFromFile", 0) == 1) {
+        setRapiditySfhitFromFile();
+    }
     paraRdr_.echo();
+}
+
+
+void Analysis::setRapiditySfhitFromFile() {
+    std::ifstream infile("rapidity_shift.dat");
+    if (!infile) {
+        messager.warning("Failed to open the file 'rapidity_shift.dat'.");
+        return;
+    }
+
+    double rapidity_shift, dummy;
+    infile >> dummy >> dummy >>rapidity_shift;
+    infile.close();
+    paraRdr_.setVal("rapidity_shift", rapidity_shift);
 }
 
 

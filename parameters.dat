@@ -36,8 +36,9 @@ net_particle_flag = 0         # flag to collect net particle yield distribution
 collect_neutral_particles = 0 # flag to collect neutral particles
 
 event_buffer_size = 1000000   # the number of particles read in at once
-rapidity_shift = 0.
 
+rapidity_shift = 0.
+readRapidityShiftFromFile = 0
 
 # Parameters for single particle spectra and vn
 order_max = 10                # the maximum harmonic order of anisotropic flow

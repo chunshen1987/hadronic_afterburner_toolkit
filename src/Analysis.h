@@ -23,6 +23,7 @@ class Analysis {
     void UpdateParameterDict(std::string param_filename);
     void UpdateParameterDict(std::string param_filename,
                              int argc, char *argv[]);
+    void setRapiditySfhitFromFile();
 
     void InitializeAnalysis();
     void PerformAnalysis();
