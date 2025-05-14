@@ -485,17 +485,18 @@ void singleParticleSpectra::calculate_Qn_vector(
 
     int number_of_particles = particle_list->get_number_of_particles(event_id);
     for (int i = 0; i < number_of_particles; i++) {
-        double pz_local = particle_list->get_particle(event_id, i).pz;
-        double E_local = particle_list->get_particle(event_id, i).E;
-        double mass = particle_list->get_particle(event_id, i).mass;
+        // double pz_local = particle_list->get_particle(event_id, i).pz;
+        // double E_local = particle_list->get_particle(event_id, i).E;
+        // double mass = particle_list->get_particle(event_id, i).mass;
 
         double rap_local;
         if (rap_type == 0) {
-            //double pmag = sqrt(E_local * E_local - mass * mass);
-            //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            // double pmag = sqrt(E_local * E_local - mass * mass);
+            // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_eta;
         } else {
-            //rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            // rap_local = 0.5 * log((E_local + pz_local) / (E_local -
+            // pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_y;
         }
 
@@ -567,18 +568,20 @@ void singleParticleSpectra::calculate_Qn_vector_positive_charge(
     int number_of_particles =
         (particle_list->get_number_of_positive_particles(event_id));
     for (int i = 0; i < number_of_particles; i++) {
-        double pz_local = particle_list->get_positive_particle(event_id, i).pz;
-        double E_local = particle_list->get_positive_particle(event_id, i).E;
+        // double pz_local = particle_list->get_positive_particle(event_id,
+        // i).pz; double E_local =
+        // particle_list->get_positive_particle(event_id, i).E;
 
         double rap_local;
         if (rap_type == 0) {
-            //double mass =
-            //    (particle_list->get_positive_particle(event_id, i).mass);
-            //double pmag = sqrt(E_local * E_local - mass * mass);
-            //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            // double mass =
+            //     (particle_list->get_positive_particle(event_id, i).mass);
+            // double pmag = sqrt(E_local * E_local - mass * mass);
+            // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_eta;
         } else {
-            //rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            // rap_local = 0.5 * log((E_local + pz_local) / (E_local -
+            // pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_y;
         }
 
@@ -639,18 +642,20 @@ void singleParticleSpectra::calculate_Qn_vector_negative_charge(
     int number_of_particles =
         (particle_list->get_number_of_negative_particles(event_id));
     for (int i = 0; i < number_of_particles; i++) {
-        double pz_local = particle_list->get_negative_particle(event_id, i).pz;
-        double E_local = particle_list->get_negative_particle(event_id, i).E;
+        // double pz_local = particle_list->get_negative_particle(event_id,
+        // i).pz; double E_local =
+        // particle_list->get_negative_particle(event_id, i).E;
 
         double rap_local;
         if (rap_type == 0) {
-            //double mass =
-            //    (particle_list->get_negative_particle(event_id, i).mass);
-            //double pmag = sqrt(E_local * E_local - mass * mass);
-            //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            // double mass =
+            //     (particle_list->get_negative_particle(event_id, i).mass);
+            // double pmag = sqrt(E_local * E_local - mass * mass);
+            // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_eta;
         } else {
-            //rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            // rap_local = 0.5 * log((E_local + pz_local) / (E_local -
+            // pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_y;
         }
 
@@ -2360,10 +2365,11 @@ void singleParticleSpectra::calculateRapidityPTDistribution(
 
         double rap_local = 0.0;
         if (rap_type == 0) {
-            //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_eta;
         } else {
-            //rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            // rap_local = 0.5 * log((E_local + pz_local) / (E_local -
+            // pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_y;
         }
 
@@ -2452,10 +2458,11 @@ void singleParticleSpectra::calculate_rapidity_distribution(
 
         double rap_local = 0.0;
         if (rap_type == 0) {
-            //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_eta;
         } else {
-            //rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            // rap_local = 0.5 * log((E_local + pz_local) / (E_local -
+            // pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_y;
         }
 
@@ -2605,17 +2612,18 @@ void singleParticleSpectra::output_rapidity_distribution() {
 void singleParticleSpectra::check_dNdSV(int event_id) {
     int number_of_particles = particle_list->get_number_of_particles(event_id);
     for (int i = 0; i < number_of_particles; i++) {
-        double pz_local = particle_list->get_particle(event_id, i).pz;
-        double E_local = particle_list->get_particle(event_id, i).E;
+        // double pz_local = particle_list->get_particle(event_id, i).pz;
+        // double E_local = particle_list->get_particle(event_id, i).E;
 
         double rap_local;
         if (rap_type == 0) {
-            //double mass = particle_list->get_particle(event_id, i).mass;
-            //double pmag = sqrt(E_local * E_local - mass * mass);
-            //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            // double mass = particle_list->get_particle(event_id, i).mass;
+            // double pmag = sqrt(E_local * E_local - mass * mass);
+            // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_eta;
         } else {
-            //rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            // rap_local = 0.5 * log((E_local + pz_local) / (E_local -
+            // pz_local));
             rap_local = particle_list->get_particle(event_id, i).rap_y;
         }
 

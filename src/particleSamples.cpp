@@ -454,13 +454,15 @@ void particleSamples::boostParticles(
             part_i.E = E_shifted;
             part_i.pz = pz_shifted;
 
-            //part_i.rap_y =
-            //    0.5 * log((part_i.E + part_i.pz) / (part_i.E - part_i.pz));
-            part_i.rap_y = asinh(part_i.pz/mT);     // more accurate for large rapidity
-            //double p_mag = sqrt(part_i.pT * part_i.pT + part_i.pz * part_i.pz);
-            //part_i.rap_eta =
-            //    0.5 * log((p_mag + part_i.pz) / (p_mag - part_i.pz));
-            part_i.rap_eta = asinh(part_i.pz/part_i.pT);     // more accurate for large rapidity
+            // part_i.rap_y =
+            //     0.5 * log((part_i.E + part_i.pz) / (part_i.E - part_i.pz));
+            part_i.rap_y =
+                asinh(part_i.pz / mT);  // more accurate for large rapidity
+            // double p_mag = sqrt(part_i.pT * part_i.pT + part_i.pz *
+            // part_i.pz); part_i.rap_eta =
+            //     0.5 * log((p_mag + part_i.pz) / (p_mag - part_i.pz));
+            part_i.rap_eta = asinh(
+                part_i.pz / part_i.pT);  // more accurate for large rapidity
         }
     }
 }
