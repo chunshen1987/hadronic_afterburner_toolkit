@@ -430,11 +430,11 @@ int particleSamples::read_in_particle_samples() {
         reconst_flag = 0;
     }
 
-    boostParticles(full_particle_list, rap_shift_);
-
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list);
+
     addParticleQuantumNumber(full_particle_list);
+    boostParticles(full_particle_list, rap_shift_);
 
     return (full_particle_list->size());
 }
@@ -445,6 +445,7 @@ void particleSamples::boostParticles(
     for (auto &ev_i : (*input_particle_list)) {
         for (auto &part_i : (*ev_i)) {
             part_i.pT = sqrt(part_i.px * part_i.px + part_i.py * part_i.py);
+            double mT = sqrt(part_i.pT * part_i.pT + part_i.mass * part_i.mass);
             part_i.phi_p = atan2(part_i.py, part_i.px);
             double E_shifted =
                 (part_i.E * cosh(rap_shift) + part_i.pz * sinh(rap_shift));
@@ -453,11 +454,13 @@ void particleSamples::boostParticles(
             part_i.E = E_shifted;
             part_i.pz = pz_shifted;
 
-            part_i.rap_y =
-                0.5 * log((part_i.E + part_i.pz) / (part_i.E - part_i.pz));
-            double p_mag = sqrt(part_i.pT * part_i.pT + part_i.pz * part_i.pz);
-            part_i.rap_eta =
-                0.5 * log((p_mag + part_i.pz) / (p_mag - part_i.pz));
+            //part_i.rap_y =
+            //    0.5 * log((part_i.E + part_i.pz) / (part_i.E - part_i.pz));
+            part_i.rap_y = asinh(part_i.pz/mT);     // more accurate for large rapidity
+            //double p_mag = sqrt(part_i.pT * part_i.pT + part_i.pz * part_i.pz);
+            //part_i.rap_eta =
+            //    0.5 * log((p_mag + part_i.pz) / (p_mag - part_i.pz));
+            part_i.rap_eta = asinh(part_i.pz/part_i.pT);     // more accurate for large rapidity
         }
     }
 }
@@ -510,11 +513,12 @@ int particleSamples::read_in_particle_samples_mixed_event() {
         read_in_particle_samples_mixed_event_gzipped();
     }
 
-    boostParticles(full_particle_list_mixed_event, rap_shift_);
-
     if (resonance_feed_down_flag == 1)
         perform_resonance_feed_down(full_particle_list_mixed_event);
+
     addParticleQuantumNumber(full_particle_list_mixed_event);
+    boostParticles(full_particle_list_mixed_event, rap_shift_);
+
     return (full_particle_list_mixed_event->size());
 }
 

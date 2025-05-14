@@ -66,11 +66,13 @@ void particle_yield_distribution::collect_particle_yield(int event_id) {
 
         double rap_local;
         if (rap_type == 0) {
-            double mass = particle_list->get_particle(event_id, i).mass;
-            double pmag = sqrt(E_local * E_local - mass * mass);
-            rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            //double mass = particle_list->get_particle(event_id, i).mass;
+            //double pmag = sqrt(E_local * E_local - mass * mass);
+            //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+            rap_local = particle_list->get_particle(event_id, i).rap_eta;
         } else {
-            rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            //rap_local = 0.5 * log((E_local + pz_local) / (E_local - pz_local));
+            rap_local = particle_list->get_particle(event_id, i).rap_y;
         }
 
         if (rap_local > rap_min && rap_local < rap_max) {
@@ -92,13 +94,15 @@ void particle_yield_distribution::collect_particle_yield(int event_id) {
 
             double rap_local;
             if (rap_type == 0) {
-                double mass =
-                    particle_list->get_anti_particle(event_id, i).mass;
-                double pmag = sqrt(E_local * E_local - mass * mass);
-                rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+                //double mass =
+                //    particle_list->get_anti_particle(event_id, i).mass;
+                //double pmag = sqrt(E_local * E_local - mass * mass);
+                //rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
+                rap_local = particle_list->get_particle(event_id, i).rap_eta;
             } else {
-                rap_local =
-                    0.5 * log((E_local + pz_local) / (E_local - pz_local));
+                //rap_local =
+                //    0.5 * log((E_local + pz_local) / (E_local - pz_local));
+                rap_local = particle_list->get_particle(event_id, i).rap_y;
             }
 
             if (rap_local > rap_min && rap_local < rap_max) {
