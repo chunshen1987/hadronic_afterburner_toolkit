@@ -771,7 +771,7 @@ void singleParticleSpectra::output_Qn_vectors() {
                     << "(n=1-" << order_max - 1 << ")" << endl;
     }
 
-    for (int ipT = 0; ipT < npT - 1; ipT++) {
+    for (int ipT = 0; ipT < npT; ipT++) {
         double total_NpT = Qn_diff_vector_real[0][ipT];
         double dNpT_ev_avg =
             Qn_diff_vector_real[0][ipT] / total_number_of_events;
