@@ -59,7 +59,7 @@ singleParticleSpectra::singleParticleSpectra(
     npT = paraRdr.getVal("npT");
     pT_min = paraRdr.getVal("pT_min");
     pT_max = paraRdr.getVal("pT_max");
-    dpT = (pT_max - pT_min) / (npT - 1 + 1e-15);
+    dpT = (pT_max - pT_min) / (npT + 1e-15);
     pT_array = vector<double>(npT, 0.);
     pT_mean_array = vector<double>(npT, 0.);
     pT_mean_array_err = vector<double>(npT, 0.);
