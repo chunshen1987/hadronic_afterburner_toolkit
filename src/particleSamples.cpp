@@ -994,6 +994,7 @@ int particleSamples::read_in_particle_samples_UrQMD_binary() {
             inputfile.read(reinterpret_cast<char *>(&idummy), sizeof(int));
         }
 
+        int errorBuffer = 0;
         // std::cout << "n_particle = " << n_particle << std::endl;
         for (int ipart = 0; ipart < n_particle; ipart++) {
             int info_array[6];
@@ -1041,6 +1042,12 @@ int particleSamples::read_in_particle_samples_UrQMD_binary() {
                 messager.flush("error");
                 messager << "Ignore this particle!";
                 messager.flush("error");
+                errorBuffer++;
+                if (errorBuffer > 1000) {
+                    messager << "Too many errors, stop reading!";
+                    messager.flush("error");
+                    exit(1);
+                }
             } else {
                 (*full_particle_list)[ievent]->push_back(temp_particle_info);
             }
