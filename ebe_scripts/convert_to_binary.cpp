@@ -47,11 +47,20 @@ int main(int argc, char *argv[]) {
         fp_gz = gzopen(output_filename.str().c_str(), "wb");
     }
 
-    string temp_string;
-    double dummy;
-    int urqmd_id, urqmd_iso3, urqmd_charge, n_coll;
-    int parent_id, parent_proc_type;
-    double mass, t, x, y, z, E, px, py, pz;
+    string temp_string = "";
+    double dummy = 0;
+    int urqmd_id = 0, urqmd_iso3 = 0, urqmd_charge = 0, n_coll = 0;
+    int parent_id = 0, parent_proc_type = 0;
+    double mass = 0;
+    double t = 0;
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double E = 0;
+    double px = 0;
+    double py = 0;
+    double pz = 0;
+    int errorCount = 0;
     getline(urqmd_file, temp_string);
     while (!urqmd_file.eof()) {
         // skip the header
@@ -61,8 +70,14 @@ int main(int argc, char *argv[]) {
         // get total number of particles
         getline(urqmd_file, temp_string); 
         stringstream temp1(temp_string);
-        int n_particles;
+        int n_particles = 0;
         temp1 >> n_particles;
+
+        if (n_particles > 100000) {
+            cout << "too many particles: n_particles = " << n_particles << endl;
+            cout << "The file is wrong. exit" << endl;
+            exit(1);
+        }
 
         // get some information
         int n_info[8];
@@ -95,6 +110,16 @@ int main(int argc, char *argv[]) {
                   >> parent_id >> n_coll >> parent_proc_type
                   >> t >> x >> y >> z
                   >> E >> px >> py >> pz;
+
+            if (std::abs(E) < 1e-5 && std::abs(px) < 1e-5
+                && std::abs(py) < 1e-5 && std::abs(pz) < 1e-5) {
+                errorCount++;
+                if (errorCount > 20) {
+                    cout << "too many errors. exit" << endl;
+                    exit(1);
+                }
+                continue;
+            }
 
             if (output_mode == "gz") {
                 gzprintf(fp_gz, "%d %d %d %d %d %d ",
