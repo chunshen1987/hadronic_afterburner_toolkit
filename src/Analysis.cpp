@@ -765,10 +765,26 @@ void Analysis::FlowAnalysis_LHC() {
         paraRdr.setVal("particle_monval", -2112);
         spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
     }
+    paraRdr.setVal("vn_rapidity_dis_pT_min", 0.0);
+    paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
+    paraRdr.setVal("particle_monval", 211);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("particle_monval", -211);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("particle_monval", 321);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("particle_monval", -321);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("particle_monval", 2212);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
+    paraRdr.setVal("particle_monval", -2212);
+    spvn.push_back(new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_));
 
     // lastly, if we want to compute multi-particle correlations within
     // the same UrQMD events
     if (compute_correlation == 1) {
+        paraRdr.setVal("vn_rapidity_dis_pT_min", 0.2);
+        paraRdr.setVal("vn_rapidity_dis_pT_max", 3.0);
         paraRdr.setVal("compute_correlation", 1);
         paraRdr.setVal("flag_charge_dependence", flag_charge_dependence);
         paraRdr.setVal("particle_monval", 9999);
