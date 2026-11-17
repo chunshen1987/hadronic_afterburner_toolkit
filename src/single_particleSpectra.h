@@ -42,9 +42,13 @@ class singleParticleSpectra {
     std::vector<double> dNdy_array;
     std::vector<double> dETdy_array;
 
+    std::vector<double> dNdy_covMatrix;  // N_rap x N_rap
+
     double vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max;
     std::vector<std::vector<double>> vn_real_rapidity_dis_array;
     std::vector<std::vector<double>> vn_imag_rapidity_dis_array;
+    std::vector<std::vector<double>> vn_real_rapidity_covMatrix;
+    std::vector<std::vector<double>> vn_imag_rapidity_covMatrix;
 
     int total_number_of_events;
     std::vector<double> Qn_vector_real;

@@ -90,6 +90,7 @@ singleParticleSpectra::singleParticleSpectra(
         rapidity_array = vector<double>(N_rap, 0.);
         dNdy_array = vector<double>(N_rap, 0.);
         dETdy_array = vector<double>(N_rap, 0.);
+        dNdy_covMatrix = vector<double>(N_rap * N_rap, 0.);  // N_rap x N_rap
         for (int i = 0; i < N_rap; i++)
             rapidity_array[i] = rapidity_dis_min + i * drap;
 
@@ -97,6 +98,8 @@ singleParticleSpectra::singleParticleSpectra(
         vn_rapidity_dis_pT_max = paraRdr.getVal("vn_rapidity_dis_pT_max");
         resize2DVector(vn_real_rapidity_dis_array, N_rap, order_max, 0);
         resize2DVector(vn_imag_rapidity_dis_array, N_rap, order_max, 0);
+        resize2DVector(vn_real_rapidity_covMatrix, N_rap * N_rap, order_max, 0);
+        resize2DVector(vn_imag_rapidity_covMatrix, N_rap * N_rap, order_max, 0);
         rapidityPTDistributionFlag_ =
             paraRdr.getVal("rapidityPTDistributionFlag", 0);
         if (rapidityPTDistributionFlag_ != 0) {
@@ -387,6 +390,16 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
                         (event_Qn_rap_real[i][j]);
                     vn_imag_rapidity_dis_array[i][j] +=
                         (event_Qn_rap_imag[i][j]);
+                }
+            }
+            for (int i = 0; i < N_rap; i++) {
+                for (int j = 0; j < N_rap; j++) {
+                    for (int k = 0; k < order_max; k++) {
+                        vn_real_rapidity_covMatrix[i * N_rap + j][k] +=
+                            (event_Qn_rap_real[i][k] * event_Qn_rap_real[j][k]);
+                        vn_imag_rapidity_covMatrix[i * N_rap + j][k] +=
+                            (event_Qn_rap_imag[i][k] * event_Qn_rap_imag[j][k]);
+                    }
                 }
             }
             if (rapidityPTDistributionFlag_ == 1) {
@@ -2432,6 +2445,8 @@ void singleParticleSpectra::calculate_rapidity_distribution(
         messager.flush("error");
         exit(1);
     }
+
+    std::vector<double> dNdy_event(N_rap, 0.0);
     for (int i = 0; i < number_of_particles; i++) {
         double pz_local = 0.0;
         double E_local = 0.0;
@@ -2475,7 +2490,7 @@ void singleParticleSpectra::calculate_rapidity_distribution(
         // no pT cut on particle yield
         if (flag == 0) {
             rapidity_array[rap_idx] += rap_local;
-            dNdy_array[rap_idx]++;
+            dNdy_event[rap_idx]++;
 
             // compute the transverse energy
             // ALICE https://arxiv.org/pdf/1603.04775
@@ -2514,6 +2529,13 @@ void singleParticleSpectra::calculate_rapidity_distribution(
                 event_Qn_real[rap_idx][iorder] += cos_nphi;
                 event_Qn_imag[rap_idx][iorder] += sin_nphi;
             }
+        }
+    }
+    for (int i = 0; i < N_rap; i++) {
+        dNdy_array[i] += dNdy_event[i];
+        for (int j = 0; j < N_rap; j++) {
+            int idx = i * N_rap + j;
+            dNdy_covMatrix[idx] += dNdy_event[i] * dNdy_event[j];
         }
     }
 }
@@ -2607,6 +2629,36 @@ void singleParticleSpectra::output_rapidity_distribution() {
         output << endl;
     }
     output.close();
+
+    // output the covariance matrix of dN/dy
+    for (int i = 0; i < N_rap; i++) {
+        for (int j = 0; j < N_rap; j++) {
+            int idx = i * N_rap + j;
+            dNdy_covMatrix[idx] = dNdy_covMatrix[idx] / total_number_of_events
+                                  - dNdy_array[i] * dNdy_array[j];
+        }
+    }
+    ostringstream filename_cov;
+    filename_cov << path_ << "/particle_" << particle_monval;
+    if (rap_type == 0) {
+        filename_cov << "_dNdeta_covMatrix";
+    } else {
+        filename_cov << "_dNdy_covMatrix";
+    }
+    if (bWeakFeedDown_) filename_cov << "_weakFD";
+    filename_cov << ".dat";
+    ofstream output_cov(filename_cov.str().c_str());
+    output_cov << "# y1  y2  cov(dN/dy1, dN/dy2)  total event = "
+               << total_number_of_events << endl;
+    for (int i = 0; i < N_rap; i++) {
+        for (int j = 0; j < N_rap; j++) {
+            int idx = i * N_rap + j;
+            output_cov << scientific << setw(18) << setprecision(8)
+                       << rapidity_array[i] << "  " << rapidity_array[j] << "  "
+                       << dNdy_covMatrix[idx] << endl;
+        }
+    }
+    output_cov.close();
 }
 
 void singleParticleSpectra::check_dNdSV(int event_id) {
