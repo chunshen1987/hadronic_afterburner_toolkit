@@ -6,13 +6,16 @@
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "BalanceFunction.h"
+#include "binary_event_writer.h"
 #include "gtest/gtest.h"
+#include "particle_yield_distribution.h"
 #include "single_particleSpectra.h"
 
 namespace {
@@ -515,6 +518,131 @@ TEST(Analysis, SpatialHistogramsDropSmearsPastTheLastBin) {
         EXPECT_GT(count, 0.0);
         EXPECT_LT(count, 0.6 * n_tracks);
     }
+}
+
+TEST(Analysis, SpectraCountTracksStrictlyInsideTheAcceptance) {
+    // Three pi+ inside |y| < 0.5 and 0.05 < pT < 4.05 GeV; every other track
+    // sits just outside one cut or is a different species. The expected
+    // values are counted by hand.
+    using test_fixtures::track_from_rapidity;
+    const double m = 0.13957;
+    const std::string path = "test_spectra_acceptance";
+    test_fixtures::write_binary_events(
+        path,
+        {{track_from_rapidity(211, m, 0.5, 0.0, 0.0),         // in
+          track_from_rapidity(211, m, 1.0, 0.498, M_PI / 2),  // in, y edge
+          track_from_rapidity(211, m, 0.5, 0.502, 0.0),       // y > 0.5
+          track_from_rapidity(211, m, 0.5, -0.502, 0.0),      // y < -0.5
+          track_from_rapidity(211, m, 0.04, 0.0, 0.0),        // pT < 0.05
+          track_from_rapidity(211, m, 4.1, 0.0, 0.0)},        // pT > 4.05
+         {track_from_rapidity(211, m, 0.5, -0.3, M_PI / 4),   // in
+          track_from_rapidity(-211, m, 0.5, 0.0, 0.0)},       // pi-
+         {}});
+    ParameterReader params;
+    params.readFromFile("parameters.dat");
+    params.setVal("read_in_mode", 9);
+    params.setVal("read_in_real_mixed_events", 0);
+    params.setVal("particle_monval", 211);
+    params.setVal("rap_type", 1);
+    params.setVal("compute_correlation", 0);
+    params.setVal("rapidity_distribution", 0);
+    auto random = std::make_shared<RandomUtil::Random>(2);
+    auto samples = std::make_shared<particleSamples>(params, path, random);
+    samples->read_in_particle_samples_and_filter();
+    ASSERT_EQ(samples->get_number_of_events(), 3);
+
+    singleParticleSpectra spectra(params, path, random);
+    spectra.calculate_Qn_vector_shell(samples);
+    spectra.output_spectra_and_Qn_results();
+
+    // Integrated: dN/dy = 3 tracks / (3 events * 1 unit of rapidity), with a
+    // Poisson error; v_n = <cos(n phi)> + i <sin(n phi)> over the 3 tracks.
+    const auto rows = read_rows(path + "/particle_211_vndata_y_-0.5_0.5.dat");
+    // Identified particles keep harmonics n < 6: rows n = 0..5, then 99.
+    ASSERT_EQ(rows.size(), 7u);
+    EXPECT_NEAR(rows[0][1], 1.0, 1e-8);  // 8 printed digits
+    EXPECT_NEAR(rows[0][2], std::sqrt(3.0) / 3.0, 1e-8);
+    EXPECT_NEAR(rows[0][3], 2.0 / 3.0, 1e-7);  // mean pT
+    EXPECT_NEAR(rows[1][1], (1.0 + std::cos(M_PI / 4)) / 3.0, 1e-7);
+    EXPECT_NEAR(rows[1][3], (1.0 + std::sin(M_PI / 4)) / 3.0, 1e-7);
+    EXPECT_NEAR(rows[2][1], (1.0 - 1.0 + 0.0) / 3.0, 1e-7);
+    EXPECT_NEAR(rows[2][3], (0.0 + 0.0 + 1.0) / 3.0, 1e-7);
+    EXPECT_DOUBLE_EQ(rows[6][0], 99);
+    EXPECT_DOUBLE_EQ(rows[6][1], 3.0);  // total count
+    EXPECT_DOUBLE_EQ(rows[6][2], 3.0);  // number of events
+
+    // Differential: dN/(2 pi pT dpT dy) per event in 41 bins of width
+    // 4.0/41 GeV from 0.05 GeV. The pT = 0.5 GeV tracks land in bin 4 and
+    // the pT = 1.0 GeV track in bin 9; every other bin is empty.
+    const double dpT = 4.0 / 41.0;
+    const auto diff =
+        read_rows(path + "/particle_211_vndata_diff_y_-0.5_0.5.dat");
+    ASSERT_EQ(diff.size(), 41u);
+    for (std::size_t ipT = 0; ipT < diff.size(); ipT++) {
+        const auto &row = diff[ipT];
+        double count = 0.0, pT = 0.0;
+        if (ipT == 4) count = 2.0, pT = 0.5;
+        if (ipT == 9) count = 1.0, pT = 1.0;
+        EXPECT_DOUBLE_EQ(row.back(), count) << "bin " << ipT;
+        if (count == 0.0) {
+            EXPECT_DOUBLE_EQ(row[2], 0.0) << "bin " << ipT;
+            continue;
+        }
+        EXPECT_NEAR(row[0], pT, 1e-7);
+        EXPECT_NEAR(row[2], count / 3.0 / pT / dpT / (2 * M_PI), 1e-6);
+        EXPECT_NEAR(
+            row[3], std::sqrt(count) / 3.0 / pT / dpT / (2 * M_PI), 1e-6);
+    }
+    // v_2(pT) in bin 4 from tracks at phi = 0 and pi/4: cos 2phi = 1 and 0.
+    EXPECT_NEAR(diff[4][8], 0.5, 1e-7);
+    EXPECT_NEAR(diff[4][10], 0.5, 1e-7);  // sin 2phi = 0 and 1
+}
+
+TEST(Analysis, NetParticleYieldDistributionCountsEachEvent) {
+    // Net pi+ minus pi- inside |y| < 0.5 is +2, 0, -2, and +2 in four events;
+    // tracks outside the window and other species are not counted.
+    using test_fixtures::track_from_rapidity;
+    const double m = 0.13957;
+    const auto pip = [&](double y) {
+        return track_from_rapidity(211, m, 0.5, y, 0.0);
+    };
+    const auto pim = [&](double y) {
+        return track_from_rapidity(-211, m, 0.5, y, 0.0);
+    };
+    const std::string path = "test_net_yield";
+    test_fixtures::write_binary_events(
+        path,
+        {{pip(0.0), pip(0.2), pim(0.9)},
+         {pip(0.1), pim(-0.1), track_from_rapidity(321, 0.4937, 0.5, 0.0, 0.0)},
+         {pip(0.0), pim(0.0), pim(0.3), pim(-0.4)},
+         {pip(0.0), pip(-0.2), pip(0.7)}});
+    ParameterReader params;
+    params.readFromFile("parameters.dat");
+    params.setVal("read_in_mode", 9);
+    params.setVal("read_in_real_mixed_events", 0);
+    params.setVal("particle_monval", 211);
+    params.setVal("rap_type", 1);
+    params.setVal("analyze_ebe_yield", 1);
+    params.setVal("net_particle_flag", 1);
+    auto samples = std::make_shared<particleSamples>(
+        params, path, std::make_shared<RandomUtil::Random>(4));
+    samples->read_in_particle_samples_and_filter();
+    ASSERT_EQ(samples->get_number_of_events(), 4);
+    EXPECT_EQ(samples->get_number_of_anti_particles(2), 3);
+
+    particle_yield_distribution yields(params, path);
+    yields.collect_particle_yield_distribution(samples);
+    yields.output_particle_yield_distribution();
+
+    std::map<int, double> probability;
+    for (const auto &row :
+         read_rows(path + "/particle_0211_yield_distribution_y.dat")) {
+        if (row[1] > 0.0) probability[static_cast<int>(row[0])] = row[1];
+    }
+    ASSERT_EQ(probability.size(), 3u);
+    EXPECT_DOUBLE_EQ(probability[2], 0.5);
+    EXPECT_DOUBLE_EQ(probability[0], 0.25);
+    EXPECT_DOUBLE_EQ(probability[-2], 0.25);
 }
 
 }  // namespace
