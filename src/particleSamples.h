@@ -47,6 +47,8 @@ class particleSamples {
 
     //! perform resonance feed down for all unstable particles
     int resonance_feed_down_flag;
+    bool parallel_resonance_decays_ = false;
+    std::shared_ptr<RandomUtil::Random> decay_rng_;
     int resonance_weak_feed_down_flag;
     //! perform resonance decays for only selected particle species
     int select_resonances_flag;

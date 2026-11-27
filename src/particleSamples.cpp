@@ -1,12 +1,14 @@
 // Copyright Chun Shen @ 2016
 #include "particleSamples.h"
 
+#include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <list>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -88,6 +90,10 @@ particleSamples::particleSamples(
     resonance_weak_feed_down_flag =
         (paraRdr_.getVal("resonance_weak_feed_down_flag"));
     decayer_ptr = new particle_decay(ran_gen, resonance_weak_feed_down_flag);
+    decay_rng_ = ran_gen;
+    if (paraRdr.exist("resonance_decay_parallel")) {
+        parallel_resonance_decays_ = paraRdr.getVal("resonance_decay_parallel") == 1;
+    }
     resonance_feed_down_flag = paraRdr_.getVal("resonance_feed_down_flag");
     if (resonance_weak_feed_down_flag == 1) {
         resonance_feed_down_flag = 1;
@@ -2105,37 +2111,73 @@ int particleSamples::read_in_particle_samples_mixed_event_Sangwook() {
 void particleSamples::perform_resonance_feed_down(
     vector<vector<particle_info> *> *input_particle_list) {
     messager.info("perform resonance decays... ");
-    // loop over events
-    int ievent = 0;
-    for (auto &ev_i : (*input_particle_list)) {
-        // create a temporary particle list
-        std::list<particle_info> current_ev_list;
+    const long event_count = input_particle_list->size();
+    if (event_count == 0) return;
 
-        // copy all particles into the temp list
-        for (auto &part_i : (*ev_i)) {
-            current_ev_list.push_back(part_i);
-        }
-
-        (*input_particle_list)[ievent]->clear();
-
-        // perform resonance decays
-        while (current_ev_list.size() > 0) {
-            auto part_i = current_ev_list.front();
-            current_ev_list.pop_front();
-            vector<particle_info> daughter_list;
-            decayer_ptr->perform_decays(part_i, daughter_list);
-            for (auto &daughter_i : daughter_list) {
-                if (decayer_ptr->check_particle_stable(daughter_i) == 1) {
-                    (*input_particle_list)[ievent]->push_back(daughter_i);
-                } else {
-                    current_ev_list.push_back(daughter_i);
+    auto decay_event = [&](vector<particle_info> &event,
+                           vector<particle_info> &queue,
+                           vector<particle_info> &daughters,
+                           RandomUtil::Random &ran) {
+        queue.clear();
+        queue.swap(event);
+        const auto original_size = queue.size();
+        try {
+            event.reserve(original_size);
+            for (size_t i = 0; i < queue.size(); i++) {
+                daughters.clear();
+                decayer_ptr->perform_decays(queue[i], daughters, ran);
+                for (const auto &daughter : daughters) {
+                    if (decayer_ptr->check_particle_stable(daughter)) {
+                        event.push_back(daughter);
+                    } else {
+                        queue.push_back(daughter);
+                    }
                 }
             }
-            daughter_list.clear();
+        } catch (...) {
+            queue.resize(original_size);
+            queue.swap(event);
+            throw;
         }
-        current_ev_list.clear();
-        ievent++;
+    };
+
+    if (!parallel_resonance_decays_) {
+        vector<particle_info> queue, daughters;
+        for (auto *event : *input_particle_list) {
+            decay_event(*event, queue, daughters, *decay_rng_);
+        }
+        return;
     }
+
+    // Derive each batch's event streams before scheduling any workers.
+    const auto key_hi = decay_rng_->rand_uint32();
+    const auto key_lo = decay_rng_->rand_uint32();
+    std::exception_ptr failure;
+#ifdef _OPENMP
+#pragma omp parallel if (event_count > 1)
+#endif
+    {
+        vector<particle_info> queue, daughters;
+#ifdef _OPENMP
+#pragma omp for schedule(dynamic)
+#endif
+        for (long i = 0; i < event_count; i++) {
+            try {
+                const std::array<std::uint32_t, 3> stream_key{
+                    key_hi, key_lo, static_cast<std::uint32_t>(i)};
+                RandomUtil::Random ran(stream_key);
+                decay_event(*(*input_particle_list)[i], queue, daughters, ran);
+            } catch (...) {
+#ifdef _OPENMP
+#pragma omp critical(resonance_decay_failure)
+#endif
+                {
+                    if (!failure) failure = std::current_exception();
+                }
+            }
+        }
+    }
+    if (failure) std::rethrow_exception(failure);
 }
 
 void particleSamples::perform_weak_resonance_feed_down_Sigma_to_Lambda() {

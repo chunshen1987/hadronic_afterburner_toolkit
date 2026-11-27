@@ -10,6 +10,7 @@ set(CMAKE_INSTALL_RPATH ${CMAKE_HOME_DIRECTORY})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_package ( ZLIB REQUIRED )
+find_package(OpenMP QUIET)
 if ( ZIB_FOUND )
     include_directories( ${ZLIB_INCLUDE_DIRS} )
 endif ( ZIB_FOUND)

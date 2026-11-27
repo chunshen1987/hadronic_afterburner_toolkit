@@ -23,6 +23,13 @@ else (link_with_lib)
     target_link_libraries (${exename} ${ZLIB_LIBRARIES})
 endif (link_with_lib)
 
+if (OpenMP_CXX_FOUND)
+    target_link_libraries(${libname} OpenMP::OpenMP_CXX)
+    if (NOT link_with_lib)
+        target_link_libraries(${exename} OpenMP::OpenMP_CXX)
+    endif ()
+endif ()
+
 if (APPLE)
     set_target_properties (${libname} PROPERTIES COMPILE_FLAGS "-DAPPLE")
     set_target_properties (${exename} PROPERTIES COMPILE_FLAGS "-DAPPLE")

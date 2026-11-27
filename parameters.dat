@@ -27,6 +27,7 @@ resonance_weak_feed_down_flag = 0    # include weak feed down contribution
 resonance_feed_down_flag = 0  # perform resonance feed down
                               # (will read in all hadrons and filter particle
                               #  after decays are performed)
+resonance_decay_parallel = 0  # use independent event streams and OpenMP when available
 resonance_weak_feed_down_Sigma_to_Lambda_flag = 0  # include weak feed down contribution
                                                    # turn on only for Lambda (monval=3122)
                                                    # for Sigma^0 -> Lambda + gamma

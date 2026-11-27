@@ -46,3 +46,12 @@ files for ensemble normalization if the raw pair counts were not saved.
 
 Particle yield distrbution from a given pT and rapidity cut can be collected from UrQMD outputs
 
+### Parallel resonance feed-down
+
+With resonance feed-down enabled, set `resonance_decay_parallel=1` to
+assign independent random streams to events. CMake enables OpenMP when
+available, and `OMP_NUM_THREADS` controls the worker count. For a fixed
+`randomSeed` and event buffer size, the results in this mode are independent
+of the worker count. The default `resonance_decay_parallel=0` uses a single
+sequential random stream.
+

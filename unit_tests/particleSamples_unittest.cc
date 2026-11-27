@@ -9,6 +9,10 @@
 #include "gtest/gtest.h"
 #include "zlib.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 using std::string;
 
 namespace {
@@ -39,6 +43,113 @@ TEST(ParticleDecay, ConservesFourMomentumForRestingAndMovingMothers) {
     }
 }
 
+TEST(ParticleDecay, ConservesRoundedFourMomentumAtLargeBoost) {
+    particle_decay decayer(std::make_shared<RandomUtil::Random>(24680), 0);
+    for (int pdg : {113, 223, 225}) {
+        int four_body = 0;
+        for (double gamma : {3.0, 30.0, 300.0}) {
+            particle_info mother{};
+            mother.monval = pdg;
+            mother.mass = decayer.get_particle_mass(pdg);
+            const double momentum = mother.mass * std::sqrt(gamma * gamma - 1);
+            mother.E = static_cast<float>(gamma * mother.mass);
+            mother.px = static_cast<float>(0.36 * momentum);
+            mother.py = static_cast<float>(-0.48 * momentum);
+            mother.pz = static_cast<float>(0.80 * momentum);
+
+            for (int sample = 0; sample < 30; sample++) {
+                std::vector<particle_info> daughters;
+                decayer.perform_decays(mother, daughters);
+                if (daughters.size() == 4) four_body++;
+                double energy = 0, px = 0, py = 0, pz = 0;
+                for (const auto &daughter : daughters) {
+                    energy += daughter.E;
+                    px += daughter.px;
+                    py += daughter.py;
+                    pz += daughter.pz;
+                    const double mass_squared =
+                        daughter.E * daughter.E - daughter.px * daughter.px
+                        - daughter.py * daughter.py - daughter.pz * daughter.pz;
+                    EXPECT_NEAR(mass_squared, daughter.mass * daughter.mass,
+                                1e-10);
+                }
+                const double tolerance = 1e-12 * mother.E;
+                EXPECT_NEAR(energy, mother.E, tolerance);
+                EXPECT_NEAR(px, mother.px, tolerance);
+                EXPECT_NEAR(py, mother.py, tolerance);
+                EXPECT_NEAR(pz, mother.pz, tolerance);
+            }
+        }
+        if (pdg == 225) {
+            EXPECT_GT(four_body, 0);
+        }
+    }
+}
+
+TEST(ParticleDecay, SamplesFourBodyAndSubthresholdChannels) {
+    particle_decay decayer(std::make_shared<RandomUtil::Random>(12345), 0);
+    int four_body = 0;
+    for (int pdg : {225, 10333}) {
+        particle_info mother{};
+        mother.monval = pdg;
+        mother.mass = decayer.get_particle_mass(pdg);
+        mother.pz = 0.4;
+        mother.E = std::hypot(mother.mass, mother.pz);
+        for (int sample = 0; sample < 100; sample++) {
+            std::vector<particle_info> daughters;
+            decayer.perform_decays(mother, daughters);
+            EXPECT_TRUE(daughters.size() == 2 || daughters.size() == 4);
+            if (daughters.size() == 4) four_body++;
+            double energy = 0.0, px = 0.0, py = 0.0, pz = 0.0;
+            int charge = 0, strangeness = 0;
+            bool sampled_mass = false;
+            for (const auto &daughter : daughters) {
+                energy += daughter.E;
+                px += daughter.px;
+                py += daughter.py;
+                pz += daughter.pz;
+                charge += decayer.get_particle_charge(daughter.monval);
+                strangeness +=
+                    decayer.get_particle_strange_number(daughter.monval);
+                if (daughter.mass < decayer.get_particle_mass(daughter.monval)) {
+                    sampled_mass = true;
+                    EXPECT_EQ(decayer.check_particle_stable(daughter), 0);
+                }
+            }
+            if (pdg == 10333) {
+                EXPECT_TRUE(sampled_mass);
+            }
+            EXPECT_NEAR(energy, mother.E, 1e-12);
+            EXPECT_NEAR(px, mother.px, 1e-12);
+            EXPECT_NEAR(py, mother.py, 1e-12);
+            EXPECT_NEAR(pz, mother.pz, 1e-12);
+            EXPECT_EQ(charge, 0);
+            EXPECT_EQ(strangeness, 0);
+        }
+    }
+    EXPECT_GT(four_body, 0);
+}
+
+TEST(ParticleDecay, SkipsExactThresholdAndKeepsTerminalResonance) {
+    particle_decay decayer(std::make_shared<RandomUtil::Random>(12345), 0);
+    particle_info mother{};
+    mother.monval = 225;
+    mother.E = mother.mass = 4 * decayer.get_particle_mass(111);
+    for (int sample = 0; sample < 30; sample++) {
+        std::vector<particle_info> daughters;
+        decayer.perform_decays(mother, daughters);
+        EXPECT_EQ(daughters.size(), 2u);
+    }
+
+    mother.monval = 113;
+    mother.E = mother.mass = 2 * decayer.get_particle_mass(211);
+    std::vector<particle_info> daughters;
+    decayer.perform_decays(mother, daughters);
+    ASSERT_EQ(daughters.size(), 1u);
+    EXPECT_EQ(daughters.front().monval, mother.monval);
+    EXPECT_EQ(decayer.check_particle_stable(daughters.front()), 1);
+}
+
 TEST(particleSamples, RapidityShiftPreservesHbtPhase) {
     ParameterReader params;
     params.readFromFile("parameters.dat");
@@ -61,6 +172,52 @@ TEST(particleSamples, RapidityShiftPreservesHbtPhase) {
         (pair[0].E - pair[1].E) * (pair[0].t - pair[1].t)
         - (pair[0].pz - pair[1].pz) * (pair[0].z - pair[1].z);
     EXPECT_NEAR(phase, -0.2, 1e-12);
+}
+
+TEST(particleSamples, ResonanceDecayStreamsAreIndependentOfWorkerCount) {
+    ParameterReader params;
+    params.readFromFile("parameters.dat");
+    params.setVal("read_in_mode", 0);
+    params.setVal("resonance_feed_down_flag", 1);
+    params.setVal("resonance_decay_parallel", 1);
+    const auto run = [&params](int threads) {
+#ifdef _OPENMP
+        const int old_threads = omp_get_max_threads();
+        omp_set_num_threads(threads);
+#else
+        (void)threads;
+#endif
+        particleSamples samples(
+            params, "test_reader_files", std::make_shared<RandomUtil::Random>(4));
+        particle_info mother{};
+        mother.monval = 225;
+        mother.E = mother.mass = 1.275;
+        std::vector<std::vector<particle_info>> events(
+            8, std::vector<particle_info>(32, mother));
+        std::vector<std::vector<particle_info> *> event_ptrs;
+        for (auto &event : events) event_ptrs.push_back(&event);
+        samples.perform_resonance_feed_down(&event_ptrs);
+#ifdef _OPENMP
+        omp_set_num_threads(old_threads);
+#endif
+        return events;
+    };
+
+    const auto one = run(1);
+    const auto four = run(4);
+    EXPECT_NE(one[0][0].px, one[1][0].px);
+    for (size_t i = 0; i < one.size(); i++) {
+        ASSERT_EQ(one[i].size(), four[i].size());
+        for (size_t j = 0; j < one[i].size(); j++) {
+            const auto &a = one[i][j], &b = four[i][j];
+            EXPECT_EQ(a.monval, b.monval);
+            EXPECT_EQ(a.E, b.E);
+            EXPECT_EQ(a.px, b.px);
+            EXPECT_EQ(a.py, b.py);
+            EXPECT_EQ(a.pz, b.pz);
+            EXPECT_EQ(a.t, b.t);
+        }
+    }
 }
 
 TEST(particleSamples, DefaultConstructor) {
