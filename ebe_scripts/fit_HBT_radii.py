@@ -13,18 +13,27 @@ Q_CUTS = (0.05, 0.075, 0.1, 0.125, 0.15)
 HEADER = (
     "# q_cut[GeV]  lambda  lambda_err  R_out[fm]  R_out_err[fm]  "
     "R_side[fm]  R_side_err[fm]  R_long[fm]  R_long_err[fm]  "
-    "R_os[fm]  R_os_err[fm]  R_ol[fm]  R_ol_err[fm]"
+    "R_os_sq[fm^2]  R_os_sq_err[fm^2]  R_ol_sq[fm^2]  R_ol_sq_err[fm^2]"
 )
 
 
-def gaussian_3d(q_arr, lambda_, R_out, R_side, R_long, R_os, R_ol):
+def gaussian_3d(q_arr, lambda_, R_out, R_side, R_long, R_os_sq, R_ol_sq):
     """Evaluate the Gaussian parametrization from arXiv:1403.4972v1."""
     q_out, q_side, q_long = q_arr
     exponent = (
         (R_out * q_out)**2 + (R_side * q_side)**2 + (R_long * q_long)**2
-        + 2 * q_out * q_side * R_os**2 + 2 * q_out * q_long * R_ol**2
+        + 2 * q_out * q_side * R_os_sq + 2 * q_out * q_long * R_ol_sq
     )
     return lambda_ * np.exp(-exponent / hbarc**2)
+
+
+def gaussian_from_factors(q_arr, lambda_, out_core, side, long, os_mix, ol_mix):
+    # This triangular factor parametrizes a positive-definite width matrix
+    # with no side-long term and signed out-side and out-long terms.
+    return gaussian_3d(
+        q_arr, lambda_, np.linalg.norm([out_core, os_mix, ol_mix]), side, long,
+        side * os_mix, long * ol_mix,
+    )
 
 
 def fit_radii(data, label):
@@ -49,15 +58,24 @@ def fit_radii(data, label):
             continue
         try:
             params, covariance = curve_fit(
-                gaussian_3d, q[selected].T, correlation[selected],
-                p0=(1.0, 5.0, 5.0, 5.0, 0.1, 0.1),
+                gaussian_from_factors, q[selected].T, correlation[selected],
+                p0=(1.0, 5.0, 5.0, 5.0, 0.0, 0.0),
+                bounds=((0, 1e-12, 1e-12, 1e-12, -np.inf, -np.inf), np.inf),
                 sigma=error[selected], absolute_sigma=True,
             )
         except RuntimeError as error_message:
             print(f"{label}, q < {q_cut:g} GeV: {error_message}", file=sys.stderr)
             continue
-        output[index, 1::2] = params
-        output[index, 2::2] = np.sqrt(np.diag(covariance))
+        lambda_, out_core, side, long, os_mix, ol_mix = params
+        out = np.linalg.norm([out_core, os_mix, ol_mix])
+        output[index, 1::2] = [lambda_, out, side, long, side * os_mix,
+                               long * ol_mix]
+        jacobian = np.eye(6)
+        jacobian[1, [1, 4, 5]] = np.array([out_core, os_mix, ol_mix]) / out
+        jacobian[4, [2, 4]] = [os_mix, side]
+        jacobian[5, [3, 5]] = [ol_mix, long]
+        variances = np.einsum("ij,jk,ik->i", jacobian, covariance, jacobian)
+        output[index, 2::2] = np.sqrt(np.maximum(variances, 0))
     return output
 
 

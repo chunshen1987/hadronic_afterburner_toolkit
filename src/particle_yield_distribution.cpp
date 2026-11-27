@@ -17,13 +17,6 @@ particle_yield_distribution::particle_yield_distribution(
     ParameterReader &paraRdr, std::string path)
     : paraRdr_(paraRdr), path_(path) {
     particle_monval = paraRdr_.getVal("particle_monval");
-    if (particle_monval == 333) {
-        // phi(1020) is reconstructed from (K^+, K^-) pairs
-        reconst_branching_ratio = 0.489;
-    } else {
-        reconst_branching_ratio = 1.0;
-    }
-
     net_particle_flag = paraRdr_.getVal("net_particle_flag");
     n_max = 6000;
     number_of_events = new int[n_max];
@@ -57,66 +50,22 @@ void particle_yield_distribution::collect_particle_yield_distribution(
 }
 
 void particle_yield_distribution::collect_particle_yield(int event_id) {
-    int number_of_particles = particle_list->get_number_of_particles(event_id);
-
+    const auto passes_cuts = [this](const particle_info &particle) {
+        const double rapidity = rap_type == 0 ? particle.rap_eta : particle.rap_y;
+        const double pT = std::hypot(particle.px, particle.py);
+        return rapidity > rap_min && rapidity < rap_max
+               && pT > pT_min && pT < pT_max;
+    };
     int count = 0;
-    for (int i = 0; i < number_of_particles; i++) {
-        // double pz_local = particle_list->get_particle(event_id, i).pz;
-        // double E_local = particle_list->get_particle(event_id, i).E;
-
-        double rap_local;
-        if (rap_type == 0) {
-            // double mass = particle_list->get_particle(event_id, i).mass;
-            // double pmag = sqrt(E_local * E_local - mass * mass);
-            // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
-            rap_local = particle_list->get_particle(event_id, i).rap_eta;
-        } else {
-            // rap_local = 0.5 * log((E_local + pz_local) / (E_local -
-            // pz_local));
-            rap_local = particle_list->get_particle(event_id, i).rap_y;
-        }
-
-        if (rap_local > rap_min && rap_local < rap_max) {
-            double px_local = particle_list->get_particle(event_id, i).px;
-            double py_local = particle_list->get_particle(event_id, i).py;
-            double p_perp = sqrt(px_local * px_local + py_local * py_local);
-            if (p_perp > pT_min && p_perp < pT_max) {
-                count++;
-            }
-        }
+    for (int i = 0; i < particle_list->get_number_of_particles(event_id); i++) {
+        count += passes_cuts(particle_list->get_particle(event_id, i));
     }
     int count_anti_particle = 0;
     if (net_particle_flag == 1) {
-        int number_of_anti_particles =
-            particle_list->get_number_of_anti_particles(event_id);
-        for (int i = 0; i < number_of_anti_particles; i++) {
-            // double pz_local = particle_list->get_anti_particle(event_id,
-            // i).pz; double E_local =
-            // particle_list->get_anti_particle(event_id, i).E;
-
-            double rap_local;
-            if (rap_type == 0) {
-                // double mass =
-                //     particle_list->get_anti_particle(event_id, i).mass;
-                // double pmag = sqrt(E_local * E_local - mass * mass);
-                // rap_local = 0.5 * log((pmag + pz_local) / (pmag - pz_local));
-                rap_local = particle_list->get_particle(event_id, i).rap_eta;
-            } else {
-                // rap_local =
-                //     0.5 * log((E_local + pz_local) / (E_local - pz_local));
-                rap_local = particle_list->get_particle(event_id, i).rap_y;
-            }
-
-            if (rap_local > rap_min && rap_local < rap_max) {
-                double px_local =
-                    particle_list->get_anti_particle(event_id, i).px;
-                double py_local =
-                    particle_list->get_anti_particle(event_id, i).py;
-                double p_perp = sqrt(px_local * px_local + py_local * py_local);
-                if (p_perp > pT_min && p_perp < pT_max) {
-                    count_anti_particle++;
-                }
-            }
+        const int anti_count = particle_list->get_number_of_anti_particles(event_id);
+        for (int i = 0; i < anti_count; i++) {
+            count_anti_particle +=
+                passes_cuts(particle_list->get_anti_particle(event_id, i));
         }
     }
     int idx = count - count_anti_particle + n_max / 2;
@@ -155,10 +104,10 @@ void particle_yield_distribution::output_particle_yield_distribution() {
     output << "# N  P(N)" << endl;
 
     for (int i = 0; i < n_max; i++) {
-        double p_N =
-            (static_cast<double>(number_of_events[i])
-             / static_cast<double>(total_number_of_events)
-             / reconst_branching_ratio);
+        const double p_N = total_number_of_events > 0
+                               ? static_cast<double>(number_of_events[i])
+                                     / total_number_of_events
+                               : 0.0;
         output << scientific << setw(18) << setprecision(8) << i - n_max / 2
                << "   " << p_N << endl;
     }

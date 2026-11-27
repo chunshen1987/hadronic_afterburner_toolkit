@@ -7,6 +7,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 
 #include "arsenal.h"
@@ -399,30 +400,46 @@ long double breakup_momentum(
            / (2 * mass);
 }
 
-// Rounded input four-vectors can disagree with the listed mass, especially
-// for fast particles read from single-precision formats.
-double rest_frame_mass(const particle_info &mother, long double threshold) {
+struct DecayFrame {
+    double E, px, py, pz, mass;
+};
+
+DecayFrame decay_frame(const particle_info &mother, long double threshold) {
     const long double E = mother.E;
     const long double px = mother.px, py = mother.py, pz = mother.pz;
-    const long double mass_squared = E * E - (px * px + py * py + pz * pz);
-    if (mass_squared > threshold * threshold) {
+    const long double momentum_squared = px * px + py * py + pz * pz;
+    const long double mass_squared = E * E - momentum_squared;
+    if (E > 0.0 && mass_squared >= threshold * threshold) {
         const double mass = std::sqrt(mass_squared);
-        if (mass > threshold) return mass;
+        if (mass > 0.0 && mass >= threshold) {
+            return {mother.E, mother.px, mother.py, mother.pz, mass};
+        }
     }
-    // Keep a decay selected using the listed mass when rounding closes it.
-    return mother.mass;
+
+    // A channel near threshold can close when a single-precision file rounds
+    // the input four-vector. Repair only rounding-sized energy discrepancies.
+    const double on_shell_energy = std::hypot(
+        mother.mass, static_cast<double>(std::sqrt(momentum_squared)));
+    const double tolerance =
+        8 * std::numeric_limits<float>::epsilon() * on_shell_energy;
+    if (mother.mass > 0.0 && mother.mass >= threshold && mother.E > 0.0
+        && std::abs(mother.E - on_shell_energy) <= tolerance) {
+        return {on_shell_energy, mother.px, mother.py, mother.pz, mother.mass};
+    }
+    throw std::runtime_error(
+        "Stored four-momentum cannot support decay of PDG "
+        + std::to_string(mother.monval));
 }
 
-void boost_from_rest_frame(
-    const particle_info &mother, double mass, particle_info &daughter) {
-    const double dot = mother.px * daughter.px + mother.py * daughter.py
-                       + mother.pz * daughter.pz;
+void boost_from_rest_frame(const DecayFrame &frame, particle_info &daughter) {
+    const double dot = frame.px * daughter.px + frame.py * daughter.py
+                       + frame.pz * daughter.pz;
     const double coefficient =
-        (daughter.E + dot / (mother.E + mass)) / mass;
-    daughter.E = (mother.E * daughter.E + dot) / mass;
-    daughter.px += coefficient * mother.px;
-    daughter.py += coefficient * mother.py;
-    daughter.pz += coefficient * mother.pz;
+        (daughter.E + dot / (frame.E + frame.mass)) / frame.mass;
+    daughter.E = (frame.E * daughter.E + dot) / frame.mass;
+    daughter.px += coefficient * frame.px;
+    daughter.py += coefficient * frame.py;
+    daughter.pz += coefficient * frame.pz;
 }
 }  // namespace
 
@@ -442,8 +459,8 @@ void particle_decay::perform_n_body_decay(
         throw std::runtime_error("Closed phase space for PDG "
                                  + std::to_string(mother.monval));
     }
-    const double mass = rest_frame_mass(mother, threshold);
-    const long double kinetic = mass - threshold;
+    const auto frame = decay_frame(mother, threshold);
+    const long double kinetic = frame.mass - threshold;
     long double max_weight = 1.0;
     for (int i = 1; i < count; i++) {
         max_weight *= breakup_momentum(
@@ -487,13 +504,11 @@ void particle_decay::perform_n_body_decay(
             daughters[0].py = -daughter.py;
             daughters[0].pz = -daughter.pz;
         } else {
-            particle_info subsystem{};
-            subsystem.E = subsystem_energy;
-            subsystem.px = -daughter.px;
-            subsystem.py = -daughter.py;
-            subsystem.pz = -daughter.pz;
+            const DecayFrame subsystem{subsystem_energy, -daughter.px,
+                                       -daughter.py, -daughter.pz,
+                                       subsystem_mass};
             for (int j = 0; j < i; j++) {
-                boost_from_rest_frame(subsystem, subsystem_mass, daughters[j]);
+                boost_from_rest_frame(subsystem, daughters[j]);
             }
         }
     }
@@ -501,14 +516,14 @@ void particle_decay::perform_n_body_decay(
     const double width = get_particle_width(mother);
     double lifetime = 1e10;
     if (width > 1e-10) {
-        lifetime = -std::log(ran.rand_uniform()) * mother.E
-                   / (mass * width) * AfterburnerUtil::hbarc;
+        lifetime = -std::log(ran.rand_uniform()) * frame.E
+                   / (frame.mass * width) * AfterburnerUtil::hbarc;
     }
-    const double vx = mother.px / mother.E;
-    const double vy = mother.py / mother.E;
-    const double vz = mother.pz / mother.E;
+    const double vx = frame.px / frame.E;
+    const double vy = frame.py / frame.E;
+    const double vz = frame.pz / frame.E;
     for (auto &daughter : daughters) {
-        boost_from_rest_frame(mother, mass, daughter);
+        boost_from_rest_frame(frame, daughter);
         daughter.t = mother.t + lifetime;
         daughter.x = mother.x + vx * lifetime;
         daughter.y = mother.y + vy * lifetime;
@@ -537,16 +552,12 @@ void particle_decay::perform_two_body_decay(
     double m2 = daughter2.mass;
     double M_min = m1 + m2;
     if (M_pole < M_min) {
-        cout << "Error:particleSamples::perform_two_body_decay:"
-             << "can not found decays!" << endl;
-        cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2 << endl;
-        cout << "Mother: " << mother.monval
-             << ", daugther1: " << daughter1.monval
-             << ", daugther2: " << daughter2.monval << endl;
-        exit(1);
+        throw std::runtime_error(
+            "Listed mass is below the decay threshold for PDG "
+            + std::to_string(mother.monval));
     }
-    const double M_sampled = rest_frame_mass(mother, M_min);
-    const double p_lrf = breakup_momentum(M_sampled, m1, m2);
+    const auto frame = decay_frame(mother, M_min);
+    const double p_lrf = breakup_momentum(frame.mass, m1, m2);
 
     // randomly pick emission angle
     double phi = ran.rand_uniform() * 2 * M_PI;
@@ -564,9 +575,9 @@ void particle_decay::perform_two_body_decay(
     double p2_lrf_z = -p1_lrf_z;
 
     // compute mother velocity
-    double vx = mother.px / mother.E;
-    double vy = mother.py / mother.E;
-    double vz = mother.pz / mother.E;
+    double vx = frame.px / frame.E;
+    double vy = frame.py / frame.E;
+    double vz = frame.pz / frame.E;
 
     daughter1.E = E1_lrf;
     daughter1.px = p1_lrf_x;
@@ -576,13 +587,13 @@ void particle_decay::perform_two_body_decay(
     daughter2.px = p2_lrf_x;
     daughter2.py = p2_lrf_y;
     daughter2.pz = p2_lrf_z;
-    boost_from_rest_frame(mother, M_sampled, daughter1);
-    boost_from_rest_frame(mother, M_sampled, daughter2);
+    boost_from_rest_frame(frame, daughter1);
+    boost_from_rest_frame(frame, daughter2);
 
     double life_time = 1e10;
     if (M_width > 1e-10) {
         // compute life-time = gamma*1/\Gamma
-        double tau0 = mother.E / (M_sampled) * 1. / (M_width);
+        double tau0 = frame.E / frame.mass * 1. / (M_width);
         life_time = -tau0 * log(ran.rand_uniform());
         life_time *= AfterburnerUtil::hbarc;  // convert to fm
     }
@@ -615,46 +626,46 @@ void particle_decay::perform_three_body_decay(
     double m3 = daughter3.mass;
     double M_min = m1 + m2 + m3;
     if (M_pole < M_min) {
-        cout << "Error:particleSamples::perform_three_body_decay:"
-             << "can not found decays!" << endl;
-        cout << "M = " << M_pole << ", m1 = " << m1 << ", m2 = " << m2
-             << ", m3 = " << m3 << endl;
-        cout << "reso: " << mother.monval << ", m1: " << daughter1.monval
-             << ", m2: " << daughter2.monval << ", m3: " << daughter3.monval
-             << endl;
-        exit(1);
+        throw std::runtime_error(
+            "Listed mass is below the decay threshold for PDG "
+            + std::to_string(mother.monval));
     }
-    const double M_sampled = rest_frame_mass(mother, M_min);
-    // generate lrf E1, E2, and theta12 using accept and reject method
-    double E1_lrf, E2_lrf, E3_lrf, p1_lrf, p2_lrf, cos12_lrf;
-    do {
+    const auto frame = decay_frame(mother, M_min);
+    // Use kinetic energies to avoid subtracting nearly equal squares close
+    // to threshold. At equality all daughters are at rest in this frame.
+    double p1_lrf = 0.0, p2_lrf = 0.0, cos12_lrf = 1.0;
+    const double available = frame.mass - M_min;
+    if (available > 0.0) {
         do {
-            E1_lrf =
-                ran.rand_uniform() * (M_sampled - m1 - m2 - m3) + m1;
-            E2_lrf =
-                ran.rand_uniform() * (M_sampled - m1 - m2 - m3) + m2;
-        } while (E1_lrf + E2_lrf > M_sampled);
-        p1_lrf = sqrt(E1_lrf * E1_lrf - m1 * m1);
-        p2_lrf = sqrt(E2_lrf * E2_lrf - m2 * m2);
-        double E3_lrf = M_sampled - E1_lrf - E2_lrf;
-        cos12_lrf =
-            (E3_lrf * E3_lrf - p1_lrf * p1_lrf - p2_lrf * p2_lrf - m3 * m3)
-            / (2. * p1_lrf * p2_lrf);
-    } while (cos12_lrf < -1.0 || cos12_lrf > 1.0);
-    // now we get the a good sample
+            const double kinetic1 = ran.rand_uniform() * available;
+            const double kinetic2 = ran.rand_uniform() * available;
+            const double kinetic3 = available - kinetic1 - kinetic2;
+            if (kinetic3 < 0.0) {
+                cos12_lrf = 2.0;
+                continue;
+            }
+            const double p1_sq = kinetic1 * (kinetic1 + 2 * m1);
+            const double p2_sq = kinetic2 * (kinetic2 + 2 * m2);
+            const double p3_sq = kinetic3 * (kinetic3 + 2 * m3);
+            p1_lrf = std::sqrt(p1_sq);
+            p2_lrf = std::sqrt(p2_sq);
+            const double divisor = 2 * p1_lrf * p2_lrf;
+            cos12_lrf = divisor > 0.0 ? (p3_sq - p1_sq - p2_sq) / divisor : 2.0;
+        } while (!(cos12_lrf >= -1.0 && cos12_lrf <= 1.0));
+    }
 
     // sample the lifetime
     double life_time = 1e10;
     if (M_width > 1e-10) {
-        double tau = mother.E / (M_sampled) * 1. / M_width;
+        double tau = frame.E / frame.mass * 1. / M_width;
         life_time = -tau * log(ran.rand_uniform());
         life_time *= AfterburnerUtil::hbarc;  // convert unit to fm
     }
     // compute the decay position
     double decay_time = mother.t + life_time;
-    double decay_x = mother.x + mother.px / mother.E * life_time;
-    double decay_y = mother.y + mother.py / mother.E * life_time;
-    double decay_z = mother.z + mother.pz / mother.E * life_time;
+    double decay_x = mother.x + frame.px / frame.E * life_time;
+    double decay_y = mother.y + frame.py / frame.E * life_time;
+    double decay_z = mother.z + frame.pz / frame.E * life_time;
 
     // compute the momentum of decay daughters
     double tp2_lrf_x = p2_lrf * sqrt(1. - cos12_lrf * cos12_lrf);
@@ -674,7 +685,7 @@ void particle_decay::perform_three_body_decay(
     double p1_lrf_x = -p1_lrf * sin_theta * cos_ksi;
     double p1_lrf_y = p1_lrf * sin_theta * sin_ksi;
     double p1_lrf_z = p1_lrf * cos_theta;
-    E1_lrf = sqrt(
+    const double E1_lrf = sqrt(
         m1 * m1 + p1_lrf_x * p1_lrf_x + p1_lrf_y * p1_lrf_y
         + p1_lrf_z * p1_lrf_z);
     double p2_lrf_x =
@@ -684,7 +695,7 @@ void particle_decay::perform_three_body_decay(
         (tp2_lrf_x * (-cos_phi * cos_theta * sin_ksi - sin_phi * cos_ksi)
          + tp2_lrf_z * sin_theta * sin_ksi);
     double p2_lrf_z = tp2_lrf_x * (cos_phi * sin_theta) + tp2_lrf_z * cos_theta;
-    E2_lrf = sqrt(
+    const double E2_lrf = sqrt(
         m2 * m2 + p2_lrf_x * p2_lrf_x + p2_lrf_y * p2_lrf_y
         + p2_lrf_z * p2_lrf_z);
     double p3_lrf_x =
@@ -694,7 +705,7 @@ void particle_decay::perform_three_body_decay(
         (tp3_lrf_x * (-cos_phi * cos_theta * sin_ksi - sin_phi * cos_ksi)
          + tp3_lrf_z * (sin_theta * sin_ksi));
     double p3_lrf_z = tp3_lrf_x * cos_phi * sin_theta + tp3_lrf_z * cos_theta;
-    E3_lrf = sqrt(
+    const double E3_lrf = sqrt(
         m3 * m3 + p3_lrf_x * p3_lrf_x + p3_lrf_y * p3_lrf_y
         + p3_lrf_z * p3_lrf_z);
 
@@ -711,7 +722,7 @@ void particle_decay::perform_three_body_decay(
     daughter3.py = p3_lrf_y;
     daughter3.pz = p3_lrf_z;
     for (auto *daughter : {&daughter1, &daughter2, &daughter3}) {
-        boost_from_rest_frame(mother, M_sampled, *daughter);
+        boost_from_rest_frame(frame, *daughter);
         daughter->t = decay_time;
         daughter->x = decay_x;
         daughter->y = decay_y;

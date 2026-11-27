@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -19,6 +20,15 @@ HBT_correlation::HBT_correlation(
     std::shared_ptr<RandomUtil::Random> ran_gen)
     : paraRdr_(paraRdr), path_(path) {
     ran_gen_ptr_ = ran_gen;
+    const double group_size = paraRdr.exist("number_of_oversample_events")
+                                  ? paraRdr.getVal("number_of_oversample_events")
+                                  : 1.0;
+    if (!(group_size >= 1 && group_size <= std::numeric_limits<int>::max())
+        || std::floor(group_size) != group_size) {
+        throw std::runtime_error(
+            "number_of_oversample_events must be a positive integer");
+    }
+    oversamples_per_collision_ = static_cast<int>(group_size);
 
     long_comoving_boost = false;
     if (paraRdr_.getVal("long_comoving_boost") == 1) long_comoving_boost = true;
@@ -180,50 +190,49 @@ void HBT_correlation::calculate_HBT_correlation_function(
     set_particle_list(particle_list_in);
     const int nev = particle_list->get_number_of_events();
     if (nev == 0) return;
-    const int mixed_nev = particle_list->get_number_of_mixed_events();
-    if (mixed_nev == 0) {
+    const bool use_external = particle_list->uses_external_mixed_events();
+    const int mixed_nev =
+        use_external ? particle_list->get_number_of_mixed_events() : 0;
+    if (use_external && mixed_nev == 0) {
         throw std::runtime_error("HBT analysis requires a mixed-event batch");
     }
-    if (azimuthal_flag_ == 1) {
-        calculate_flow_event_plane_angle(2);
-    }
 
-    // first pairs from the same event
-    number_of_oversample_events_ = nev;
-    messager.info("Compute pairs from the same event ...");
-    messager.flush("info");
-
-    std::vector<int> event_list(number_of_oversample_events_, 0);
-    for (int isample = 0; isample < number_of_oversample_events_; isample++) {
-        event_list[isample] = isample;
-    }
-    combine_and_bin_particle_pairs(event_list);
-
-    // then pairs from mixed events
-    messager << "nev_mixed = " << mixed_nev;
-    messager.flush("info");
-    number_of_mixed_events_ = static_cast<int>(mixed_nev / 2) + 1;
-    messager.info("Compute pairs from the mixed event ...");
     for (int iev = 0; iev < nev; iev++) {
-        messager << "progess: " << iev << "/" << nev;
-        messager.flush("info");
-
-        std::vector<int> mixed_event_list(number_of_mixed_events_, 0);
-        int count = 0;
-        while (count < number_of_mixed_events_) {
-            int mixed_event_id = (ran_gen_ptr_->rand_int_uniform() % mixed_nev);
-            while (!particle_list->uses_external_mixed_events()
-                   && iev == mixed_event_id && mixed_nev != 1) {
-                mixed_event_id = (ran_gen_ptr_->rand_int_uniform() % mixed_nev);
+        if (use_external && pending_events_ == 0) {
+            for (int i = 0; i < mixed_nev / 2 + 1; i++) {
+                const int ref = ran_gen_ptr_->rand_int_uniform() % mixed_nev;
+                append_external_reference(ref, external_reference_);
             }
-            mixed_event_list[count] = mixed_event_id;
-            count++;
         }
-        combine_and_bin_particle_pairs_mixed_events(iev, mixed_event_list);
+        const int count = particle_list->get_number_of_particles(iev);
+        for (int i = 0; i < count; i++) {
+            pending_collision_.push_back(particle_list->get_particle(iev, i));
+        }
+        if (++pending_events_ == oversamples_per_collision_) finish_collision();
     }
 }
 
+void HBT_correlation::finish_collision() {
+    if (pending_events_ == 0) return;
+    if (azimuthal_flag_ == 1) set_event_plane(pending_collision_, 2);
+    bin_same_event_pairs(pending_collision_);
+
+    if (particle_list->uses_external_mixed_events()) {
+        bin_mixed_event_pairs(pending_collision_, external_reference_);
+        external_reference_.clear();
+    } else {
+        if (!previous_collision_.empty()) {
+            rotate_reference(previous_collision_, 0);
+            bin_mixed_event_pairs(pending_collision_, previous_collision_);
+        }
+        previous_collision_.swap(pending_collision_);
+    }
+    pending_collision_.clear();
+    pending_events_ = 0;
+}
+
 void HBT_correlation::output_HBTcorrelation() {
+    finish_collision();
     if (invariant_radius_flag_ == 1) output_correlation_function_inv();
 
     if (azimuthal_flag_ == 0) {
@@ -237,64 +246,48 @@ void HBT_correlation::output_HBTcorrelation() {
 //! The results is stored in the variable psi_ref
 //! This is needed when computing the azimuthal dependent HBT radii
 void HBT_correlation::calculate_flow_event_plane_angle(int n_order) {
-    int nev = particle_list->get_number_of_events();
-    double vn_real = 0.0;
-    double vn_imag = 0.0;
-    for (int iev = 0; iev < nev; iev++) {
-        int event_number_particle =
-            (particle_list->get_number_of_particles(iev));
-        for (int i = 0; i < event_number_particle; i++) {
-            double temp_px = particle_list->get_particle(iev, i).px;
-            double temp_py = particle_list->get_particle(iev, i).py;
-            double temp_phi = atan2(temp_py, temp_px);
-            vn_real += cos(n_order * temp_phi);
-            vn_imag += sin(n_order * temp_phi);
+    std::vector<particle_info> particles;
+    for (int iev = 0; iev < particle_list->get_number_of_events(); iev++) {
+        const int count = particle_list->get_number_of_particles(iev);
+        for (int i = 0; i < count; i++) {
+            particles.push_back(particle_list->get_particle(iev, i));
         }
     }
-    psi_ref = atan2(vn_imag, vn_real) / n_order;
+    set_event_plane(particles, n_order);
+}
+
+void HBT_correlation::set_event_plane(
+    const std::vector<particle_info> &particles, int harmonic) {
+    double real = 0.0, imag = 0.0;
+    for (const auto &particle : particles) {
+        const double angle = harmonic * std::atan2(particle.py, particle.px);
+        real += std::cos(angle);
+        imag += std::sin(angle);
+    }
+    psi_ref = std::atan2(imag, real) / harmonic;
 }
 
 void HBT_correlation::combine_and_bin_particle_pairs(
     std::vector<int> event_list) {
-    double hbarC_inv = 1. / hbarC;
-    std::vector<particle_info> temp_particle_list;
-    double particle_list_rapidity_cut_max = tanh(Krap_max_);
-    double particle_list_rapidity_cut_min = tanh(Krap_min_);
-    for (int j = 0; j < number_of_oversample_events_; j++) {
-        int event_id = event_list[j];
-        int event_number_particle =
-            (particle_list->get_number_of_particles(event_list[j]));
-        for (int i = 0; i < event_number_particle; i++) {
-            double temp_E = particle_list->get_particle(event_id, i).E;
-            double temp_pz = particle_list->get_particle(event_id, i).pz;
-            double temp_ratio = temp_pz / temp_E;
-            if (temp_ratio > particle_list_rapidity_cut_min
-                && temp_ratio < particle_list_rapidity_cut_max) {
-                particle_info temp_particle;
-                temp_particle.E = temp_E;
-                temp_particle.pz = temp_pz;
-                temp_particle.px = particle_list->get_particle(event_id, i).px;
-                temp_particle.py = particle_list->get_particle(event_id, i).py;
-                temp_particle.mass =
-                    (particle_list->get_particle(event_id, i).mass);
-                temp_particle.x = particle_list->get_particle(event_id, i).x;
-                temp_particle.y = particle_list->get_particle(event_id, i).y;
-                temp_particle.z = particle_list->get_particle(event_id, i).z;
-                temp_particle.t = particle_list->get_particle(event_id, i).t;
-                temp_particle_list.push_back(temp_particle);
-            }
+    std::vector<particle_info> particles;
+    for (int event : event_list) {
+        const int count = particle_list->get_number_of_particles(event);
+        for (int i = 0; i < count; i++) {
+            particles.push_back(particle_list->get_particle(event, i));
         }
     }
-    long long int number_of_particles = temp_particle_list.size();
-    unsigned long long int number_of_pairs =
-        (number_of_particles * (number_of_particles - 1) / 2);
+    bin_same_event_pairs(particles);
+}
 
-    // nested pair loop
-    messager << "number of pairs: " << number_of_pairs;
-    messager.flush("info");
+void HBT_correlation::bin_same_event_pairs(
+    const std::vector<particle_info> &temp_particle_list) {
+    double hbarC_inv = 1. / hbarC;
+    const double min_pair_beta = std::tanh(Krap_min_);
+    const double max_pair_beta = std::tanh(Krap_max_);
+    const auto number_of_particles = temp_particle_list.size();
     double KT_min_sq = KT_min * KT_min;
     double KT_max_sq = KT_max * KT_max;
-    for (int i = 0; i < number_of_particles; i++) {
+    for (std::size_t i = 0; i < number_of_particles; i++) {
         double particle_1_px = temp_particle_list[i].px;
         double particle_1_py = temp_particle_list[i].py;
         double particle_1_pz = temp_particle_list[i].pz;
@@ -304,7 +297,7 @@ void HBT_correlation::combine_and_bin_particle_pairs(
         double particle_1_z = temp_particle_list[i].z;
         double particle_1_t = temp_particle_list[i].t;
 
-        for (int j = i + 1; j < number_of_particles; j++) {
+        for (std::size_t j = i + 1; j < number_of_particles; j++) {
             double particle_2_px = temp_particle_list[j].px;
             double particle_2_py = temp_particle_list[j].py;
             double particle_2_pz = temp_particle_list[j].pz;
@@ -316,13 +309,16 @@ void HBT_correlation::combine_and_bin_particle_pairs(
 
             double K_z = 0.5 * (particle_1_pz + particle_2_pz);
             double K_E = 0.5 * (particle_1_E + particle_2_E);
-            double K_z_over_K_E = K_z / K_E;
+            if (!(K_E > std::abs(K_z))) continue;
+            const double K_z_over_K_E = K_z / K_E;
+            if (!(K_z_over_K_E > min_pair_beta && K_z_over_K_E < max_pair_beta))
+                continue;
 
             // K_T cut
             double K_x = 0.5 * (particle_1_px + particle_2_px);
             double K_y = 0.5 * (particle_1_py + particle_2_py);
             double K_perp_sq = K_x * K_x + K_y * K_y;
-            if (K_perp_sq < KT_min_sq || K_perp_sq > KT_max_sq) {
+            if (K_perp_sq < KT_min_sq || K_perp_sq >= KT_max_sq) {
                 continue;
             }
 
@@ -362,6 +358,7 @@ void HBT_correlation::combine_and_bin_particle_pairs(
             }
 
             // calculate qout and qside in lcms
+            if (K_perp == 0.0) continue;
             double cos_K_phi = K_x / K_perp;
             double sin_K_phi = K_y / K_perp;
 
@@ -464,114 +461,56 @@ void HBT_correlation::combine_and_bin_particle_pairs(
             }
         }
     }
-    temp_particle_list.clear();
+}
+
+void HBT_correlation::rotate_reference(
+    std::vector<particle_info> &reference, std::size_t first) {
+    const double angle = ran_gen_ptr_->rand_uniform() * 2. * M_PI;
+    const double cosine = std::cos(angle), sine = std::sin(angle);
+    for (std::size_t i = first; i < reference.size(); i++) {
+        auto &particle = reference[i];
+        const double px = particle.px;
+        particle.px = px * cosine - particle.py * sine;
+        particle.py = px * sine + particle.py * cosine;
+    }
+}
+
+void HBT_correlation::append_external_reference(
+    int event_id, std::vector<particle_info> &reference) {
+    const auto start = reference.size();
+    const int count = particle_list->get_number_of_particles_mixed_event(event_id);
+    for (int i = 0; i < count; i++) {
+        reference.push_back(particle_list->get_particle_from_mixed_event(event_id, i));
+    }
+    rotate_reference(reference, start);
 }
 
 void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
-    int event_id1, std::vector<int> mixed_event_list) {
-    long long int number_of_particles_1 =
-        (particle_list->get_number_of_particles(event_id1));
-    double particle_list_rapidity_cut_max = tanh(Krap_max_);
-    double particle_list_rapidity_cut_min = tanh(Krap_min_);
-    std::vector<particle_info> temp_particle_list_1;
-    for (int i = 0; i < number_of_particles_1; i++) {
-        double temp_E = particle_list->get_particle(event_id1, i).E;
-        double temp_pz = particle_list->get_particle(event_id1, i).pz;
-        double temp_ratio = temp_pz / temp_E;
-        if (temp_ratio > particle_list_rapidity_cut_min
-            && temp_ratio < particle_list_rapidity_cut_max) {
-            particle_info temp_particle;
-            temp_particle.E = temp_E;
-            temp_particle.pz = temp_pz;
-            temp_particle.px = particle_list->get_particle(event_id1, i).px;
-            temp_particle.py = particle_list->get_particle(event_id1, i).py;
-            temp_particle.mass = particle_list->get_particle(event_id1, i).mass;
-            temp_particle.x = particle_list->get_particle(event_id1, i).x;
-            temp_particle.y = particle_list->get_particle(event_id1, i).y;
-            temp_particle.t = particle_list->get_particle(event_id1, i).t;
-            temp_particle.z = particle_list->get_particle(event_id1, i).z;
-            temp_particle_list_1.push_back(temp_particle);
-        }
+    int event_id, std::vector<int> mixed_event_list) {
+    std::vector<particle_info> particles, reference;
+    const int count = particle_list->get_number_of_particles(event_id);
+    for (int i = 0; i < count; i++) {
+        particles.push_back(particle_list->get_particle(event_id, i));
     }
+    for (int ref : mixed_event_list) append_external_reference(ref, reference);
+    bin_mixed_event_pairs(particles, reference);
+}
 
-    // prepare for the mixed events
-    std::vector<particle_info> temp_particle_list_2;
-    for (int iev = 0; iev < number_of_mixed_events_; iev++) {
-        // introduce a random rotation for the mixed event
-        const double random_rotation = ran_gen_ptr_->rand_uniform() * 2 * M_PI;
-        const double cos_phi = cos(random_rotation);
-        const double sin_phi = sin(random_rotation);
-        int mixed_event_id = mixed_event_list[iev];
-        int event_number_particle =
-            (particle_list->get_number_of_particles_mixed_event(
-                mixed_event_id));
-        for (int i = 0; i < event_number_particle; i++) {
-            double temp_E =
-                (particle_list->get_particle_from_mixed_event(mixed_event_id, i)
-                     .E);
-            double temp_pz =
-                (particle_list->get_particle_from_mixed_event(mixed_event_id, i)
-                     .pz);
-            double temp_ratio = temp_pz / temp_E;
-            if (temp_ratio > particle_list_rapidity_cut_min
-                && temp_ratio < particle_list_rapidity_cut_max) {
-                particle_info temp_particle;
-
-                double px_temp =
-                    (particle_list
-                         ->get_particle_from_mixed_event(mixed_event_id, i)
-                         .px);
-                double py_temp =
-                    (particle_list
-                         ->get_particle_from_mixed_event(mixed_event_id, i)
-                         .py);
-                temp_particle.px = px_temp * cos_phi - py_temp * sin_phi;
-                temp_particle.py = px_temp * sin_phi + py_temp * cos_phi;
-                double x_temp =
-                    (particle_list
-                         ->get_particle_from_mixed_event(mixed_event_id, i)
-                         .x);
-                double y_temp =
-                    (particle_list
-                         ->get_particle_from_mixed_event(mixed_event_id, i)
-                         .y);
-                temp_particle.x = x_temp * cos_phi - y_temp * sin_phi;
-                temp_particle.y = x_temp * sin_phi + y_temp * cos_phi;
-
-                temp_particle.pz = temp_pz;
-                temp_particle.E = temp_E;
-                temp_particle.mass =
-                    (particle_list
-                         ->get_particle_from_mixed_event(mixed_event_id, i)
-                         .mass);
-                temp_particle.z =
-                    (particle_list
-                         ->get_particle_from_mixed_event(mixed_event_id, i)
-                         .z);
-                temp_particle.t =
-                    (particle_list
-                         ->get_particle_from_mixed_event(mixed_event_id, i)
-                         .t);
-                temp_particle_list_2.push_back(temp_particle);
-            }
-        }
-    }
-
-    // nested pair loop
-    number_of_particles_1 = temp_particle_list_1.size();
-    long long int number_of_particles_2 = temp_particle_list_2.size();
-    unsigned long long int number_of_pairs =
-        (number_of_particles_1 * number_of_particles_2);
-    messager << "number of mixed pairs: " << number_of_pairs;
-    messager.flush("info");
+void HBT_correlation::bin_mixed_event_pairs(
+    const std::vector<particle_info> &temp_particle_list_1,
+    const std::vector<particle_info> &temp_particle_list_2) {
+    const auto number_of_particles_1 = temp_particle_list_1.size();
+    const auto number_of_particles_2 = temp_particle_list_2.size();
+    const double min_pair_beta = std::tanh(Krap_min_);
+    const double max_pair_beta = std::tanh(Krap_max_);
     double KT_min_sq = KT_min * KT_min;
     double KT_max_sq = KT_max * KT_max;
-    for (int i = 0; i < number_of_particles_1; i++) {
+    for (std::size_t i = 0; i < number_of_particles_1; i++) {
         double particle_1_pz = temp_particle_list_1[i].pz;
         double particle_1_px = temp_particle_list_1[i].px;
         double particle_1_py = temp_particle_list_1[i].py;
         double particle_1_E = temp_particle_list_1[i].E;
-        for (int j = 0; j < number_of_particles_2; j++) {
+        for (std::size_t j = 0; j < number_of_particles_2; j++) {
             double particle_2_pz = temp_particle_list_2[j].pz;
             double particle_2_px = temp_particle_list_2[j].px;
             double particle_2_py = temp_particle_list_2[j].py;
@@ -579,12 +518,15 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
 
             double K_z = 0.5 * (particle_1_pz + particle_2_pz);
             double K_E = 0.5 * (particle_1_E + particle_2_E);
-            double K_z_over_K_E = K_z / K_E;
+            if (!(K_E > std::abs(K_z))) continue;
+            const double K_z_over_K_E = K_z / K_E;
+            if (!(K_z_over_K_E > min_pair_beta && K_z_over_K_E < max_pair_beta))
+                continue;
 
             double K_x = 0.5 * (particle_1_px + particle_2_px);
             double K_y = 0.5 * (particle_1_py + particle_2_py);
             double K_perp_sq = K_x * K_x + K_y * K_y;
-            if (K_perp_sq < KT_min_sq || K_perp_sq > KT_max_sq) {
+            if (K_perp_sq < KT_min_sq || K_perp_sq >= KT_max_sq) {
                 continue;
             }
 
@@ -612,6 +554,7 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
                 }
             }
 
+            if (K_perp == 0.0) continue;
             double cos_K_phi = K_x / K_perp;
             double sin_K_phi = K_y / K_perp;
             double local_q_out = q_x * cos_K_phi + q_y * sin_K_phi;
@@ -693,8 +636,6 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
             }
         }
     }
-    temp_particle_list_1.clear();
-    temp_particle_list_2.clear();
 }
 
 void HBT_correlation::output_correlation_function_inv() {

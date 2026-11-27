@@ -4,10 +4,34 @@
 #include <cmath>
 #include <string>
 
+#include "BalanceFunction.h"
 #include "single_particleSpectra.h"
 #include "gtest/gtest.h"
 
 namespace {
+
+TEST(BalanceFunction, PreservesDistinctTracksAtEqualRapidity) {
+    ParameterReader params;
+    params.setVal("particle_alpha", 211);
+    params.setVal("particle_beta", 211);
+    params.setVal("BpT_min", 0.2);
+    params.setVal("BpT_max", 3.0);
+    params.setVal("Bnpts", 21);
+    params.setVal("Brap_max", 2.0);
+    params.setVal("rap_type", 1);
+    auto ran = std::make_shared<RandomUtil::Random>(1);
+    BalanceFunction analysis(params, ".", ran);
+    particle_info first{}, second{};
+    first.monval = second.monval = 211;
+    first.pT = second.pT = 0.3;
+    first.event_track_id = 1;
+    second.event_track_id = 2;
+    std::vector<particle_info> a{first, second}, b{first, second};
+    std::vector<std::vector<particle_info> *> selected_a{&a}, selected_b{&b};
+    std::vector<std::vector<double>> same(21, std::vector<double>(20, 0));
+    analysis.combine_and_bin_particle_pairs(same, &selected_a, &selected_b);
+    EXPECT_DOUBLE_EQ(same[10][5], 2);
+}
 
 TEST(Analysis, Constructor) {
     std::string path = "results";

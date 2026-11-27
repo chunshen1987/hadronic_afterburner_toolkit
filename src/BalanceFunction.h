@@ -25,7 +25,6 @@ class BalanceFunction {
 
     int particle_monval_a;
     int particle_monval_b;
-    bool same_species;
 
     long int N_b, N_bbar;
 

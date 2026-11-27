@@ -2,6 +2,8 @@
 #ifndef SRC_particle_info_h_
 #define SRC_particle_info_h_
 
+#include <cstddef>
+
 typedef struct {
     int monval;
     double mass;
@@ -9,6 +11,7 @@ typedef struct {
     double px, py, pz, E;
     double x, y, z, t;
     double rap_y, rap_eta, pT, phi_p;
+    std::size_t event_track_id = 0;
 } particle_info;
 
 #endif  // SRC_particle_info_h_

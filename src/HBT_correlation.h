@@ -35,8 +35,11 @@ class HBT_correlation {
     std::vector<double> KT_array_, Kphi_array_;
 
     std::vector<double> q_out, q_side, q_long;
-    int number_of_mixed_events_;
-    int number_of_oversample_events_;
+    int oversamples_per_collision_;
+    int pending_events_ = 0;
+    std::vector<particle_info> pending_collision_;
+    std::vector<particle_info> previous_collision_;
+    std::vector<particle_info> external_reference_;
     unsigned long long int needed_number_of_pairs;
     unsigned long long int number_pairs_num, number_pairs_denorm;
     std::vector<unsigned long long int> number_of_pairs_numerator_KTdiff;
@@ -59,6 +62,18 @@ class HBT_correlation {
     double *****q_long_diff_mean;
     double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
     double *****correl_3d_Kphi_diff_num_count;
+
+    void finish_collision();
+    void bin_same_event_pairs(const std::vector<particle_info> &particles);
+    void bin_mixed_event_pairs(
+        const std::vector<particle_info> &particles,
+        const std::vector<particle_info> &reference);
+    void append_external_reference(
+        int event_id, std::vector<particle_info> &reference);
+    void rotate_reference(
+        std::vector<particle_info> &reference, std::size_t first);
+    void set_event_plane(
+        const std::vector<particle_info> &particles, int harmonic);
 
     void output_3d_correlation(
         const std::string &suffix, double total_same, double total_mixed,

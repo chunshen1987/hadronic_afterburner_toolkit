@@ -81,6 +81,7 @@ flag_charge_dependence = 1    # flag to compute charge dependence correlation
 compute_corr_rap_dep = 1      # flag to compute the rapidity dependent multi-particle correlation
 
 # Parameters for HBT correlation functions
+number_of_oversample_events = 1  # consecutive samples per physical collision
 hbt_raw_output = 1            # write raw 3D pair counts for ensemble averaging
 long_comoving_boost = 1       # whether boost the qz by the pair longitudinal velocity
 reject_decay_flag = 0         # reject particles from resonance decays

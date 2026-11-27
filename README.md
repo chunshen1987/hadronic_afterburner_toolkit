@@ -23,9 +23,14 @@ C(q, K) - 1 = \frac{\int d^4 x \int d^4 y s(x, p1) s(y, p2) cos(q \cdot (x - y)}
 
 where K = 0.5(p1 + p2) and q = p1 - p2. 
 
-In the program, we introduce oversampling parameter to increase statistics by first grouping multiply events together to a single big event and then form the pairs. The number of the pairs will increase by oversampling factor.
-
-Pairs from mixed event are form by first rotating the mixture event by a random angle which eliminate the unwanted correlations.
+By default, each input event is a separate collision. Set
+`number_of_oversample_events` to the number of consecutive records sampled
+from the same collision. HBT groups these records across read buffers and
+processes a partial final group at the end of the input. The default mixed
+reference uses the preceding collision group with a random azimuthal rotation.
+Use `read_in_real_mixed_events=1` for a separate mixed-event stream, including
+runs with a single physical collision. `HBTrap_min` and `HBTrap_max` apply
+to the rapidity of the pair in both the numerator and denominator.
 
 The output correlation function is in 3-d q space (q_out, q_side, q_long).
 
@@ -39,7 +44,8 @@ both standard and compact output modes.
 Run `ebe_scripts/average_event_HBT_correlation_function_h5.py events.h5 output_dir`
 on the combined event file. Then run `ebe_scripts/fit_HBT_radii.py` on
 the resulting ensemble HDF5 file. The fitter writes radii into that file
-using its existing momentum-bin names. Regenerate old two- or five-column
+using its existing momentum-bin names. The out–side and out–long columns
+contain signed cross coefficients in fm². Regenerate old two- or five-column
 files for ensemble normalization if the raw pair counts were not saved.
 
 ### Event-by-event particle yield distribution
@@ -54,4 +60,9 @@ available, and `OMP_NUM_THREADS` controls the worker count. For a fixed
 `randomSeed` and event buffer size, the results in this mode are independent
 of the worker count. The default `resonance_decay_parallel=0` uses a single
 sequential random stream.
+
+With `select_resonances_flag=1`, only the signed PDG IDs listed in
+`EOS/selected_resonances_list.dat` decay in the general cascade.
+The separate Sigma-to-Lambda switch includes the corresponding signed
+Σ⁰ parent when selecting Λ or anti-Λ.
 

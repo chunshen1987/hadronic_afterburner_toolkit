@@ -18,8 +18,6 @@ class particle_yield_distribution {
     int particle_monval;
     int net_particle_flag;
 
-    double reconst_branching_ratio;
-
     double pT_min, pT_max;
 
     int rap_type;

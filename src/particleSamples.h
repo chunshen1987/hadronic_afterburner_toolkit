@@ -93,14 +93,13 @@ class particleSamples {
     //! (used when run_mode == 1 for HBT calculation)
     std::vector<std::vector<particle_info>*>* particle_list_mixed_event;
 
-    //! particle list to store the resonance particles (Sigma0)
-    //! (used when resonance_weak_feed_down_Sigma_to_Lambda_flag == 1)
-    std::vector<std::vector<particle_info>*>* resonance_list_Sigma0;
+    void append_sigma_daughter(
+        particle_info sigma, int lambda_pdg, std::vector<particle_info> &selected);
 
     //! particle list to store the (K^+ and K^-) pairs
     //! (used when reconst_flag == 1)
-    std::vector<std::vector<particle_info>*>* reconst_list_1;
-    std::vector<std::vector<particle_info>*>* reconst_list_2;
+    std::vector<std::vector<particle_info>*>* reconst_list_1 = nullptr;
+    std::vector<std::vector<particle_info>*>* reconst_list_2 = nullptr;
 
     //! particle list to store the positive hadrons
     //! (used when flag_charge_dependence == 1)
@@ -139,7 +138,6 @@ class particleSamples {
     int get_pdg_id(int urqmd_id, int urqmd_isospin);
     void build_map_urqmd_to_pdg_id();
 
-    int decide_to_pick_resonance(int monval);
     int decide_to_pick_reconst(int monval);
     int decide_to_pick_anti_particles(int monval);
     int decide_to_pick_charge(int monval);
@@ -148,7 +146,6 @@ class particleSamples {
     void initialize_selected_resonance_list();
     void perform_resonance_feed_down(
         std::vector<std::vector<particle_info>*>* input_particle_list);
-    void perform_weak_resonance_feed_down_Sigma_to_Lambda();
     void perform_particle_reconstruction();
 
     int read_in_particle_samples();

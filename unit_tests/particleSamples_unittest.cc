@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "../src/Random.h"
@@ -148,6 +149,37 @@ TEST(ParticleDecay, SkipsExactThresholdAndKeepsTerminalResonance) {
     ASSERT_EQ(daughters.size(), 1u);
     EXPECT_EQ(daughters.front().monval, mother.monval);
     EXPECT_EQ(decayer.check_particle_stable(daughters.front()), 1);
+}
+
+TEST(ParticleDecay, HandlesExactThreeBodyThresholdAndRejectsInconsistentInput) {
+    particle_decay decayer(std::make_shared<RandomUtil::Random>(12345), 0);
+    particle_info mother{}, first{}, second{}, third{};
+    mother.monval = 223;
+    mother.E = mother.mass = 0.375;
+    first.mass = second.mass = third.mass = 0.125;
+    decayer.perform_three_body_decay(mother, first, second, third);
+    for (const auto *daughter : {&first, &second, &third}) {
+        EXPECT_DOUBLE_EQ(daughter->E, daughter->mass);
+        EXPECT_DOUBLE_EQ(daughter->px, 0);
+        EXPECT_DOUBLE_EQ(daughter->py, 0);
+        EXPECT_DOUBLE_EQ(daughter->pz, 0);
+    }
+
+    mother.monval = 113;
+    mother.mass = 0.30;
+    mother.E = 0.25;
+    first.mass = second.mass = 0.138;
+    EXPECT_THROW(decayer.perform_two_body_decay(mother, first, second),
+                 std::runtime_error);
+
+    const double threshold = first.mass + second.mass;
+    mother.mass = std::nextafter(threshold, 1.0);
+    mother.E = std::nextafter(threshold, 0.0);
+    decayer.perform_two_body_decay(mother, first, second);
+    EXPECT_NEAR(first.E + second.E, mother.mass, 1e-15);
+    EXPECT_NEAR(first.E * first.E - first.px * first.px - first.py * first.py
+                    - first.pz * first.pz,
+                first.mass * first.mass, 1e-15);
 }
 
 TEST(particleSamples, RapidityShiftPreservesHbtPhase) {

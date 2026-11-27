@@ -1,6 +1,7 @@
 // Copyright Chun Shen @ 2016
 #include "particleSamples.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -110,17 +111,9 @@ particleSamples::particleSamples(
     full_particle_list_mixed_event = new vector<vector<particle_info> *>;
     particle_list = new vector<vector<particle_info> *>;
     particle_list_mixed_event = new vector<vector<particle_info> *>;
-    if (std::abs(particle_monval) == 3122) {
-        // for Lambda and anti-Lambda
-        resonance_weak_feed_down_Sigma_to_Lambda_flag =
-            paraRdr_.getVal("resonance_weak_feed_down_Sigma_to_Lambda_flag");
-        if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1) {
-            // include Sigma0 feed down to Lambda
-            resonance_list_Sigma0 = new vector<vector<particle_info> *>;
-        }
-    } else {
-        resonance_weak_feed_down_Sigma_to_Lambda_flag = 0;
-    }
+    resonance_weak_feed_down_Sigma_to_Lambda_flag =
+        paraRdr.exist("resonance_weak_feed_down_Sigma_to_Lambda_flag")
+        && paraRdr.getVal("resonance_weak_feed_down_Sigma_to_Lambda_flag") == 1;
 
     if (particle_monval == 333) {
         // for phi(1020) meson, we need reconstruct them from (K^+ K^-) pairs
@@ -261,14 +254,7 @@ particleSamples::~particleSamples() {
     }
 
     delete decayer_ptr;
-    if (resonance_feed_down_flag == 1) {
-        if (select_resonances_flag == 1) select_resonances_list.clear();
-    } else if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1) {
-        clear_out_previous_record(resonance_list_Sigma0);
-        delete resonance_list_Sigma0;
-    }
-
-    if (reconst_flag == 1) {
+    if (reconst_list_1) {
         clear_out_previous_record(reconst_list_1);
         delete reconst_list_1;
         clear_out_previous_record(reconst_list_2);
@@ -385,12 +371,10 @@ void particleSamples::initialize_selected_resonance_list() {
         exit(1);
     }
     int temp_id;
-    reso_file >> temp_id;
-    while (!reso_file.eof()) {
-        select_resonances_list.push_back(temp_id);
-        reso_file >> temp_id;
+    while (reso_file >> temp_id) select_resonances_list.push_back(temp_id);
+    if (!reso_file.eof()) {
+        throw std::runtime_error("Invalid PDG ID in " + filename.str());
     }
-    reso_file.close();
     if (select_resonances_flag == 1 && echo_level_ > 8) {
         messager << "particleSamples::initialize_selected_resonance_list:"
                  << "selected resonance list: ";
@@ -456,6 +440,16 @@ int particleSamples::read_in_particle_samples() {
     return (full_particle_list->size());
 }
 
+namespace {
+void set_particle_kinematics(particle_info &particle) {
+    particle.pT = std::hypot(particle.px, particle.py);
+    const double mT = std::hypot(particle.pT, particle.mass);
+    particle.phi_p = std::atan2(particle.py, particle.px);
+    particle.rap_y = std::asinh(particle.pz / mT);
+    particle.rap_eta = std::asinh(particle.pz / particle.pT);
+}
+}  // namespace
+
 void particleSamples::boostParticles(
     vector<vector<particle_info> *> *input_particle_list,
     const double rap_shift) {
@@ -463,9 +457,6 @@ void particleSamples::boostParticles(
     const double sinh_shift = sinh(rap_shift);
     for (auto &ev_i : (*input_particle_list)) {
         for (auto &part_i : (*ev_i)) {
-            part_i.pT = sqrt(part_i.px * part_i.px + part_i.py * part_i.py);
-            double mT = sqrt(part_i.pT * part_i.pT + part_i.mass * part_i.mass);
-            part_i.phi_p = atan2(part_i.py, part_i.px);
             if (rap_shift != 0.0) {
                 const double E_shifted =
                     part_i.E * cosh_shift + part_i.pz * sinh_shift;
@@ -478,15 +469,7 @@ void particleSamples::boostParticles(
                 part_i.t = t_shifted;
             }
 
-            // part_i.rap_y =
-            //     0.5 * log((part_i.E + part_i.pz) / (part_i.E - part_i.pz));
-            part_i.rap_y =
-                asinh(part_i.pz / mT);  // more accurate for large rapidity
-            // double p_mag = sqrt(part_i.pT * part_i.pT + part_i.pz *
-            // part_i.pz); part_i.rap_eta =
-            //     0.5 * log((p_mag + part_i.pz) / (p_mag - part_i.pz));
-            part_i.rap_eta = asinh(
-                part_i.pz / part_i.pT);  // more accurate for large rapidity
+            set_particle_kinematics(part_i);
         }
     }
 }
@@ -616,18 +599,6 @@ int particleSamples::decide_to_pick_charge(int monval) {
         pick_flag = -1;
     else if (charge > 0)
         pick_flag = 1;
-    return (pick_flag);
-}
-
-int particleSamples::decide_to_pick_resonance(int monval) {
-    int pick_flag = 0;
-    if (particle_monval == 3122) {
-        // Lambda particles, we will consider feed down from Sigma^0
-        if (monval == 3212) pick_flag = 1;
-    } else if (particle_monval == -3122) {
-        // Anti-Lambda particles, we will consider feed down from Anti-Sigma^0
-        if (monval == -3212) pick_flag = 1;
-    }
     return (pick_flag);
 }
 
@@ -1308,14 +1279,6 @@ int particleSamples::read_in_particle_samples_gzipped() {
 void particleSamples::filter_particles_from_events(const int PoI_monval) {
     filter_particles(PoI_monval, full_particle_list, particle_list);
 
-    if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1) {
-        if (PoI_monval == 3122) {
-            filter_particles(3212, full_particle_list, resonance_list_Sigma0);
-        } else if (PoI_monval == -3122) {
-            filter_particles(-3212, full_particle_list, resonance_list_Sigma0);
-        }
-    }
-
     if (net_particle_flag == 1) {
         filter_particles(-PoI_monval, full_particle_list, anti_particle_list);
     }
@@ -1352,16 +1315,21 @@ void particleSamples::filter_particles(
     // clean out the previous record
     clear_out_previous_record(filted_list);
 
-    int i = 0;
     for (auto &ev_i : (*full_list)) {
         filted_list->push_back(new vector<particle_info>);
-        for (auto &part_i : (*ev_i)) {
-            bool pick_flag = decide_to_pick_OSCAR(PoI_monval, part_i.monval);
-            if (pick_flag) {
-                (*filted_list)[i]->push_back(part_i);
+        auto &selected = *filted_list->back();
+        for (size_t j = 0; j < ev_i->size(); j++) {
+            const auto &particle = (*ev_i)[j];
+            if (decide_to_pick_OSCAR(PoI_monval, particle.monval)) {
+                selected.push_back(particle);
+                selected.back().event_track_id = j + 1;
+            } else if (resonance_weak_feed_down_Sigma_to_Lambda_flag
+                       && std::abs(PoI_monval) == 3122
+                       && particle.monval == (PoI_monval > 0 ? 3212 : -3212)) {
+                append_sigma_daughter(particle, PoI_monval, selected);
+                selected.back().event_track_id = j + 1;
             }
         }
-        i++;
     }
 }
 
@@ -1376,107 +1344,22 @@ void particleSamples::clear_out_previous_record(
 
 void particleSamples::filter_particles_into_lists(
     vector<vector<particle_info> *> *full_list) {
-    // clean out the previous record
-    clear_out_previous_record(particle_list);
-
-    if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1)
-        clear_out_previous_record(resonance_list_Sigma0);
-
-    if (net_particle_flag == 1) clear_out_previous_record(anti_particle_list);
-
+    filter_particles(particle_monval, full_list, particle_list);
+    if (net_particle_flag == 1)
+        filter_particles(-particle_monval, full_list, anti_particle_list);
     if (reconst_flag == 1) {
-        clear_out_previous_record(reconst_list_1);
-        clear_out_previous_record(reconst_list_2);
+        filter_particles(321, full_list, reconst_list_1);
+        filter_particles(-321, full_list, reconst_list_2);
     }
-
     if (flag_charge_dependence == 1) {
-        clear_out_previous_record(positive_charge_hadron_list);
-        clear_out_previous_record(negative_charge_hadron_list);
+        filter_particles(9998, full_list, positive_charge_hadron_list);
+        filter_particles(-9998, full_list, negative_charge_hadron_list);
     }
-
     if (analyze_BF) {
-        clear_out_previous_record(balance_function_particle_a);
-        clear_out_previous_record(balance_function_particle_abar);
-        clear_out_previous_record(balance_function_particle_b);
-        clear_out_previous_record(balance_function_particle_bbar);
-    }
-
-    int iev = 0;
-    for (auto &ev_i : (*full_list)) {
-        particle_list->push_back(new vector<particle_info>);
-        if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1)
-            resonance_list_Sigma0->push_back(new vector<particle_info>);
-
-        if (net_particle_flag == 1)
-            anti_particle_list->push_back(new vector<particle_info>);
-
-        if (reconst_flag == 1) {
-            reconst_list_1->push_back(new vector<particle_info>);
-            reconst_list_2->push_back(new vector<particle_info>);
-        }
-
-        if (flag_charge_dependence == 1) {
-            positive_charge_hadron_list->push_back(new vector<particle_info>);
-            negative_charge_hadron_list->push_back(new vector<particle_info>);
-        }
-
-        if (analyze_BF) {
-            balance_function_particle_a->push_back(new vector<particle_info>);
-            balance_function_particle_abar->push_back(
-                new vector<particle_info>);
-            balance_function_particle_b->push_back(new vector<particle_info>);
-            balance_function_particle_bbar->push_back(
-                new vector<particle_info>);
-        }
-
-        for (auto &part_i : (*ev_i)) {
-            bool pick_flag =
-                decide_to_pick_OSCAR(particle_monval, part_i.monval);
-            if (pick_flag) {
-                (*particle_list)[iev]->push_back(part_i);
-            }
-
-            if (resonance_weak_feed_down_Sigma_to_Lambda_flag == 1) {
-                int resonance_pick_flag =
-                    decide_to_pick_resonance(part_i.monval);
-                if (resonance_pick_flag == 1)
-                    (*resonance_list_Sigma0)[iev]->push_back(part_i);
-            }
-
-            if (reconst_flag == 1) {
-                int reconst_pick_flag = decide_to_pick_reconst(part_i.monval);
-                if (reconst_pick_flag == 1)
-                    (*reconst_list_1)[iev]->push_back(part_i);
-                else if (reconst_pick_flag == 2)
-                    (*reconst_list_2)[iev]->push_back(part_i);
-            }
-            if (net_particle_flag == 1) {
-                int anti_particle_pick_flag =
-                    decide_to_pick_anti_particles(part_i.monval);
-                if (anti_particle_pick_flag == 1)
-                    (*anti_particle_list)[iev]->push_back(part_i);
-            }
-
-            if (flag_charge_dependence == 1) {
-                int charge_flag = decide_to_pick_charge(part_i.monval);
-                if (charge_flag == 1)
-                    (*positive_charge_hadron_list)[iev]->push_back(part_i);
-                else if (charge_flag == -1)
-                    (*negative_charge_hadron_list)[iev]->push_back(part_i);
-            }
-
-            if (analyze_BF) {
-                if (decide_to_pick_OSCAR(particle_monval_a, part_i.monval))
-                    (*balance_function_particle_a)[iev]->push_back(part_i);
-                if (decide_to_pick_OSCAR(particle_monval_abar, part_i.monval))
-                    (*balance_function_particle_abar)[iev]->push_back(part_i);
-                if (decide_to_pick_OSCAR(particle_monval_b, part_i.monval))
-                    (*balance_function_particle_b)[iev]->push_back(part_i);
-                if (decide_to_pick_OSCAR(particle_monval_bbar, part_i.monval))
-                    (*balance_function_particle_bbar)[iev]->push_back(part_i);
-            }
-        }
-        iev++;
+        filter_particles(particle_monval_a, full_list, balance_function_particle_a);
+        filter_particles(particle_monval_abar, full_list, balance_function_particle_abar);
+        filter_particles(particle_monval_b, full_list, balance_function_particle_b);
+        filter_particles(particle_monval_bbar, full_list, balance_function_particle_bbar);
     }
 }
 
@@ -2114,6 +1997,12 @@ void particleSamples::perform_resonance_feed_down(
     const long event_count = input_particle_list->size();
     if (event_count == 0) return;
 
+    const auto selected_for_decay = [this](int pdg) {
+        return select_resonances_flag != 1
+               || std::find(select_resonances_list.begin(),
+                            select_resonances_list.end(), pdg)
+                      != select_resonances_list.end();
+    };
     auto decay_event = [&](vector<particle_info> &event,
                            vector<particle_info> &queue,
                            vector<particle_info> &daughters,
@@ -2124,10 +2013,15 @@ void particleSamples::perform_resonance_feed_down(
         try {
             event.reserve(original_size);
             for (size_t i = 0; i < queue.size(); i++) {
+                if (!selected_for_decay(queue[i].monval)) {
+                    event.push_back(queue[i]);
+                    continue;
+                }
                 daughters.clear();
                 decayer_ptr->perform_decays(queue[i], daughters, ran);
                 for (const auto &daughter : daughters) {
-                    if (decayer_ptr->check_particle_stable(daughter)) {
+                    if (!selected_for_decay(daughter.monval)
+                        || decayer_ptr->check_particle_stable(daughter)) {
                         event.push_back(daughter);
                     } else {
                         queue.push_back(daughter);
@@ -2180,22 +2074,16 @@ void particleSamples::perform_resonance_feed_down(
     if (failure) std::rethrow_exception(failure);
 }
 
-void particleSamples::perform_weak_resonance_feed_down_Sigma_to_Lambda() {
-    if (std::abs(particle_monval) == 3122) {
-        // consider Sigma^0 feed down to Lambda
-        for (unsigned int iev = 0; iev < resonance_list_Sigma0->size(); iev++) {
-            for (unsigned int i = 0; i < (*resonance_list_Sigma0)[iev]->size();
-                 i++) {
-                particle_info daughter1;
-                particle_info daughter2;
-                daughter1.mass = 1.116;  // mass of Lambda
-                daughter2.mass = 0.0;    // mass of photon
-                decayer_ptr->perform_two_body_decay(
-                    (*(*resonance_list_Sigma0)[iev])[i], daughter1, daughter2);
-                (*particle_list)[iev]->push_back(daughter1);
-            }
-        }
-    }
+void particleSamples::append_sigma_daughter(
+    particle_info sigma, int lambda_pdg, vector<particle_info> &selected) {
+    particle_info lambda{}, photon{};
+    lambda.monval = lambda_pdg;
+    lambda.mass = decayer_ptr->get_particle_mass(lambda_pdg);
+    lambda.baryon = decayer_ptr->get_particle_baryon_number(lambda_pdg);
+    photon.monval = 22;
+    decayer_ptr->perform_two_body_decay(sigma, lambda, photon);
+    set_particle_kinematics(lambda);
+    selected.push_back(lambda);
 }
 
 void particleSamples::perform_particle_reconstruction() {
@@ -2244,17 +2132,19 @@ void particleSamples::perform_particle_reconstruction() {
                             + (z_1 - z_2) * (z_1 - z_2));
                         if (spatial_distance < 0.01) {
                             // this is a real phi(1020)
-                            particle_info *mother = new particle_info;
-                            mother->mass = particle_mass;
-                            mother->E = E;
-                            mother->px = px;
-                            mother->py = py;
-                            mother->pz = pz;
-                            mother->t = (t_1 + t_2) / 2.;
-                            mother->x = (x_1 + x_2) / 2.;
-                            mother->y = (y_1 + y_2) / 2.;
-                            mother->z = (z_1 + z_2) / 2.;
-                            (*particle_list)[iev]->push_back(*mother);
+                            particle_info mother{};
+                            mother.monval = 333;
+                            mother.mass = particle_mass;
+                            mother.E = E;
+                            mother.px = px;
+                            mother.py = py;
+                            mother.pz = pz;
+                            mother.t = (t_1 + t_2) / 2.;
+                            mother.x = (x_1 + x_2) / 2.;
+                            mother.y = (y_1 + y_2) / 2.;
+                            mother.z = (z_1 + z_2) / 2.;
+                            set_particle_kinematics(mother);
+                            (*particle_list)[iev]->push_back(mother);
                         }
                     }
                 }
