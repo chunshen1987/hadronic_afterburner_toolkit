@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "BalanceFunction.h"
-#include "single_particleSpectra.h"
 #include "gtest/gtest.h"
+#include "single_particleSpectra.h"
 
 namespace {
 
@@ -48,14 +48,14 @@ TEST(BalanceFunction, SameBatchMixingNeverPairsAnEventWithItself) {
     BalanceFunction analysis(params, ".", ran);
     // One like-sign track per event, so a reference drawn from the same
     // event would pair each track with itself at Delta y = 0.
-    particle_info first{}, second{};
+    particle_info first {}, second {};
     first.monval = second.monval = 211;
     first.pT = second.pT = 0.3;
     first.event_track_id = second.event_track_id = 1;
     first.rap_y = 0.0;
     second.rap_y = 1.0;
-    std::vector<particle_info> event_0{first}, event_1{second};
-    std::vector<std::vector<particle_info> *> events{&event_0, &event_1};
+    std::vector<particle_info> event_0 {first}, event_1 {second};
+    std::vector<std::vector<particle_info> *> events {&event_0, &event_1};
     for (int repeat = 0; repeat < 20; repeat++) {
         std::vector<std::vector<double>> mixed(21, std::vector<double>(20, 0));
         analysis.combine_and_bin_mixed_particle_pairs(
@@ -72,7 +72,7 @@ TEST(BalanceFunction, SameBatchMixingNeverPairsAnEventWithItself) {
     }
 
     // A single-event batch has no independent reference.
-    std::vector<std::vector<particle_info> *> single{&event_0};
+    std::vector<std::vector<particle_info> *> single {&event_0};
     std::vector<std::vector<double>> mixed(21, std::vector<double>(20, 0));
     analysis.combine_and_bin_mixed_particle_pairs(
         mixed, &single, &single, true);

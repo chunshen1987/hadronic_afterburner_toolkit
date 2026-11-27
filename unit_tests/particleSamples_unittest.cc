@@ -270,9 +270,9 @@ TEST(particleSamples, SigmaFeedDownSharesOneDecayAcrossLists) {
                 const double y = 0.3 * (2 * iev + i) - 0.4;
                 const double mT = std::sqrt(mass * mass + pT * pT);
                 const float record[9] = {
-                    mass, 0.f, 0.f, 0.f, 0.f,
-                    static_cast<float>(mT * std::cosh(y)), pT, 0.f,
-                    static_cast<float>(mT * std::sinh(y))};
+                    mass, 0.f, 0.f,
+                    0.f,  0.f, static_cast<float>(mT * std::cosh(y)),
+                    pT,   0.f, static_cast<float>(mT * std::sinh(y))};
                 out.write(reinterpret_cast<const char *>(&pdg), sizeof(int));
                 out.write(
                     reinterpret_cast<const char *>(record), sizeof(record));

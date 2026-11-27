@@ -159,8 +159,7 @@ void BalanceFunction::combine_and_bin_particle_pairs(
 void BalanceFunction::combine_and_bin_mixed_particle_pairs(
     std::vector<std::vector<double>>& hist,
     const std::vector<std::vector<particle_info>*>* plist_a,
-    const std::vector<std::vector<particle_info>*>* plist_b,
-    bool same_batch) {
+    const std::vector<std::vector<particle_info>*>* plist_b, bool same_batch) {
     const int nev = plist_a->size();
     const int nev_mixed = plist_b->size();
     if (nev != 0 && nev_mixed == 0) {

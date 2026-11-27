@@ -102,8 +102,8 @@ class particleSamples {
         std::unordered_map<std::size_t, particle_info>>
         sigma_daughters_;
 
-    const particle_info &get_sigma_daughter(
-        const std::vector<particle_info> &event, std::size_t track);
+    const particle_info& get_sigma_daughter(
+        const std::vector<particle_info>& event, std::size_t track);
 
     //! particle list to store the (K^+ and K^-) pairs
     //! (used when reconst_flag == 1)

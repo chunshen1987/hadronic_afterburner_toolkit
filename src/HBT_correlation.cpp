@@ -36,7 +36,7 @@ struct TrackKinematics {
 };
 
 TrackKinematics track_kinematics(const particle_info &particle) {
-    TrackKinematics result{0.0, 0.0, 0.0, false};
+    TrackKinematics result {0.0, 0.0, 0.0, false};
     const double mT_sq = particle.E * particle.E - particle.pz * particle.pz;
     if (!(particle.E > std::abs(particle.pz)) || !(mT_sq > 0.0)) return result;
     result.mT = std::sqrt(mT_sq);
@@ -599,18 +599,16 @@ void HBT_correlation::bin_mixed_event_pairs(
     PartnerBounds bounds_1, bounds_2;
     add_partner_bounds(all_tracks_1, bounds_1);
     add_partner_bounds(all_tracks_2, bounds_2);
-    const double mass_spread =
-        std::max(bounds_1.mass_max, bounds_2.mass_max)
-        - std::min(bounds_1.mass_min, bounds_2.mass_min);
+    const double mass_spread = std::max(bounds_1.mass_max, bounds_2.mass_max)
+                               - std::min(bounds_1.mass_min, bounds_2.mass_min);
     const double q_inv_max_sq = binned_q_inv_max_sq();
     std::vector<particle_info> candidates_1, candidates_2;
-    const bool reduced =
-        select_pair_candidates(
-            all_tracks_1, bounds_2, mass_spread, q_inv_max_sq, Krap_min_,
-            Krap_max_, candidates_1)
-        && select_pair_candidates(
-            all_tracks_2, bounds_1, mass_spread, q_inv_max_sq, Krap_min_,
-            Krap_max_, candidates_2);
+    const bool reduced = select_pair_candidates(
+                             all_tracks_1, bounds_2, mass_spread, q_inv_max_sq,
+                             Krap_min_, Krap_max_, candidates_1)
+                         && select_pair_candidates(
+                             all_tracks_2, bounds_1, mass_spread, q_inv_max_sq,
+                             Krap_min_, Krap_max_, candidates_2);
     const std::vector<particle_info> &temp_particle_list_1 =
         reduced ? candidates_1 : all_tracks_1;
     const std::vector<particle_info> &temp_particle_list_2 =

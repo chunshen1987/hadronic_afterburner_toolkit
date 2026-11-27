@@ -101,7 +101,7 @@ The review's side remark that the feature "is active for any configured `particl
 - An AddressSanitizer build (Debug, `CMAKE_CXX_FLAGS_DEBUG`) produced no reports in these runs:
   - a 300-event Σ0 run with 7-track buffers (43 batches), with internal and external mixing
   - HBT with group sizes 1 and 10, the q_inv branch, and the azimuthal branch
-- No compiler warnings with `-Wall -Wextra`. `clang-format` is not installed. Added lines were checked against the 80-column limit by hand.
+- No compiler warnings with `-Wall -Wextra`. The changed lines were formatted with `git clang-format --style=file HEAD` (clang-format 21.1.8). Untouched lines in the edited files were left as they were. After formatting, the tests and the HBT byte comparison against HEAD passed again.
 
 ## Unresolved limitations
 
