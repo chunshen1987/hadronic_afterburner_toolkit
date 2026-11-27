@@ -4,6 +4,8 @@
 
 #include <map>
 #include <memory>
+#include <set>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -52,41 +54,20 @@ void Analysis::InitializeAnalysis() {
 }
 
 void Analysis::PerformAnalysis() {
-    InitializeAnalysis();
-    if (paraRdr_.getVal("analyze_flow") != 0) {
+    const int flow_mode = paraRdr_.getVal("analyze_flow");
+    if (flow_mode != 0) {
         messager.info("Analyze flow observables ...");
-        particle_list_ =
-            std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
-        if (paraRdr_.getVal("analyze_flow") == 1) {
-            FlowAnalysis();
-        } else if (paraRdr_.getVal("analyze_flow") == 2) {
-            FlowAnalysis_3D();
-        } else if (paraRdr_.getVal("analyze_flow") == 3) {
-            FlowAnalysis_RHIC();
-        } else if (paraRdr_.getVal("analyze_flow") == 4) {
-            FlowAnalysis_LHC();
-        }
-        particle_list_.reset();
-
+        perform_flow(paraRdr_, flow_mode);
         if (paraRdr_.getVal("resonance_weak_feed_down_flag") == 1) {
-            // analysis multi-strange particles
-            paraRdr_.setVal("resonance_weak_feed_down_flag", 0);
-            particle_list_ = std::make_shared<particleSamples>(
-                paraRdr_, path_, ran_gen_ptr_);
-            if (paraRdr_.getVal("analyze_flow") == 1) {
-                FlowAnalysis();
-            } else if (paraRdr_.getVal("analyze_flow") == 2) {
-                FlowAnalysis_3D();
-            } else if (paraRdr_.getVal("analyze_flow") == 3) {
-                FlowAnalysis_RHIC();
-            } else if (paraRdr_.getVal("analyze_flow") == 4) {
-                FlowAnalysis_LHC();
-            }
-            particle_list_.reset();
+            // Collect multistrange hadrons before their weak decays.
+            auto config = paraRdr_;
+            config.setVal("resonance_weak_feed_down_flag", 0);
+            perform_flow(config, flow_mode);
         }
     }
 
     if (paraRdr_.getVal("analyze_HBT") == 1) {
+        InitializeAnalysis();
         messager.info("Analyze HBT ...");
         particle_list_ =
             std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
@@ -95,6 +76,7 @@ void Analysis::PerformAnalysis() {
     }
 
     if (paraRdr_.getVal("analyze_balance_function") == 1) {
+        InitializeAnalysis();
         messager.info("Analyze balance functions ...");
         particle_list_ =
             std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
@@ -103,6 +85,7 @@ void Analysis::PerformAnalysis() {
     }
 
     if (paraRdr_.getVal("analyze_ebe_yield") == 1) {
+        InitializeAnalysis();
         messager.info("Analyze event-by-event particle yield distriution ...");
         particle_list_ =
             std::make_shared<particleSamples>(paraRdr_, path_, ran_gen_ptr_);
@@ -111,8 +94,75 @@ void Analysis::PerformAnalysis() {
     }
 }
 
+void Analysis::perform_flow(const ParameterReader &config, int mode) {
+    InitializeAnalysis();
+    switch (mode) {
+        case 1:
+            FlowAnalysis(config);
+            break;
+        case 2:
+            FlowAnalysis_3D(config);
+            break;
+        case 3:
+            FlowAnalysis_RHIC(config);
+            break;
+        case 4:
+            FlowAnalysis_LHC(config);
+            break;
+        default:
+            throw std::invalid_argument("Invalid analyze_flow mode");
+    }
+}
+
+void Analysis::run_flow_spectra(
+    const ParameterReader &config,
+    const vector<std::unique_ptr<singleParticleSpectra>> &spectra) {
+    std::map<std::string, std::set<std::string>> claimed_outputs;
+    // Preserve the filename of the last matching definition.
+    for (auto it = spectra.rbegin(); it != spectra.rend(); ++it) {
+        (*it)->plan_outputs(claimed_outputs);
+    }
+
+    auto reader_config = config;
+    particle_list_ =
+        std::make_shared<particleSamples>(reader_config, path_, ran_gen_ptr_);
+    int event_id = 0;
+    while (!particle_list_->end_of_file()) {
+        messager << "Reading event: " << event_id + 1 << " ... ";
+        messager.flush("info");
+        const int nev = particle_list_->read_in_particle_samples();
+        messager << "nev = " << nev;
+        messager.flush("info");
+        if (nev == 0) continue;
+
+        messager.info(" processing ...");
+        bool have_selection = false;
+        int previous_pid = 0;
+        for (const auto &spectrum : spectra) {
+            const int pid = spectrum->get_monval();
+            if (!have_selection || previous_pid != pid) {
+                particle_list_->filter_particles_from_events(pid);
+                previous_pid = pid;
+                have_selection = true;
+            }
+            spectrum->calculate_Qn_vector_shell(particle_list_);
+        }
+        messager.info("done!");
+        event_id += nev;
+    }
+    for (const auto &spectrum : spectra) {
+        spectrum->output_spectra_and_Qn_results();
+    }
+    particle_list_.reset();
+}
+
 void Analysis::FlowAnalysis() {
-    ParameterReader paraRdr = paraRdr_;
+    InitializeAnalysis();
+    FlowAnalysis(paraRdr_);
+}
+
+void Analysis::FlowAnalysis(const ParameterReader &config) {
+    ParameterReader paraRdr = config;
     int compute_correlation = paraRdr.getVal("compute_correlation");
     if (compute_correlation == 1) paraRdr.setVal("compute_correlation", 0);
     int flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
@@ -305,28 +355,17 @@ void Analysis::FlowAnalysis() {
         add_spectra();
     }
 
-    // start the loop
-    int event_id = 0;
-    while (!particle_list_->end_of_file()) {
-        messager << "Reading event: " << event_id + 1 << " ... ";
-        messager.flush("info");
-        int nev = particle_list_->read_in_particle_samples();
-        messager << "nev = " << nev;
-        messager.flush("info");
-        messager.info(" processing ...");
-        for (auto &ipart : spvn) {
-            int particle_monval = ipart->get_monval();
-            particle_list_->filter_particles_from_events(particle_monval);
-            ipart->calculate_Qn_vector_shell(particle_list_);
-        }
-        messager.info("done!");
-        event_id += nev;
-    }
-    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
+    run_flow_spectra(config, spvn);
 }
 
 void Analysis::FlowAnalysis_multistrange_particles() {
-    ParameterReader paraRdr = paraRdr_;
+    InitializeAnalysis();
+    FlowAnalysis_multistrange_particles(paraRdr_);
+}
+
+void Analysis::FlowAnalysis_multistrange_particles(
+    const ParameterReader &config) {
+    ParameterReader paraRdr = config;
     paraRdr.setVal("compute_correlation", 0);
     paraRdr.setVal("flag_charge_dependence", 0);
     paraRdr.setVal("rap_type", 1);
@@ -358,28 +397,16 @@ void Analysis::FlowAnalysis_multistrange_particles() {
     paraRdr.setVal("particle_monval", 333);
     add_spectra();
 
-    // start the loop
-    int event_id = 0;
-    while (!particle_list_->end_of_file()) {
-        messager << "Reading event: " << event_id + 1 << " ... ";
-        messager.flush("info");
-        int nev = particle_list_->read_in_particle_samples();
-        messager << "nev = " << nev;
-        messager.flush("info");
-        messager.info(" processing ...");
-        for (auto &ipart : spvn) {
-            int particle_monval = ipart->get_monval();
-            particle_list_->filter_particles_from_events(particle_monval);
-            ipart->calculate_Qn_vector_shell(particle_list_);
-        }
-        messager.info("done!");
-        event_id += nev;
-    }
-    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
+    run_flow_spectra(config, spvn);
 }
 
 void Analysis::FlowAnalysis_3D() {
-    ParameterReader paraRdr = paraRdr_;
+    InitializeAnalysis();
+    FlowAnalysis_3D(paraRdr_);
+}
+
+void Analysis::FlowAnalysis_3D(const ParameterReader &config) {
+    ParameterReader paraRdr = config;
     paraRdr.setVal("compute_correlation", 0);
     paraRdr.setVal("flag_charge_dependence", 0);
 
@@ -452,28 +479,16 @@ void Analysis::FlowAnalysis_3D() {
         add_spectra();
     }
 
-    // start the loop
-    int event_id = 0;
-    while (!particle_list_->end_of_file()) {
-        messager << "Reading event: " << event_id + 1 << " ... ";
-        messager.flush("info");
-        int nev = particle_list_->read_in_particle_samples();
-        messager << "nev = " << nev;
-        messager.flush("info");
-        messager.info(" processing ...");
-        for (auto &ipart : spvn) {
-            int particle_monval = ipart->get_monval();
-            particle_list_->filter_particles_from_events(particle_monval);
-            ipart->calculate_Qn_vector_shell(particle_list_);
-        }
-        messager.info("done!");
-        event_id += nev;
-    }
-    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
+    run_flow_spectra(config, spvn);
 }
 
 void Analysis::FlowAnalysis_RHIC() {
-    ParameterReader paraRdr = paraRdr_;
+    InitializeAnalysis();
+    FlowAnalysis_RHIC(paraRdr_);
+}
+
+void Analysis::FlowAnalysis_RHIC(const ParameterReader &config) {
+    ParameterReader paraRdr = config;
     int compute_correlation = paraRdr.getVal("compute_correlation");
     if (compute_correlation == 1) paraRdr.setVal("compute_correlation", 0);
     int flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
@@ -589,28 +604,16 @@ void Analysis::FlowAnalysis_RHIC() {
         add_spectra();
     }
 
-    // start the loop
-    int event_id = 0;
-    while (!particle_list_->end_of_file()) {
-        messager << "Reading event: " << event_id + 1 << " ... ";
-        messager.flush("info");
-        int nev = particle_list_->read_in_particle_samples();
-        messager << "nev = " << nev;
-        messager.flush("info");
-        messager.info(" processing ...");
-        for (auto &ipart : spvn) {
-            int particle_monval = ipart->get_monval();
-            particle_list_->filter_particles_from_events(particle_monval);
-            ipart->calculate_Qn_vector_shell(particle_list_);
-        }
-        messager.info("done!");
-        event_id += nev;
-    }
-    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
+    run_flow_spectra(config, spvn);
 }
 
 void Analysis::FlowAnalysis_LHC() {
-    ParameterReader paraRdr = paraRdr_;
+    InitializeAnalysis();
+    FlowAnalysis_LHC(paraRdr_);
+}
+
+void Analysis::FlowAnalysis_LHC(const ParameterReader &config) {
+    ParameterReader paraRdr = config;
     int compute_correlation = paraRdr.getVal("compute_correlation");
     if (compute_correlation == 1) paraRdr.setVal("compute_correlation", 0);
     int flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
@@ -830,24 +833,7 @@ void Analysis::FlowAnalysis_LHC() {
         add_spectra();
     }
 
-    // start the loop
-    int event_id = 0;
-    while (!particle_list_->end_of_file()) {
-        messager << "Reading event: " << event_id + 1 << " ... ";
-        messager.flush("info");
-        int nev = particle_list_->read_in_particle_samples();
-        messager << "nev = " << nev;
-        messager.flush("info");
-        messager.info(" processing ...");
-        for (auto &ipart : spvn) {
-            int particle_monval = ipart->get_monval();
-            particle_list_->filter_particles_from_events(particle_monval);
-            ipart->calculate_Qn_vector_shell(particle_list_);
-        }
-        messager.info("done!");
-        event_id += nev;
-    }
-    for (auto &ipart : spvn) ipart->output_spectra_and_Qn_results();
+    run_flow_spectra(config, spvn);
 }
 
 void Analysis::HBTAnalysis() {

@@ -62,6 +62,37 @@ TEST(Analysis, FlowAnalysis) {
     EXPECT_EQ(0, 0);
 }
 
+TEST(Analysis, IntegratedTupleCountsIgnorePackedTransverseMomentum) {
+    ParameterReader params;
+    params.readFromFile("parameters.dat");
+    params.setVal("particle_monval", 9999);
+    params.setVal("compute_correlation", 1);
+    params.setVal("rapidity_distribution", 0);
+    singleParticleSpectra spectra(
+        params, ".", std::make_shared<RandomUtil::Random>(42));
+
+    // Four tracks at phi = 0 and pT = 0.25 GeV.
+    std::vector<double> real(9, 4.0), imag(9, 0.0);
+    imag[0] = 1.0;
+    std::vector<double> pairs(9), pair_squares(9), triples(9), triple_squares(9);
+    std::vector<double> cn4(5), cn4_squares(5), sc(6), sc_squares(6);
+
+    spectra.calculate_two_particle_correlation_charge_base(
+        real, imag, real, imag, 0, pairs, pair_squares);
+    spectra.calculate_three_particle_correlation(
+        real, imag, real, imag, real, imag, 0, triples, triple_squares);
+    spectra.calculate_four_particle_correlation_Cn4(
+        real, imag, cn4, cn4_squares);
+    spectra.calculate_four_particle_correlation_SC(
+        real, imag, real, imag, real, imag, real, imag, 0, sc, sc_squares);
+
+    EXPECT_DOUBLE_EQ(pairs[0], 12.0);
+    EXPECT_DOUBLE_EQ(triples[0], 24.0);
+    EXPECT_DOUBLE_EQ(cn4[0], 24.0);
+    EXPECT_DOUBLE_EQ(sc[0], 24.0);
+    EXPECT_DOUBLE_EQ(imag[0], 1.0);
+}
+
 TEST(Analysis, RapidityDifferentialTripletsMatchEnumeration) {
     ParameterReader params;
     params.readFromFile("parameters.dat");
@@ -87,7 +118,9 @@ TEST(Analysis, RapidityDifferentialTripletsMatchEnumeration) {
         for (const auto &track : tracks) {
             if (charge > 0 && !track.positive) continue;
             if (charge < 0 && track.positive) continue;
-            for (int n = 0; n < 9; n++) {
+            real[track.bin][0] += 1.0;
+            imag[track.bin][0] += 0.25;
+            for (int n = 1; n < 9; n++) {
                 real[track.bin][n] += std::cos(n * track.phi);
                 imag[track.bin][n] += std::sin(n * track.phi);
             }

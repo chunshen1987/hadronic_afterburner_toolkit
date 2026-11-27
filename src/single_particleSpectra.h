@@ -1,7 +1,9 @@
 #ifndef SRC_single_particleSpectra_h_
 #define SRC_single_particleSpectra_h_
 
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -12,6 +14,56 @@
 
 class singleParticleSpectra {
   private:
+    friend class Analysis;
+
+    struct OutputSelection {
+        bool enabled = true;
+        std::string suffix;
+    };
+    OutputSelection spectra_output_;
+    OutputSelection rapidity_output_;
+    OutputSelection covariance_output_;
+    OutputSelection rapidity_pt_output_;
+    OutputSelection rapidity_correlation_output_;
+    OutputSelection spatial_output_;
+    void plan_outputs(std::map<std::string, std::set<std::string>> &claimed);
+    std::string output_suffix(const OutputSelection &selection) const;
+    void output_rapidity_density();
+    void output_rapidity_covariance();
+
+
+    int selected_track_count(int event_id, int charge);
+    particle_info selected_track(int event_id, int index, int charge);
+    struct DifferentialMoments {
+        std::vector<std::vector<double>> &real;
+        std::vector<std::vector<double>> &real_squares;
+        std::vector<std::vector<double>> &imag;
+        std::vector<std::vector<double>> &imag_squares;
+        std::vector<double> *pt = nullptr;
+        std::vector<double> *pt_squares = nullptr;
+
+        DifferentialMoments(
+            std::vector<std::vector<double>> &real,
+            std::vector<std::vector<double>> &real_squares,
+            std::vector<std::vector<double>> &imag,
+            std::vector<std::vector<double>> &imag_squares)
+            : real(real), real_squares(real_squares), imag(imag),
+              imag_squares(imag_squares) {}
+    };
+
+    void accumulate_event_qn(
+        int event_id, int charge, double pT_min_selected,
+        double pT_max_selected, std::vector<double> &event_Qn_real,
+        std::vector<double> &event_Qn_real_err,
+        std::vector<double> &event_Qn_imag,
+        std::vector<double> &event_Qn_imag_err,
+        DifferentialMoments *differential = nullptr);
+    int rapidity_bin(double rapidity) const;
+
+    void calculate_two_particle_correlation(
+        const std::vector<double> &event_Qn_real,
+        const std::vector<double> &event_Qn_imag);
+
     const std::string path_;
     std::shared_ptr<particleSamples> particle_list;
 
@@ -36,7 +88,7 @@ class singleParticleSpectra {
     int rap_type;
     double rap_min, rap_max;
     int rapidity_distribution_flag;
-    int N_rap;
+    int N_rap = 0;
     double rapidity_dis_min, rapidity_dis_max, drap;
     std::vector<double> rapidity_array;
     std::vector<double> dNdy_array;
@@ -44,11 +96,10 @@ class singleParticleSpectra {
 
     std::vector<double> dNdy_covMatrix;  // N_rap x N_rap
 
-    double vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max;
+    double vn_rapidity_dis_pT_min = 0.0;
+    double vn_rapidity_dis_pT_max = 0.0;
     std::vector<std::vector<double>> vn_real_rapidity_dis_array;
     std::vector<std::vector<double>> vn_imag_rapidity_dis_array;
-    std::vector<std::vector<double>> vn_real_rapidity_covMatrix;
-    std::vector<std::vector<double>> vn_imag_rapidity_covMatrix;
 
     int total_number_of_events;
     std::vector<double> Qn_vector_real;
@@ -60,27 +111,31 @@ class singleParticleSpectra {
     std::vector<std::vector<double>> Qn_diff_vector_real_err;
     std::vector<std::vector<double>> Qn_diff_vector_imag_err;
 
-    int rapidityPTDistributionFlag_;
+    int rapidityPTDistributionFlag_ = 0;
     std::vector<std::vector<std::vector<double>>> Qn_pTrapdiff_vector;
 
     int flag_correlation;
     std::vector<double> Qn2_vector;
     std::vector<double> Qn2_vector_err;
-    std::vector<std::vector<double>> QnSP_diff_vector;
-    std::vector<std::vector<double>> QnSP_diff_vector_err;
+    std::vector<double> Qn2_vector_cross;
     std::vector<std::vector<double>> QnSP_eta12;
     std::vector<std::vector<double>> QnSP_eta12_err;
+    std::vector<std::vector<double>> QnSP_eta12_cross;
 
     // charge dependent two-particle correlation
     std::vector<double> Cn2_ss;
     std::vector<double> Cn2_ss_err;
+    std::vector<double> Cn2_ss_cross;
     std::vector<double> Cn2_os;
     std::vector<double> Cn2_os_err;
+    std::vector<double> Cn2_os_cross;
     // \Delta eta dependent two-particle correlation
     std::vector<std::vector<double>> Cn2_ss_eta12;
     std::vector<std::vector<double>> Cn2_ss_eta12_err;
+    std::vector<std::vector<double>> Cn2_ss_eta12_cross;
     std::vector<std::vector<double>> Cn2_os_eta12;
     std::vector<std::vector<double>> Cn2_os_eta12_err;
+    std::vector<std::vector<double>> Cn2_os_eta12_cross;
 
     // 3-particle correlations
     int num_corr;
@@ -90,7 +145,7 @@ class singleParticleSpectra {
     std::vector<std::vector<double>> C_nmk_eta13;
     std::vector<std::vector<double>> C_nmk_eta12_err;
     std::vector<std::vector<double>> C_nmk_eta13_err;
-    int flag_charge_dependence;
+    int flag_charge_dependence = 0;
     std::vector<double> C_nmk_ss;
     std::vector<double> C_nmk_ss_err;
     std::vector<double> C_nmk_os;
@@ -198,7 +253,9 @@ class singleParticleSpectra {
         std::vector<double> &event_Qn_m_real,
         std::vector<double> &event_Qn_m_imag, std::vector<double> &corr_ss,
         std::vector<double> &corr_ss_err, std::vector<double> &corr_os,
-        std::vector<double> &corr_os_err);
+        std::vector<double> &corr_os_err,
+        std::vector<double> *cross_ss = nullptr,
+        std::vector<double> *cross_os = nullptr);
 
     //! This function computes the 2-particle correlation for Qn vectors
     //! within one event with particle dependence
@@ -239,7 +296,9 @@ class singleParticleSpectra {
         std::vector<std::vector<double>> &Cn2_ss_eta12,
         std::vector<std::vector<double>> &Cn2_ss_eta12_err,
         std::vector<std::vector<double>> &Cn2_os_eta12,
-        std::vector<std::vector<double>> &Cn2_os_eta12_err);
+        std::vector<std::vector<double>> &Cn2_os_eta12_err,
+        std::vector<std::vector<double>> *cross_ss = nullptr,
+        std::vector<std::vector<double>> *cross_os = nullptr);
 
     //! This function computes the 2-particle correlation for Qn vectors
     //! as a function of \delta \eta within one event with charge depenedence
