@@ -1,0 +1,41 @@
+name: Unit tests
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtest-dev zlib1g-dev
+
+      - name: Build unit tests
+        run: |
+          cmake -S . -B build -Dunit_tests=ON
+          cmake --build build --parallel 2
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          test_run=$(mktemp -d "$RUNNER_TEMP/unit-tests.XXXXXX")
+          cp -R EOS unit_tests "$test_run/"
+          cd "$test_run/unit_tests"
+
+          shopt -s failglob
+          status=0
+          for test_executable in "$GITHUB_WORKSPACE"/build/unit_tests/*_unittest.e; do
+            "$test_executable" || status=1
+          done
+          exit "$status"
