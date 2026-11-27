@@ -460,7 +460,7 @@ for ii in range(1, len(corr_label)):
     vmvn_ch_err = (sum(SC_mn_ch_array[:, 0, 1]*SC_mn_ch_array[:, ii, 2])
             /(sum(SC_mn_ch_array[:, 0, 1]))/sqrt(nev))
     vm2_ch = mean(Qn2_array_ch[:, mn_idx[ii][0], 3])
-    vm2_ch_err = (sqrt(mean(Qn2_array_ch[:, mn_idx[ii][0], 4]) - vn2_ch**2.)
+    vm2_ch_err = (sqrt(mean(Qn2_array_ch[:, mn_idx[ii][0], 4]) - vm2_ch**2.)
                   /sqrt(nev))
     vm2_ch = vm2_ch/mean(Qn2_array_ch[:, 0, 3])
     vm2_ch_err = vm2_ch_err/mean(Qn2_array_ch[:, 0, 3])

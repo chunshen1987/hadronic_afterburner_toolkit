@@ -78,10 +78,38 @@ The kept fractions match the analytic acceptance for a uniform smear:
 
 All 35 unit tests pass (20 particleSamples, 4 HBT, 11 Analysis). The build has no warnings, and `git clang-format` was applied to the changed C++ lines.
 
-## Limitations and related issues not fixed
+## Follow-up: sibling scripts and the symmetric-cumulant error
 
-- **Sibling scripts.** Two other scripts read the same stale names. I did not change them:
-  - `analysis_multi_particle_correlation_within_UrQMDevent_h5_minimumbias.py` already uses `-1_1`, but reads `_pT_0.2_3` for the rapidity-difference files.
-  - `analysis_multi_particle_correlation_within_UrQMDevent.py` (text input) reads `-0.5_0.5` and `_pT_0.2_3`.
-- **Symmetric-cumulant error (pre-existing).** In the SC section of the fixed script, `vm2_ch_err` subtracts `vn2_ch**2`, a stale and already normalized value from the previous loop iteration, where `vm2_ch**2` is meant. This affects only the error column of `symmetric_cumulant_STAR.dat`.
-- **Script estimators.** The script's ensemble estimators combine per-event errors as `Σ w·err/Σ w/√nev`. They were not reviewed here.
+### Changes
+
+The first two items apply to both sibling scripts:
+
+- **`analysis_multi_particle_correlation_within_UrQMDevent_h5_minimumbias.py`:**
+  - Reads `_pT_0.2_2` for the rapidity-difference files. It already used `rap_region = "-1_1"`.
+  - Every dataset read goes through the same `load()` check as the h5 script.
+  - The centrality estimator (`particle_9999_vndata_eta_-0.5_0.5.dat` and the `C<low>-<high>_` group labels) is unchanged. That file is written by the workflow's |η| < 0.5 charged-hadron definition.
+- **`analysis_multi_particle_correlation_within_UrQMDevent.py`** (per-event text folders):
+  - Reads `rap_region = "-1_1"` and `_pT_0.2_2`.
+  - `load()` checks that each file exists and exits with the path and the required flags if it does not.
+  - Fixed a `NameError` in the Cn{4} section, where `Cn4_avg` was written for `Cn4_ch_avg`. This script could not previously finish.
+- **Symmetric-cumulant error (all three scripts):** `vm2_ch_err` now uses √(⟨X²⟩ − ⟨vm2_ch⟩²). It previously subtracted `vn2_ch**2`, a stale and already normalized value from the previous loop iteration, which made the variance close to ⟨X²⟩. SC values are unchanged; only their error column changes.
+
+### Checks
+
+These checks use the same four-event ensemble as above.
+
+| Check | Result |
+|---|---|
+| Minimum-bias script, scratch copy with `Reg_centrality_cut_list = [0., 5.]`, groups renamed `C0-5_event_i` | Exit 0; all 15 files byte-identical to the h5 script's |
+| Text script on the per-event folders | Exit 0 (failed at Cn{4} before); all 15 files written |
+| Text script compared with h5 script | Shared columns identical, except for a last-digit difference in the Δη₁₂ pair count at 2 of 41 points (1638.825 rounded either way, 6×10⁻⁶; summation order differs). The text script's three-plane file has no `_13` columns, a difference that predates this change. |
+| h5 script, fixed against df219f9 | Only `symmetric_cumulant_STAR.dat` differs, in its error column |
+| SC errors against a direct calculation | Fixed values match to all printed digits for all five (m, n). Changes from df219f9: −0.03% (32), −0.43% (42), −0.12% (52), −0.02% (43), −0.005% (53) |
+| One file or dataset removed | Both scripts exit 1 with a message naming the file, event, and flags |
+
+Empty centrality bins still raise an error in the minimum-bias script, as before.
+
+## Remaining limitations
+
+- The scripts' ensemble estimators combine per-event errors as `Σ w·err/Σ w/√nev`. They were not reviewed here.
+- The text script lacks the `_13` three-plane columns that the h5 scripts write.

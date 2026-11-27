@@ -59,18 +59,35 @@ except IndexError:
     print("Usage: %s working_folder results_folder" % argv[0])
     exit(1)
 
+# With compute_correlation = 1, the flow workflow (src/Analysis.cpp) writes
+# the charged-hadron correlators for |eta| < 1 and |eta| < 2, with reference
+# particles in 0.2 < pT < 2 GeV. The rapidity-difference files are named by
+# that pT range.
 rap_region = "-1_1"
+ref_pT_region = "0.2_2"
 
 n_order = 7
 
 hf = h5py.File(data_path, "r")
+
+
+def load(event_group, file_name):
+    """Return one event's dataset, or stop if the workflow did not write it."""
+    data = event_group.get(file_name)
+    if data is None:
+        exit("Error: %s has no dataset %s in event %s. Check that the events "
+             "were run with compute_correlation = 1, flag_charge_dependence "
+             "= 1 and compute_corr_rap_dep = 1."
+             % (data_path, file_name, event_group.name))
+    return array(data)
+
 event_list = list(hf.keys())
 nev = len(event_list)
 dN_dy_mb = []
 for ifolder, event_name in enumerate(event_list):
     file_name   = "particle_9999_vndata_eta_-0.5_0.5.dat"
     event_group = hf.get(event_name)
-    temp_data   = event_group.get(file_name)
+    temp_data   = load(event_group, file_name)
     temp_data   = nan_to_num(temp_data)
     dN_dy_mb.append(-temp_data[0, 1])
 dN_dy_mb = -sort(array(dN_dy_mb))
@@ -101,7 +118,7 @@ for icen in range(len(centrality_cut_list) - 1):
         elif Centrality_flag == 1:
             file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
             event_group = hf.get(event_name)
-            temp_data   = event_group.get(file_name)
+            temp_data   = load(event_group, file_name)
             temp_data   = nan_to_num(temp_data)
             if (temp_data[0, 1] > dN_dy_cut_low
                 and temp_data[0, 1] <= dN_dy_cut_high):
@@ -121,11 +138,11 @@ for icen in range(len(centrality_cut_list) - 1):
 
     for ifolder, event_name in enumerate(selected_events_list):
         event_group = hf.get(event_name)
-        temp_data_vn2 = event_group.get(file_name_ch)
+        temp_data_vn2 = load(event_group, file_name_ch)
         Qn2_array_ch.append(temp_data_vn2)
-        temp_data_vn2 = event_group.get(file_name_ss)
+        temp_data_vn2 = load(event_group, file_name_ss)
         Qn2_array_ss.append(temp_data_vn2)
-        temp_data_vn2 = event_group.get(file_name_os)
+        temp_data_vn2 = load(event_group, file_name_os)
         Qn2_array_os.append(temp_data_vn2)
     Qn2_array_ch = array(Qn2_array_ch)
     Qn2_array_ss = array(Qn2_array_ss)
@@ -172,19 +189,19 @@ for icen in range(len(centrality_cut_list) - 1):
     shutil.move(output_filename_os, avg_folder)
 
     print("processing two particle correlations delta eta dependence ...")
-    file_name_ch = 'particle_9999_vn2_eta12_pT_0.2_3.dat'
-    file_name_ss = 'particle_9999_vn2_eta12_ss_pT_0.2_3.dat'
-    file_name_os = 'particle_9999_vn2_eta12_os_pT_0.2_3.dat'
+    file_name_ch = 'particle_9999_vn2_eta12_pT_%s.dat' % ref_pT_region
+    file_name_ss = 'particle_9999_vn2_eta12_ss_pT_%s.dat' % ref_pT_region
+    file_name_os = 'particle_9999_vn2_eta12_os_pT_%s.dat' % ref_pT_region
     Qn2_array_ch = []
     Qn2_array_ss = []
     Qn2_array_os = []
     for ifolder, event_name in enumerate(selected_events_list):
         event_group = hf.get(event_name)
-        temp_data_vn2 = event_group.get(file_name_ch)
+        temp_data_vn2 = load(event_group, file_name_ch)
         Qn2_array_ch.append(temp_data_vn2)
-        temp_data_vn2 = event_group.get(file_name_ss)
+        temp_data_vn2 = load(event_group, file_name_ss)
         Qn2_array_ss.append(temp_data_vn2)
-        temp_data_vn2 = event_group.get(file_name_os)
+        temp_data_vn2 = load(event_group, file_name_os)
         Qn2_array_os.append(temp_data_vn2)
     Qn2_array_ch = array(Qn2_array_ch)
     Qn2_array_ss = array(Qn2_array_ss)
@@ -270,11 +287,11 @@ for icen in range(len(centrality_cut_list) - 1):
     dN_array = []; pT_array = []
     for ifolder, event_name in enumerate(selected_events_list):
         event_group    = hf.get(event_name)
-        temp_data_ch   = event_group.get(file_name_ch)
-        temp_data_ss   = event_group.get(file_name_ss)
-        temp_data_os   = event_group.get(file_name_os)
-        temp_data_vn2  = event_group.get(file_name_vn2)
-        temp_data_spvn = event_group.get(file_name_spvn)
+        temp_data_ch   = load(event_group, file_name_ch)
+        temp_data_ss   = load(event_group, file_name_ss)
+        temp_data_os   = load(event_group, file_name_os)
+        temp_data_vn2  = load(event_group, file_name_vn2)
+        temp_data_spvn = load(event_group, file_name_spvn)
     
         C_mnk_ch_array.append(temp_data_ch)
         C_mnk_ss_array.append(temp_data_ss)
@@ -354,18 +371,18 @@ for icen in range(len(centrality_cut_list) - 1):
     for itype in range(len(eta_type_list)):
         eta_type = eta_type_list[itype]
         # load the file
-        file_name_ss = 'particle_9999_Cmnk_%s_ss_pT_0.2_3.dat' % eta_type
-        file_name_os = 'particle_9999_Cmnk_%s_os_pT_0.2_3.dat' % eta_type
-        file_name_ch = 'particle_9999_Cmnk_%s_pT_0.2_3.dat' % eta_type
+        file_name_ss = 'particle_9999_Cmnk_%s_ss_pT_%s.dat' % (eta_type, ref_pT_region)
+        file_name_os = 'particle_9999_Cmnk_%s_os_pT_%s.dat' % (eta_type, ref_pT_region)
+        file_name_ch = 'particle_9999_Cmnk_%s_pT_%s.dat' % (eta_type, ref_pT_region)
         
         C_mnk_ch_array = []
         C_mnk_ss_array = []
         C_mnk_os_array = []
         for ifolder, event_name in enumerate(selected_events_list):
             event_group = hf.get(event_name)
-            temp_data_ch = event_group.get(file_name_ch)
-            temp_data_ss = event_group.get(file_name_ss)
-            temp_data_os = event_group.get(file_name_os)
+            temp_data_ch = load(event_group, file_name_ch)
+            temp_data_ss = load(event_group, file_name_ss)
+            temp_data_os = load(event_group, file_name_os)
         
             C_mnk_ch_array.append(temp_data_ch)
             C_mnk_ss_array.append(temp_data_ss)
@@ -445,9 +462,9 @@ for icen in range(len(centrality_cut_list) - 1):
     Qn2_array_ch = []
     for ifolder, event_name in enumerate(selected_events_list):
         event_group = hf.get(event_name)
-        temp_data_ch = event_group.get(file_name_ch)
+        temp_data_ch = load(event_group, file_name_ch)
         Qn4_ch_array.append(temp_data_ch)
-        temp_data_vn2 = event_group.get(file_name_C2)
+        temp_data_vn2 = load(event_group, file_name_C2)
         Qn2_array_ch.append(temp_data_vn2)
     Qn4_ch_array = array(Qn4_ch_array)
     Qn2_array_ch = array(Qn2_array_ch)
@@ -481,7 +498,7 @@ for icen in range(len(centrality_cut_list) - 1):
     SC_mn_ch_array = []
     for ifolder, event_name in enumerate(selected_events_list):
         event_group = hf.get(event_name)
-        temp_data_ch = event_group.get(file_name_ch)
+        temp_data_ch = load(event_group, file_name_ch)
         SC_mn_ch_array.append(temp_data_ch)
     SC_mn_ch_array = array(SC_mn_ch_array)
     nev = len(SC_mn_ch_array[:, 0, 1])
@@ -496,7 +513,7 @@ for icen in range(len(centrality_cut_list) - 1):
         vmvn_ch_err = (sum(SC_mn_ch_array[:, 0, 1]*SC_mn_ch_array[:, ii, 2])
                 /(sum(SC_mn_ch_array[:, 0, 1]))/sqrt(nev))
         vm2_ch = mean(Qn2_array_ch[:, mn_idx[ii][0], 3])
-        vm2_ch_err = (sqrt(mean(Qn2_array_ch[:, mn_idx[ii][0], 4]) - vn2_ch**2.)
+        vm2_ch_err = (sqrt(mean(Qn2_array_ch[:, mn_idx[ii][0], 4]) - vm2_ch**2.)
                       /sqrt(nev))
         vm2_ch = vm2_ch/mean(Qn2_array_ch[:, 0, 3])
         vm2_ch_err = vm2_ch_err/mean(Qn2_array_ch[:, 0, 3])
