@@ -6,10 +6,22 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
+#include <stdexcept>
 
 using std::cout;
 using std::endl;
+
+namespace {
+double normalized_pair_ratio(
+    double same, double mixed, double total_same, double total_mixed) {
+    if (mixed <= 0.0 || total_same <= 0.0 || total_mixed <= 0.0) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    return (same / total_same) / (mixed / total_mixed);
+}
+}  // namespace
 
 BalanceFunction::BalanceFunction(
     const ParameterReader& paraRdr, const std::string path,
@@ -66,6 +78,14 @@ void BalanceFunction::calculate_balance_function(
     auto plist_b = particle_list->get_balance_function_particle_list_b();
     auto plist_abar = particle_list->get_balance_function_particle_list_abar();
     auto plist_bbar = particle_list->get_balance_function_particle_list_bbar();
+    auto plist_b_mixed_event =
+        particle_list->get_balance_function_particle_list_b_mixed_event();
+    auto plist_bbar_mixed_event =
+        particle_list->get_balance_function_particle_list_bbar_mixed_event();
+    if (!plist_a->empty() && plist_b_mixed_event->empty()) {
+        throw std::runtime_error(
+            "Balance-function analysis requires a mixed-event batch");
+    }
 
     N_b += get_number_of_particles(plist_b);
     N_bbar += get_number_of_particles(plist_bbar);
@@ -79,11 +99,6 @@ void BalanceFunction::calculate_balance_function(
     combine_and_bin_particle_pairs(C_abarb, plist_abar, plist_b);
 
     messager.info("calculating correlatoin function using mixed events ... ");
-
-    auto plist_b_mixed_event =
-        particle_list->get_balance_function_particle_list_b_mixed_event();
-    auto plist_bbar_mixed_event =
-        particle_list->get_balance_function_particle_list_bbar_mixed_event();
 
     combine_and_bin_mixed_particle_pairs(
         C_mixed_ab, plist_a, plist_b_mixed_event);
@@ -162,6 +177,10 @@ void BalanceFunction::combine_and_bin_mixed_particle_pairs(
     const std::vector<std::vector<particle_info>*>* plist_b) {
     const int nev = plist_a->size();
     const int nev_mixed = plist_b->size();
+    if (nev != 0 && nev_mixed == 0) {
+        throw std::runtime_error(
+            "Balance-function analysis requires a mixed-event batch");
+    }
     for (int iev = 0; iev < nev; iev++) {
         const int iev_mixed =
             (ran_gen_ptr.lock()->rand_int_uniform() % nev_mixed);
@@ -255,10 +274,10 @@ void BalanceFunction::output_balance_function() {
     output << "# DeltaY  Delta_C2  C2(OS)  rho2(OS)  rho1^2(OS)  "
            << "C2(SS) rho2(SS)  rho1^2(SS)" << endl;
     for (int i = 0; i < Bnpts; i++) {
-        double C2_OS =
-            C2_OS_delta_y[i] / C2_OS_delta_y_mixed[i] * N_OS_mixed / N_OS;
-        double C2_SS =
-            C2_SS_delta_y[i] / C2_SS_delta_y_mixed[i] * N_SS_mixed / N_SS;
+        double C2_OS = normalized_pair_ratio(
+            C2_OS_delta_y[i], C2_OS_delta_y_mixed[i], N_OS, N_OS_mixed);
+        double C2_SS = normalized_pair_ratio(
+            C2_SS_delta_y[i], C2_SS_delta_y_mixed[i], N_SS, N_SS_mixed);
         output << std::scientific << std::setw(18) << std::setprecision(8)
                << Delta_y[i] << "   " << C2_OS - C2_SS << "  " << C2_OS << "  "
                << C2_OS_delta_y[i] << "  " << C2_OS_delta_y_mixed[i] << "  "
@@ -277,10 +296,10 @@ void BalanceFunction::output_balance_function() {
     output2 << "# Delta_phi  Delta_C2  C2(OS)  rho2(OS)  rho1^2(OS)  "
             << "C2(SS) rho2(SS)  rho1^2(SS)" << endl;
     for (int j = 0; j < Bnphi; j++) {
-        double C2_OS =
-            (C2_OS_delta_phi[j] / C2_OS_delta_phi_mixed[j] * N_OS_mixed / N_OS);
-        double C2_SS =
-            (C2_SS_delta_phi[j] / C2_SS_delta_phi_mixed[j] * N_SS_mixed / N_SS);
+        double C2_OS = normalized_pair_ratio(
+            C2_OS_delta_phi[j], C2_OS_delta_phi_mixed[j], N_OS, N_OS_mixed);
+        double C2_SS = normalized_pair_ratio(
+            C2_SS_delta_phi[j], C2_SS_delta_phi_mixed[j], N_SS, N_SS_mixed);
         output2 << std::scientific << std::setw(18) << std::setprecision(8)
                 << Delta_phi[j] << "   " << C2_OS - C2_SS << "  " << C2_OS
                 << "  " << C2_OS_delta_phi[j] << "  "
@@ -299,18 +318,18 @@ void BalanceFunction::output_balance_function() {
             << "C2(SS)  rho2(SS)  rho1^2(SS)" << endl;
     for (int i = 0; i < Bnpts; i++) {
         for (int j = 0; j < Bnphi; j++) {
-            double C2_OS =
-                ((C_ab[i][j] + C_abarbbar[i][j])
-                 / (C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] + 1e-15));
-            double C2_SS =
-                ((C_abbar[i][j] + C_abarb[i][j])
-                 / (C_mixed_abbar[i][j] + C_mixed_abarb[i][j] + 1e-15));
+            double C2_OS = normalized_pair_ratio(
+                C_ab[i][j] + C_abarbbar[i][j],
+                C_mixed_ab[i][j] + C_mixed_abarbbar[i][j], N_OS, N_OS_mixed);
+            double C2_SS = normalized_pair_ratio(
+                C_abbar[i][j] + C_abarb[i][j],
+                C_mixed_abbar[i][j] + C_mixed_abarb[i][j], N_SS, N_SS_mixed);
             output3 << std::scientific << std::setw(18) << std::setprecision(8)
                     << Delta_y[i] << "  " << Delta_phi[j] << "  "
-                    << C2_OS * N_OS_mixed / N_OS << "  "
+                    << C2_OS << "  "
                     << C_ab[i][j] + C_abarbbar[i][j] << "  "
                     << C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] << "  "
-                    << C2_SS * N_SS_mixed / N_SS << "  "
+                    << C2_SS << "  "
                     << C_abbar[i][j] + C_abarb[i][j] << "  "
                     << C_mixed_abbar[i][j] + C_mixed_abarb[i][j] << endl;
         }

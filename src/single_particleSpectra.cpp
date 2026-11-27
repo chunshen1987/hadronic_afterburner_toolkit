@@ -3,7 +3,9 @@
 
 #include <stdlib.h>
 
+#include <algorithm>
 #include <cmath>
+#include <complex>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -1629,134 +1631,74 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
     vector<vector<double>> &event_Q3_real,
     vector<vector<double>> &event_Q3_imag, int flag, int flag_ch,
     vector<vector<double>> &corr_rap, vector<vector<double>> &corr_rap_err) {
-    // C_nmk[0] = C_000 = N(N-1)(N-2) is the number of pairs
+    // C_nmk[0] = C_000 = N(N-1)(N-2) is the number of ordered triplets
     // C_nmk[1] = C_112, C_nmk[2] = C_123, C_nmk[3] = C_224, C_nmk[4] = C_235
     // C_nmk[5] = C_134, C_nmk[6] = C_246, C_nmk[7] = C_336, C_nmk[8] = C_347
     int n[9] = {0, 1, 1, 2, 2, 1, 2, 3, 3};
     int m[9] = {0, 1, 2, 2, 3, 3, 4, 3, 4};
-    double *temp_corr = new double[N_rap];
+    using Complex = std::complex<double>;
+    const auto q = [](const vector<vector<double>> &real,
+                      const vector<vector<double>> &imag, int bin,
+                      int harmonic) {
+        return Complex(real[bin][harmonic], imag[bin][harmonic]);
+    };
+    const bool eta12 = flag == 1;
+    const bool same_charge = flag_ch == 1;
+    vector<double> temp_corr(N_rap);
     for (int i = 0; i < num_corr; i++) {
-        int k = n[i] + m[i];
-        if (k > order_max) {
-            messager << "Error: the vn needed for three-particle correlation "
-                     << "is not computed, order_max = " << order_max
-                     << "n+m = " << k << ". Make sure order_max > n+m!";
+        const int k = n[i] + m[i];
+        if (k >= order_max) {
+            messager << "Three-particle correlation requires order_max > "
+                     << k << ", got " << order_max;
             messager.flush("error");
             exit(1);
         }
 
-        double Q2_real = 0.0;
-        double Q2_imag = 0.0;
-        double Q3_real = 0.0;
-        double Q3_imag = 0.0;
-        if (flag == 1) {
-            for (int j = 0; j < N_rap; j++) {
-                Q3_real += event_Q3_real[j][k];
-                Q3_imag += event_Q3_imag[j][k];
-            }
-        } else if (flag == 2) {
-            for (int j = 0; j < N_rap; j++) {
-                Q2_real += event_Q2_real[j][k];
-                Q2_imag += event_Q2_imag[j][k];
-            }
+        Complex integrated_q;
+        for (int bin = 0; bin < N_rap; bin++) {
+            integrated_q += eta12
+                                ? q(event_Q3_real, event_Q3_imag, bin, k)
+                                : q(event_Q2_real, event_Q2_imag, bin, m[i]);
         }
 
-        for (int kk = 0; kk < N_rap; kk++) {
-            temp_corr[kk] = 0.0;
-        }
+        std::fill(temp_corr.begin(), temp_corr.end(), 0.0);
         for (int ii = 0; ii < N_rap; ii++) {
+            const Complex q1n = q(event_Q1_real, event_Q1_imag, ii, n[i]);
+            const Complex q1m = q(event_Q1_real, event_Q1_imag, ii, m[i]);
+            const Complex q1k = q(event_Q1_real, event_Q1_imag, ii, k);
             for (int jj = 0; jj < N_rap; jj++) {
-                int rap_idx =
-                    ((ii - jj) - static_cast<int>(rapidity_dis_min / drap));
-                if (rap_idx >= 0 && rap_idx < N_rap) {
-                    double Qn_Qm_Qkstar = 0.0;
-                    double Qn_Qnstar = 0.0;
-                    double Qm_Qmstar = 0.0;
-                    double Qk_Qkstar = 0.0;
-                    if (flag == 1) {
-                        Qn_Qm_Qkstar =
-                            ((event_Q1_real[ii][n[i]] * event_Q2_real[jj][m[i]]
-                              - event_Q1_imag[ii][n[i]]
-                                    * event_Q2_imag[jj][m[i]])
-                                 * Q3_real
-                             + (event_Q1_real[ii][n[i]]
-                                    * event_Q2_imag[jj][m[i]]
-                                + event_Q1_imag[ii][n[i]]
-                                      * event_Q2_real[jj][m[i]])
-                                   * Q3_imag);
-                        // full overlap between Q2 and Q3 = Q1[n]*conj(Q2[n])
-                        Qn_Qnstar =
-                            (event_Q1_real[ii][n[i]] * event_Q2_real[jj][n[i]]
-                             + event_Q1_imag[ii][n[i]]
-                                   * event_Q2_imag[jj][n[i]]);
-                        // full overlap between Q1 and Q3 = Q2[m]*conj(Q1[m])
-                        Qm_Qmstar =
-                            (event_Q2_real[ii][m[i]] * event_Q1_real[jj][m[i]]
-                             + event_Q2_imag[ii][m[i]]
-                                   * event_Q1_imag[jj][m[i]]);
-                        // full overlap between Q1 and Q2 = Q1[k]*conj(Q3[k])
-                        if (ii == jj && flag_ch == 1) {
-                            Qk_Qkstar =
-                                (event_Q1_real[ii][k] * Q3_real
-                                 + event_Q1_imag[ii][k] * Q3_imag);
-                        }
-                        double corr_local;
-                        if (fabs(Qk_Qkstar) < 1e-15) {
-                            corr_local = Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar;
-                        } else {
-                            corr_local =
-                                (Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar
-                                 - Qk_Qkstar + 2. * event_Q1_real[ii][0]);
-                        }
-                        temp_corr[rap_idx] += corr_local;
-                    } else if (flag == 2) {
-                        Qn_Qm_Qkstar =
-                            ((event_Q1_real[ii][n[i]] * Q2_real
-                              - event_Q1_imag[ii][n[i]] * Q2_imag)
-                                 * event_Q3_real[jj][k]
-                             + (event_Q1_real[ii][n[i]] * Q2_imag
-                                + event_Q1_imag[ii][n[i]] * Q2_real)
-                                   * event_Q3_imag[jj][k]);
-                        // full overlap between Q2 and Q3 = Q1[n]*conj(Q2[n])
-                        Qn_Qnstar =
-                            (event_Q1_real[ii][n[i]] * event_Q2_real[jj][n[i]]
-                             + event_Q1_imag[ii][n[i]]
-                                   * event_Q2_imag[jj][n[i]]);
-                        // full overlap between Q1 and Q3 = Q2[m]*conj(Q1[m])
-                        if (ii == jj) {
-                            Qm_Qmstar =
-                                (Q2_real * event_Q1_real[jj][m[i]]
-                                 + Q2_imag * event_Q1_imag[jj][m[i]]);
-                        }
-                        // full overlap between Q1 and Q2 = Q1[k]*conj(Q3[k])
-                        if (flag_ch == 1) {
-                            Qk_Qkstar =
-                                (event_Q1_real[ii][k] * event_Q3_real[jj][k]
-                                 + event_Q1_imag[ii][k] * event_Q3_imag[jj][k]);
-                        }
+                const int rap_idx =
+                    (ii - jj) - static_cast<int>(rapidity_dis_min / drap);
+                if (rap_idx < 0 || rap_idx >= N_rap) continue;
 
-                        double corr_local;
-                        if (fabs(Qk_Qkstar) > 1e-15
-                            && fabs(Qm_Qmstar) > 1e-15) {
-                            corr_local =
-                                (Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar
-                                 - Qk_Qkstar + 2. * event_Q1_real[ii][0]);
-                        } else {
-                            corr_local =
-                                (Qn_Qm_Qkstar - Qn_Qnstar - Qm_Qmstar
-                                 - Qk_Qkstar);
-                        }
-                        temp_corr[rap_idx] += corr_local;
-                    }
+                const Complex q2n = q(event_Q2_real, event_Q2_imag, jj, n[i]);
+                const Complex q2m =
+                    eta12 ? q(event_Q2_real, event_Q2_imag, jj, m[i])
+                          : integrated_q;
+                const Complex q3k =
+                    eta12 ? integrated_q
+                          : q(event_Q3_real, event_Q3_imag, jj, k);
+                // Subtract the 2=3 overlap, then the 1=2 and 1=3 overlaps
+                // wherever their charge selections and rapidity bins coincide.
+                Complex corr =
+                    q1n * q2m * std::conj(q3k) - q1n * std::conj(q2n);
+                if (same_charge && (!eta12 || ii == jj)) {
+                    corr -= q1k * std::conj(q3k);
                 }
+                if (eta12 || ii == jj) {
+                    corr -= std::conj(q1m) * q2m;
+                }
+                if (same_charge && ii == jj) {
+                    corr += 2.0 * event_Q1_real[ii][0];
+                }
+                temp_corr[rap_idx] += corr.real();
             }
         }
-        for (int kk = 0; kk < N_rap; kk++) {
-            corr_rap[i][kk] += temp_corr[kk];
-            corr_rap_err[i][kk] += temp_corr[kk] * temp_corr[kk];
+        for (int bin = 0; bin < N_rap; bin++) {
+            corr_rap[i][bin] += temp_corr[bin];
+            corr_rap_err[i][bin] += temp_corr[bin] * temp_corr[bin];
         }
     }
-    delete[] temp_corr;
 }
 
 //! This function computes the 4-particle correlation for C_n{4}

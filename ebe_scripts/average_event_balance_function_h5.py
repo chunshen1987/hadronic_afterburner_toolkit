@@ -10,6 +10,8 @@ from sys import argv, exit
 from os import path, mkdir
 from glob import glob
 from numpy import *
+
+from balance_function import normalized_correlation
 import h5py
 import shutil
 
@@ -67,29 +69,29 @@ for ipart in pair_list:
 
     event_avg_data = event_avg_data/nev
     # rho_2(OS)_err
-    event_avg_data[:, 6] = sqrt(event_avg_data[:, 6]
-                                - event_avg_data[:, 5]**2.)/sqrt(nev)
+    event_avg_data[:, 6] = sqrt(
+        maximum(event_avg_data[:, 6] - event_avg_data[:, 5]**2, 0.0) / nev
+    )
     # rho_1^2(OS)_err
-    event_avg_data[:, 8] = sqrt(event_avg_data[:, 8]
-                                - event_avg_data[:, 7]**2.)/sqrt(nev)
+    event_avg_data[:, 8] = sqrt(
+        maximum(event_avg_data[:, 8] - event_avg_data[:, 7]**2, 0.0) / nev
+    )
     # rho_2(SS)_err
-    event_avg_data[:, 12] = sqrt(event_avg_data[:, 12]
-                                - event_avg_data[:, 11]**2.)/sqrt(nev)
+    event_avg_data[:, 12] = sqrt(
+        maximum(event_avg_data[:, 12] - event_avg_data[:, 11]**2, 0.0) / nev
+    )
     # rho_1^2(SS)_err
-    event_avg_data[:, 14] = sqrt(event_avg_data[:, 14]
-                                - event_avg_data[:, 13]**2.)/sqrt(nev)
-    # C_2(OS)
-    norm = sum(event_avg_data[:, 7])/sum(event_avg_data[:, 5])
-    event_avg_data[:, 3] = norm*event_avg_data[:, 5]/event_avg_data[:, 7]
-    event_avg_data[:, 4] = norm*sqrt(
-          (event_avg_data[:, 6]/event_avg_data[:, 7])**2.
-        + (event_avg_data[:, 5]*event_avg_data[:, 8]/event_avg_data[:, 7]**2.)**2.)
-    # C_2(SS)
-    norm = sum(event_avg_data[:, 13])/sum(event_avg_data[:, 11])
-    event_avg_data[:, 9] = norm*event_avg_data[:, 11]/event_avg_data[:, 13]
-    event_avg_data[:, 10] = norm*sqrt(
-          (event_avg_data[:, 12]/event_avg_data[:, 13])**2.
-        + (event_avg_data[:, 11]*event_avg_data[:, 14]/event_avg_data[:, 13]**2.)**2.)
+    event_avg_data[:, 14] = sqrt(
+        maximum(event_avg_data[:, 14] - event_avg_data[:, 13]**2, 0.0) / nev
+    )
+    event_avg_data[:, 3], event_avg_data[:, 4] = normalized_correlation(
+        event_avg_data[:, 5], event_avg_data[:, 7],
+        event_avg_data[:, 6], event_avg_data[:, 8],
+    )
+    event_avg_data[:, 9], event_avg_data[:, 10] = normalized_correlation(
+        event_avg_data[:, 11], event_avg_data[:, 13],
+        event_avg_data[:, 12], event_avg_data[:, 14],
+    )
     # Delta C_2
     event_avg_data[:, 1] = event_avg_data[:, 3] - event_avg_data[:, 9]
     event_avg_data[:, 2] = sqrt(event_avg_data[:, 4]**2.
@@ -123,29 +125,29 @@ for ipart in pair_list:
 
     event_avg_data = event_avg_data/nev
     # rho_2(OS)_err
-    event_avg_data[:, 6] = sqrt(event_avg_data[:, 6]
-                                - event_avg_data[:, 5]**2.)/sqrt(nev)
+    event_avg_data[:, 6] = sqrt(
+        maximum(event_avg_data[:, 6] - event_avg_data[:, 5]**2, 0.0) / nev
+    )
     # rho_1^2(OS)_err
-    event_avg_data[:, 8] = sqrt(event_avg_data[:, 8]
-                                - event_avg_data[:, 7]**2.)/sqrt(nev)
+    event_avg_data[:, 8] = sqrt(
+        maximum(event_avg_data[:, 8] - event_avg_data[:, 7]**2, 0.0) / nev
+    )
     # rho_2(SS)_err
-    event_avg_data[:, 12] = sqrt(event_avg_data[:, 12]
-                                - event_avg_data[:, 11]**2.)/sqrt(nev)
+    event_avg_data[:, 12] = sqrt(
+        maximum(event_avg_data[:, 12] - event_avg_data[:, 11]**2, 0.0) / nev
+    )
     # rho_1^2(SS)_err
-    event_avg_data[:, 14] = sqrt(event_avg_data[:, 14]
-                                - event_avg_data[:, 13]**2.)/sqrt(nev)
-    # C_2(OS)
-    norm = sum(event_avg_data[:, 7])/sum(event_avg_data[:, 5])
-    event_avg_data[:, 3] = norm*event_avg_data[:, 5]/event_avg_data[:, 7]
-    event_avg_data[:, 4] = norm*sqrt(
-          (event_avg_data[:, 6]/event_avg_data[:, 7])**2.
-        + (event_avg_data[:, 5]*event_avg_data[:, 8]/event_avg_data[:, 7]**2.)**2.)
-    # C_2(SS)
-    norm = sum(event_avg_data[:, 13])/sum(event_avg_data[:, 11])
-    event_avg_data[:, 9] = norm*event_avg_data[:, 11]/event_avg_data[:, 13]
-    event_avg_data[:, 10] = norm*sqrt(
-          (event_avg_data[:, 12]/event_avg_data[:, 13])**2.
-        + (event_avg_data[:, 11]*event_avg_data[:, 14]/event_avg_data[:, 13]**2.)**2.)
+    event_avg_data[:, 14] = sqrt(
+        maximum(event_avg_data[:, 14] - event_avg_data[:, 13]**2, 0.0) / nev
+    )
+    event_avg_data[:, 3], event_avg_data[:, 4] = normalized_correlation(
+        event_avg_data[:, 5], event_avg_data[:, 7],
+        event_avg_data[:, 6], event_avg_data[:, 8],
+    )
+    event_avg_data[:, 9], event_avg_data[:, 10] = normalized_correlation(
+        event_avg_data[:, 11], event_avg_data[:, 13],
+        event_avg_data[:, 12], event_avg_data[:, 14],
+    )
     # Delta C_2
     event_avg_data[:, 1] = event_avg_data[:, 3] - event_avg_data[:, 9]
     event_avg_data[:, 2] = sqrt(event_avg_data[:, 4]**2.
@@ -180,29 +182,29 @@ for ipart in pair_list:
 
     event_avg_data = event_avg_data/nev
     # rho_2(OS)_err
-    event_avg_data[:, 7] = sqrt(event_avg_data[:, 7]
-                                - event_avg_data[:, 6]**2.)/sqrt(nev)
+    event_avg_data[:, 7] = sqrt(
+        maximum(event_avg_data[:, 7] - event_avg_data[:, 6]**2, 0.0) / nev
+    )
     # rho_1^2(OS)_err
-    event_avg_data[:, 9] = sqrt(event_avg_data[:, 9]
-                                - event_avg_data[:, 8]**2.)/sqrt(nev)
+    event_avg_data[:, 9] = sqrt(
+        maximum(event_avg_data[:, 9] - event_avg_data[:, 8]**2, 0.0) / nev
+    )
     # rho_2(SS)_err
-    event_avg_data[:, 13] = sqrt(event_avg_data[:, 13]
-                                 - event_avg_data[:, 12]**2.)/sqrt(nev)
+    event_avg_data[:, 13] = sqrt(
+        maximum(event_avg_data[:, 13] - event_avg_data[:, 12]**2, 0.0) / nev
+    )
     # rho_1^2(SS)_err
-    event_avg_data[:, 15] = sqrt(event_avg_data[:, 15]
-                                 - event_avg_data[:, 14]**2.)/sqrt(nev)
-    # C_2(OS)
-    norm = sum(event_avg_data[:, 8])/sum(event_avg_data[:, 6])
-    event_avg_data[:, 4] = norm*event_avg_data[:, 6]/event_avg_data[:, 8]
-    event_avg_data[:, 5] = norm*sqrt(
-          (event_avg_data[:, 7]/event_avg_data[:, 8])**2.
-        + (event_avg_data[:, 6]*event_avg_data[:, 9]/event_avg_data[:, 8]**2.)**2.)
-    # C_2(SS)
-    norm = sum(event_avg_data[:, 14])/sum(event_avg_data[:, 12])
-    event_avg_data[:, 10] = norm*event_avg_data[:, 12]/event_avg_data[:, 14]
-    event_avg_data[:, 11] = norm*sqrt(
-          (event_avg_data[:, 13]/event_avg_data[:, 14])**2.
-        + (event_avg_data[:, 12]*event_avg_data[:, 15]/event_avg_data[:, 14]**2.)**2.)
+    event_avg_data[:, 15] = sqrt(
+        maximum(event_avg_data[:, 15] - event_avg_data[:, 14]**2, 0.0) / nev
+    )
+    event_avg_data[:, 4], event_avg_data[:, 5] = normalized_correlation(
+        event_avg_data[:, 6], event_avg_data[:, 8],
+        event_avg_data[:, 7], event_avg_data[:, 9],
+    )
+    event_avg_data[:, 10], event_avg_data[:, 11] = normalized_correlation(
+        event_avg_data[:, 12], event_avg_data[:, 14],
+        event_avg_data[:, 13], event_avg_data[:, 15],
+    )
     # Delta C_2
     event_avg_data[:, 2] = event_avg_data[:, 4] - event_avg_data[:, 10]
     event_avg_data[:, 3] = sqrt(event_avg_data[:, 5]**2.

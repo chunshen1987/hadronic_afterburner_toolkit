@@ -29,6 +29,19 @@ Pairs from mixed event are form by first rotating the mixture event by a random 
 
 The output correlation function is in 3-d q space (q_out, q_side, q_long).
 
+For HDF5 ensemble averaging, leave `hbt_raw_output=1` and collect the
+`HBT_raw_correlation_function_KT_*.dat` files alongside the existing HBT
+output and flow files used for centrality selection. The raw tables store
+three nominal q-bin coordinates in GeV, same-event pair count, sum of the
+cosine weights, and mixed-event pair count. The raw files are available in
+both standard and compact output modes.
+
+Run `ebe_scripts/average_event_HBT_correlation_function_h5.py events.h5 output_dir`
+on the combined event file. Then run `ebe_scripts/fit_HBT_radii.py` on
+the resulting ensemble HDF5 file. The fitter writes radii into that file
+using its existing momentum-bin names. Regenerate old two- or five-column
+files for ensemble normalization if the raw pair counts were not saved.
+
 ### Event-by-event particle yield distribution
 
 Particle yield distrbution from a given pT and rapidity cut can be collected from UrQMD outputs

@@ -9,6 +9,8 @@ from sys import argv, exit
 from os import path, mkdir
 from glob import glob
 from numpy import *
+
+from centrality import multiplicity_bounds
 import h5py
 import shutil
 from scipy.optimize import curve_fit
@@ -249,13 +251,9 @@ for icen in range(len(centralityCutList) - 1):
         mkdir(avg_folder)
 
     selected_events_list = []
-    dN_dy_cut_high = dNdyList[
-        int(len(dNdyList)*centralityCutList[icen]/100.)
-    ]
-    dN_dy_cut_low  = dNdyList[
-        min(len(dNdyList)-1,
-            int(len(dNdyList)*centralityCutList[icen+1]/100.))
-    ]
+    dN_dy_cut_low, dN_dy_cut_high = multiplicity_bounds(
+        dNdyList, centralityCutList[icen], centralityCutList[icen+1]
+    )
     for event_name in dNdyDict.keys():
         if (dNdyDict[event_name] > dN_dy_cut_low
             and dNdyDict[event_name] <= dN_dy_cut_high):

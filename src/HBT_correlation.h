@@ -60,6 +60,11 @@ class HBT_correlation {
     double *****correl_3d_Kphi_diff_num, *****correl_3d_Kphi_diff_denorm;
     double *****correl_3d_Kphi_diff_num_count;
 
+    void output_3d_correlation(
+        const std::string &suffix, double total_same, double total_mixed,
+        double ***out_sum, double ***side_sum, double ***long_sum,
+        double ***same_count, double ***cos_sum, double ***mixed_count);
+
   public:
     HBT_correlation(
         ParameterReader &paraRdr, std::string path,

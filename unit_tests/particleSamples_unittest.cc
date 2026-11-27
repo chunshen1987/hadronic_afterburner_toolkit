@@ -1,6 +1,7 @@
 
 #include "../src/particleSamples.h"
 
+#include <cmath>
 #include <memory>
 #include <string>
 
@@ -11,6 +12,56 @@
 using std::string;
 
 namespace {
+
+TEST(ParticleDecay, ConservesFourMomentumForRestingAndMovingMothers) {
+    particle_decay decayer(std::make_shared<RandomUtil::Random>(24680), 0);
+    for (int pdg : {113, 223}) {
+        for (double pz : {0.0, 0.6}) {
+            particle_info mother{}, plus{}, minus{}, neutral{};
+            mother.monval = pdg;
+            mother.mass = decayer.get_particle_mass(pdg);
+            mother.pz = pz;
+            mother.E = std::hypot(mother.mass, mother.pz);
+            plus.mass = decayer.get_particle_mass(211);
+            minus.mass = decayer.get_particle_mass(-211);
+            if (pdg == 113) {
+                decayer.perform_two_body_decay(mother, plus, minus);
+            } else {
+                neutral.mass = decayer.get_particle_mass(111);
+                decayer.perform_three_body_decay(mother, plus, minus, neutral);
+            }
+
+            EXPECT_NEAR(plus.E + minus.E + neutral.E, mother.E, 1e-12);
+            EXPECT_NEAR(plus.px + minus.px + neutral.px, mother.px, 1e-12);
+            EXPECT_NEAR(plus.py + minus.py + neutral.py, mother.py, 1e-12);
+            EXPECT_NEAR(plus.pz + minus.pz + neutral.pz, mother.pz, 1e-12);
+        }
+    }
+}
+
+TEST(particleSamples, RapidityShiftPreservesHbtPhase) {
+    ParameterReader params;
+    params.readFromFile("parameters.dat");
+    params.setVal("read_in_mode", 0);
+    particleSamples samples(
+        params, "test_reader_files", std::make_shared<RandomUtil::Random>(0));
+
+    std::vector<particle_info> pair(2);
+    for (auto &particle : pair) {
+        particle.mass = 0.14;
+        particle.px = 0.2;
+        particle.E = std::sqrt(0.14 * 0.14 + 0.2 * 0.2 + 0.1 * 0.1);
+    }
+    pair[0].pz = 0.1;
+    pair[1].pz = -0.1;
+    pair[0].z = 1.0;
+    std::vector<std::vector<particle_info> *> events{&pair};
+    samples.boostParticles(&events, 0.7);
+    const double phase =
+        (pair[0].E - pair[1].E) * (pair[0].t - pair[1].t)
+        - (pair[0].pz - pair[1].pz) * (pair[0].z - pair[1].z);
+    EXPECT_NEAR(phase, -0.2, 1e-12);
+}
 
 TEST(particleSamples, DefaultConstructor) {
     ParameterReader paraRdr;

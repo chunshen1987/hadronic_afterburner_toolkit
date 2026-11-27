@@ -21,6 +21,8 @@ from os import path, mkdir
 from glob import glob
 import h5py
 from numpy import *
+
+from centrality import multiplicity_bounds
 import shutil
 
 # define colors
@@ -83,12 +85,9 @@ for icen in range(len(centrality_cut_list) - 1):
     )
     mkdir(avg_folder)
     
-    dN_dy_cut_high = (
-        dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)])
-    dN_dy_cut_low  = dN_dy_mb[
-        min(len(dN_dy_mb)-1,
-            int(len(dN_dy_mb)*centrality_cut_list[icen+1]/100.))
-    ]
+    dN_dy_cut_low, dN_dy_cut_high = multiplicity_bounds(
+        dN_dy_mb, centrality_cut_list[icen], centrality_cut_list[icen+1]
+    )
 
     selected_events_list = []
     for ifolder, event_name in enumerate(event_list):

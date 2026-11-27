@@ -10,6 +10,8 @@ from sys import argv, exit
 from os import path, mkdir
 from glob import glob
 from numpy import *
+
+from centrality import multiplicity_bounds
 import h5py
 import shutil
 from random import randrange
@@ -1061,12 +1063,9 @@ for icen in range(len(centrality_cut_list) - 1):
     mkdir(avg_folder)
 
     selected_events_list = []
-    dN_dy_cut_high = (
-        dNdyList[int(len(dNdyList)*centrality_cut_list[icen]/100.)])
-    dN_dy_cut_low  = dNdyList[
-        min(len(dNdyList) - 1,
-            int(len(dNdyList)*centrality_cut_list[icen+1]/100.))
-    ]
+    dN_dy_cut_low, dN_dy_cut_high = multiplicity_bounds(
+        dNdyList, centrality_cut_list[icen], centrality_cut_list[icen+1]
+    )
     if len(dNcutList) == len(centrality_cut_list):
         dN_dy_cut_high = dNcutList[icen]
         dN_dy_cut_low = dNcutList[icen+1]

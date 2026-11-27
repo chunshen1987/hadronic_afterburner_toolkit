@@ -25,7 +25,9 @@ class particleSamples {
 
     std::ifstream inputfile;
     std::ifstream inputfile_mixed_event;
-    uint16_t smash_format_version_;
+    uint16_t smash_format_version_ = 0;
+    uint16_t smash_mixed_format_version_ = 0;
+
     gzFile inputfile_gz;
     gzFile inputfile_mixed_event_gz;
     int event_buffer_size;
@@ -211,6 +213,7 @@ class particleSamples {
     }
 
     int get_event_buffer_size() const { return (event_buffer_size); }
+    bool uses_external_mixed_events() const { return read_mixed_events; }
 
     int get_number_of_events() const { return (particle_list->size()); }
     int get_number_of_events_anti_particle() {

@@ -15,7 +15,13 @@ run_mode = 1                  # running mode for the program
                               #    specified by pT_min, pT_max, rap_min,
                               #    and rap_max)
 
-randomSeed = -1
+analyze_flow = 1
+analyze_HBT = 0
+analyze_balance_function = 0
+analyze_ebe_yield = 0
+read_in_real_mixed_events = 1
+rapidity_shift = 0
+randomSeed = 0
 particle_monval = 211         # particle Monte-Carlo number
 distinguish_isospin = 1       # flag whether to distinguish the isospin of 
                               # particles
@@ -63,6 +69,7 @@ compute_correlation = 0       # flag to compute correlation function
 flag_charge_dependence = 0    # flag to compute charge dependence correlation
 
 # Parameters for HBT correlation functions
+long_comoving_boost = 1
 reject_decay_flag = 0         # reject particles from resonance decays
                               # 0: no rejection
                               # 1: reject particles from all decay channels
@@ -95,8 +102,8 @@ KT_max = 1.0                         # maximum value of the pair momentum k_T
 n_Kphi = 48                          # number of the azimuthal angles for the 
                                      # pair momentum k_T 
                                      # (range is assumed to be from 0 to 2*pi)
-Krap_min = -0.5                      # minimum accept pair momentum rapidity
-Krap_max = 0.5                       # maximum accept pair momentum rapidity
+HBTrap_min = -0.5                    # minimum accept pair momentum rapidity
+HBTrap_max = 0.5                      # maximum accept pair momentum rapidity
 buffer_rapidity = 5.0                # collect particles with rapidity from 
                                      # [Krap_min - buffer_rapidity, 
                                      #  Krap_max + buffer_rapidity]

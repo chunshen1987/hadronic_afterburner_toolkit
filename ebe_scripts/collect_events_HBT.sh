@@ -28,7 +28,8 @@ do
     eventsPath=$fromFolder/$ijob/HBT_results
     for iev in `ls --color=none $eventsPath`
     do 
-        if [ -a $eventsPath/$iev/HBT_correlation_function_KT_0_0.2.dat ]
+        hbt_files=("$eventsPath/$iev"/HBT_correlation_function_KT_*.dat)
+        if [[ -f "${hbt_files[0]}" ]]
         then
             mv $eventsPath/$iev $toFolder/$folderName
             ((collected_eventNum++))

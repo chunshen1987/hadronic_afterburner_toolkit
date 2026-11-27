@@ -8,6 +8,8 @@ from sys import argv, exit
 from os import path, mkdir
 from glob import glob
 from numpy import *
+
+from centrality import multiplicity_bounds
 import h5py
 import shutil
 
@@ -473,13 +475,10 @@ for icen in range(len(centrality_cut_list) - 1):
     mkdir(avg_folder)
 
     selected_events_list = []
+    dN_dy_cut_low, dN_dy_cut_high = multiplicity_bounds(
+        dN_dy_mb, centrality_cut_list[icen], centrality_cut_list[icen+1]
+    )
     for ifolder, event_name in enumerate(event_list):
-        dN_dy_cut_high = (
-            dN_dy_mb[int(len(dN_dy_mb)*centrality_cut_list[icen]/100.)])
-        dN_dy_cut_low  = dN_dy_mb[
-            min(len(dN_dy_mb)-1,
-                int(len(dN_dy_mb)*centrality_cut_list[icen+1]/100.))
-        ]
         file_name = "particle_9999_vndata_eta_-0.5_0.5.dat"
         try:
             event_group = hf.get(event_name)

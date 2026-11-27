@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -177,7 +178,12 @@ HBT_correlation::~HBT_correlation() {
 void HBT_correlation::calculate_HBT_correlation_function(
     std::shared_ptr<particleSamples> particle_list_in) {
     set_particle_list(particle_list_in);
-    int nev = particle_list->get_number_of_events();
+    const int nev = particle_list->get_number_of_events();
+    if (nev == 0) return;
+    const int mixed_nev = particle_list->get_number_of_mixed_events();
+    if (mixed_nev == 0) {
+        throw std::runtime_error("HBT analysis requires a mixed-event batch");
+    }
     if (azimuthal_flag_ == 1) {
         calculate_flow_event_plane_angle(2);
     }
@@ -194,7 +200,6 @@ void HBT_correlation::calculate_HBT_correlation_function(
     combine_and_bin_particle_pairs(event_list);
 
     // then pairs from mixed events
-    int mixed_nev = particle_list->get_number_of_mixed_events();
     messager << "nev_mixed = " << mixed_nev;
     messager.flush("info");
     number_of_mixed_events_ = static_cast<int>(mixed_nev / 2) + 1;
@@ -207,7 +212,8 @@ void HBT_correlation::calculate_HBT_correlation_function(
         int count = 0;
         while (count < number_of_mixed_events_) {
             int mixed_event_id = (ran_gen_ptr_->rand_int_uniform() % mixed_nev);
-            while (iev == mixed_event_id && mixed_nev != 1) {
+            while (!particle_list->uses_external_mixed_events()
+                   && iev == mixed_event_id && mixed_nev != 1) {
                 mixed_event_id = (ran_gen_ptr_->rand_int_uniform() % mixed_nev);
             }
             mixed_event_list[count] = mixed_event_id;
@@ -725,132 +731,90 @@ void HBT_correlation::output_correlation_function_inv() {
 
 void HBT_correlation::output_correlation_function() {
     for (int iK = 0; iK < n_KT - 1; iK++) {
-        double npair_ratio =
-            (static_cast<double>(number_of_pairs_numerator_KTdiff[iK])
-             / static_cast<double>(number_of_pairs_denormenator_KTdiff[iK]));
-        std::ostringstream filename;
-        filename << path_ << "/HBT_correlation_function_KT_" << KT_array_[iK]
-                 << "_" << KT_array_[iK + 1] << ".dat";
-        std::ofstream output(filename.str().c_str());
-        for (int iqlong = 0; iqlong < qnpts; iqlong++) {
-            for (int iqout = 0; iqout < qnpts; iqout++) {
-                for (int iqside = 0; iqside < qnpts; iqside++) {
-                    int npart_num =
-                        correl_3d_num_count[iK][iqout][iqside][iqlong];
-                    int npart_denorm =
-                        correl_3d_denorm[iK][iqout][iqside][iqlong];
-                    double q_out_local, q_side_local, q_long_local;
-                    double correl_fun_num, correl_fun_denorm;
-                    if (npart_num < 2 || npart_denorm < 2) {
-                        q_out_local = q_out[iqout];
-                        q_side_local = q_side[iqside];
-                        q_long_local = q_long[iqlong];
-                        correl_fun_num = 0.0;
-                        correl_fun_denorm = npart_denorm;
-                    } else {
-                        q_out_local =
-                            (q_out_mean[iK][iqout][iqside][iqlong] / npart_num);
-                        q_side_local =
-                            (q_side_mean[iK][iqout][iqside][iqlong]
-                             / npart_num);
-                        q_long_local =
-                            (q_long_mean[iK][iqout][iqside][iqlong]
-                             / npart_num);
-
-                        correl_fun_num =
-                            (correl_3d_num[iK][iqout][iqside][iqlong]);
-                        correl_fun_denorm =
-                            (npair_ratio
-                             * correl_3d_denorm[iK][iqout][iqside][iqlong]);
-                    }
-
-                    if (paraRdr_.getVal("ecoOutput", 0) == 1) {
-                        output << std::scientific << std::setw(18)
-                               << std::setprecision(8) << correl_fun_num
-                               << "    " << correl_fun_denorm << std::endl;
-                    } else {
-                        output << std::scientific << std::setw(18)
-                               << std::setprecision(8) << q_out_local << "    "
-                               << q_side_local << "    " << q_long_local
-                               << "    " << correl_fun_num << "    "
-                               << correl_fun_denorm << std::endl;
-                    }
-                }
-            }
-        }
-        output.close();
+        std::ostringstream suffix;
+        suffix << KT_array_[iK] << "_" << KT_array_[iK + 1] << ".dat";
+        output_3d_correlation(
+            suffix.str(), number_of_pairs_numerator_KTdiff[iK],
+            number_of_pairs_denormenator_KTdiff[iK], q_out_mean[iK],
+            q_side_mean[iK], q_long_mean[iK], correl_3d_num_count[iK],
+            correl_3d_num[iK], correl_3d_denorm[iK]);
     }
 }
 
 void HBT_correlation::output_correlation_function_Kphi_differential() {
     for (int iK = 0; iK < n_KT - 1; iK++) {
         for (int iKphi = 0; iKphi < n_Kphi; iKphi++) {
-            double npair_ratio =
-                (static_cast<double>(
-                     number_of_pairs_numerator_KTKphidiff[iK][iKphi])
-                 / static_cast<double>(
-                     number_of_pairs_denormenator_KTKphidiff[iK][iKphi]));
-            std::ostringstream filename;
-            filename << path_ << "/HBT_correlation_function_KT_"
-                     << KT_array_[iK] << "_" << KT_array_[iK + 1] << "_Kphi_"
-                     << Kphi_array_[iKphi] << ".dat";
-            std::ofstream output(filename.str().c_str());
-            for (int iqlong = 0; iqlong < qnpts; iqlong++) {
-                for (int iqout = 0; iqout < qnpts; iqout++) {
-                    for (int iqside = 0; iqside < qnpts; iqside++) {
-                        int npart_num =
-                            correl_3d_Kphi_diff_num_count[iK][iKphi][iqout]
-                                                         [iqside][iqlong];
-                        int npart_denorm =
-                            correl_3d_Kphi_diff_denorm[iK][iKphi][iqout][iqside]
-                                                      [iqlong];
-                        double q_out_local, q_side_local, q_long_local;
-                        double correl_fun_num, correl_fun_denorm;
-                        if (npart_num < 2 || npart_denorm < 2) {
-                            q_out_local = q_out[iqout];
-                            q_side_local = q_side[iqside];
-                            q_long_local = q_long[iqlong];
-                            correl_fun_num = 0.0;
-                            correl_fun_denorm = npart_denorm;
-                        } else {
-                            q_out_local =
-                                (q_out_diff_mean[iK][iKphi][iqout][iqside]
-                                                [iqlong]
-                                 / npart_num);
-                            q_side_local =
-                                (q_side_diff_mean[iK][iKphi][iqout][iqside]
-                                                 [iqlong]
-                                 / npart_num);
-                            q_long_local =
-                                (q_long_diff_mean[iK][iKphi][iqout][iqside]
-                                                 [iqlong]
-                                 / npart_num);
-
-                            correl_fun_num =
-                                correl_3d_Kphi_diff_num[iK][iKphi][iqout]
-                                                       [iqside][iqlong];
-                            correl_fun_denorm =
-                                (npair_ratio
-                                 * correl_3d_Kphi_diff_denorm[iK][iKphi][iqout]
-                                                             [iqside][iqlong]);
-                        }
-
-                        if (paraRdr_.getVal("ecoOutput", 0) == 1) {
-                            output << std::scientific << std::setw(18)
-                                   << std::setprecision(8) << correl_fun_num
-                                   << "    " << correl_fun_denorm << std::endl;
-                        } else {
-                            output << std::scientific << std::setw(18)
-                                   << std::setprecision(8) << q_out_local
-                                   << "    " << q_side_local << "    "
-                                   << q_long_local << "    " << correl_fun_num
-                                   << "    " << correl_fun_denorm << std::endl;
-                        }
-                    }
-                }
-            }
-            output.close();
+            std::ostringstream suffix;
+            suffix << KT_array_[iK] << "_" << KT_array_[iK + 1] << "_Kphi_"
+                   << Kphi_array_[iKphi] << ".dat";
+            output_3d_correlation(
+                suffix.str(), number_of_pairs_numerator_KTKphidiff[iK][iKphi],
+                number_of_pairs_denormenator_KTKphidiff[iK][iKphi],
+                q_out_diff_mean[iK][iKphi], q_side_diff_mean[iK][iKphi],
+                q_long_diff_mean[iK][iKphi],
+                correl_3d_Kphi_diff_num_count[iK][iKphi],
+                correl_3d_Kphi_diff_num[iK][iKphi],
+                correl_3d_Kphi_diff_denorm[iK][iKphi]);
         }
+    }
+}
+
+void HBT_correlation::output_3d_correlation(
+    const std::string &suffix, double total_same, double total_mixed,
+    double ***out_sum, double ***side_sum, double ***long_sum,
+    double ***same_count, double ***cos_sum, double ***mixed_count) {
+    const bool compact = paraRdr_.getVal("ecoOutput", 0) == 1;
+    const bool write_raw = paraRdr_.getVal("hbt_raw_output", 1) == 1;
+    const double pair_ratio = total_mixed > 0.0 ? total_same / total_mixed : 0.0;
+    std::ofstream output(path_ + "/HBT_correlation_function_KT_" + suffix);
+    if (!output) throw std::runtime_error("Cannot write HBT output " + suffix);
+    output << std::scientific << std::setprecision(8);
+
+    std::ofstream raw;
+    if (write_raw) {
+        raw.open(path_ + "/HBT_raw_correlation_function_KT_" + suffix);
+        if (!raw) {
+            throw std::runtime_error("Cannot write raw HBT output " + suffix);
+        }
+        raw << "# q_out q_side q_long same_pairs sum_cos mixed_pairs\n"
+            << std::scientific << std::setprecision(16);
+    }
+
+    for (int ilong = 0; ilong < qnpts; ilong++) {
+        for (int iout = 0; iout < qnpts; iout++) {
+            for (int iside = 0; iside < qnpts; iside++) {
+                const double same = same_count[iout][iside][ilong];
+                const double mixed = mixed_count[iout][iside][ilong];
+                const double numerator = cos_sum[iout][iside][ilong];
+                if (write_raw) {
+                    raw << q_out[iout] << ' ' << q_side[iside] << ' '
+                        << q_long[ilong] << ' ' << same << ' ' << numerator
+                        << ' ' << mixed << '\n';
+                }
+
+                const bool populated = same >= 2.0 && mixed >= 2.0;
+                if (!compact) {
+                    const double out =
+                        populated ? out_sum[iout][iside][ilong] / same
+                                  : q_out[iout];
+                    const double side =
+                        populated ? side_sum[iout][iside][ilong] / same
+                                  : q_side[iside];
+                    const double longitudinal =
+                        populated ? long_sum[iout][iside][ilong] / same
+                                  : q_long[ilong];
+                    output << std::setw(18) << out << "    " << side << "    "
+                           << longitudinal << "    ";
+                }
+                output << (populated ? numerator : 0.0) << "    "
+                       << (populated ? pair_ratio * mixed : mixed) << '\n';
+            }
+        }
+    }
+    output.close();
+    if (write_raw) raw.close();
+    if (!output || (write_raw && !raw)) {
+        throw std::runtime_error("Failed to finish HBT output " + suffix);
     }
 }
 

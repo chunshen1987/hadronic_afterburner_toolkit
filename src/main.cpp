@@ -10,6 +10,7 @@
 //
 //=============================================================================
 
+#include <exception>
 #include <iostream>
 #include <string>
 
@@ -35,9 +36,14 @@ int main(int argc, char *argv[]) {
     sw_total.tic();
     sw.tic();
 
-    Analysis flow_analysis(path);
-    flow_analysis.UpdateParameterDict("parameters.dat", argc, argv);
-    flow_analysis.PerformAnalysis();
+    try {
+        Analysis flow_analysis(path);
+        flow_analysis.UpdateParameterDict("parameters.dat", argc, argv);
+        flow_analysis.PerformAnalysis();
+    } catch (const std::exception &error) {
+        cerr << "Analysis failed: " << error.what() << endl;
+        return 1;
+    }
 
     sw_total.toc();
     cout << "Program totally finished in " << sw_total.takeTime() << " sec."

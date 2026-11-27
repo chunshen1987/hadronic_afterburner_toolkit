@@ -16,10 +16,13 @@
      All the errors are only statistic errors
 """
 
+from builtins import max as scalar_max
 from sys import argv, exit
 from os import path, mkdir
 from glob import glob
 from numpy import *
+
+from centrality import multiplicity_bounds
 import h5py
 import shutil
 
@@ -1595,13 +1598,9 @@ for icen in range(len(centralityCutList) - 1):
             if cen_label in event_name:
                 selected_events_list.append(event_name)
     elif CentralityFlag > 0:
-        dN_dy_cut_high = dNdyList[
-            int(len(dNdyList)*centralityCutList[icen]/100.)
-        ]
-        dN_dy_cut_low  = dNdyList[
-            min(len(dNdyList)-1,
-                int(len(dNdyList)*centralityCutList[icen+1]/100.))
-        ]
+        dN_dy_cut_low, dN_dy_cut_high = multiplicity_bounds(
+            dNdyList, centralityCutList[icen], centralityCutList[icen+1]
+        )
         if len(dNcutList) == len(centralityCutList):
             dN_dy_cut_high = dNcutList[icen]
             dN_dy_cut_low = dNcutList[icen+1]
@@ -1820,8 +1819,9 @@ for icen in range(len(centralityCutList) - 1):
                          /sum(pT_interp*(dN_interp+dN_interp_err)))
         mean_pT_lower = (sum(pT_interp**2.*(dN_interp-dN_interp_err))
                          /sum(pT_interp*(dN_interp-dN_interp_err)))
-        mean_pT_err = max(abs(mean_pT_upper - mean_pT), 
-                          abs(mean_pT - mean_pT_lower))
+        mean_pT_err = scalar_max(
+            abs(mean_pT_upper - mean_pT), abs(mean_pT - mean_pT_lower)
+        )
         pT_interp = linspace(0.15, 2.95, 30)
         dN_interp = exp(interp(pT_interp, pT_spectra, log(dN_spectra + 1e-30)))
         dN_interp_err = interp(pT_interp, pT_spectra, dN_spectra_err)
@@ -1830,8 +1830,9 @@ for icen in range(len(centralityCutList) - 1):
                          /sum(pT_interp*(dN_interp+dN_interp_err)))
         mean_pT_1_lower = (sum(pT_interp**2.*(dN_interp-dN_interp_err))
                          /sum(pT_interp*(dN_interp-dN_interp_err)))
-        mean_pT_1_err = max(abs(mean_pT_1_upper - mean_pT_1), 
-                          abs(mean_pT_1 - mean_pT_1_lower))
+        mean_pT_1_err = scalar_max(
+            abs(mean_pT_1_upper - mean_pT_1), abs(mean_pT_1 - mean_pT_1_lower)
+        )
 
         # loop over all kinematic cuts
         vn_2_list = []

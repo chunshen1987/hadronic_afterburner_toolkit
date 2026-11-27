@@ -6,14 +6,16 @@
      Format from HBT correlation function file:
      col 0-2: q_out(GeV), q_side(GeV), q_long (GeV)
      col 3: numerator number of pairs in the q bin
-     col 4: numerator <cos(q*r)> in the q bin
+     col 4: sum of cos(q*r) over the same-event pairs in the q bin
      col 5: denominator number of pairs in the q bin
 """
 
 from sys import argv, exit
 from os import path, mkdir
 from glob import glob
-from numpy import *
+import numpy as np
+
+from centrality import multiplicity_bounds
 import h5py
 import shutil
 
@@ -24,8 +26,6 @@ blue = "\033[94m"
 yellow = "\033[93m"
 red = "\033[91m"
 normal = "\033[0m"
-
-KT_values = ['0.15_0.25', '0.25_0.35', '0.35_0.45', '0.45_0.55']
 
 Reg_centrality_cut_list = [0., 5., 10., 20., 30., 40., 50.,
                            60., 70., 80., 90., 100.]
@@ -117,12 +117,94 @@ for ifolder, event_name in enumerate(event_list):
         file_name = "particle_9999_vndata_eta_-4.9_-3.1.dat"
     event_group = hf.get(event_name)
     eventStatus = check_an_event_is_good(event_group)
-    if eventStatus:
+    if eventStatus and file_name in event_group:
         temp_data   = event_group.get(file_name)
-        temp_data   = nan_to_num(temp_data)
-        dNdyDict[event_name] = temp_data[0, 1]
-dNdyList = -sort(-array(list(dNdyDict.values())))
+        temp_data   = np.asarray(temp_data)
+        multiplicity = temp_data[0, 1]
+        if np.isfinite(multiplicity):
+            dNdyDict[event_name] = multiplicity
+dNdyList = sorted(dNdyDict.values(), reverse=True)
 print("Number of good events: {}".format(len(dNdyList)))
+
+
+
+HBT_PREFIX = "HBT_correlation_function_KT_"
+RAW_PREFIX = "HBT_raw_correlation_function_KT_"
+
+
+def hbt_input_names(event_group):
+    names = {}
+    for key in event_group:
+        if key.startswith(HBT_PREFIX) and key.endswith(".dat"):
+            names[key] = key
+    for key in event_group:
+        if key.startswith(RAW_PREFIX) and key.endswith(".dat"):
+            names[HBT_PREFIX + key[len(RAW_PREFIX):]] = key
+    return names
+
+
+def average_correlation(events, filename):
+    stats = None
+    raw_grid = None
+    for group, names in events:
+        if filename not in names:
+            raise ValueError(f"{group.name} is missing {filename}")
+        key = names[filename]
+        table = np.asarray(group[key], dtype=float)
+        if table.ndim != 2 or table.shape[1] not in (6, 8):
+            raise ValueError(
+                f"{group.name}/{key} has no raw pair counts. "
+                "Regenerate HBT output with hbt_raw_output=1."
+            )
+        if not np.all(np.isfinite(table[:, 3:6])) or np.any(table[:, (3, 5)] < 0):
+            raise ValueError(f"Invalid pair data in {group.name}/{key}")
+        if stats is None:
+            mean = np.zeros((len(table), 8))
+            stats = np.zeros((6, len(table)))
+        if len(table) != len(mean):
+            raise ValueError(f"Inconsistent HBT grid shape in {group.name}/{key}")
+        if key.startswith(RAW_PREFIX):
+            if raw_grid is None:
+                raw_grid = table[:, :3]
+            elif not np.array_equal(raw_grid, table[:, :3]):
+                raise ValueError(f"Inconsistent HBT grid in {group.name}/{key}")
+
+        mean[:, :6] += table[:, :6]
+        same, numerator, mixed = table[:, 3:6].T
+        total_same, total_mixed = same.sum(), mixed.sum()
+        stats[0] += numerator**2
+        stats[1] += total_same**2
+        stats[2] += numerator * total_same
+        stats[3] += mixed**2
+        stats[4] += total_mixed**2
+        stats[5] += mixed * total_mixed
+
+    nev = len(events)
+    mean /= nev
+    stats /= nev
+    if raw_grid is not None:
+        mean[:, :3] = raw_grid
+    mean[:, 6:] = np.nan
+    same, numerator, mixed = mean[:, 3:6].T
+    total_same, total_mixed = same.sum(), mixed.sum()
+    if total_same > 0 and total_mixed > 0:
+        valid = (same > 0) & (mixed > 0)
+        num_fraction = numerator[valid] / total_same
+        den_fraction = mixed[valid] / total_mixed
+        correlation = num_fraction / den_fraction
+        mean[valid, 6] = correlation
+        if nev > 1:
+            # Propagate each normalized sum with its own covariance.
+            # The last step retains the independent num/den error convention.
+            var_num = (stats[0, valid] - 2 * num_fraction * stats[2, valid]
+                       + num_fraction**2 * stats[1, valid]) / total_same**2
+            var_den = (stats[3, valid] - 2 * den_fraction * stats[5, valid]
+                       + den_fraction**2 * stats[4, valid]) / total_mixed**2
+            mean[valid, 7] = np.sqrt(
+                (np.maximum(var_num, 0) + correlation**2 * np.maximum(var_den, 0))
+                / nev
+            ) / den_fraction
+    return mean
 
 
 for icen in range(len(centralityCutList) - 1):
@@ -132,13 +214,9 @@ for icen in range(len(centralityCutList) - 1):
     cenGroup = avgResH5File.create_group(groupName)
 
     selected_events_list = []
-    dN_dy_cut_high = dNdyList[
-        int(len(dNdyList)*centralityCutList[icen]/100.)
-    ]
-    dN_dy_cut_low  = dNdyList[
-        min(len(dNdyList)-1,
-            int(len(dNdyList)*centralityCutList[icen+1]/100.))
-    ]
+    dN_dy_cut_low, dN_dy_cut_high = multiplicity_bounds(
+        dNdyList, centralityCutList[icen], centralityCutList[icen+1]
+    )
     if len(dNcutList) == len(centralityCutList):
         dN_dy_cut_high = dNcutList[icen]
         dN_dy_cut_low = dNcutList[icen+1]
@@ -151,76 +229,20 @@ for icen in range(len(centralityCutList) - 1):
     nev = len(selected_events_list)
     print("analysis {}%-{}% nev = {}...".format(
             centralityCutList[icen], centralityCutList[icen+1], nev))
-    print("dNdy: {0:.2f} - {1:.2f}".format(dN_dy_cut_low, dN_dy_cut_high))
     if nev == 0:
         print("Skip ...")
         continue
 
-    for iKT in range(len(KT_values)):
-        file_name = 'HBT_correlation_function_KT_%s.dat' % KT_values[iKT]
-        event_group = hf.get(event_list[0])
-        event_avg_data = array(event_group.get(file_name))*0.0
-        num = zeros(len(event_avg_data[:, 0]))
-        sigma_num = zeros(len(event_avg_data[:, 0]))
-        Npair_num = 0
-        sigma_Npair_num = 0
-        sigma_num_Npair_num = zeros(len(event_avg_data[:, 0]))
-        denorm = zeros(len(event_avg_data[:, 0]))
-        sigma_denorm = zeros(len(event_avg_data[:, 0]))
-        sigma_denorm_Npair_denorm = zeros(len(event_avg_data[:, 0]))
-        Npair_denorm = 0
-        sigma_Npair_denorm = 0
+    events = [(hf[name], hbt_input_names(hf[name])) for name in selected_events_list]
+    filenames = sorted({filename for _, names in events for filename in names})
+    if not filenames:
+        raise ValueError(f"No HBT correlation datasets in centrality group {groupName}")
+    for filename in filenames:
+        cenGroup.create_dataset(
+            filename, data=average_correlation(events, filename),
+            compression="gzip", compression_opts=9,
+        )
 
-        for ifolder, event_name in enumerate(selected_events_list):
-            event_group = hf.get(event_name)
-            #print("processing {0}/{1} ...".format(event_name, file_name))
-            temp_data = event_group.get(file_name)
-            num += temp_data[:, 4]
-            sigma_num += temp_data[:, 4]**2.
-            Npair_num += sum(temp_data[:, 3])
-            sigma_Npair_num += sum(temp_data[:, 3])**2.
-            sigma_num_Npair_num += temp_data[:, 4]*sum(temp_data[:, 3])
-            denorm += temp_data[:, 5]
-            sigma_denorm += temp_data[:, 5]**2.
-            Npair_denorm += sum(temp_data[:, 5])
-            sigma_Npair_denorm += sum(temp_data[:, 5])**2.
-            sigma_denorm_Npair_denorm += temp_data[:, 5]*sum(temp_data[:, 5])
-            event_avg_data += temp_data
-
-        event_avg_data = event_avg_data/nev
-        num = num/nev
-        denorm = denorm/nev
-        Npair_num = Npair_num/nev
-        Npair_denorm = Npair_denorm/nev
-        sigma_num = sigma_num/nev - num**2
-        sigma_denorm = sigma_denorm/nev - denorm**2
-        sigma_Npair_num = sigma_Npair_num/nev - Npair_num**2.
-        sigma_Npair_denorm = sigma_Npair_denorm/nev - Npair_denorm**2.
-        sigma_num_Npair_num = sigma_num_Npair_num/nev - num*Npair_num
-        sigma_denorm_Npair_denorm = (sigma_denorm_Npair_denorm/nev
-                                     - denorm*Npair_denorm)
-
-        correlation = num/(Npair_num/Npair_denorm*denorm)
-
-        err_numerator = ((num/Npair_num*sqrt(sigma_num/(num**2.)
-                          + sigma_Npair_num/(Npair_num**2.)
-                         - 2.*sigma_num_Npair_num/(num*Npair_num))/sqrt(nev)))
-        err_denormator = ((denorm/Npair_denorm*sqrt(sigma_denorm/(denorm**2.)
-                           + sigma_Npair_denorm/(Npair_denorm**2.)
-                          - 2.*sigma_denorm_Npair_denorm/(denorm*Npair_denorm))
-                          /sqrt(nev)))
-
-        correlation_err = sqrt((err_numerator/(denorm/Npair_denorm))**2.
-                               + ((num/Npair_num)*err_denormator
-                                   /((denorm/Npair_denorm)**2.))**2.)
-        event_avg_data[:, 4] = num
-        event_avg_data[:, 5] = denorm
-        event_avg_data[:, 6] = correlation
-        event_avg_data[:, 7] = correlation_err
-        h5data = cenGroup.create_dataset("{0}".format(file_name),
-                                         data=event_avg_data,
-                                         compression="gzip",
-                                         compression_opts=9)
+hf.close()
 avgResH5File.close()
 print("Analysis is done.")
-
