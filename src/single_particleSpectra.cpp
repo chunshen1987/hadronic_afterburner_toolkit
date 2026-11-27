@@ -2143,6 +2143,10 @@ void singleParticleSpectra::output_rapidity_covariance() {
 }
 
 void singleParticleSpectra::check_dNdSV(int event_id) {
+    // Bin of a smeared value on a grid of n points spaced by width. A smear
+    // wider than one bin can push the index past the last bin; such entries
+    // are dropped, as for the r histogram.
+    const auto in_grid = [](int idx, int n) { return idx >= 0 && idx < n; };
     int number_of_particles = particle_list->get_number_of_particles(event_id);
     for (int i = 0; i < number_of_particles; i++) {
         // double pz_local = particle_list->get_particle(event_id, i).pz;
@@ -2172,8 +2176,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             if (tau_local > tau_min && tau_local < tau_max) {
                 double random = ran_gen_ptr->rand_uniform() * intrinsic_dtau;
                 int idx = (int)((tau_local + random - tau_min) / dtau);
-                tau_array[idx] += tau_local;
-                dNdtau_array[idx]++;
+                if (in_grid(idx, N_tau)) {
+                    tau_array[idx] += tau_local;
+                    dNdtau_array[idx]++;
+                }
             }
 
             // second dN/dx
@@ -2185,8 +2191,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                     double random = ran_gen_ptr->rand_uniform() * intrinsic_dx;
                     int idx =
                         (int)((x_local + random - spatial_x_min) / dspatial_x);
-                    xpt_array[idx] += x_local;
-                    dNdx1_array[idx]++;
+                    if (in_grid(idx, N_xpt)) {
+                        xpt_array[idx] += x_local;
+                        dNdx1_array[idx]++;
+                    }
                 }
             }
             if (fabs(x_local) < 0.5) {
@@ -2194,15 +2202,17 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                     double random = ran_gen_ptr->rand_uniform() * intrinsic_dx;
                     int idx =
                         (int)((y_local + random - spatial_x_min) / dspatial_x);
-                    ypt_array[idx] += y_local;
-                    dNdx2_array[idx]++;
+                    if (in_grid(idx, N_xpt)) {
+                        ypt_array[idx] += y_local;
+                        dNdx2_array[idx]++;
+                    }
                 }
             }
             if (r_local > spatial_r_min && r_local < spatial_r_max) {
                 double random = ran_gen_ptr->rand_uniform() * intrinsic_dx;
                 int idx = static_cast<int>(
                     (r_local + random - spatial_r_min) / dspatial_r);
-                if (idx >= 0 && idx < N_xpt) {
+                if (in_grid(idx, N_xpt)) {
                     rpt_array[idx] += r_local;
                     dNdr_array[idx]++;
                 }
@@ -2219,7 +2229,9 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                             ran_gen_ptr->rand_uniform() * intrinsic_dx;
                         int idx_x = (int)((x_local + random - spatial_x_min)
                                           / dspatial_x);
-                        dNdtaudx1_array[idx_tau][idx_x]++;
+                        if (in_grid(idx_tau, N_tau) && in_grid(idx_x, N_xpt)) {
+                            dNdtaudx1_array[idx_tau][idx_x]++;
+                        }
                     }
                 }
             }
@@ -2233,7 +2245,9 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
                             ran_gen_ptr->rand_uniform() * intrinsic_dx;
                         int idx_x = (int)((y_local + random - spatial_x_min)
                                           / dspatial_x);
-                        dNdtaudx2_array[idx_tau][idx_x]++;
+                        if (in_grid(idx_tau, N_tau) && in_grid(idx_x, N_xpt)) {
+                            dNdtaudx2_array[idx_tau][idx_x]++;
+                        }
                     }
                 }
             }
@@ -2245,8 +2259,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
             if (y_minus_etas > eta_s_min && y_minus_etas < eta_s_max) {
                 double random = ran_gen_ptr->rand_uniform() * intrinsic_detas;
                 int idx = (int)((y_minus_etas + random - eta_s_min) / deta_s);
-                eta_s_array[idx] += y_minus_etas;
-                dNdetas_array[idx]++;
+                if (in_grid(idx, N_eta_s)) {
+                    eta_s_array[idx] += y_minus_etas;
+                    dNdetas_array[idx]++;
+                }
             }
         }
     }

@@ -113,4 +113,4 @@ The defaults (0.01, 0.1, 0.1) are safe. The problem only arises with `check_spat
 
 No source files were changed during this review.
 
-**Status.** Findings 1 and 2 are fixed; see `doc/fix-phi-branching-ratio-and-correlator-errors.md`.
+**Status.** Findings 1 and 2 are fixed; see `doc/fix-phi-branching-ratio-and-correlator-errors.md`. Findings 3 and 4 are fixed; see `doc/fix-ensemble-script-names-and-spatial-bounds.md`.

@@ -442,4 +442,76 @@ TEST(Analysis, MultiparticleErrorsUseTheRatioDeltaMethod) {
     EXPECT_NEAR(cn4_rows[0][2], std::sqrt(variance / 3.0), 1e-6);
 }
 
+TEST(Analysis, SpatialHistogramsDropSmearsPastTheLastBin) {
+    // Smearing widths of 1 exceed the bin widths (0.294 fm, 0.408 fm,
+    // 0.154), and every track sits just inside the upper edge of the tau,
+    // x and y - eta_s grids, so most smeared indices fall past the last bin.
+    const std::string path = "test_spatial_overflow";
+    mkdir(path.c_str(), 0755);
+    const int n_tracks = 400;
+    {
+        std::ofstream out(
+            (path + "/particle_list.bin").c_str(), std::ios::binary);
+        out.write(reinterpret_cast<const char *>(&n_tracks), sizeof(int));
+        const float mass = 0.13957f, pT = 0.5f;
+        const double tau = 14.9, eta_s = -2.95;  // y - eta_s = 2.95 at y = 0
+        const float E = std::sqrt(mass * mass + pT * pT);
+        const float record[9] = {
+            mass,
+            static_cast<float>(tau * std::cosh(eta_s)),
+            9.9f,
+            0.f,
+            static_cast<float>(tau * std::sinh(eta_s)),
+            E,
+            pT,
+            0.f,
+            0.f};
+        const int pdg = 211;
+        for (int i = 0; i < n_tracks; i++) {
+            out.write(reinterpret_cast<const char *>(&pdg), sizeof(int));
+            out.write(reinterpret_cast<const char *>(record), sizeof(record));
+        }
+    }
+    ParameterReader params;
+    params.readFromFile("parameters.dat");
+    params.setVal("read_in_mode", 9);
+    params.setVal("read_in_real_mixed_events", 0);
+    params.setVal("particle_monval", 211);
+    params.setVal("compute_correlation", 0);
+    params.setVal("rapidity_distribution", 0);
+    params.setVal("check_spatial_dis", 1);
+    params.setVal("intrinsic_dtau", 1.0);
+    params.setVal("intrinsic_dx", 1.0);
+    params.setVal("intrinsic_detas", 1.0);
+    auto random = std::make_shared<RandomUtil::Random>(11);
+    auto samples = std::make_shared<particleSamples>(params, path, random);
+    samples->read_in_particle_samples_and_filter();
+    ASSERT_EQ(samples->get_number_of_particles(0), n_tracks);
+
+    singleParticleSpectra spectra(params, path, random);
+    spectra.calculate_Qn_vector_shell(samples);
+    spectra.output_spectra_and_Qn_results();
+
+    // Histogram integrals: some smeared tracks are kept, none are invented.
+    const auto integral = [&](const std::string &file, std::size_t column,
+                              double width) {
+        const auto rows = read_rows(path + "/" + file);
+        double total = 0.0;
+        for (const auto &row : rows) {
+            EXPECT_TRUE(std::isfinite(row[column])) << file;
+            total += row[column] * width;
+        }
+        return total;
+    };
+    const double dtau = 14.4 / 49, dx = 20.0 / 49, detas = 6.0 / 39;
+    const double kept[] = {
+        integral("check_211_dNdtau.dat", 1, dtau),
+        integral("check_211_dNdx.dat", 1, dx),
+        integral("check_211_dNdetas.dat", 1, detas)};
+    for (double count : kept) {
+        EXPECT_GT(count, 0.0);
+        EXPECT_LT(count, 0.6 * n_tracks);
+    }
+}
+
 }  // namespace
