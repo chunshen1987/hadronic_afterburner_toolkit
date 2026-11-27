@@ -1240,6 +1240,7 @@ int particleSamples::read_in_particle_samples_binary() {
             (*full_particle_list)[ievent]->push_back(temp_particle_info);
         }
         num_particles += n_particle;
+        ievent++;
     }
     return (0);
 }
@@ -1835,6 +1836,7 @@ int particleSamples::read_in_particle_samples_mixed_event_binary() {
                 temp_particle_info);
         }
         num_particles += n_particle;
+        ievent++;
     }
     return (0);
 }
