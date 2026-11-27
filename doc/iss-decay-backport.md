@@ -17,3 +17,9 @@ The two-, three-, and n-body routines now calculate the rest-frame mass from the
 The toolkit reuses decay scratch space and can process independent events with OpenMP. Set `resonance_decay_parallel=1` and use `OMP_NUM_THREADS` to choose the number of workers. This mode derives one random stream per event from the batch seed, so a fixed seed and event buffer size give identical results across worker counts. The default uses the existing sequential stream. Builds without OpenMP can run the event-stream mode sequentially. [iSS parallel-decay change](https://github.com/chunshen1987/iSS/commit/74934891123c84726fd485ac29ded1eff3b9f199)
 
 All 27 C++ tests passed in both the OpenMP build and a build configured with `-DCMAKE_DISABLE_FIND_PACKAGE_OpenMP=TRUE`. With seed `4`, the parallel regression decayed eight events of 32 f₂(1270) mothers and compared every daughter's identity, four-momentum, and decay time at one and four workers. The results were identical.
+
+## Cross-check of the bundled PDG tables
+
+The s95pv1 correction applies to four direct η₂(1645) → K K̄ π rows. The SMASH table models this final state through η₂(1645) → K̄ K*(892), followed by K*(892) → K π. Both UrQMD tables omit η₂(1645). These differences are part of the respective decay models. The upstream patch also affects only the s95pv1 table and its backup copy. [iSS PR #7](https://github.com/chunshen1987/iSS/pull/7)
+
+Parsed all 5,677 channels in the four physical `EOS/pdg-*.dat` tables. Compared the absolute declared daughter count with the number of nonzero daughter IDs, resolved all daughter IDs using the same antibaryon convention as the toolkit, and compared parent and daughter electric charge and baryon number. All channels passed these checks. Strangeness changes were confined to ten hyperon decay entries in the weak UrQMD table. The audit found no further table rows that needed the s95pv1 correction.
