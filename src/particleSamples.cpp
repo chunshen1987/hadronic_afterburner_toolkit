@@ -1326,7 +1326,7 @@ void particleSamples::filter_particles(
             } else if (resonance_weak_feed_down_Sigma_to_Lambda_flag
                        && std::abs(PoI_monval) == 3122
                        && particle.monval == (PoI_monval > 0 ? 3212 : -3212)) {
-                append_sigma_daughter(particle, PoI_monval, selected);
+                selected.push_back(get_sigma_daughter(*ev_i, j));
                 selected.back().event_track_id = j + 1;
             }
         }
@@ -1336,6 +1336,7 @@ void particleSamples::filter_particles(
 void particleSamples::clear_out_previous_record(
     vector<vector<particle_info> *> *plist) {
     for (auto &ev_i : (*plist)) {
+        if (!sigma_daughters_.empty()) sigma_daughters_.erase(ev_i);
         ev_i->clear();
         delete ev_i;
     }
@@ -2074,8 +2075,15 @@ void particleSamples::perform_resonance_feed_down(
     if (failure) std::rethrow_exception(failure);
 }
 
-void particleSamples::append_sigma_daughter(
-    particle_info sigma, int lambda_pdg, vector<particle_info> &selected) {
+const particle_info &particleSamples::get_sigma_daughter(
+    const vector<particle_info> &event, std::size_t track) {
+    auto &decays = sigma_daughters_[&event];
+    auto found = decays.find(track);
+    if (found != decays.end()) return found->second;
+
+    // copy: the decay routine takes a mutable mother
+    particle_info sigma = event[track];
+    const int lambda_pdg = sigma.monval > 0 ? 3122 : -3122;
     particle_info lambda{}, photon{};
     lambda.monval = lambda_pdg;
     lambda.mass = decayer_ptr->get_particle_mass(lambda_pdg);
@@ -2083,7 +2091,7 @@ void particleSamples::append_sigma_daughter(
     photon.monval = 22;
     decayer_ptr->perform_two_body_decay(sigma, lambda, photon);
     set_particle_kinematics(lambda);
-    selected.push_back(lambda);
+    return decays.emplace(track, lambda).first->second;
 }
 
 void particleSamples::perform_particle_reconstruction() {

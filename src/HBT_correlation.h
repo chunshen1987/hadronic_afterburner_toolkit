@@ -64,6 +64,7 @@ class HBT_correlation {
     double *****correl_3d_Kphi_diff_num_count;
 
     void finish_collision();
+    double binned_q_inv_max_sq() const;
     void bin_same_event_pairs(const std::vector<particle_info> &particles);
     void bin_mixed_event_pairs(
         const std::vector<particle_info> &particles,

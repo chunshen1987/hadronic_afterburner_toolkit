@@ -20,6 +20,7 @@ class BalanceFunction {
     std::shared_ptr<particleSamples> particle_list;
 
     std::weak_ptr<RandomUtil::Random> ran_gen_ptr;
+    bool warned_single_event_batch_ = false;
 
     pretty_ostream messager;
 
@@ -64,10 +65,14 @@ class BalanceFunction {
         std::vector<std::vector<double>>& hist,
         const std::vector<std::vector<particle_info>*>* plist_a,
         const std::vector<std::vector<particle_info>*>* plist_b);
+    //! Bin pairs of each event in plist_a with one random event of plist_b.
+    //! Set same_batch when plist_b is filtered from the same events as
+    //! plist_a; event iev is then never paired with itself.
     void combine_and_bin_mixed_particle_pairs(
         std::vector<std::vector<double>>& hist,
         const std::vector<std::vector<particle_info>*>* plist_a,
-        const std::vector<std::vector<particle_info>*>* plist_b);
+        const std::vector<std::vector<particle_info>*>* plist_b,
+        bool same_batch = false);
     int get_number_of_particles(
         const std::vector<std::vector<particle_info>*>* plist_b);
     void output_balance_function();

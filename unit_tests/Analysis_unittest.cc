@@ -2,7 +2,9 @@
 #include "Analysis.h"
 
 #include <cmath>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "BalanceFunction.h"
 #include "single_particleSpectra.h"
@@ -31,6 +33,52 @@ TEST(BalanceFunction, PreservesDistinctTracksAtEqualRapidity) {
     std::vector<std::vector<double>> same(21, std::vector<double>(20, 0));
     analysis.combine_and_bin_particle_pairs(same, &selected_a, &selected_b);
     EXPECT_DOUBLE_EQ(same[10][5], 2);
+}
+
+TEST(BalanceFunction, SameBatchMixingNeverPairsAnEventWithItself) {
+    ParameterReader params;
+    params.setVal("particle_alpha", 211);
+    params.setVal("particle_beta", -211);
+    params.setVal("BpT_min", 0.2);
+    params.setVal("BpT_max", 3.0);
+    params.setVal("Bnpts", 21);
+    params.setVal("Brap_max", 2.0);
+    params.setVal("rap_type", 1);
+    auto ran = std::make_shared<RandomUtil::Random>(1);
+    BalanceFunction analysis(params, ".", ran);
+    // One like-sign track per event, so a reference drawn from the same
+    // event would pair each track with itself at Delta y = 0.
+    particle_info first{}, second{};
+    first.monval = second.monval = 211;
+    first.pT = second.pT = 0.3;
+    first.event_track_id = second.event_track_id = 1;
+    first.rap_y = 0.0;
+    second.rap_y = 1.0;
+    std::vector<particle_info> event_0{first}, event_1{second};
+    std::vector<std::vector<particle_info> *> events{&event_0, &event_1};
+    for (int repeat = 0; repeat < 20; repeat++) {
+        std::vector<std::vector<double>> mixed(21, std::vector<double>(20, 0));
+        analysis.combine_and_bin_mixed_particle_pairs(
+            mixed, &events, &events, true);
+        double self_bin = 0, minus_one = 0, plus_one = 0;
+        for (int j = 0; j < 20; j++) {
+            self_bin += mixed[10][j];
+            minus_one += mixed[5][j];
+            plus_one += mixed[15][j];
+        }
+        EXPECT_DOUBLE_EQ(self_bin, 0);
+        EXPECT_DOUBLE_EQ(minus_one, 1);
+        EXPECT_DOUBLE_EQ(plus_one, 1);
+    }
+
+    // A single-event batch has no independent reference.
+    std::vector<std::vector<particle_info> *> single{&event_0};
+    std::vector<std::vector<double>> mixed(21, std::vector<double>(20, 0));
+    analysis.combine_and_bin_mixed_particle_pairs(
+        mixed, &single, &single, true);
+    for (const auto &row : mixed) {
+        for (double entry : row) EXPECT_DOUBLE_EQ(entry, 0);
+    }
 }
 
 TEST(Analysis, Constructor) {

@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -14,6 +15,88 @@
 
 #include "arsenal.h"
 #include "parameters.h"
+
+namespace {
+// Track preselection for the HBT pair loops that removes no binned pair.
+//
+// Every binned pair has q_inv^2 < q_inv_max_sq. The 3D bins need
+// |q_out|, |q_side|, |q_long| < Q, and q_inv^2 <= q_out^2 + q_side^2 + q_long^2
+// in the lab or the LCMS, so q_inv^2 < 3 Q^2. The q_inv bins need q_inv < Q.
+// For two tracks with transverse masses m_T1, m_T2 and masses m1, m2,
+//   q_inv^2 = 2 p1.p2 - m1^2 - m2^2
+//           >= 2 m_T1 m_T2 (cosh(y1 - y2) - 1) - (m1 - m2)^2,
+// using p_T1.p_T2 <= p_T1 p_T2 and m_T1 m_T2 - p_T1 p_T2 >= m1 m2. The pair
+// velocity K_z/K_E is an energy-weighted mean of the track velocities, so
+// the pair rapidity lies between y1 and y2. A track at y can therefore
+// enter a binned pair only if y_min - dy_max < y < y_max + dy_max, where
+// dy_max follows from the q_inv bound with the smallest partner m_T.
+struct TrackKinematics {
+    double rapidity, mT, mass;
+    bool valid;
+};
+
+TrackKinematics track_kinematics(const particle_info &particle) {
+    TrackKinematics result{0.0, 0.0, 0.0, false};
+    const double mT_sq = particle.E * particle.E - particle.pz * particle.pz;
+    if (!(particle.E > std::abs(particle.pz)) || !(mT_sq > 0.0)) return result;
+    result.mT = std::sqrt(mT_sq);
+    result.rapidity =
+        0.5 * std::log((particle.E + particle.pz) / (particle.E - particle.pz));
+    const double pT_sq = particle.px * particle.px + particle.py * particle.py;
+    // The bound needs a timelike four-momentum; otherwise keep every track.
+    if (mT_sq < pT_sq) return result;
+    result.mass = std::sqrt(mT_sq - pT_sq);
+    result.valid = true;
+    return result;
+}
+
+struct PartnerBounds {
+    double mT_min = std::numeric_limits<double>::infinity();
+    double mass_min = std::numeric_limits<double>::infinity();
+    double mass_max = 0.0;
+    bool usable = true;
+};
+
+void add_partner_bounds(
+    const std::vector<particle_info> &tracks, PartnerBounds &bounds) {
+    for (const auto &particle : tracks) {
+        const TrackKinematics kin = track_kinematics(particle);
+        if (!kin.valid) {
+            bounds.usable = false;
+            return;
+        }
+        bounds.mT_min = std::min(bounds.mT_min, kin.mT);
+        bounds.mass_min = std::min(bounds.mass_min, kin.mass);
+        bounds.mass_max = std::max(bounds.mass_max, kin.mass);
+    }
+}
+
+// Returns false when every track must be kept. Otherwise fills selected with
+// the tracks of `tracks` that can form a binned pair with any partner
+// described by `partners`, in their original order.
+bool select_pair_candidates(
+    const std::vector<particle_info> &tracks, const PartnerBounds &partners,
+    double mass_spread, double q_inv_max_sq, double rapidity_min,
+    double rapidity_max, std::vector<particle_info> &selected) {
+    if (!partners.usable || !(partners.mT_min > 0.0)) return false;
+    // A relative margin of 1e-3 absorbs rounding in the bound.
+    const double numerator =
+        1.001 * (q_inv_max_sq + mass_spread * mass_spread) + 1e-12;
+    selected.clear();
+    selected.reserve(tracks.size());
+    for (const auto &particle : tracks) {
+        const TrackKinematics kin = track_kinematics(particle);
+        if (!kin.valid) return false;
+        const double dy_max =
+            std::acosh(1.0 + numerator / (2.0 * kin.mT * partners.mT_min));
+        if (kin.rapidity > rapidity_min - dy_max
+            && kin.rapidity < rapidity_max + dy_max) {
+            selected.push_back(particle);
+        }
+    }
+    return true;
+}
+}  // namespace
 
 HBT_correlation::HBT_correlation(
     ParameterReader &paraRdr, std::string path,
@@ -279,8 +362,22 @@ void HBT_correlation::combine_and_bin_particle_pairs(
     bin_same_event_pairs(particles);
 }
 
+double HBT_correlation::binned_q_inv_max_sq() const {
+    const double q_bound = std::max(
+        std::abs(q_min - 0.5 * delta_q), std::abs(q_max + 0.5 * delta_q));
+    return 3.0 * q_bound * q_bound;
+}
+
 void HBT_correlation::bin_same_event_pairs(
-    const std::vector<particle_info> &temp_particle_list) {
+    const std::vector<particle_info> &all_tracks) {
+    PartnerBounds bounds;
+    add_partner_bounds(all_tracks, bounds);
+    std::vector<particle_info> candidates;
+    const bool reduced = select_pair_candidates(
+        all_tracks, bounds, bounds.mass_max - bounds.mass_min,
+        binned_q_inv_max_sq(), Krap_min_, Krap_max_, candidates);
+    const std::vector<particle_info> &temp_particle_list =
+        reduced ? candidates : all_tracks;
     double hbarC_inv = 1. / hbarC;
     const double min_pair_beta = std::tanh(Krap_min_);
     const double max_pair_beta = std::tanh(Krap_max_);
@@ -497,8 +594,27 @@ void HBT_correlation::combine_and_bin_particle_pairs_mixed_events(
 }
 
 void HBT_correlation::bin_mixed_event_pairs(
-    const std::vector<particle_info> &temp_particle_list_1,
-    const std::vector<particle_info> &temp_particle_list_2) {
+    const std::vector<particle_info> &all_tracks_1,
+    const std::vector<particle_info> &all_tracks_2) {
+    PartnerBounds bounds_1, bounds_2;
+    add_partner_bounds(all_tracks_1, bounds_1);
+    add_partner_bounds(all_tracks_2, bounds_2);
+    const double mass_spread =
+        std::max(bounds_1.mass_max, bounds_2.mass_max)
+        - std::min(bounds_1.mass_min, bounds_2.mass_min);
+    const double q_inv_max_sq = binned_q_inv_max_sq();
+    std::vector<particle_info> candidates_1, candidates_2;
+    const bool reduced =
+        select_pair_candidates(
+            all_tracks_1, bounds_2, mass_spread, q_inv_max_sq, Krap_min_,
+            Krap_max_, candidates_1)
+        && select_pair_candidates(
+            all_tracks_2, bounds_1, mass_spread, q_inv_max_sq, Krap_min_,
+            Krap_max_, candidates_2);
+    const std::vector<particle_info> &temp_particle_list_1 =
+        reduced ? candidates_1 : all_tracks_1;
+    const std::vector<particle_info> &temp_particle_list_2 =
+        reduced ? candidates_2 : all_tracks_2;
     const auto number_of_particles_1 = temp_particle_list_1.size();
     const auto number_of_particles_2 = temp_particle_list_2.size();
     const double min_pair_beta = std::tanh(Krap_min_);

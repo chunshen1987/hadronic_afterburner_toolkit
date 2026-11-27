@@ -1,7 +1,10 @@
 
 #include "../src/particleSamples.h"
 
+#include <sys/stat.h>
+
 #include <cmath>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -248,6 +251,73 @@ TEST(particleSamples, ResonanceDecayStreamsAreIndependentOfWorkerCount) {
             EXPECT_EQ(a.py, b.py);
             EXPECT_EQ(a.pz, b.pz);
             EXPECT_EQ(a.t, b.t);
+        }
+    }
+}
+
+TEST(particleSamples, SigmaFeedDownSharesOneDecayAcrossLists) {
+    // Two read_in_mode = 9 events with two Sigma0 each.
+    const string path = "test_sigma_feed_down";
+    mkdir(path.c_str(), 0755);
+    {
+        std::ofstream out(path + "/particle_list.bin", std::ios::binary);
+        const float mass = 1.192642f, pT = 0.8f;
+        for (int iev = 0; iev < 2; iev++) {
+            const int count = 2;
+            out.write(reinterpret_cast<const char *>(&count), sizeof(int));
+            for (int i = 0; i < count; i++) {
+                const int pdg = 3212;
+                const double y = 0.3 * (2 * iev + i) - 0.4;
+                const double mT = std::sqrt(mass * mass + pT * pT);
+                const float record[9] = {
+                    mass, 0.f, 0.f, 0.f, 0.f,
+                    static_cast<float>(mT * std::cosh(y)), pT, 0.f,
+                    static_cast<float>(mT * std::sinh(y))};
+                out.write(reinterpret_cast<const char *>(&pdg), sizeof(int));
+                out.write(
+                    reinterpret_cast<const char *>(record), sizeof(record));
+            }
+        }
+    }
+    ParameterReader params;
+    params.readFromFile("parameters.dat");
+    params.setVal("read_in_mode", 9);
+    params.setVal("read_in_real_mixed_events", 0);
+    params.setVal("resonance_feed_down_flag", 0);
+    params.setVal("net_particle_flag", 0);
+    params.setVal("analyze_balance_function", 1);
+    params.setVal("particle_monval", 3122);
+    params.setVal("particle_alpha", 3122);
+    params.setVal("particle_beta", -3122);
+    params.setVal("resonance_weak_feed_down_Sigma_to_Lambda_flag", 1);
+    particleSamples samples(
+        params, path, std::make_shared<RandomUtil::Random>(5));
+    samples.read_in_particle_samples_and_filter();
+    samples.read_in_particle_samples_mixed_event_and_filter();
+
+    // particle_beta = -3122 makes bbar a Lambda list as well.
+    const auto *a = samples.get_balance_function_particle_list_a();
+    const auto *bbar = samples.get_balance_function_particle_list_bbar();
+    const auto *a_mixed =
+        samples.get_balance_function_particle_list_a_mixed_event();
+    ASSERT_EQ(samples.get_number_of_events(), 2);
+    ASSERT_EQ(a->size(), 2u);
+    for (int iev = 0; iev < 2; iev++) {
+        ASSERT_EQ(samples.get_number_of_particles(iev), 2);
+        ASSERT_EQ((*a)[iev]->size(), 2u);
+        ASSERT_EQ((*bbar)[iev]->size(), 2u);
+        ASSERT_EQ((*a_mixed)[iev]->size(), 2u);
+        for (int i = 0; i < 2; i++) {
+            const particle_info lambda = samples.get_particle(iev, i);
+            EXPECT_EQ(lambda.monval, 3122);
+            for (const auto *list : {a, bbar, a_mixed}) {
+                const particle_info &other = (*(*list)[iev])[i];
+                EXPECT_EQ(other.event_track_id, lambda.event_track_id);
+                EXPECT_DOUBLE_EQ(other.E, lambda.E);
+                EXPECT_DOUBLE_EQ(other.px, lambda.px);
+                EXPECT_DOUBLE_EQ(other.py, lambda.py);
+                EXPECT_DOUBLE_EQ(other.pz, lambda.pz);
+            }
         }
     }
 }

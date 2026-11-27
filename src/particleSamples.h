@@ -5,6 +5,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -93,8 +94,16 @@ class particleSamples {
     //! (used when run_mode == 1 for HBT calculation)
     std::vector<std::vector<particle_info>*>* particle_list_mixed_event;
 
-    void append_sigma_daughter(
-        particle_info sigma, int lambda_pdg, std::vector<particle_info> &selected);
+    //! Lambda daughters of Sigma0 decays, keyed by event record and track
+    //! index, so every list filtered from one batch shares the same decay.
+    //! Entries are removed when their event record is deleted.
+    std::unordered_map<
+        const std::vector<particle_info>*,
+        std::unordered_map<std::size_t, particle_info>>
+        sigma_daughters_;
+
+    const particle_info &get_sigma_daughter(
+        const std::vector<particle_info> &event, std::size_t track);
 
     //! particle list to store the (K^+ and K^-) pairs
     //! (used when reconst_flag == 1)

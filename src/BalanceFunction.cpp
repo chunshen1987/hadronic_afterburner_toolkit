@@ -95,14 +95,24 @@ void BalanceFunction::calculate_balance_function(
 
     messager.info("calculating correlatoin function using mixed events ... ");
 
+    // Without a separate mixed-event stream, the reference lists hold the
+    // same events as the signal lists.
+    const bool same_batch = !particle_list->uses_external_mixed_events();
+    if (same_batch && plist_a->size() == 1 && !warned_single_event_batch_) {
+        warned_single_event_batch_ = true;
+        messager.warning(
+            "Balance function: batches with one event have no independent "
+            "mixed event; their mixed-event pairs are skipped. Increase "
+            "event_buffer_size or set read_in_real_mixed_events = 1.");
+    }
     combine_and_bin_mixed_particle_pairs(
-        C_mixed_ab, plist_a, plist_b_mixed_event);
+        C_mixed_ab, plist_a, plist_b_mixed_event, same_batch);
     combine_and_bin_mixed_particle_pairs(
-        C_mixed_abarbbar, plist_abar, plist_bbar_mixed_event);
+        C_mixed_abarbbar, plist_abar, plist_bbar_mixed_event, same_batch);
     combine_and_bin_mixed_particle_pairs(
-        C_mixed_abbar, plist_a, plist_bbar_mixed_event);
+        C_mixed_abbar, plist_a, plist_bbar_mixed_event, same_batch);
     combine_and_bin_mixed_particle_pairs(
-        C_mixed_abarb, plist_abar, plist_b_mixed_event);
+        C_mixed_abarb, plist_abar, plist_b_mixed_event, same_batch);
 }
 
 bool BalanceFunction::check_same_particle(
@@ -149,16 +159,31 @@ void BalanceFunction::combine_and_bin_particle_pairs(
 void BalanceFunction::combine_and_bin_mixed_particle_pairs(
     std::vector<std::vector<double>>& hist,
     const std::vector<std::vector<particle_info>*>* plist_a,
-    const std::vector<std::vector<particle_info>*>* plist_b) {
+    const std::vector<std::vector<particle_info>*>* plist_b,
+    bool same_batch) {
     const int nev = plist_a->size();
     const int nev_mixed = plist_b->size();
     if (nev != 0 && nev_mixed == 0) {
         throw std::runtime_error(
             "Balance-function analysis requires a mixed-event batch");
     }
+    if (same_batch && nev_mixed != nev) {
+        throw std::runtime_error(
+            "Balance function: same-batch mixing needs aligned event lists");
+    }
+    // Pairing an event with itself would add its own correlations, and for
+    // like-sign lists every track paired with itself, to the reference.
+    if (same_batch && nev_mixed < 2) return;
     for (int iev = 0; iev < nev; iev++) {
-        const int iev_mixed =
-            (ran_gen_ptr.lock()->rand_int_uniform() % nev_mixed);
+        int iev_mixed;
+        if (same_batch) {
+            // uniform over the nev_mixed - 1 other events
+            iev_mixed =
+                ran_gen_ptr.lock()->rand_int_uniform() % (nev_mixed - 1);
+            if (iev_mixed >= iev) iev_mixed++;
+        } else {
+            iev_mixed = ran_gen_ptr.lock()->rand_int_uniform() % nev_mixed;
+        }
         const double global_random_rotation =
             (ran_gen_ptr.lock()->rand_uniform() * 2. * M_PI);
         for (auto const& part_a : (*(*plist_a)[iev])) {
