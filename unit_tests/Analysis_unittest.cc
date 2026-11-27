@@ -68,13 +68,13 @@ TEST(BalanceFunction, PreservesDistinctTracksAtEqualRapidity) {
     params.setVal("rap_type", 1);
     auto ran = std::make_shared<RandomUtil::Random>(1);
     BalanceFunction analysis(params, ".", ran);
-    particle_info first{}, second{};
+    particle_info first {}, second {};
     first.monval = second.monval = 211;
     first.pT = second.pT = 0.3;
     first.event_track_id = 1;
     second.event_track_id = 2;
-    std::vector<particle_info> a{first, second}, b{first, second};
-    std::vector<std::vector<particle_info> *> selected_a{&a}, selected_b{&b};
+    std::vector<particle_info> a {first, second}, b {first, second};
+    std::vector<std::vector<particle_info> *> selected_a {&a}, selected_b {&b};
     std::vector<std::vector<double>> same(21, std::vector<double>(20, 0));
     analysis.combine_and_bin_particle_pairs(same, &selected_a, &selected_b);
     EXPECT_DOUBLE_EQ(same[10][5], 2);
@@ -167,7 +167,8 @@ TEST(Analysis, IntegratedTupleCountsIgnorePackedTransverseMomentum) {
     // Four tracks at phi = 0 and pT = 0.25 GeV.
     std::vector<double> real(9, 4.0), imag(9, 0.0);
     imag[0] = 1.0;
-    std::vector<double> pairs(9), pair_squares(9), triples(9), triple_squares(9);
+    std::vector<double> pairs(9), pair_squares(9), triples(9),
+        triple_squares(9);
     std::vector<double> cn4(5), cn4_squares(5), sc(6), sc_squares(6);
 
     spectra.calculate_two_particle_correlation_charge_base(
@@ -202,9 +203,11 @@ TEST(Analysis, RapidityDifferentialTripletsMatchEnumeration) {
         double phi;
     };
     const std::vector<Track> tracks = {
-        {0, true, -1.1}, {1, true, 0.2}, {1, true, 1.5},
-        {1, false, 2.3}, {2, false, -0.6}
-    };
+        {0, true, -1.1},
+        {1, true, 0.2},
+        {1, true, 1.5},
+        {1, false, 2.3},
+        {2, false, -0.6}};
     using Grid = std::vector<std::vector<double>>;
     const auto q_vectors = [&tracks](int charge) {
         Grid real(3, std::vector<double>(9)), imag = real;
@@ -228,8 +231,8 @@ TEST(Analysis, RapidityDifferentialTripletsMatchEnumeration) {
             Grid corr(9, std::vector<double>(3)), err = corr;
             spectra.calculate_three_particle_correlation_deltaeta(
                 first.first, first.second, second.first, second.second,
-                inclusive.first, inclusive.second, flag,
-                charge < 0 ? 2 : 1, corr, err);
+                inclusive.first, inclusive.second, flag, charge < 0 ? 2 : 1,
+                corr, err);
 
             std::vector<double> count(3), c123(3);
             for (const auto &a : tracks) {

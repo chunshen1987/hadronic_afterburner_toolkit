@@ -51,10 +51,11 @@ void particle_yield_distribution::collect_particle_yield_distribution(
 
 void particle_yield_distribution::collect_particle_yield(int event_id) {
     const auto passes_cuts = [this](const particle_info &particle) {
-        const double rapidity = rap_type == 0 ? particle.rap_eta : particle.rap_y;
+        const double rapidity =
+            rap_type == 0 ? particle.rap_eta : particle.rap_y;
         const double pT = std::hypot(particle.px, particle.py);
-        return rapidity > rap_min && rapidity < rap_max
-               && pT > pT_min && pT < pT_max;
+        return rapidity > rap_min && rapidity < rap_max && pT > pT_min
+               && pT < pT_max;
     };
     int count = 0;
     for (int i = 0; i < particle_list->get_number_of_particles(event_id); i++) {
@@ -62,7 +63,8 @@ void particle_yield_distribution::collect_particle_yield(int event_id) {
     }
     int count_anti_particle = 0;
     if (net_particle_flag == 1) {
-        const int anti_count = particle_list->get_number_of_anti_particles(event_id);
+        const int anti_count =
+            particle_list->get_number_of_anti_particles(event_id);
         for (int i = 0; i < anti_count; i++) {
             count_anti_particle +=
                 passes_cuts(particle_list->get_anti_particle(event_id, i));

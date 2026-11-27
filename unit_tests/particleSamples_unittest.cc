@@ -25,7 +25,7 @@ TEST(ParticleDecay, ConservesFourMomentumForRestingAndMovingMothers) {
     particle_decay decayer(std::make_shared<RandomUtil::Random>(24680), 0);
     for (int pdg : {113, 223}) {
         for (double pz : {0.0, 0.6}) {
-            particle_info mother{}, plus{}, minus{}, neutral{};
+            particle_info mother {}, plus {}, minus {}, neutral {};
             mother.monval = pdg;
             mother.mass = decayer.get_particle_mass(pdg);
             mother.pz = pz;
@@ -52,7 +52,7 @@ TEST(ParticleDecay, ConservesRoundedFourMomentumAtLargeBoost) {
     for (int pdg : {113, 223, 225}) {
         int four_body = 0;
         for (double gamma : {3.0, 30.0, 300.0}) {
-            particle_info mother{};
+            particle_info mother {};
             mother.monval = pdg;
             mother.mass = decayer.get_particle_mass(pdg);
             const double momentum = mother.mass * std::sqrt(gamma * gamma - 1);
@@ -74,8 +74,8 @@ TEST(ParticleDecay, ConservesRoundedFourMomentumAtLargeBoost) {
                     const double mass_squared =
                         daughter.E * daughter.E - daughter.px * daughter.px
                         - daughter.py * daughter.py - daughter.pz * daughter.pz;
-                    EXPECT_NEAR(mass_squared, daughter.mass * daughter.mass,
-                                1e-10);
+                    EXPECT_NEAR(
+                        mass_squared, daughter.mass * daughter.mass, 1e-10);
                 }
                 const double tolerance = 1e-12 * mother.E;
                 EXPECT_NEAR(energy, mother.E, tolerance);
@@ -94,7 +94,7 @@ TEST(ParticleDecay, SamplesFourBodyAndSubthresholdChannels) {
     particle_decay decayer(std::make_shared<RandomUtil::Random>(12345), 0);
     int four_body = 0;
     for (int pdg : {225, 10333}) {
-        particle_info mother{};
+        particle_info mother {};
         mother.monval = pdg;
         mother.mass = decayer.get_particle_mass(pdg);
         mother.pz = 0.4;
@@ -115,7 +115,8 @@ TEST(ParticleDecay, SamplesFourBodyAndSubthresholdChannels) {
                 charge += decayer.get_particle_charge(daughter.monval);
                 strangeness +=
                     decayer.get_particle_strange_number(daughter.monval);
-                if (daughter.mass < decayer.get_particle_mass(daughter.monval)) {
+                if (daughter.mass
+                    < decayer.get_particle_mass(daughter.monval)) {
                     sampled_mass = true;
                     EXPECT_EQ(decayer.check_particle_stable(daughter), 0);
                 }
@@ -136,7 +137,7 @@ TEST(ParticleDecay, SamplesFourBodyAndSubthresholdChannels) {
 
 TEST(ParticleDecay, SkipsExactThresholdAndKeepsTerminalResonance) {
     particle_decay decayer(std::make_shared<RandomUtil::Random>(12345), 0);
-    particle_info mother{};
+    particle_info mother {};
     mother.monval = 225;
     mother.E = mother.mass = 4 * decayer.get_particle_mass(111);
     for (int sample = 0; sample < 30; sample++) {
@@ -156,7 +157,7 @@ TEST(ParticleDecay, SkipsExactThresholdAndKeepsTerminalResonance) {
 
 TEST(ParticleDecay, HandlesExactThreeBodyThresholdAndRejectsInconsistentInput) {
     particle_decay decayer(std::make_shared<RandomUtil::Random>(12345), 0);
-    particle_info mother{}, first{}, second{}, third{};
+    particle_info mother {}, first {}, second {}, third {};
     mother.monval = 223;
     mother.E = mother.mass = 0.375;
     first.mass = second.mass = third.mass = 0.125;
@@ -172,17 +173,19 @@ TEST(ParticleDecay, HandlesExactThreeBodyThresholdAndRejectsInconsistentInput) {
     mother.mass = 0.30;
     mother.E = 0.25;
     first.mass = second.mass = 0.138;
-    EXPECT_THROW(decayer.perform_two_body_decay(mother, first, second),
-                 std::runtime_error);
+    EXPECT_THROW(
+        decayer.perform_two_body_decay(mother, first, second),
+        std::runtime_error);
 
     const double threshold = first.mass + second.mass;
     mother.mass = std::nextafter(threshold, 1.0);
     mother.E = std::nextafter(threshold, 0.0);
     decayer.perform_two_body_decay(mother, first, second);
     EXPECT_NEAR(first.E + second.E, mother.mass, 1e-15);
-    EXPECT_NEAR(first.E * first.E - first.px * first.px - first.py * first.py
-                    - first.pz * first.pz,
-                first.mass * first.mass, 1e-15);
+    EXPECT_NEAR(
+        first.E * first.E - first.px * first.px - first.py * first.py
+            - first.pz * first.pz,
+        first.mass * first.mass, 1e-15);
 }
 
 TEST(particleSamples, RapidityShiftPreservesHbtPhase) {
@@ -201,11 +204,10 @@ TEST(particleSamples, RapidityShiftPreservesHbtPhase) {
     pair[0].pz = 0.1;
     pair[1].pz = -0.1;
     pair[0].z = 1.0;
-    std::vector<std::vector<particle_info> *> events{&pair};
+    std::vector<std::vector<particle_info> *> events {&pair};
     samples.boostParticles(&events, 0.7);
-    const double phase =
-        (pair[0].E - pair[1].E) * (pair[0].t - pair[1].t)
-        - (pair[0].pz - pair[1].pz) * (pair[0].z - pair[1].z);
+    const double phase = (pair[0].E - pair[1].E) * (pair[0].t - pair[1].t)
+                         - (pair[0].pz - pair[1].pz) * (pair[0].z - pair[1].z);
     EXPECT_NEAR(phase, -0.2, 1e-12);
 }
 
@@ -223,8 +225,9 @@ TEST(particleSamples, ResonanceDecayStreamsAreIndependentOfWorkerCount) {
         (void)threads;
 #endif
         particleSamples samples(
-            params, "test_reader_files", std::make_shared<RandomUtil::Random>(4));
-        particle_info mother{};
+            params, "test_reader_files",
+            std::make_shared<RandomUtil::Random>(4));
+        particle_info mother {};
         mother.monval = 225;
         mother.E = mother.mass = 1.275;
         std::vector<std::vector<particle_info>> events(

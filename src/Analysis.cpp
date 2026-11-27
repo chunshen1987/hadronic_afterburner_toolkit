@@ -172,8 +172,9 @@ void Analysis::FlowAnalysis(const ParameterReader &config) {
     // first define all the analysis sets
     std::vector<std::unique_ptr<singleParticleSpectra>> spvn;
     const auto add_spectra = [&] {
-        spvn.push_back(std::unique_ptr<singleParticleSpectra>(
-            new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
+        spvn.push_back(
+            std::unique_ptr<singleParticleSpectra>(
+                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
     };
 
     // all hadrons (99999) first (collect E_T)
@@ -379,8 +380,9 @@ void Analysis::FlowAnalysis_multistrange_particles(
     // first define all the analysis sets
     std::vector<std::unique_ptr<singleParticleSpectra>> spvn;
     const auto add_spectra = [&] {
-        spvn.push_back(std::unique_ptr<singleParticleSpectra>(
-            new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
+        spvn.push_back(
+            std::unique_ptr<singleParticleSpectra>(
+                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
     };
     paraRdr.setVal("particle_monval", 3122);
     add_spectra();
@@ -413,8 +415,9 @@ void Analysis::FlowAnalysis_3D(const ParameterReader &config) {
     // first define all the analysis sets
     std::vector<std::unique_ptr<singleParticleSpectra>> spvn;
     const auto add_spectra = [&] {
-        spvn.push_back(std::unique_ptr<singleParticleSpectra>(
-            new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
+        spvn.push_back(
+            std::unique_ptr<singleParticleSpectra>(
+                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
     };
 
     // all hadrons (99999) first (collect E_T)
@@ -498,8 +501,9 @@ void Analysis::FlowAnalysis_RHIC(const ParameterReader &config) {
     // first define all the analysis sets
     std::vector<std::unique_ptr<singleParticleSpectra>> spvn;
     const auto add_spectra = [&] {
-        spvn.push_back(std::unique_ptr<singleParticleSpectra>(
-            new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
+        spvn.push_back(
+            std::unique_ptr<singleParticleSpectra>(
+                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
     };
 
     // all hadrons (99999) first (collect E_T)
@@ -623,8 +627,9 @@ void Analysis::FlowAnalysis_LHC(const ParameterReader &config) {
     // first define all the analysis sets
     std::vector<std::unique_ptr<singleParticleSpectra>> spvn;
     const auto add_spectra = [&] {
-        spvn.push_back(std::unique_ptr<singleParticleSpectra>(
-            new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
+        spvn.push_back(
+            std::unique_ptr<singleParticleSpectra>(
+                new singleParticleSpectra(paraRdr, path_, ran_gen_ptr_)));
     };
 
     // all hadrons (99999) first (collect E_T)

@@ -65,9 +65,10 @@ void write_pair_moments(
         value = sqrt(ratio);
         // The residual X - (X/Y)Y has zero mean by construction.
         const double residual_squares = moments.squares
-            - 2.0 * ratio * moments.cross + ratio * ratio * pairs.squares;
-        error = sqrt(std::max(0.0, residual_squares))
-                / (2.0 * value * pairs.sum);
+                                        - 2.0 * ratio * moments.cross
+                                        + ratio * ratio * pairs.squares;
+        error =
+            sqrt(std::max(0.0, residual_squares)) / (2.0 * value * pairs.sum);
     }
     out << "  " << value << "  " << error << "  " << mean << "  " << second;
 }
@@ -459,7 +460,8 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
         flag_correlation == 1 && rapidity_correlation_output_.enabled;
     const bool rapidity_pt =
         rapidityPTDistributionFlag_ == 1 && rapidity_pt_output_.enabled;
-    const bool use_rapidity = rapidity_distribution_flag == 1
+    const bool use_rapidity =
+        rapidity_distribution_flag == 1
         && (rapidity_output_.enabled || covariance_output_.enabled
             || rapidity_correlations || rapidity_pt);
     // start the loop
@@ -626,8 +628,9 @@ void singleParticleSpectra::plan_outputs(
         if (output.enabled && !first) output.suffix = suffix;
     };
 
-    claim(spectra_output_, "_vndata" + window.str(), pt_grid.str(),
-          pt_grid.str());
+    claim(
+        spectra_output_, "_vndata" + window.str(), pt_grid.str(),
+        pt_grid.str());
     if (check_spatial_flag == 1) {
         claim(spatial_output_, "_spatial", window.str(), window.str());
     }
@@ -638,11 +641,13 @@ void singleParticleSpectra::plan_outputs(
     reference_pt << "_pT_" << vn_rapidity_dis_pT_min << "_"
                  << vn_rapidity_dis_pT_max;
     const std::string coordinate = rap_type == 0 ? "_eta" : "_y";
-    claim(rapidity_output_, "_density" + coordinate + reference_pt.str(),
-          rapidity_grid.str(), rapidity_grid.str());
+    claim(
+        rapidity_output_, "_density" + coordinate + reference_pt.str(),
+        rapidity_grid.str(), rapidity_grid.str());
     // The count covariance has no reference pT or integrated rapidity cut.
-    claim(covariance_output_, "_covariance" + coordinate,
-          rapidity_grid.str(), rapidity_grid.str());
+    claim(
+        covariance_output_, "_covariance" + coordinate, rapidity_grid.str(),
+        rapidity_grid.str());
     if (rapidityPTDistributionFlag_ == 1) {
         const auto grid = rapidity_grid.str() + pt_grid.str();
         claim(rapidity_pt_output_, "_rapidity_pt" + coordinate, grid, grid);
@@ -650,8 +655,9 @@ void singleParticleSpectra::plan_outputs(
     if (flag_correlation == 1) {
         // Rapidity-difference correlations use the full rapidity grid.
         const auto grid = coordinate + rapidity_grid.str();
-        claim(rapidity_correlation_output_,
-              "_rapidity_corr" + reference_pt.str(), grid, grid);
+        claim(
+            rapidity_correlation_output_, "_rapidity_corr" + reference_pt.str(),
+            grid, grid);
     }
 }
 
@@ -689,27 +695,26 @@ void singleParticleSpectra::calculate_Qn_vector(
     vector<vector<double>> &event_Qn_diff_imag,
     vector<vector<double>> &event_Qn_diff_imag_err) {
     DifferentialMoments differential(
-        event_Qn_diff_real, event_Qn_diff_real_err,
-        event_Qn_diff_imag, event_Qn_diff_imag_err);
+        event_Qn_diff_real, event_Qn_diff_real_err, event_Qn_diff_imag,
+        event_Qn_diff_imag_err);
     differential.pt = &event_pT_mean;
     differential.pt_squares = &event_pT_mean_err;
     accumulate_event_qn(
-        event_id, 0, pT_min_selected, pT_max_selected,
-        event_Qn_real, event_Qn_real_err, event_Qn_imag, event_Qn_imag_err,
-        &differential);
+        event_id, 0, pT_min_selected, pT_max_selected, event_Qn_real,
+        event_Qn_real_err, event_Qn_imag, event_Qn_imag_err, &differential);
 }
 
 void singleParticleSpectra::calculate_Qn_vector_positive_charge(
-    int event_id,
-    vector<double> &event_Qn_real, vector<double> &event_Qn_real_err,
-    vector<double> &event_Qn_imag, vector<double> &event_Qn_imag_err,
+    int event_id, vector<double> &event_Qn_real,
+    vector<double> &event_Qn_real_err, vector<double> &event_Qn_imag,
+    vector<double> &event_Qn_imag_err,
     vector<vector<double>> &event_Qn_diff_real,
     vector<vector<double>> &event_Qn_diff_real_err,
     vector<vector<double>> &event_Qn_diff_imag,
     vector<vector<double>> &event_Qn_diff_imag_err) {
     DifferentialMoments differential(
-        event_Qn_diff_real, event_Qn_diff_real_err,
-        event_Qn_diff_imag, event_Qn_diff_imag_err);
+        event_Qn_diff_real, event_Qn_diff_real_err, event_Qn_diff_imag,
+        event_Qn_diff_imag_err);
     accumulate_event_qn(
         event_id, 1, vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
         event_Qn_real, event_Qn_real_err, event_Qn_imag, event_Qn_imag_err,
@@ -717,16 +722,16 @@ void singleParticleSpectra::calculate_Qn_vector_positive_charge(
 }
 
 void singleParticleSpectra::calculate_Qn_vector_negative_charge(
-    int event_id,
-    vector<double> &event_Qn_real, vector<double> &event_Qn_real_err,
-    vector<double> &event_Qn_imag, vector<double> &event_Qn_imag_err,
+    int event_id, vector<double> &event_Qn_real,
+    vector<double> &event_Qn_real_err, vector<double> &event_Qn_imag,
+    vector<double> &event_Qn_imag_err,
     vector<vector<double>> &event_Qn_diff_real,
     vector<vector<double>> &event_Qn_diff_real_err,
     vector<vector<double>> &event_Qn_diff_imag,
     vector<vector<double>> &event_Qn_diff_imag_err) {
     DifferentialMoments differential(
-        event_Qn_diff_real, event_Qn_diff_real_err,
-        event_Qn_diff_imag, event_Qn_diff_imag_err);
+        event_Qn_diff_real, event_Qn_diff_real_err, event_Qn_diff_imag,
+        event_Qn_diff_imag_err);
     accumulate_event_qn(
         event_id, 2, vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
         event_Qn_real, event_Qn_real_err, event_Qn_imag, event_Qn_imag_err,
@@ -764,15 +769,17 @@ void singleParticleSpectra::accumulate_event_qn(
     std::fill(event_Qn_imag.begin(), event_Qn_imag.end(), 0.0);
     std::fill(event_Qn_imag_err.begin(), event_Qn_imag_err.end(), 0.0);
     if (differential) {
-        const auto matrices = {&differential->real, &differential->real_squares,
-                               &differential->imag, &differential->imag_squares};
+        const auto matrices = {
+            &differential->real, &differential->real_squares,
+            &differential->imag, &differential->imag_squares};
         for (auto *moments : matrices) {
             for (auto &row : *moments) std::fill(row.begin(), row.end(), 0.0);
         }
         if (differential->pt) {
             std::fill(differential->pt->begin(), differential->pt->end(), 0.0);
-            std::fill(differential->pt_squares->begin(),
-                      differential->pt_squares->end(), 0.0);
+            std::fill(
+                differential->pt_squares->begin(),
+                differential->pt_squares->end(), 0.0);
         }
     }
 
@@ -781,8 +788,9 @@ void singleParticleSpectra::accumulate_event_qn(
         const auto track = selected_track(event_id, i, charge);
         const double rap = rap_type == 0 ? track.rap_eta : track.rap_y;
         const double pt = track.pT;
-        if (!(rap > rap_min && rap < rap_max
-              && pt > pT_min_selected && pt < pT_max_selected)) continue;
+        if (!(rap > rap_min && rap < rap_max && pt > pT_min_selected
+              && pt < pT_max_selected))
+            continue;
 
         int bin = -1;
         if (differential && pt >= pT_min && pt < pT_max) {
@@ -1028,8 +1036,8 @@ void singleParticleSpectra::calculate_two_particle_correlation_charge_dep(
         corr_ss[i] += local_Cn2_ss;
         corr_ss_err[i] += local_Cn2_ss * local_Cn2_ss;
         if (cross_ss) {
-            (*cross_ss)[i] += local_Cn2_ss
-                * (temp_Cn2_ss_1[0] + temp_Cn2_ss_2[0]);
+            (*cross_ss)[i] +=
+                local_Cn2_ss * (temp_Cn2_ss_1[0] + temp_Cn2_ss_2[0]);
         }
     }
 
@@ -1048,8 +1056,8 @@ void singleParticleSpectra::calculate_two_particle_correlation_charge_dep(
         corr_os[i] += local_Cn2_os;
         corr_os_err[i] += local_Cn2_os * local_Cn2_os;
         if (cross_os) {
-            (*cross_os)[i] += local_Cn2_os
-                * (temp_Cn2_os_1[0] + temp_Cn2_os_2[0]);
+            (*cross_os)[i] +=
+                local_Cn2_os * (temp_Cn2_os_1[0] + temp_Cn2_os_2[0]);
         }
     }
 }
@@ -1063,10 +1071,9 @@ void singleParticleSpectra::calculate_two_particle_correlation_charge_base(
     vector<double> &event_Q2_real, vector<double> &event_Q2_imag, int flag,
     vector<double> &corr, vector<double> &corr_err) {
     for (int i = 0; i < order_max; i++) {
-        double Q2_local =
-            event_Q1_real[i] * event_Q2_real[i]
-            + correlation_imag(event_Q1_imag, i)
-                  * correlation_imag(event_Q2_imag, i);
+        double Q2_local = event_Q1_real[i] * event_Q2_real[i]
+                          + correlation_imag(event_Q1_imag, i)
+                                * correlation_imag(event_Q2_imag, i);
         if (flag == 0) {
             // subtract the self correlation
             Q2_local -= event_Q1_real[0];
@@ -1087,8 +1094,7 @@ void singleParticleSpectra::calculate_two_particle_correlation(
 }
 
 void singleParticleSpectra::calculate_two_particle_correlation(
-    const vector<double> &event_Qn_real,
-    const vector<double> &event_Qn_imag) {
+    const vector<double> &event_Qn_real, const vector<double> &event_Qn_imag) {
     const double multiplicity = event_Qn_real[0];
     const double pairs = multiplicity * (multiplicity - 1.0);
     for (int i = 0; i < order_max; i++) {
@@ -1151,8 +1157,8 @@ void singleParticleSpectra::calculate_two_particle_correlation_deltaeta_chdep(
     vector<vector<double>> &C_n2_ss_eta12,
     vector<vector<double>> &C_n2_ss_eta12_err,
     vector<vector<double>> &C_n2_os_eta12,
-    vector<vector<double>> &C_n2_os_eta12_err,
-    vector<vector<double>> *cross_ss, vector<vector<double>> *cross_os) {
+    vector<vector<double>> &C_n2_os_eta12_err, vector<vector<double>> *cross_ss,
+    vector<vector<double>> *cross_os) {
     vector<vector<double>> temp_Cn2_ss_1(order_max, vector<double>(N_rap, 0.));
     vector<vector<double>> temp_Cn2_ss_2(order_max, vector<double>(N_rap, 0.));
     vector<vector<double>> temp_Cn2_os_1(order_max, vector<double>(N_rap, 0.));
@@ -1178,15 +1184,15 @@ void singleParticleSpectra::calculate_two_particle_correlation_deltaeta_chdep(
             C_n2_ss_eta12[i][j] += temp_ss;
             C_n2_ss_eta12_err[i][j] += temp_ss * temp_ss;
             if (cross_ss) {
-                (*cross_ss)[i][j] += temp_ss
-                    * (temp_Cn2_ss_1[0][j] + temp_Cn2_ss_2[0][j]);
+                (*cross_ss)[i][j] +=
+                    temp_ss * (temp_Cn2_ss_1[0][j] + temp_Cn2_ss_2[0][j]);
             }
             double temp_os = temp_Cn2_os_1[i][j] + temp_Cn2_os_2[i][j];
             C_n2_os_eta12[i][j] += temp_os;
             C_n2_os_eta12_err[i][j] += temp_os * temp_os;
             if (cross_os) {
-                (*cross_os)[i][j] += temp_os
-                    * (temp_Cn2_os_1[0][j] + temp_Cn2_os_2[0][j]);
+                (*cross_os)[i][j] +=
+                    temp_os * (temp_Cn2_os_1[0][j] + temp_Cn2_os_2[0][j]);
             }
         }
     }
@@ -1240,25 +1246,26 @@ void singleParticleSpectra::output_two_particle_correlation() {
         ostringstream filename;
         filename << path_ << "/particle_" << particle_monval << observable
                  << (rap_type == 0 ? "_eta_" : "_y_") << rap_min << "_"
-                 << rap_max
-                 << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
+                 << rap_max << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
         ofstream out(filename.str());
         out << "# n  vn{2}  vn{2}_err  " << columns << '\n';
-        const PairMoments pairs{sum[0], squares[0], cross[0]};
+        const PairMoments pairs {sum[0], squares[0], cross[0]};
         for (int n = 0; n < order_max; n++) {
             out << scientific << setw(18) << setprecision(8) << n;
-            write_pair_moments(out, {sum[n], squares[n], cross[n]}, pairs,
-                               total_number_of_events, n == 0);
+            write_pair_moments(
+                out, {sum[n], squares[n], cross[n]}, pairs,
+                total_number_of_events, n == 0);
             out << '\n';
         }
     };
-    write("_vn2", "<Qn*conj(Qn)>  <(Qn*conj(Qn))^2>", Qn2_vector,
-          Qn2_vector_err, Qn2_vector_cross);
+    write(
+        "_vn2", "<Qn*conj(Qn)>  <(Qn*conj(Qn))^2>", Qn2_vector, Qn2_vector_err,
+        Qn2_vector_cross);
     if (flag_charge_dependence == 1) {
-        write("_Cn2_ss", "Cn2_ss  Cn2_ss_err", Cn2_ss, Cn2_ss_err,
-              Cn2_ss_cross);
-        write("_Cn2_os", "Cn2_os  Cn2_os_err", Cn2_os, Cn2_os_err,
-              Cn2_os_cross);
+        write(
+            "_Cn2_ss", "Cn2_ss  Cn2_ss_err", Cn2_ss, Cn2_ss_err, Cn2_ss_cross);
+        write(
+            "_Cn2_os", "Cn2_os  Cn2_os_err", Cn2_os, Cn2_os_err, Cn2_os_cross);
     }
 }
 
@@ -1291,10 +1298,12 @@ void singleParticleSpectra::output_two_particle_correlation_rap() {
     };
     write("_vn2_eta12", QnSP_eta12, QnSP_eta12_err, QnSP_eta12_cross);
     if (flag_charge_dependence == 1) {
-        write("_vn2_eta12_ss", Cn2_ss_eta12, Cn2_ss_eta12_err,
-              Cn2_ss_eta12_cross);
-        write("_vn2_eta12_os", Cn2_os_eta12, Cn2_os_eta12_err,
-              Cn2_os_eta12_cross);
+        write(
+            "_vn2_eta12_ss", Cn2_ss_eta12, Cn2_ss_eta12_err,
+            Cn2_ss_eta12_cross);
+        write(
+            "_vn2_eta12_os", Cn2_os_eta12, Cn2_os_eta12_err,
+            Cn2_os_eta12_cross);
     }
 }
 
@@ -1405,8 +1414,7 @@ void singleParticleSpectra::calculate_three_particle_correlation(
         const double q1_imag_k = correlation_imag(event_Q1_imag, k);
         const double q3_imag_n = correlation_imag(event_Q3_imag, n[i]);
         double Qn_Qm_Qkstar =
-            ((event_Q1_real[n[i]] * event_Q2_real[m[i]]
-              - q1_imag_n * q2_imag_m)
+            ((event_Q1_real[n[i]] * event_Q2_real[m[i]] - q1_imag_n * q2_imag_m)
                  * event_Q3_real[k]
              + (event_Q1_real[n[i]] * q2_imag_m
                 + q1_imag_n * event_Q2_real[m[i]])
@@ -1414,21 +1422,17 @@ void singleParticleSpectra::calculate_three_particle_correlation(
 
         // full overlap between Q2 and Q3 (Q2 <= Q3) := Q1[n]*conj(Q2[n])
         double Qn_Qnstar =
-            (event_Q1_real[n[i]] * event_Q2_real[n[i]]
-             + q1_imag_n * q2_imag_n);
+            (event_Q1_real[n[i]] * event_Q2_real[n[i]] + q1_imag_n * q2_imag_n);
         // full overlap between Q1 and Q3 (Q1 <= Q3) := Q2[m]*conj(Q1[m])
         double Qm_Qmstar =
-            (event_Q2_real[m[i]] * event_Q1_real[m[i]]
-             + q2_imag_m * q1_imag_m);
+            (event_Q2_real[m[i]] * event_Q1_real[m[i]] + q2_imag_m * q1_imag_m);
         // full overlap between Q1 and Q2 (Q1 <= Q2) := Q1[k]*conj(Q3[k])
         double Qk_Qkstar =
-            (event_Q1_real[k] * event_Q3_real[k]
-             + q1_imag_k * q3_imag_k);
+            (event_Q1_real[k] * event_Q3_real[k] + q1_imag_k * q3_imag_k);
 
         // full overlap between Q2 and Q3 (Q3 <= Q2) := Q1[n]*conj(Q3[n])
         double Qn_Qnstar_3 =
-            (event_Q1_real[n[i]] * event_Q3_real[n[i]]
-             + q1_imag_n * q3_imag_n);
+            (event_Q1_real[n[i]] * event_Q3_real[n[i]] + q1_imag_n * q3_imag_n);
         double corr_local = 0.;
         if (flag == 0) {
             corr_local =
@@ -1569,17 +1573,16 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta(
     for (int i = 0; i < num_corr; i++) {
         const int k = n[i] + m[i];
         if (k >= order_max) {
-            messager << "Three-particle correlation requires order_max > "
-                     << k << ", got " << order_max;
+            messager << "Three-particle correlation requires order_max > " << k
+                     << ", got " << order_max;
             messager.flush("error");
             exit(1);
         }
 
         Complex integrated_q;
         for (int bin = 0; bin < N_rap; bin++) {
-            integrated_q += eta12
-                                ? q(event_Q3_real, event_Q3_imag, bin, k)
-                                : q(event_Q2_real, event_Q2_imag, bin, m[i]);
+            integrated_q += eta12 ? q(event_Q3_real, event_Q3_imag, bin, k)
+                                  : q(event_Q2_real, event_Q2_imag, bin, m[i]);
         }
 
         std::fill(temp_corr.begin(), temp_corr.end(), 0.0);
@@ -1643,18 +1646,15 @@ void singleParticleSpectra::calculate_four_particle_correlation_Cn4(
         }
         const double imag_n = correlation_imag(event_Qn_imag, i);
         const double imag_2n = correlation_imag(event_Qn_imag, ii);
-        double abs_Qn_2 =
-            event_Qn_real[i] * event_Qn_real[i] + imag_n * imag_n;
+        double abs_Qn_2 = event_Qn_real[i] * event_Qn_real[i] + imag_n * imag_n;
         double abs_Q2n_2 =
             event_Qn_real[ii] * event_Qn_real[ii] + imag_2n * imag_2n;
 
         double Re_Q2n_QnQn =
             (event_Qn_real[i]
-                 * (event_Qn_real[ii] * event_Qn_real[i]
-                    + imag_2n * imag_n)
+                 * (event_Qn_real[ii] * event_Qn_real[i] + imag_2n * imag_n)
              + imag_n
-                   * (event_Qn_real[i] * imag_2n
-                      - event_Qn_real[ii] * imag_n));
+                   * (event_Qn_real[i] * imag_2n - event_Qn_real[ii] * imag_n));
 
         double corr_local =
             (abs_Qn_2 * abs_Qn_2 - 2. * Re_Q2n_QnQn - 4. * (dN - 2.) * abs_Qn_2
@@ -1700,11 +1700,9 @@ void singleParticleSpectra::calculate_four_particle_correlation_SC(
         const double q2_imag_l = correlation_imag(event_Q2_imag, l);
         const double q1_imag_n = correlation_imag(event_Q1_imag, n[i]);
         double Q1_conjQ2 =
-            (event_Q1_real[m[i]] * event_Q2_real[m[i]]
-             + q1_imag_m * q2_imag_m);
+            (event_Q1_real[m[i]] * event_Q2_real[m[i]] + q1_imag_m * q2_imag_m);
         double Q3_conjQ4 =
-            (event_Q3_real[n[i]] * event_Q4_real[n[i]]
-             + q3_imag_n * q4_imag_n);
+            (event_Q3_real[n[i]] * event_Q4_real[n[i]] + q3_imag_n * q4_imag_n);
         // full overlap of Q1 and Q3
         double Q1Q3_overlap =
             (event_Q1_real[k] * event_Q2_real[m[i]] * event_Q4_real[n[i]]
@@ -1731,28 +1729,22 @@ void singleParticleSpectra::calculate_four_particle_correlation_SC(
              + q2_imag_l * q1_imag_m * event_Q4_real[n[i]]);
         // full overlap of Q1 with Q3 and Q2 with Q4
         double Q1Q3_Q2Q4_overlap =
-            (event_Q1_real[k] * event_Q2_real[k]
-             + q1_imag_k * q2_imag_k);
+            (event_Q1_real[k] * event_Q2_real[k] + q1_imag_k * q2_imag_k);
         // full overlap of Q1 with Q4 and Q2 with Q3
         double Q1Q4_Q2Q3_overlap =
-            (event_Q1_real[l] * event_Q2_real[l]
-             + q1_imag_l * q2_imag_l);
+            (event_Q1_real[l] * event_Q2_real[l] + q1_imag_l * q2_imag_l);
         // full overlap of Q1 with Q2 and Q3
         double Q1Q2Q3_overlap =
-            (event_Q1_real[n[i]] * event_Q4_real[n[i]]
-             + q1_imag_n * q4_imag_n);
+            (event_Q1_real[n[i]] * event_Q4_real[n[i]] + q1_imag_n * q4_imag_n);
         // full overlap of Q1 with Q2 and Q4
         double Q1Q2Q4_overlap =
-            (event_Q1_real[n[i]] * event_Q3_real[n[i]]
-             + q1_imag_n * q3_imag_n);
+            (event_Q1_real[n[i]] * event_Q3_real[n[i]] + q1_imag_n * q3_imag_n);
         // full overlap of Q1 with Q3 and Q4
         double Q1Q3Q4_overlap =
-            (event_Q1_real[m[i]] * event_Q2_real[m[i]]
-             + q1_imag_m * q2_imag_m);
+            (event_Q1_real[m[i]] * event_Q2_real[m[i]] + q1_imag_m * q2_imag_m);
         // full overlap of Q2 with Q3 and Q4
         double Q2Q3Q4_overlap =
-            (event_Q1_real[m[i]] * event_Q2_real[m[i]]
-             + q1_imag_m * q2_imag_m);
+            (event_Q1_real[m[i]] * event_Q2_real[m[i]] + q1_imag_m * q2_imag_m);
         // full overlap of Q1 with Q2, Q3, and Q4
         double Q1Q2Q3Q4_overlap = event_Q1_real[0];
 
@@ -2102,8 +2094,8 @@ void singleParticleSpectra::output_rapidity_density() {
         }
         // output dET/dy and total number of particles in the last column
         // this quantities is useful when one wants to reconst the Qn vectors
-        output << scientific << setw(18) << setprecision(8)
-               << energy_density << "   " << total_Nrap;
+        output << scientific << setw(18) << setprecision(8) << energy_density
+               << "   " << total_Nrap;
         output << '\n';
     }
     output.close();
@@ -2281,7 +2273,7 @@ void singleParticleSpectra::output_dNdSV() {
     // first dN/dtau
     ostringstream filename;
     filename << path_ << "/check_" << particle_monval << "_dNdtau"
-         << output_suffix(spatial_output_);
+             << output_suffix(spatial_output_);
     ofstream output(filename.str().c_str());
     for (int i = 0; i < N_tau; i++) {
         tau_array[i] = tau_array[i] / (dNdtau_array[i] + 1.);
@@ -2298,7 +2290,7 @@ void singleParticleSpectra::output_dNdSV() {
     // second dN/dx
     ostringstream filename2;
     filename2 << path_ << "/check_" << particle_monval << "_dNdx"
-         << output_suffix(spatial_output_);
+              << output_suffix(spatial_output_);
     ofstream output2(filename2.str().c_str());
     output2 << "# x  dN/dx  y  dN/dy  r  dN/dr" << '\n';
     for (int i = 0; i < N_xpt; i++) {
@@ -2330,9 +2322,9 @@ void singleParticleSpectra::output_dNdSV() {
     // dN/(dtau dx)
     ostringstream filename2_1, filename2_2;
     filename2_1 << path_ << "/check_" << particle_monval << "_dNdtaudx1"
-         << output_suffix(spatial_output_);
+                << output_suffix(spatial_output_);
     filename2_2 << path_ << "/check_" << particle_monval << "_dNdtaudx2"
-         << output_suffix(spatial_output_);
+                << output_suffix(spatial_output_);
     ofstream output2_1(filename2_1.str().c_str());
     ofstream output2_2(filename2_2.str().c_str());
     for (int i = 0; i < N_tau; i++) {
@@ -2357,7 +2349,7 @@ void singleParticleSpectra::output_dNdSV() {
     // third dN/detas
     ostringstream filename3;
     filename3 << path_ << "/check_" << particle_monval << "_dNdetas"
-         << output_suffix(spatial_output_);
+              << output_suffix(spatial_output_);
     ofstream output3(filename3.str().c_str());
     for (int i = 0; i < N_eta_s; i++) {
         eta_s_array[i] = eta_s_array[i] / (dNdetas_array[i] + 1.);

@@ -31,7 +31,6 @@ class singleParticleSpectra {
     void output_rapidity_density();
     void output_rapidity_covariance();
 
-
     int selected_track_count(int event_id, int charge);
     particle_info selected_track(int event_id, int index, int charge);
     struct DifferentialMoments {
@@ -47,7 +46,9 @@ class singleParticleSpectra {
             std::vector<std::vector<double>> &real_squares,
             std::vector<std::vector<double>> &imag,
             std::vector<std::vector<double>> &imag_squares)
-            : real(real), real_squares(real_squares), imag(imag),
+            : real(real),
+              real_squares(real_squares),
+              imag(imag),
               imag_squares(imag_squares) {}
     };
 

@@ -44,8 +44,8 @@ class particle_decay {
     std::map<int, particle_decay_info> resonance_table_;
     std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
     int weak_flag_;
-    mutable std::atomic<long> unreachable_resonances_{0};
-    std::atomic<long> mass_sampling_fallbacks_{0};
+    mutable std::atomic<long> unreachable_resonances_ {0};
+    std::atomic<long> mass_sampling_fallbacks_ {0};
 
     const particle_decay_info &particle_data(int monval) const;
     void prepare_channel_kinematics();

@@ -103,9 +103,10 @@ HBT_correlation::HBT_correlation(
     std::shared_ptr<RandomUtil::Random> ran_gen)
     : paraRdr_(paraRdr), path_(path) {
     ran_gen_ptr_ = ran_gen;
-    const double group_size = paraRdr.exist("number_of_oversample_events")
-                                  ? paraRdr.getVal("number_of_oversample_events")
-                                  : 1.0;
+    const double group_size =
+        paraRdr.exist("number_of_oversample_events")
+            ? paraRdr.getVal("number_of_oversample_events")
+            : 1.0;
     if (!(group_size >= 1 && group_size <= std::numeric_limits<int>::max())
         || std::floor(group_size) != group_size) {
         throw std::runtime_error(
@@ -575,9 +576,11 @@ void HBT_correlation::rotate_reference(
 void HBT_correlation::append_external_reference(
     int event_id, std::vector<particle_info> &reference) {
     const auto start = reference.size();
-    const int count = particle_list->get_number_of_particles_mixed_event(event_id);
+    const int count =
+        particle_list->get_number_of_particles_mixed_event(event_id);
     for (int i = 0; i < count; i++) {
-        reference.push_back(particle_list->get_particle_from_mixed_event(event_id, i));
+        reference.push_back(
+            particle_list->get_particle_from_mixed_event(event_id, i));
     }
     rotate_reference(reference, start);
 }
@@ -820,7 +823,8 @@ void HBT_correlation::output_3d_correlation(
     double ***same_count, double ***cos_sum, double ***mixed_count) {
     const bool compact = paraRdr_.getVal("ecoOutput", 0) == 1;
     const bool write_raw = paraRdr_.getVal("hbt_raw_output", 1) == 1;
-    const double pair_ratio = total_mixed > 0.0 ? total_same / total_mixed : 0.0;
+    const double pair_ratio =
+        total_mixed > 0.0 ? total_same / total_mixed : 0.0;
     std::ofstream output(path_ + "/HBT_correlation_function_KT_" + suffix);
     if (!output) throw std::runtime_error("Cannot write HBT output " + suffix);
     output << std::scientific << std::setprecision(8);
@@ -849,9 +853,9 @@ void HBT_correlation::output_3d_correlation(
 
                 const bool populated = same >= 2.0 && mixed >= 2.0;
                 if (!compact) {
-                    const double out =
-                        populated ? out_sum[iout][iside][ilong] / same
-                                  : q_out[iout];
+                    const double out = populated
+                                           ? out_sum[iout][iside][ilong] / same
+                                           : q_out[iout];
                     const double side =
                         populated ? side_sum[iout][iside][ilong] / same
                                   : q_side[iside];

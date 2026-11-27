@@ -118,7 +118,8 @@ void BalanceFunction::calculate_balance_function(
 bool BalanceFunction::check_same_particle(
     const particle_info& lhs, const particle_info& rhs) {
     return &lhs == &rhs
-           || (lhs.event_track_id != 0 && lhs.event_track_id == rhs.event_track_id);
+           || (lhs.event_track_id != 0
+               && lhs.event_track_id == rhs.event_track_id);
 }
 
 void BalanceFunction::combine_and_bin_particle_pairs(
@@ -323,12 +324,10 @@ void BalanceFunction::output_balance_function() {
                 C_abbar[i][j] + C_abarb[i][j],
                 C_mixed_abbar[i][j] + C_mixed_abarb[i][j], N_SS, N_SS_mixed);
             output3 << std::scientific << std::setw(18) << std::setprecision(8)
-                    << Delta_y[i] << "  " << Delta_phi[j] << "  "
-                    << C2_OS << "  "
-                    << C_ab[i][j] + C_abarbbar[i][j] << "  "
+                    << Delta_y[i] << "  " << Delta_phi[j] << "  " << C2_OS
+                    << "  " << C_ab[i][j] + C_abarbbar[i][j] << "  "
                     << C_mixed_ab[i][j] + C_mixed_abarbbar[i][j] << "  "
-                    << C2_SS << "  "
-                    << C_abbar[i][j] + C_abarb[i][j] << "  "
+                    << C2_SS << "  " << C_abbar[i][j] + C_abarb[i][j] << "  "
                     << C_mixed_abbar[i][j] + C_mixed_abarb[i][j] << endl;
         }
     }

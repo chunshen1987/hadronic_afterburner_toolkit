@@ -16,7 +16,7 @@ using std::cout;
 using std::endl;
 
 namespace {
-constexpr double mass_margin = 1e-5;   // GeV
+constexpr double mass_margin = 1e-5;  // GeV
 constexpr double broad_width = 1e-4;  // GeV
 constexpr int max_daughters = 5;
 }  // namespace
@@ -35,8 +35,7 @@ particle_decay::~particle_decay() {
     const long fallback =
         mass_sampling_fallbacks_.load(std::memory_order_relaxed);
     if (unreachable > 0) {
-        std::cerr << "[Warning] particle_decay: kept "
-                  << unreachable
+        std::cerr << "[Warning] particle_decay: kept " << unreachable
                   << " resonances below all of their decay thresholds" << endl;
     }
     if (fallback > 0) {
@@ -48,8 +47,8 @@ particle_decay::~particle_decay() {
 
 int particle_decay::read_resonances_list() {
     cout << " -- Read in particle resonance decay table..." << endl;
-    const std::string filename = weak_flag_ == 0 ? "EOS/pdg.dat"
-                                                : "EOS/pdg_weak.dat";
+    const std::string filename =
+        weak_flag_ == 0 ? "EOS/pdg.dat" : "EOS/pdg_weak.dat";
     std::ifstream table(filename);
     if (!table) throw std::runtime_error("Cannot open " + filename);
 
@@ -57,7 +56,7 @@ int particle_decay::read_resonances_list() {
     std::vector<int> baryons;
     int monval;
     while (table >> monval) {
-        particle_decay_info particle{};
+        particle_decay_info particle {};
         particle.monval = monval;
         if (!(table >> particle.name >> particle.mass >> particle.width
               >> particle.gspin >> particle.baryon >> particle.strange
@@ -68,12 +67,12 @@ int particle_decay::read_resonances_list() {
         }
 
         for (int i = 0; i < particle.decays; i++) {
-            decay_channel_info channel{};
+            decay_channel_info channel {};
             int parent;
-            if (!(table >> parent >> channel.decay_Npart >> channel.branching_ratio
-                  >> channel.decay_part[0] >> channel.decay_part[1]
-                  >> channel.decay_part[2] >> channel.decay_part[3]
-                  >> channel.decay_part[4])
+            if (!(table >> parent >> channel.decay_Npart
+                  >> channel.branching_ratio >> channel.decay_part[0]
+                  >> channel.decay_part[1] >> channel.decay_part[2]
+                  >> channel.decay_part[3] >> channel.decay_part[4])
                 || channel.decay_Npart < -max_daughters
                 || channel.decay_Npart > max_daughters) {
                 throw std::runtime_error(
@@ -108,9 +107,8 @@ int particle_decay::read_resonances_list() {
         for (auto &channel : anti.decay_channels) {
             for (int i = 0; i < channel.decay_Npart; i++) {
                 int &daughter = channel.decay_part[i];
-                const int lookup = resonance_table_.count(daughter)
-                                       ? daughter
-                                       : -daughter;
+                const int lookup =
+                    resonance_table_.count(daughter) ? daughter : -daughter;
                 const auto &info = particle_data(lookup);
                 if (info.baryon || info.strange || info.charge) {
                     daughter = -daughter;
@@ -128,7 +126,8 @@ const particle_decay_info &particle_decay::particle_data(int monval) const {
     const auto found = resonance_table_.find(monval);
     if (found == resonance_table_.end()) {
         throw std::runtime_error(
-            "PDG " + std::to_string(monval) + " is missing from the decay table");
+            "PDG " + std::to_string(monval)
+            + " is missing from the decay table");
     }
     return found->second;
 }
@@ -142,7 +141,8 @@ double particle_decay::compute_minimum_mass(
     const auto it = resonance_table_.find(monval);
     if (it == resonance_table_.end()) {
         throw std::runtime_error(
-            "PDG " + std::to_string(monval) + " is missing from the decay table");
+            "PDG " + std::to_string(monval)
+            + " is missing from the decay table");
     }
     auto &particle = it->second;
     if (state[monval] == 2) return particle.minimum_mass;
@@ -156,7 +156,8 @@ double particle_decay::compute_minimum_mass(
                 continue;
             double daughter_sum = 0.0;
             for (int i = 0; i < channel.decay_Npart; i++) {
-                daughter_sum += compute_minimum_mass(channel.decay_part[i], state);
+                daughter_sum +=
+                    compute_minimum_mass(channel.decay_part[i], state);
             }
             threshold = std::max(threshold, daughter_sum);
         }
@@ -281,9 +282,9 @@ void particle_decay::sample_daughter_masses(
     RandomUtil::Random &ran) {
     const int count = daughters.size();
     const double limit = mass - mass_margin;
-    std::array<const particle_decay_info *, max_daughters> data{};
-    std::array<double, max_daughters> lower{}, angle_min{}, angle_span{};
-    std::array<double, max_daughters> upper{};
+    std::array<const particle_decay_info *, max_daughters> data {};
+    std::array<double, max_daughters> lower {}, angle_min {}, angle_span {};
+    std::array<double, max_daughters> upper {};
     double lower_sum = 0.0;
     int broad_count = 0;
     for (int i = 0; i < count; i++) {
@@ -367,7 +368,7 @@ void particle_decay::perform_decays(
 
     const int count = picked->decay_Npart;
     static thread_local std::vector<particle_info> daughters;
-    daughters.assign(count, particle_info{});
+    daughters.assign(count, particle_info {});
     for (int i = 0; i < count; i++) {
         const auto &info = particle_data(picked->decay_part[i]);
         daughters[i].monval = info.monval;
@@ -395,8 +396,9 @@ long double breakup_momentum(
     const long double sum = first + second;
     if (mass <= sum) return 0.0;
     const long double difference = first - second;
-    return std::sqrt((mass - sum) * (mass + sum) * (mass - difference)
-                     * (mass + difference))
+    return std::sqrt(
+               (mass - sum) * (mass + sum) * (mass - difference)
+               * (mass + difference))
            / (2 * mass);
 }
 
@@ -449,15 +451,16 @@ void particle_decay::perform_n_body_decay(
     const particle_info &mother, std::vector<particle_info> &daughters,
     RandomUtil::Random &ran) {
     const int count = daughters.size();
-    std::array<long double, max_daughters> mass_sum{}, invariant{}, momentum{};
+    std::array<long double, max_daughters> mass_sum {}, invariant {},
+        momentum {};
     mass_sum[0] = daughters[0].mass;
     for (int i = 1; i < count; i++) {
         mass_sum[i] = mass_sum[i - 1] + daughters[i].mass;
     }
     const long double threshold = mass_sum[count - 1];
     if (mother.mass <= threshold) {
-        throw std::runtime_error("Closed phase space for PDG "
-                                 + std::to_string(mother.monval));
+        throw std::runtime_error(
+            "Closed phase space for PDG " + std::to_string(mother.monval));
     }
     const auto frame = decay_frame(mother, threshold);
     const long double kinetic = frame.mass - threshold;
@@ -504,9 +507,9 @@ void particle_decay::perform_n_body_decay(
             daughters[0].py = -daughter.py;
             daughters[0].pz = -daughter.pz;
         } else {
-            const DecayFrame subsystem{subsystem_energy, -daughter.px,
-                                       -daughter.py, -daughter.pz,
-                                       subsystem_mass};
+            const DecayFrame subsystem {
+                subsystem_energy, -daughter.px, -daughter.py, -daughter.pz,
+                subsystem_mass};
             for (int j = 0; j < i; j++) {
                 boost_from_rest_frame(subsystem, daughters[j]);
             }

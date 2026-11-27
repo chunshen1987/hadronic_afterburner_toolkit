@@ -93,7 +93,8 @@ particleSamples::particleSamples(
     decayer_ptr = new particle_decay(ran_gen, resonance_weak_feed_down_flag);
     decay_rng_ = ran_gen;
     if (paraRdr.exist("resonance_decay_parallel")) {
-        parallel_resonance_decays_ = paraRdr.getVal("resonance_decay_parallel") == 1;
+        parallel_resonance_decays_ =
+            paraRdr.getVal("resonance_decay_parallel") == 1;
     }
     resonance_feed_down_flag = paraRdr_.getVal("resonance_feed_down_flag");
     if (resonance_weak_feed_down_flag == 1) {
@@ -297,7 +298,8 @@ void particleSamples::open_SMASH_binary(
         || !SMASH_inputfile.read(
             reinterpret_cast<char *>(&format_variant), sizeof(format_variant))
         || !SMASH_inputfile.read(
-            reinterpret_cast<char *>(&version_length), sizeof(version_length))) {
+            reinterpret_cast<char *>(&version_length),
+            sizeof(version_length))) {
         throw std::runtime_error(
             "Incomplete SMASH header in " + SMASH_filename);
     }
@@ -1323,9 +1325,10 @@ void particleSamples::filter_particles(
             if (decide_to_pick_OSCAR(PoI_monval, particle.monval)) {
                 selected.push_back(particle);
                 selected.back().event_track_id = j + 1;
-            } else if (resonance_weak_feed_down_Sigma_to_Lambda_flag
-                       && std::abs(PoI_monval) == 3122
-                       && particle.monval == (PoI_monval > 0 ? 3212 : -3212)) {
+            } else if (
+                resonance_weak_feed_down_Sigma_to_Lambda_flag
+                && std::abs(PoI_monval) == 3122
+                && particle.monval == (PoI_monval > 0 ? 3212 : -3212)) {
                 selected.push_back(get_sigma_daughter(*ev_i, j));
                 selected.back().event_track_id = j + 1;
             }
@@ -1357,10 +1360,14 @@ void particleSamples::filter_particles_into_lists(
         filter_particles(-9998, full_list, negative_charge_hadron_list);
     }
     if (analyze_BF) {
-        filter_particles(particle_monval_a, full_list, balance_function_particle_a);
-        filter_particles(particle_monval_abar, full_list, balance_function_particle_abar);
-        filter_particles(particle_monval_b, full_list, balance_function_particle_b);
-        filter_particles(particle_monval_bbar, full_list, balance_function_particle_bbar);
+        filter_particles(
+            particle_monval_a, full_list, balance_function_particle_a);
+        filter_particles(
+            particle_monval_abar, full_list, balance_function_particle_abar);
+        filter_particles(
+            particle_monval_b, full_list, balance_function_particle_b);
+        filter_particles(
+            particle_monval_bbar, full_list, balance_function_particle_bbar);
     }
 }
 
@@ -2000,41 +2007,41 @@ void particleSamples::perform_resonance_feed_down(
 
     const auto selected_for_decay = [this](int pdg) {
         return select_resonances_flag != 1
-               || std::find(select_resonances_list.begin(),
-                            select_resonances_list.end(), pdg)
+               || std::find(
+                      select_resonances_list.begin(),
+                      select_resonances_list.end(), pdg)
                       != select_resonances_list.end();
     };
-    auto decay_event = [&](vector<particle_info> &event,
-                           vector<particle_info> &queue,
-                           vector<particle_info> &daughters,
-                           RandomUtil::Random &ran) {
-        queue.clear();
-        queue.swap(event);
-        const auto original_size = queue.size();
-        try {
-            event.reserve(original_size);
-            for (size_t i = 0; i < queue.size(); i++) {
-                if (!selected_for_decay(queue[i].monval)) {
-                    event.push_back(queue[i]);
-                    continue;
-                }
-                daughters.clear();
-                decayer_ptr->perform_decays(queue[i], daughters, ran);
-                for (const auto &daughter : daughters) {
-                    if (!selected_for_decay(daughter.monval)
-                        || decayer_ptr->check_particle_stable(daughter)) {
-                        event.push_back(daughter);
-                    } else {
-                        queue.push_back(daughter);
+    auto decay_event =
+        [&](vector<particle_info> &event, vector<particle_info> &queue,
+            vector<particle_info> &daughters, RandomUtil::Random &ran) {
+            queue.clear();
+            queue.swap(event);
+            const auto original_size = queue.size();
+            try {
+                event.reserve(original_size);
+                for (size_t i = 0; i < queue.size(); i++) {
+                    if (!selected_for_decay(queue[i].monval)) {
+                        event.push_back(queue[i]);
+                        continue;
+                    }
+                    daughters.clear();
+                    decayer_ptr->perform_decays(queue[i], daughters, ran);
+                    for (const auto &daughter : daughters) {
+                        if (!selected_for_decay(daughter.monval)
+                            || decayer_ptr->check_particle_stable(daughter)) {
+                            event.push_back(daughter);
+                        } else {
+                            queue.push_back(daughter);
+                        }
                     }
                 }
+            } catch (...) {
+                queue.resize(original_size);
+                queue.swap(event);
+                throw;
             }
-        } catch (...) {
-            queue.resize(original_size);
-            queue.swap(event);
-            throw;
-        }
-    };
+        };
 
     if (!parallel_resonance_decays_) {
         vector<particle_info> queue, daughters;
@@ -2058,7 +2065,7 @@ void particleSamples::perform_resonance_feed_down(
 #endif
         for (long i = 0; i < event_count; i++) {
             try {
-                const std::array<std::uint32_t, 3> stream_key{
+                const std::array<std::uint32_t, 3> stream_key {
                     key_hi, key_lo, static_cast<std::uint32_t>(i)};
                 RandomUtil::Random ran(stream_key);
                 decay_event(*(*input_particle_list)[i], queue, daughters, ran);
@@ -2084,7 +2091,7 @@ const particle_info &particleSamples::get_sigma_daughter(
     // copy: the decay routine takes a mutable mother
     particle_info sigma = event[track];
     const int lambda_pdg = sigma.monval > 0 ? 3122 : -3122;
-    particle_info lambda{}, photon{};
+    particle_info lambda {}, photon {};
     lambda.monval = lambda_pdg;
     lambda.mass = decayer_ptr->get_particle_mass(lambda_pdg);
     lambda.baryon = decayer_ptr->get_particle_baryon_number(lambda_pdg);
@@ -2140,7 +2147,7 @@ void particleSamples::perform_particle_reconstruction() {
                             + (z_1 - z_2) * (z_1 - z_2));
                         if (spatial_distance < 0.01) {
                             // this is a real phi(1020)
-                            particle_info mother{};
+                            particle_info mother {};
                             mother.monval = 333;
                             mother.reconstructed = true;
                             mother.mass = particle_mass;
