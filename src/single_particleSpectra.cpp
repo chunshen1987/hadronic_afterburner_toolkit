@@ -72,8 +72,55 @@ void write_pair_moments(
     out << "  " << value << "  " << error << "  " << mean << "  " << second;
 }
 
-double per_tuple(double value, double count) {
-    return count > 0.0 ? value / count : 0.0;
+// Multiparticle correlators are R = sum_e X_e / sum_e Y_e, where X_e is the
+// event's tuple numerator and Y_e = local[0] its ordered tuple count. Store
+// sum X, sum X^2 and sum X*Y per entry so the error can include the
+// covariance between X and Y.
+void add_event_moments(
+    const vector<double> &local, vector<double> &sum, vector<double> &squares,
+    vector<double> *cross) {
+    for (std::size_t i = 0; i < local.size(); i++) {
+        sum[i] += local[i];
+        squares[i] += local[i] * local[i];
+        if (cross) (*cross)[i] += local[i] * local[0];
+    }
+}
+
+// The same for rapidity-binned correlators, local[entry][bin].
+void add_event_moments(
+    const vector<vector<double>> &local, vector<vector<double>> &sum,
+    vector<vector<double>> &squares, vector<vector<double>> *cross) {
+    for (std::size_t i = 0; i < local.size(); i++) {
+        for (std::size_t bin = 0; bin < local[i].size(); bin++) {
+            const double value = local[i][bin];
+            sum[i][bin] += value;
+            squares[i][bin] += value * value;
+            if (cross) (*cross)[i][bin] += value * local[0][bin];
+        }
+    }
+}
+
+// Mean tuple count per event and its standard error.
+void tuple_count(
+    double sum, double squares, int events, double &mean, double &error) {
+    mean = sum / events;
+    const double variance = squares / events - mean * mean;
+    error = variance > 0.0 ? sqrt(variance / events) : 0.0;
+}
+
+// R = sum X / sum Y and its delta-method error under independent events,
+//   sigma_R = sqrt(sum (X_e - R Y_e)^2) / sum Y_e.
+// Bins without tuples report zero for both, as before.
+void tuple_ratio(
+    double sum, double squares, double cross, double count_sum,
+    double count_squares, double &value, double &error) {
+    value = 0.0;
+    error = 0.0;
+    if (!(count_sum > 0.0)) return;
+    value = sum / count_sum;
+    const double residual_squares =
+        squares - 2.0 * value * cross + value * value * count_squares;
+    error = sqrt(std::max(0.0, residual_squares)) / count_sum;
 }
 
 }  // namespace
@@ -91,11 +138,13 @@ singleParticleSpectra::singleParticleSpectra(
     }
 
     if (particle_monval == 333) {
-        // phi(1020) is reconstructed from (K^+, K^-) pairs
+        // phi(1020) reconstructed from (K^+, K^-) pairs is rescaled by the
+        // branching ratio; phi stored explicitly in the input is not.
         reconst_branching_ratio = 0.489;
     } else {
         reconst_branching_ratio = 1.0;
     }
+    reconstructed_weight_ = 1.0 / reconst_branching_ratio;
 
     if (paraRdr.getVal("ecoOutput", 0) == 1) {
         ecoOutput_ = true;
@@ -129,6 +178,7 @@ singleParticleSpectra::singleParticleSpectra(
     pT_array = vector<double>(npT, 0.);
     pT_mean_array = vector<double>(npT, 0.);
     pT_mean_array_err = vector<double>(npT, 0.);
+    reconstructed_count_pT_ = vector<double>(npT, 0.);
     for (int i = 0; i < npT; i++) {
         pT_array[i] = pT_min + dpT * (i + 0.5);
     }
@@ -177,6 +227,7 @@ singleParticleSpectra::singleParticleSpectra(
         dNdy_array = vector<double>(N_rap, 0.);
         dETdy_array = vector<double>(N_rap, 0.);
         dNdy_covMatrix = vector<double>(N_rap * N_rap, 0.);  // N_rap x N_rap
+        reconstructed_count_rap_ = vector<double>(N_rap, 0.);
         for (int i = 0; i < N_rap; i++)
             rapidity_array[i] = rapidity_dis_min + i * drap;
 
@@ -269,11 +320,14 @@ singleParticleSpectra::singleParticleSpectra(
         num_corr = 9;
         C_nmk = vector<double>(num_corr, 0.);
         C_nmk_err = vector<double>(num_corr, 0.);
+        C_nmk_cross = vector<double>(num_corr, 0.);
         if (N_rap > 0) {
             resize2DVector(C_nmk_eta12, num_corr, N_rap, 0.);
             resize2DVector(C_nmk_eta13, num_corr, N_rap, 0.);
             resize2DVector(C_nmk_eta12_err, num_corr, N_rap, 0.);
             resize2DVector(C_nmk_eta13_err, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta12_cross, num_corr, N_rap, 0.);
+            resize2DVector(C_nmk_eta13_cross, num_corr, N_rap, 0.);
         }
 
         flag_charge_dependence = paraRdr.getVal("flag_charge_dependence");
@@ -303,6 +357,10 @@ singleParticleSpectra::singleParticleSpectra(
             C_nmk_ss_13_err = vector<double>(num_corr, 0.);
             C_nmk_os_13 = vector<double>(num_corr, 0.);
             C_nmk_os_13_err = vector<double>(num_corr, 0.);
+            C_nmk_ss_cross = vector<double>(num_corr, 0.);
+            C_nmk_os_cross = vector<double>(num_corr, 0.);
+            C_nmk_ss_13_cross = vector<double>(num_corr, 0.);
+            C_nmk_os_13_cross = vector<double>(num_corr, 0.);
             if (N_rap > 0) {
                 resize2DVector(C_nmk_eta12_ss, num_corr, N_rap, 0.);
                 resize2DVector(C_nmk_eta12_os, num_corr, N_rap, 0.);
@@ -312,15 +370,21 @@ singleParticleSpectra::singleParticleSpectra(
                 resize2DVector(C_nmk_eta12_os_err, num_corr, N_rap, 0.);
                 resize2DVector(C_nmk_eta13_ss_err, num_corr, N_rap, 0.);
                 resize2DVector(C_nmk_eta13_os_err, num_corr, N_rap, 0.);
+                resize2DVector(C_nmk_eta12_ss_cross, num_corr, N_rap, 0.);
+                resize2DVector(C_nmk_eta12_os_cross, num_corr, N_rap, 0.);
+                resize2DVector(C_nmk_eta13_ss_cross, num_corr, N_rap, 0.);
+                resize2DVector(C_nmk_eta13_os_cross, num_corr, N_rap, 0.);
             }
         }
         SC_num_corr = 6;
         SC_mn = vector<double>(SC_num_corr, 0.);
         SC_mn_err = vector<double>(SC_num_corr, 0.);
+        SC_mn_cross = vector<double>(SC_num_corr, 0.);
 
         num_Cn4 = 5;
         Cn4 = vector<double>(num_Cn4, 0.);
         Cn4_err = vector<double>(num_Cn4, 0.);
+        Cn4_cross = vector<double>(num_Cn4, 0.);
     }
 }
 
@@ -433,15 +497,21 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
                 event_Qn_real, event_Qn_real_err, event_Qn_imag,
                 event_Qn_imag_err);
             calculate_two_particle_correlation(event_Qn_real, event_Qn_imag);
+            // The kernels add one event's values into zeroed buffers.
+            vector<double> local_Cnmk(num_corr, 0.), local_SC(SC_num_corr, 0.);
+            vector<double> local_Cn4(num_Cn4, 0.), unused(num_corr, 0.);
             calculate_three_particle_correlation(
                 event_Qn_real, event_Qn_imag, event_Qn_real, event_Qn_imag,
-                event_Qn_real, event_Qn_imag, 0, C_nmk, C_nmk_err);
+                event_Qn_real, event_Qn_imag, 0, local_Cnmk, unused);
+            add_event_moments(local_Cnmk, C_nmk, C_nmk_err, &C_nmk_cross);
             calculate_four_particle_correlation_SC(
                 event_Qn_real, event_Qn_imag, event_Qn_real, event_Qn_imag,
                 event_Qn_real, event_Qn_imag, event_Qn_real, event_Qn_imag, 0,
-                SC_mn, SC_mn_err);
+                local_SC, unused);
+            add_event_moments(local_SC, SC_mn, SC_mn_err, &SC_mn_cross);
             calculate_four_particle_correlation_Cn4(
-                event_Qn_real, event_Qn_imag, Cn4, Cn4_err);
+                event_Qn_real, event_Qn_imag, local_Cn4, unused);
+            add_event_moments(local_Cn4, Cn4, Cn4_err, &Cn4_cross);
             if (flag_charge_dependence == 1) {
                 accumulate_event_qn(
                     iev, 1, vn_rapidity_dis_pT_min, vn_rapidity_dis_pT_max,
@@ -461,7 +531,9 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
                     event_Qn_p_real, event_Qn_p_imag, event_Qn_m_real,
                     event_Qn_m_imag, event_Qn_real, event_Qn_imag, C_nmk_ss,
                     C_nmk_ss_err, C_nmk_os, C_nmk_os_err, C_nmk_ss_13,
-                    C_nmk_ss_13_err, C_nmk_os_13, C_nmk_os_13_err);
+                    C_nmk_ss_13_err, C_nmk_os_13, C_nmk_os_13_err,
+                    &C_nmk_ss_cross, &C_nmk_os_cross, &C_nmk_ss_13_cross,
+                    &C_nmk_os_13_cross);
             }
         }
 
@@ -482,14 +554,27 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
             if (rapidity_correlations) {
                 calculate_two_particle_correlation_deltaeta(
                     event_Qn_rap_real, event_Qn_rap_imag);
+                vector<vector<double>> local_eta(
+                    num_corr, vector<double>(N_rap, 0.));
+                vector<vector<double>> unused_eta(
+                    num_corr, vector<double>(N_rap, 0.));
                 calculate_three_particle_correlation_deltaeta(
                     event_Qn_rap_real, event_Qn_rap_imag, event_Qn_rap_real,
                     event_Qn_rap_imag, event_Qn_rap_real, event_Qn_rap_imag, 1,
-                    1, C_nmk_eta12, C_nmk_eta12_err);
+                    1, local_eta, unused_eta);
+                add_event_moments(
+                    local_eta, C_nmk_eta12, C_nmk_eta12_err,
+                    &C_nmk_eta12_cross);
+                for (auto &row : local_eta) {
+                    std::fill(row.begin(), row.end(), 0.0);
+                }
                 calculate_three_particle_correlation_deltaeta(
                     event_Qn_rap_real, event_Qn_rap_imag, event_Qn_rap_real,
                     event_Qn_rap_imag, event_Qn_rap_real, event_Qn_rap_imag, 2,
-                    1, C_nmk_eta13, C_nmk_eta13_err);
+                    1, local_eta, unused_eta);
+                add_event_moments(
+                    local_eta, C_nmk_eta13, C_nmk_eta13_err,
+                    &C_nmk_eta13_cross);
                 if (flag_charge_dependence == 1) {
                     calculate_rapidity_distribution(
                         iev, event_Qn_p_rap_real, event_Qn_p_rap_imag, 1);
@@ -508,7 +593,9 @@ void singleParticleSpectra::calculate_Qn_vector_shell(
                         event_Qn_rap_real, event_Qn_rap_imag, C_nmk_eta12_ss,
                         C_nmk_eta12_ss_err, C_nmk_eta12_os, C_nmk_eta12_os_err,
                         C_nmk_eta13_ss, C_nmk_eta13_ss_err, C_nmk_eta13_os,
-                        C_nmk_eta13_os_err);
+                        C_nmk_eta13_os_err, &C_nmk_eta12_ss_cross,
+                        &C_nmk_eta12_os_cross, &C_nmk_eta13_ss_cross,
+                        &C_nmk_eta13_os_cross);
                 }
             }
         }
@@ -702,6 +789,10 @@ void singleParticleSpectra::accumulate_event_qn(
             const int index = static_cast<int>((pt - pT_min) / dpT);
             if (index < npT) bin = index;
         }
+        if (track.reconstructed && differential && differential->pt) {
+            reconstructed_count_ += 1.0;
+            if (bin >= 0) reconstructed_count_pT_[bin] += 1.0;
+        }
         event_Qn_real[0] += 1.0;
         event_Qn_real_err[0] += 1.0;
         event_Qn_imag[0] += pt;  // spectra use this slot for mean pT
@@ -748,22 +839,25 @@ void singleParticleSpectra::output_Qn_vectors() {
     ofstream output(filename.str().c_str());
     output << "# n  Qn_real  Qn_real_err  Qn_imag  Qn_imag_err" << '\n';
 
-    double total_N = Qn_vector_real[0];
+    // Each reconstructed track carries weight w = 1/branching ratio; stored
+    // tracks carry one. The Poisson error uses the sum of squared weights.
+    const double w = reconstructed_weight_;
+    const double total_count = Qn_vector_real[0];
+    const double total_N = total_count + (w - 1.0) * reconstructed_count_;
+    const double total_N_sq =
+        total_count + (w * w - 1.0) * reconstructed_count_;
     const double yield_norm = total_number_of_events * drapidity;
-    double dN_ev_avg = total_N / yield_norm;
-    double dN_ev_avg_err = sqrt(total_N) / yield_norm;
-    const double pT_avg = total_N > 0.0 ? Qn_vector_imag[0] / total_N : 0.0;
-    const double pT_avg_err = total_N > 0.0
-        ? sqrt(std::max(0.0, Qn_vector_imag_err[0] / total_N - pT_avg * pT_avg)
-               / total_N)
-        : 0.0;
-    if (particle_monval == 333) {
-        // for phi(1020) need to rescale the yield by
-        // reconstruction branching ratio
-        total_N = total_N / reconst_branching_ratio;
-        dN_ev_avg = dN_ev_avg / reconst_branching_ratio;
-        dN_ev_avg_err = dN_ev_avg_err / reconst_branching_ratio;
-    }
+    const double dN_ev_avg = total_N / yield_norm;
+    const double dN_ev_avg_err = sqrt(total_N_sq) / yield_norm;
+    const double pT_avg =
+        total_count > 0.0 ? Qn_vector_imag[0] / total_count : 0.0;
+    const double pT_avg_err =
+        total_count > 0.0 ? sqrt(
+                                std::max(
+                                    0.0, Qn_vector_imag_err[0] / total_count
+                                             - pT_avg * pT_avg)
+                                / total_count)
+                          : 0.0;
     output << scientific << setw(18) << setprecision(8) << 0 << "   "
            << dN_ev_avg << "   " << dN_ev_avg_err << "   " << pT_avg << "   "
            << pT_avg_err << '\n';
@@ -824,17 +918,13 @@ void singleParticleSpectra::output_Qn_vectors() {
     }
 
     for (int ipT = 0; ipT < npT; ipT++) {
-        double total_NpT = Qn_diff_vector_real[0][ipT];
-        double dNpT_ev_avg =
-            Qn_diff_vector_real[0][ipT] / total_number_of_events;
-        double dNpT_ev_avg_err = sqrt(dNpT_ev_avg / total_number_of_events);
-        if (particle_monval == 333) {
-            // for phi(1020) need to rescale the yield by
-            // reconstruction branching ratio
-            total_NpT = total_NpT / reconst_branching_ratio;
-            dNpT_ev_avg = dNpT_ev_avg / reconst_branching_ratio;
-            dNpT_ev_avg_err = dNpT_ev_avg_err / reconst_branching_ratio;
-        }
+        const double bin_count = Qn_diff_vector_real[0][ipT];
+        const double bin_reconstructed = reconstructed_count_pT_[ipT];
+        const double total_NpT = bin_count + (w - 1.0) * bin_reconstructed;
+        const double dNpT_ev_avg = total_NpT / total_number_of_events;
+        const double dNpT_ev_avg_err =
+            sqrt(bin_count + (w * w - 1.0) * bin_reconstructed)
+            / total_number_of_events;
         double mean_pT, mean_pT_err;
         if (dNpT_ev_avg > 0.) {
             mean_pT = pT_mean_array[ipT] / Qn_diff_vector_real[0][ipT];
@@ -1217,7 +1307,9 @@ void singleParticleSpectra::calculate_three_particle_correlation_charge_dep(
     vector<double> &corr_ss, vector<double> &corr_ss_err,
     vector<double> &corr_os, vector<double> &corr_os_err,
     vector<double> &corr_ss_13, vector<double> &corr_ss_13_err,
-    vector<double> &corr_os_13, vector<double> &corr_os_13_err) {
+    vector<double> &corr_os_13, vector<double> &corr_os_13_err,
+    vector<double> *cross_ss, vector<double> *cross_os,
+    vector<double> *cross_ss_13, vector<double> *cross_os_13) {
     vector<double> temp_Cmnk_ss_1(num_corr, 0.);
     vector<double> temp_Cmnk_ss_2(num_corr, 0.);
     vector<double> temp_Cmnk_ss_3(num_corr, 0.);
@@ -1240,14 +1332,13 @@ void singleParticleSpectra::calculate_three_particle_correlation_charge_dep(
         event_Qn_m_real, event_Qn_m_imag, event_Qn_real, event_Qn_imag,
         event_Qn_m_real, event_Qn_m_imag, 3, temp_Cmnk_ss_4,
         temp_Cmnk_ss_4_err);
+    vector<double> local_ss(num_corr), local_ss_13(num_corr);
     for (int i = 0; i < num_corr; i++) {
-        double local_Cmnk_ss = temp_Cmnk_ss_1[i] + temp_Cmnk_ss_2[i];
-        corr_ss[i] += local_Cmnk_ss;
-        corr_ss_err[i] += local_Cmnk_ss * local_Cmnk_ss;
-        double local_Cmnk_ss_13 = temp_Cmnk_ss_3[i] + temp_Cmnk_ss_4[i];
-        corr_ss_13[i] += local_Cmnk_ss_13;
-        corr_ss_13_err[i] += local_Cmnk_ss_13 * local_Cmnk_ss_13;
+        local_ss[i] = temp_Cmnk_ss_1[i] + temp_Cmnk_ss_2[i];
+        local_ss_13[i] = temp_Cmnk_ss_3[i] + temp_Cmnk_ss_4[i];
     }
+    add_event_moments(local_ss, corr_ss, corr_ss_err, cross_ss);
+    add_event_moments(local_ss_13, corr_ss_13, corr_ss_13_err, cross_ss_13);
 
     vector<double> temp_Cmnk_os_1(num_corr, 0.);
     vector<double> temp_Cmnk_os_2(num_corr, 0.);
@@ -1271,14 +1362,13 @@ void singleParticleSpectra::calculate_three_particle_correlation_charge_dep(
         event_Qn_m_real, event_Qn_m_imag, event_Qn_real, event_Qn_imag,
         event_Qn_p_real, event_Qn_p_imag, 4, temp_Cmnk_os_4,
         temp_Cmnk_os_4_err);
+    vector<double> local_os(num_corr), local_os_13(num_corr);
     for (int i = 0; i < num_corr; i++) {
-        double local_Cmnk_os = temp_Cmnk_os_1[i] + temp_Cmnk_os_2[i];
-        corr_os[i] += local_Cmnk_os;
-        corr_os_err[i] += local_Cmnk_os * local_Cmnk_os;
-        double local_Cmnk_os_13 = temp_Cmnk_os_3[i] + temp_Cmnk_os_4[i];
-        corr_os_13[i] += local_Cmnk_os_13;
-        corr_os_13_err[i] += local_Cmnk_os_13 * local_Cmnk_os_13;
+        local_os[i] = temp_Cmnk_os_1[i] + temp_Cmnk_os_2[i];
+        local_os_13[i] = temp_Cmnk_os_3[i] + temp_Cmnk_os_4[i];
     }
+    add_event_moments(local_os, corr_os, corr_os_err, cross_os);
+    add_event_moments(local_os_13, corr_os_13, corr_os_13_err, cross_os_13);
 }
 
 //! This function computes the 3-particle correlation for Qn vectors
@@ -1376,7 +1466,11 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta_chdep(
     vector<vector<double>> &Cmnk_ss_eta13,
     vector<vector<double>> &Cmnk_ss_eta13_err,
     vector<vector<double>> &Cmnk_os_eta13,
-    vector<vector<double>> &Cmnk_os_eta13_err) {
+    vector<vector<double>> &Cmnk_os_eta13_err,
+    vector<vector<double>> *cross_ss_eta12,
+    vector<vector<double>> *cross_os_eta12,
+    vector<vector<double>> *cross_ss_eta13,
+    vector<vector<double>> *cross_os_eta13) {
     vector<vector<double>> temp_Cmnk_ss_1(num_corr, vector<double>(N_rap, 0.));
     vector<vector<double>> temp_Cmnk_ss_2(num_corr, vector<double>(N_rap, 0.));
     vector<vector<double>> temp_Cmnk_ss_3(num_corr, vector<double>(N_rap, 0.));
@@ -1420,22 +1514,26 @@ void singleParticleSpectra::calculate_three_particle_correlation_deltaeta_chdep(
         event_Qn_m_rap_imag, event_Qn_rap_real, event_Qn_rap_imag, 2, 1,
         temp_Cmnk_ss_4, temp_Cmnk_err);
 
-    for (int i = 0; i < num_corr; i++) {
-        for (int j = 0; j < N_rap; j++) {
-            double temp_ss_12 = temp_Cmnk_ss_1[i][j] + temp_Cmnk_ss_2[i][j];
-            Cmnk_ss_eta12[i][j] += temp_ss_12;
-            Cmnk_ss_eta12_err[i][j] += temp_ss_12 * temp_ss_12;
-            double temp_ss_13 = temp_Cmnk_ss_3[i][j] + temp_Cmnk_ss_4[i][j];
-            Cmnk_ss_eta13[i][j] += temp_ss_13;
-            Cmnk_ss_eta13_err[i][j] += temp_ss_13 * temp_ss_13;
-            double temp_os_12 = temp_Cmnk_os_1[i][j] + temp_Cmnk_os_2[i][j];
-            Cmnk_os_eta12[i][j] += temp_os_12;
-            Cmnk_os_eta12_err[i][j] += temp_os_12 * temp_os_12;
-            double temp_os_13 = temp_Cmnk_os_3[i][j] + temp_Cmnk_os_4[i][j];
-            Cmnk_os_eta13[i][j] += temp_os_13;
-            Cmnk_os_eta13_err[i][j] += temp_os_13 * temp_os_13;
+    const auto add_pair = [](vector<vector<double>> &first,
+                             const vector<vector<double>> &second) {
+        for (std::size_t i = 0; i < first.size(); i++) {
+            for (std::size_t j = 0; j < first[i].size(); j++) {
+                first[i][j] += second[i][j];
+            }
         }
-    }
+    };
+    add_pair(temp_Cmnk_ss_1, temp_Cmnk_ss_2);
+    add_pair(temp_Cmnk_ss_3, temp_Cmnk_ss_4);
+    add_pair(temp_Cmnk_os_1, temp_Cmnk_os_2);
+    add_pair(temp_Cmnk_os_3, temp_Cmnk_os_4);
+    add_event_moments(
+        temp_Cmnk_ss_1, Cmnk_ss_eta12, Cmnk_ss_eta12_err, cross_ss_eta12);
+    add_event_moments(
+        temp_Cmnk_ss_3, Cmnk_ss_eta13, Cmnk_ss_eta13_err, cross_ss_eta13);
+    add_event_moments(
+        temp_Cmnk_os_1, Cmnk_os_eta12, Cmnk_os_eta12_err, cross_os_eta12);
+    add_event_moments(
+        temp_Cmnk_os_3, Cmnk_os_eta13, Cmnk_os_eta13_err, cross_os_eta13);
 }
 
 //! This function computes the 3-particle correlation as a function of relative
@@ -1677,465 +1775,149 @@ void singleParticleSpectra::calculate_four_particle_correlation_SC(
 
 //! This function outputs the event averaged three-particle correlation
 void singleParticleSpectra::output_three_particle_correlation() {
-    ostringstream filename;
-    if (rap_type == 0) {
-        filename << path_ << "/particle_" << particle_monval << "_Cmnk"
-                 << "_eta_" << rap_min << "_" << rap_max
-                 << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-    } else {
-        filename << path_ << "/particle_" << particle_monval << "_Cmnk"
-                 << "_y_" << rap_min << "_" << rap_max
-                 << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-    }
-    ofstream output(filename.str().c_str());
+    const auto filename = [&](const char *observable) {
+        ostringstream name;
+        name << path_ << "/particle_" << particle_monval << observable
+             << (rap_type == 0 ? "_eta_" : "_y_") << rap_min << "_" << rap_max
+             << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
+        return name.str();
+    };
+    // One column pair: tuple count (row 0) or per-tuple correlator (rows 1+).
+    const auto write_entry = [&](ofstream &out, const vector<double> &sum,
+                                 const vector<double> &squares,
+                                 const vector<double> &cross, int i) {
+        double value, error;
+        if (i == 0) {
+            tuple_count(
+                sum[0], squares[0], total_number_of_events, value, error);
+        } else {
+            tuple_ratio(
+                sum[i], squares[i], cross[i], sum[0], squares[0], value, error);
+        }
+        out << value << "  " << error;
+    };
+
+    ofstream output(filename("_Cmnk").c_str());
     output << "# n  C_nmk  C_nmk_err" << '\n';
-
-    double num_pair = C_nmk[0] / total_number_of_events;
-    double num_pair_stdsq =
-        (C_nmk_err[0] / total_number_of_events - num_pair * num_pair);
-    double num_pair_err = 0.0;
-    if (num_pair_stdsq > 0) {
-        num_pair_err = sqrt(num_pair_stdsq / total_number_of_events);
+    for (int i = 0; i < num_corr; i++) {
+        output << scientific << setw(18) << setprecision(8) << i << "  ";
+        write_entry(output, C_nmk, C_nmk_err, C_nmk_cross, i);
+        output << '\n';
     }
-    output << scientific << setw(18) << setprecision(8) << 0 << "  " << num_pair
-           << "  " << num_pair_err << '\n';
-    for (int i = 1; i < num_corr; i++) {
-        double Cnmk_avg = C_nmk[i] / total_number_of_events;
-        double Cnmk_stdsq =
-            (C_nmk_err[i] / total_number_of_events - Cnmk_avg * Cnmk_avg);
-        Cnmk_avg = per_tuple(Cnmk_avg, num_pair);
-        double Cnmk_err = 0.0;
-        if (Cnmk_stdsq > 0) {
-            Cnmk_err = sqrt(Cnmk_stdsq / total_number_of_events);
-            Cnmk_err = per_tuple(Cnmk_err, num_pair);
-        }
-        output << scientific << setw(18) << setprecision(8) << i << "  "
-               << Cnmk_avg << "  " << Cnmk_err << '\n';
-    }
-    if (flag_charge_dependence == 1) {
-        ostringstream filename_ss;
-        if (rap_type == 0) {
-            filename_ss << path_ << "/particle_" << particle_monval
-                        << "_Cmnk_ss_eta_" << rap_min << "_" << rap_max
-                        << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-        } else {
-            filename_ss << path_ << "/particle_" << particle_monval
-                        << "_Cmnk_ss_y_" << rap_min << "_" << rap_max
-                        << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-        }
-        ofstream output_ss(filename_ss.str().c_str());
-        output_ss << "# n  C_nmk_ss  C_nmk_ss_err  C_nmk_ss_13  C_nmk_ss_13_err"
-                  << '\n';
+    if (flag_charge_dependence != 1) return;
 
-        double num_pair_ss = C_nmk_ss[0] / total_number_of_events;
-        double num_pair_ss_stdsq =
-            (C_nmk_ss_err[0] / total_number_of_events
-             - num_pair_ss * num_pair_ss);
-        double num_pair_ss_err = 0.0;
-        if (num_pair_ss_stdsq > 0) {
-            num_pair_ss_err = sqrt(num_pair_ss_stdsq / total_number_of_events);
-        }
-        double num_pair_ss_13 = C_nmk_ss_13[0] / total_number_of_events;
-        double num_pair_ss_13_stdsq =
-            (C_nmk_ss_13_err[0] / total_number_of_events
-             - num_pair_ss_13 * num_pair_ss_13);
-        double num_pair_ss_13_err = 0.0;
-        if (num_pair_ss_13_stdsq > 0) {
-            num_pair_ss_13_err =
-                sqrt(num_pair_ss_13_stdsq / total_number_of_events);
-        }
-        output_ss << scientific << setw(18) << setprecision(8) << 0 << "  "
-                  << num_pair_ss << "  " << num_pair_ss_err << "  "
-                  << num_pair_ss_13 << "  " << num_pair_ss_13_err << '\n';
-        for (int i = 1; i < num_corr; i++) {
-            double Cnmk_ss_avg = C_nmk_ss[i] / total_number_of_events;
-            double Cnmk_ss_stdsq =
-                (C_nmk_ss_err[i] / total_number_of_events
-                 - Cnmk_ss_avg * Cnmk_ss_avg);
-            Cnmk_ss_avg = per_tuple(Cnmk_ss_avg, num_pair_ss);
-            double Cnmk_ss_err = 0.0;
-            if (Cnmk_ss_stdsq > 0) {
-                Cnmk_ss_err = sqrt(Cnmk_ss_stdsq / total_number_of_events);
-                Cnmk_ss_err = per_tuple(Cnmk_ss_err, num_pair_ss);
+    const auto write_charge =
+        [&](const char *observable, const char *label,
+            const vector<double> &sum_12, const vector<double> &squares_12,
+            const vector<double> &cross_12, const vector<double> &sum_13,
+            const vector<double> &squares_13, const vector<double> &cross_13) {
+            ofstream out(filename(observable).c_str());
+            out << "# n  C_nmk_" << label << "  C_nmk_" << label
+                << "_err  C_nmk_" << label << "_13  C_nmk_" << label
+                << "_13_err" << '\n';
+            for (int i = 0; i < num_corr; i++) {
+                out << scientific << setw(18) << setprecision(8) << i << "  ";
+                write_entry(out, sum_12, squares_12, cross_12, i);
+                out << "  ";
+                write_entry(out, sum_13, squares_13, cross_13, i);
+                out << '\n';
             }
-            double Cnmk_ss_13_avg = C_nmk_ss_13[i] / total_number_of_events;
-            double Cnmk_ss_13_stdsq =
-                (C_nmk_ss_13_err[i] / total_number_of_events
-                 - Cnmk_ss_13_avg * Cnmk_ss_13_avg);
-            Cnmk_ss_13_avg = per_tuple(Cnmk_ss_13_avg, num_pair_ss_13);
-            double Cnmk_ss_13_err = 0.0;
-            if (Cnmk_ss_13_stdsq > 0) {
-                Cnmk_ss_13_err =
-                    sqrt(Cnmk_ss_13_stdsq / total_number_of_events);
-                Cnmk_ss_13_err = per_tuple(Cnmk_ss_13_err, num_pair_ss_13);
-            }
-            output_ss << scientific << setw(18) << setprecision(8) << i << "  "
-                      << Cnmk_ss_avg << "  " << Cnmk_ss_err << "  "
-                      << Cnmk_ss_13_avg << "  " << Cnmk_ss_13_err << '\n';
-        }
-        ostringstream filename_os;
-        if (rap_type == 0) {
-            filename_os << path_ << "/particle_" << particle_monval
-                        << "_Cmnk_os_eta_" << rap_min << "_" << rap_max
-                        << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-        } else {
-            filename_os << path_ << "/particle_" << particle_monval
-                        << "_Cmnk_os_y_" << rap_min << "_" << rap_max
-                        << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-        }
-        ofstream output_os(filename_os.str().c_str());
-        output_os << "# n  C_nmk_os  C_nmk_os_err  C_nmk_os_13  C_nmk_os_13_err"
-                  << '\n';
-
-        double num_pair_os = C_nmk_os[0] / total_number_of_events;
-        double num_pair_os_stdsq =
-            (C_nmk_os_err[0] / total_number_of_events
-             - num_pair_os * num_pair_os);
-        double num_pair_os_err = 0.0;
-        if (num_pair_os_stdsq > 0) {
-            num_pair_os_err = sqrt(num_pair_os_stdsq / total_number_of_events);
-        }
-        double num_pair_os_13 = C_nmk_os_13[0] / total_number_of_events;
-        double num_pair_os_13_stdsq =
-            (C_nmk_os_13_err[0] / total_number_of_events
-             - num_pair_os_13 * num_pair_os_13);
-        double num_pair_os_13_err = 0.0;
-        if (num_pair_os_13_stdsq > 0) {
-            num_pair_os_13_err =
-                sqrt(num_pair_os_13_stdsq / total_number_of_events);
-        }
-        output_os << scientific << setw(18) << setprecision(8) << 0 << "  "
-                  << num_pair_os << "  " << num_pair_os_err << "  "
-                  << num_pair_os_13 << "  " << num_pair_os_13_err << '\n';
-        for (int i = 1; i < num_corr; i++) {
-            double Cnmk_os_avg = C_nmk_os[i] / total_number_of_events;
-            double Cnmk_os_stdsq =
-                (C_nmk_os_err[i] / total_number_of_events
-                 - Cnmk_os_avg * Cnmk_os_avg);
-            Cnmk_os_avg = per_tuple(Cnmk_os_avg, num_pair_os);
-            double Cnmk_os_err = 0.0;
-            if (Cnmk_os_stdsq > 0) {
-                Cnmk_os_err = sqrt(Cnmk_os_stdsq / total_number_of_events);
-                Cnmk_os_err = per_tuple(Cnmk_os_err, num_pair_os);
-            }
-            double Cnmk_os_13_avg = C_nmk_os_13[i] / total_number_of_events;
-            double Cnmk_os_13_stdsq =
-                (C_nmk_os_13_err[i] / total_number_of_events
-                 - Cnmk_os_13_avg * Cnmk_os_13_avg);
-            Cnmk_os_13_avg = per_tuple(Cnmk_os_13_avg, num_pair_os_13);
-            double Cnmk_os_13_err = 0.0;
-            if (Cnmk_os_13_stdsq > 0) {
-                Cnmk_os_13_err =
-                    sqrt(Cnmk_os_13_stdsq / total_number_of_events);
-                Cnmk_os_13_err = per_tuple(Cnmk_os_13_err, num_pair_os_13);
-            }
-            output_os << scientific << setw(18) << setprecision(8) << i << "  "
-                      << Cnmk_os_avg << "  " << Cnmk_os_err << "  "
-                      << Cnmk_os_13_avg << "  " << Cnmk_os_13_err << '\n';
-        }
-    }
+        };
+    write_charge(
+        "_Cmnk_ss", "ss", C_nmk_ss, C_nmk_ss_err, C_nmk_ss_cross, C_nmk_ss_13,
+        C_nmk_ss_13_err, C_nmk_ss_13_cross);
+    write_charge(
+        "_Cmnk_os", "os", C_nmk_os, C_nmk_os_err, C_nmk_os_cross, C_nmk_os_13,
+        C_nmk_os_13_err, C_nmk_os_13_cross);
 }
 
 //! This function outputs the rapidity dependent three-particle correlation
 void singleParticleSpectra::output_three_particle_correlation_rap() {
-    ostringstream filename1, filename2;
-    filename1 << path_ << "/particle_" << particle_monval << "_Cmnk_eta12"
-              << "_pT_" << vn_rapidity_dis_pT_min << "_"
-              << vn_rapidity_dis_pT_max
-                   << output_suffix(rapidity_correlation_output_);
-    filename2 << path_ << "/particle_" << particle_monval << "_Cmnk_eta13"
-              << "_pT_" << vn_rapidity_dis_pT_min << "_"
-              << vn_rapidity_dis_pT_max
-                   << output_suffix(rapidity_correlation_output_);
-    ofstream output1(filename1.str().c_str());
-    ofstream output2(filename2.str().c_str());
-    if (rap_type == 0) {
-        output1 << "# eta12  C_nmk  C_nmk_err "
-                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << '\n';
-        output2 << "# eta13  C_nmk  C_nmk_err "
-                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << '\n';
-    } else {
-        output1 << "# y12  C_nmk  C_nmk_err "
-                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << '\n';
-        output2 << "# y13  C_nmk  C_nmk_err "
-                << "(000, 112, 123, 224, 235, 134, 246, 336, 347)" << '\n';
-    }
-
-    for (int j = 0; j < N_rap; j++) {
-        double eta_local = rapidity_dis_min + j * drap;
-        double num_pair = C_nmk_eta12[0][j] / total_number_of_events;
-        double num_pair_stdsq =
-            (C_nmk_eta12_err[0][j] / total_number_of_events
-             - num_pair * num_pair);
-        double num_pair_err = 0.0;
-        if (num_pair_stdsq > 0) {
-            num_pair_err = sqrt(num_pair_stdsq / total_number_of_events);
-        }
-        output1 << scientific << setw(18) << setprecision(8) << eta_local
-                << "  " << num_pair << "  " << num_pair_err << "  ";
-        double num_pair_2 = C_nmk_eta13[0][j] / total_number_of_events;
-        double num_pair_2_stdsq =
-            (C_nmk_eta13_err[0][j] / total_number_of_events
-             - num_pair_2 * num_pair_2);
-        num_pair_err = 0.0;
-        if (num_pair_2_stdsq > 0) {
-            num_pair_err = sqrt(num_pair_2_stdsq / total_number_of_events);
-        }
-        output2 << scientific << setw(18) << setprecision(8) << eta_local
-                << "  " << num_pair_2 << "  " << num_pair_err << "  ";
-        for (int i = 1; i < num_corr; i++) {
-            double Cnmk_avg = C_nmk_eta12[i][j] / total_number_of_events;
-            double Cnmk_stdsq =
-                (C_nmk_eta12_err[i][j] / total_number_of_events
-                 - Cnmk_avg * Cnmk_avg);
-            Cnmk_avg = per_tuple(Cnmk_avg, num_pair);
-            double Cnmk_err = 0.0;
-            if (Cnmk_stdsq > 0) {
-                Cnmk_err = sqrt(Cnmk_stdsq / total_number_of_events);
-                Cnmk_err = per_tuple(Cnmk_err, num_pair);
-            }
-            output1 << scientific << setw(18) << setprecision(8) << Cnmk_avg
-                    << "  " << Cnmk_err << "  ";
-            Cnmk_avg = C_nmk_eta13[i][j] / total_number_of_events;
-            Cnmk_stdsq =
-                (C_nmk_eta13_err[i][j] / total_number_of_events
-                 - Cnmk_avg * Cnmk_avg);
-            Cnmk_avg = per_tuple(Cnmk_avg, num_pair_2);
-            Cnmk_err = 0.0;
-            if (Cnmk_stdsq > 0) {
-                Cnmk_err = sqrt(Cnmk_stdsq / total_number_of_events);
-                Cnmk_err = per_tuple(Cnmk_err, num_pair_2);
-            }
-            output2 << scientific << setw(18) << setprecision(8) << Cnmk_avg
-                    << "  " << Cnmk_err << "  ";
-        }
-        output1 << '\n';
-        output2 << '\n';
-    }
-    output1.close();
-    output2.close();
-    if (flag_charge_dependence == 1) {
-        ostringstream filename_ss1, filename_ss2;
-        ostringstream filename_os1, filename_os2;
-        filename_ss1 << path_ << "/particle_" << particle_monval
-                     << "_Cmnk_eta12_ss_pT_" << vn_rapidity_dis_pT_min << "_"
-                     << vn_rapidity_dis_pT_max
-                          << output_suffix(rapidity_correlation_output_);
-        filename_os1 << path_ << "/particle_" << particle_monval
-                     << "_Cmnk_eta12_os_pT_" << vn_rapidity_dis_pT_min << "_"
-                     << vn_rapidity_dis_pT_max
-                          << output_suffix(rapidity_correlation_output_);
-        filename_ss2 << path_ << "/particle_" << particle_monval
-                     << "_Cmnk_eta13_ss_pT_" << vn_rapidity_dis_pT_min << "_"
-                     << vn_rapidity_dis_pT_max
-                          << output_suffix(rapidity_correlation_output_);
-        filename_os2 << path_ << "/particle_" << particle_monval
-                     << "_Cmnk_eta13_os_pT_" << vn_rapidity_dis_pT_min << "_"
-                     << vn_rapidity_dis_pT_max
-                          << output_suffix(rapidity_correlation_output_);
-        ofstream output_ss1(filename_ss1.str().c_str());
-        ofstream output_os1(filename_os1.str().c_str());
-        ofstream output_ss2(filename_ss2.str().c_str());
-        ofstream output_os2(filename_os2.str().c_str());
-        if (rap_type == 0) {
-            output_ss1 << "# eta12  C_nmk_ss  C_nmk_ss_err" << '\n';
-            output_os1 << "# eta12  C_nmk_os  C_nmk_os_err" << '\n';
-            output_ss2 << "# eta13  C_nmk_ss  C_nmk_ss_err" << '\n';
-            output_os2 << "# eta13  C_nmk_os  C_nmk_os_err" << '\n';
-        } else {
-            output_ss1 << "# y12  C_nmk_ss  C_nmk_ss_err" << '\n';
-            output_os1 << "# y12  C_nmk_os  C_nmk_os_err" << '\n';
-            output_ss2 << "# y13  C_nmk_ss  C_nmk_ss_err" << '\n';
-            output_os2 << "# y13  C_nmk_os  C_nmk_os_err" << '\n';
-        }
-
+    using Matrix = vector<vector<double>>;
+    const auto write = [&](const char *observable, const char *header,
+                           const Matrix &sum, const Matrix &squares,
+                           const Matrix &cross) {
+        ostringstream filename;
+        filename << path_ << "/particle_" << particle_monval << observable
+                 << "_pT_" << vn_rapidity_dis_pT_min << "_"
+                 << vn_rapidity_dis_pT_max
+                 << output_suffix(rapidity_correlation_output_);
+        ofstream out(filename.str().c_str());
+        out << header << '\n';
         for (int j = 0; j < N_rap; j++) {
-            double eta_local = rapidity_dis_min + j * drap;
-            double num_pair_ss = C_nmk_eta12_ss[0][j] / total_number_of_events;
-            double num_pair_ss_stdsq =
-                (C_nmk_eta12_ss_err[0][j] / total_number_of_events
-                 - num_pair_ss * num_pair_ss);
-            double num_pair_ss_err = 0.0;
-            if (num_pair_ss_stdsq > 0) {
-                num_pair_ss_err =
-                    (sqrt(num_pair_ss_stdsq / total_number_of_events));
-            }
-            output_ss1 << scientific << setw(18) << setprecision(8) << eta_local
-                       << "  " << num_pair_ss << "  " << num_pair_ss_err
-                       << "  ";
-            double num_pair_os = C_nmk_eta12_os[0][j] / total_number_of_events;
-            double num_pair_os_stdsq =
-                (C_nmk_eta12_os_err[0][j] / total_number_of_events
-                 - num_pair_os * num_pair_os);
-            double num_pair_os_err = 0.0;
-            if (num_pair_os_stdsq > 0) {
-                num_pair_os_err =
-                    (sqrt(num_pair_os_stdsq / total_number_of_events));
-            }
-            output_os1 << scientific << setw(18) << setprecision(8) << eta_local
-                       << "  " << num_pair_os << "  " << num_pair_os_err
-                       << "  ";
-            double num_pair_ss2 = C_nmk_eta13_ss[0][j] / total_number_of_events;
-            double num_pair_ss2_stdsq =
-                (C_nmk_eta13_ss_err[0][j] / total_number_of_events
-                 - num_pair_ss2 * num_pair_ss2);
-            double num_pair_ss2_err = 0.0;
-            if (num_pair_ss2_stdsq > 0) {
-                num_pair_ss2_err =
-                    (sqrt(num_pair_ss2_stdsq / total_number_of_events));
-            }
-            output_ss2 << scientific << setw(18) << setprecision(8) << eta_local
-                       << "  " << num_pair_ss2 << "  " << num_pair_ss2_err
-                       << "  ";
-            double num_pair_os2 = C_nmk_eta13_os[0][j] / total_number_of_events;
-            double num_pair_os2_stdsq =
-                (C_nmk_eta13_os_err[0][j] / total_number_of_events
-                 - num_pair_os2 * num_pair_os2);
-            double num_pair_os2_err = 0.0;
-            if (num_pair_os2_stdsq > 0) {
-                num_pair_os2_err =
-                    (sqrt(num_pair_os2_stdsq / total_number_of_events));
-            }
-            output_os2 << scientific << setw(18) << setprecision(8) << eta_local
-                       << "  " << num_pair_os2 << "  " << num_pair_os2_err
-                       << "  ";
+            double count, count_error;
+            tuple_count(
+                sum[0][j], squares[0][j], total_number_of_events, count,
+                count_error);
+            out << scientific << setw(18) << setprecision(8)
+                << rapidity_dis_min + j * drap << "  " << count << "  "
+                << count_error << "  ";
             for (int i = 1; i < num_corr; i++) {
-                double Cnmk_ss_avg =
-                    (C_nmk_eta12_ss[i][j] / total_number_of_events);
-                double Cnmk_ss_stdsq =
-                    (C_nmk_eta12_ss_err[i][j] / total_number_of_events
-                     - Cnmk_ss_avg * Cnmk_ss_avg);
-                Cnmk_ss_avg = per_tuple(Cnmk_ss_avg, num_pair_ss);
-                double Cnmk_ss_err = 0.0;
-                if (Cnmk_ss_stdsq > 0) {
-                    Cnmk_ss_err = sqrt(Cnmk_ss_stdsq / total_number_of_events);
-                    Cnmk_ss_err = per_tuple(Cnmk_ss_err, num_pair_ss);
-                }
-                output_ss1 << scientific << setw(18) << setprecision(8)
-                           << Cnmk_ss_avg << "  " << Cnmk_ss_err << "  ";
-                double Cnmk_os_avg =
-                    (C_nmk_eta12_os[i][j] / total_number_of_events);
-                double Cnmk_os_stdsq =
-                    (C_nmk_eta12_os_err[i][j] / total_number_of_events
-                     - Cnmk_os_avg * Cnmk_os_avg);
-                Cnmk_os_avg = per_tuple(Cnmk_os_avg, num_pair_os);
-                double Cnmk_os_err = 0.0;
-                if (Cnmk_os_stdsq > 0) {
-                    Cnmk_os_err = sqrt(Cnmk_os_stdsq / total_number_of_events);
-                    Cnmk_os_err = per_tuple(Cnmk_os_err, num_pair_os);
-                }
-                output_os1 << scientific << setw(18) << setprecision(8)
-                           << Cnmk_os_avg << "  " << Cnmk_os_err << "  ";
-                Cnmk_ss_avg = (C_nmk_eta13_ss[i][j] / total_number_of_events);
-                Cnmk_ss_stdsq =
-                    (C_nmk_eta13_ss_err[i][j] / total_number_of_events
-                     - Cnmk_ss_avg * Cnmk_ss_avg);
-                Cnmk_ss_avg = per_tuple(Cnmk_ss_avg, num_pair_ss2);
-                Cnmk_ss_err = 0.0;
-                if (Cnmk_ss_stdsq > 0) {
-                    Cnmk_ss_err = sqrt(Cnmk_ss_stdsq / total_number_of_events);
-                    Cnmk_ss_err = per_tuple(Cnmk_ss_err, num_pair_ss2);
-                }
-                output_ss2 << scientific << setw(18) << setprecision(8)
-                           << Cnmk_ss_avg << "  " << Cnmk_ss_err << "  ";
-                Cnmk_os_avg = (C_nmk_eta13_os[i][j] / total_number_of_events);
-                Cnmk_os_stdsq =
-                    (C_nmk_eta13_os_err[i][j] / total_number_of_events
-                     - Cnmk_os_avg * Cnmk_os_avg);
-                Cnmk_os_avg = per_tuple(Cnmk_os_avg, num_pair_os2);
-                Cnmk_os_err = 0.0;
-                if (Cnmk_os_stdsq > 0) {
-                    Cnmk_os_err = sqrt(Cnmk_os_stdsq / total_number_of_events);
-                    Cnmk_os_err = per_tuple(Cnmk_os_err, num_pair_os2);
-                }
-                output_os2 << scientific << setw(18) << setprecision(8)
-                           << Cnmk_os_avg << "  " << Cnmk_os_err << "  ";
+                double value, error;
+                tuple_ratio(
+                    sum[i][j], squares[i][j], cross[i][j], sum[0][j],
+                    squares[0][j], value, error);
+                out << scientific << setw(18) << setprecision(8) << value
+                    << "  " << error << "  ";
             }
-            output_ss1 << '\n';
-            output_os1 << '\n';
-            output_ss2 << '\n';
-            output_os2 << '\n';
+            out << '\n';
         }
-        output_ss1.close();
-        output_os1.close();
-        output_ss2.close();
-        output_os2.close();
-    }
+    };
+    const std::string gap = rap_type == 0 ? "eta" : "y";
+    const std::string list = "(000, 112, 123, 224, 235, 134, 246, 336, 347)";
+    write(
+        "_Cmnk_eta12", ("# " + gap + "12  C_nmk  C_nmk_err " + list).c_str(),
+        C_nmk_eta12, C_nmk_eta12_err, C_nmk_eta12_cross);
+    write(
+        "_Cmnk_eta13", ("# " + gap + "13  C_nmk  C_nmk_err " + list).c_str(),
+        C_nmk_eta13, C_nmk_eta13_err, C_nmk_eta13_cross);
+    if (flag_charge_dependence != 1) return;
+    write(
+        "_Cmnk_eta12_ss", ("# " + gap + "12  C_nmk_ss  C_nmk_ss_err").c_str(),
+        C_nmk_eta12_ss, C_nmk_eta12_ss_err, C_nmk_eta12_ss_cross);
+    write(
+        "_Cmnk_eta12_os", ("# " + gap + "12  C_nmk_os  C_nmk_os_err").c_str(),
+        C_nmk_eta12_os, C_nmk_eta12_os_err, C_nmk_eta12_os_cross);
+    write(
+        "_Cmnk_eta13_ss", ("# " + gap + "13  C_nmk_ss  C_nmk_ss_err").c_str(),
+        C_nmk_eta13_ss, C_nmk_eta13_ss_err, C_nmk_eta13_ss_cross);
+    write(
+        "_Cmnk_eta13_os", ("# " + gap + "13  C_nmk_os  C_nmk_os_err").c_str(),
+        C_nmk_eta13_os, C_nmk_eta13_os_err, C_nmk_eta13_os_cross);
 }
 
 //! This function outputs the event averaged four-particle correlation Cn{4}
 void singleParticleSpectra::output_four_particle_Cn4_correlation() {
-    ostringstream filename;
-    if (rap_type == 0) {
-        filename << path_ << "/particle_" << particle_monval << "_Cn4"
-                 << "_eta_" << rap_min << "_" << rap_max
-                 << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-    } else {
-        filename << path_ << "/particle_" << particle_monval << "_Cn4"
-                 << "_y_" << rap_min << "_" << rap_max
-                 << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-    }
-    ofstream output(filename.str().c_str());
-    output << "# n  Cn4  Cn4_err" << '\n';
-    double num_pair = Cn4[0] / total_number_of_events;
-    double num_pair_stdsq =
-        (Cn4_err[0] / total_number_of_events - num_pair * num_pair);
-    double num_pair_err = 0.0;
-    if (num_pair_stdsq > 0) {
-        num_pair_err = sqrt(num_pair_stdsq / total_number_of_events);
-    }
-    output << scientific << setw(18) << setprecision(8) << 0 << "  " << num_pair
-           << "  " << num_pair_err << '\n';
-    for (int i = 1; i < num_Cn4; i++) {
-        double Cn4_avg = Cn4[i] / total_number_of_events;
-        double Cn4_stdsq =
-            (Cn4_err[i] / total_number_of_events - Cn4_avg * Cn4_avg);
-        Cn4_avg = per_tuple(Cn4_avg, num_pair);
-        double Cn4_avg_err = 0.0;
-        if (Cn4_stdsq > 0) {
-            Cn4_avg_err = sqrt(Cn4_stdsq / total_number_of_events);
-            Cn4_avg_err = per_tuple(Cn4_avg_err, num_pair);
-        }
-        output << scientific << setw(18) << setprecision(8) << i << "  "
-               << Cn4_avg << "  " << Cn4_avg_err << '\n';
-    }
+    write_four_particle_correlation(
+        "_Cn4", "# n  Cn4  Cn4_err", Cn4, Cn4_err, Cn4_cross);
 }
 
 //! This function outputs the event averaged four-particle correlation
 void singleParticleSpectra::output_four_particle_SC_correlation() {
+    write_four_particle_correlation(
+        "_SCmn", "# n  SC_mn  SC_mn_err", SC_mn, SC_mn_err, SC_mn_cross);
+}
+
+void singleParticleSpectra::write_four_particle_correlation(
+    const char *observable, const char *header, const vector<double> &sum,
+    const vector<double> &squares, const vector<double> &cross) {
     ostringstream filename;
-    if (rap_type == 0) {
-        filename << path_ << "/particle_" << particle_monval << "_SCmn"
-                 << "_eta_" << rap_min << "_" << rap_max
-                 << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-    } else {
-        filename << path_ << "/particle_" << particle_monval << "_SCmn"
-                 << "_y_" << rap_min << "_" << rap_max
-                 << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
-    }
+    filename << path_ << "/particle_" << particle_monval << observable
+             << (rap_type == 0 ? "_eta_" : "_y_") << rap_min << "_" << rap_max
+             << (bWeakFeedDown_ ? "_weakFD.dat" : ".dat");
     ofstream output(filename.str().c_str());
-    output << "# n  SC_mn  SC_mn_err" << '\n';
-    double num_pair = SC_mn[0] / total_number_of_events;
-    double num_pair_stdsq =
-        (SC_mn_err[0] / total_number_of_events - num_pair * num_pair);
-    double num_pair_err = 0.0;
-    if (num_pair_stdsq > 0) {
-        num_pair_err = sqrt(num_pair_stdsq / total_number_of_events);
-    }
-    output << scientific << setw(18) << setprecision(8) << 0 << "  " << num_pair
-           << "  " << num_pair_err << '\n';
-    for (int i = 1; i < SC_num_corr; i++) {
-        double SC_mn_avg = SC_mn[i] / total_number_of_events;
-        double SC_mn_stdsq =
-            (SC_mn_err[i] / total_number_of_events - SC_mn_avg * SC_mn_avg);
-        SC_mn_avg = per_tuple(SC_mn_avg, num_pair);
-        double SC_mn_avg_err = 0.0;
-        if (SC_mn_stdsq > 0) {
-            SC_mn_avg_err = sqrt(SC_mn_stdsq / total_number_of_events);
-            SC_mn_avg_err = per_tuple(SC_mn_avg_err, num_pair);
+    output << header << '\n';
+    for (std::size_t i = 0; i < sum.size(); i++) {
+        double value, error;
+        if (i == 0) {
+            tuple_count(
+                sum[0], squares[0], total_number_of_events, value, error);
+        } else {
+            tuple_ratio(
+                sum[i], squares[i], cross[i], sum[0], squares[0], value, error);
         }
         output << scientific << setw(18) << setprecision(8) << i << "  "
-               << SC_mn_avg << "  " << SC_mn_avg_err << '\n';
+               << value << "  " << error << '\n';
     }
 }
 
@@ -2206,6 +1988,7 @@ void singleParticleSpectra::calculate_rapidity_distribution(
         if (flag == 0) {
             rapidity_array[bin] += rap;
             dNdy_event[bin]++;
+            if (track.reconstructed) reconstructed_count_rap_[bin] += 1.0;
             dETdy_array[bin] += transverse_energy(track);
         }
         if (track.pT > vn_rapidity_dis_pT_min
@@ -2297,9 +2080,11 @@ void singleParticleSpectra::output_rapidity_density() {
            << "total event = " << total_number_of_events << '\n';
     for (int i = 0; i < N_rap; i++) {
         const double mean_rapidity = rapidity_array[i] / (dNdy_array[i] + 1.);
-        const double mean_count = dNdy_array[i] / total_number_of_events;
+        const double weighted_count =
+            dNdy_array[i]
+            + (reconstructed_weight_ - 1.0) * reconstructed_count_rap_[i];
         const double yield_density =
-            mean_count / drap / reconst_branching_ratio;
+            weighted_count / total_number_of_events / drap;
         const double energy_density =
             dETdy_array[i] / total_number_of_events / drap;
 
@@ -2376,6 +2161,10 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
         }
 
         if (rap_local > rap_min && rap_local < rap_max) {
+            spatial_count_ += 1.0;
+            if (particle_list->get_particle(event_id, i).reconstructed) {
+                spatial_reconstructed_count_ += 1.0;
+            }
             // first dN/dtau
             double t_local = particle_list->get_particle(event_id, i).t;
             double z_local = particle_list->get_particle(event_id, i).z;
@@ -2464,6 +2253,15 @@ void singleParticleSpectra::check_dNdSV(int event_id) {
 }
 
 void singleParticleSpectra::output_dNdSV() {
+    // Reconstructed tracks carry weight 1/branching ratio. One factor for all
+    // spatial histograms: exact when the sample is all reconstructed or all
+    // stored, approximate for a mixture.
+    const double yield_scale = spatial_count_ > 0.0
+                                   ? 1.0
+                                         + (reconstructed_weight_ - 1.0)
+                                               * spatial_reconstructed_count_
+                                               / spatial_count_
+                                   : 1.0;
     // first dN/dtau
     ostringstream filename;
     filename << path_ << "/check_" << particle_monval << "_dNdtau"
@@ -2473,10 +2271,8 @@ void singleParticleSpectra::output_dNdSV() {
         tau_array[i] = tau_array[i] / (dNdtau_array[i] + 1.);
         dNdtau_array[i] = dNdtau_array[i] / total_number_of_events;
         double dNdtau_err = sqrt(dNdtau_array[i] / total_number_of_events);
-        if (particle_monval == 333) {
-            dNdtau_array[i] = dNdtau_array[i] / reconst_branching_ratio;
-            dNdtau_err = dNdtau_err / reconst_branching_ratio;
-        }
+        dNdtau_array[i] = dNdtau_array[i] * yield_scale;
+        dNdtau_err = dNdtau_err * yield_scale;
         output << scientific << setw(18) << setprecision(8) << tau_array[i]
                << "   " << dNdtau_array[i] / dtau << "   " << dNdtau_err / dtau
                << '\n';
@@ -2499,14 +2295,12 @@ void singleParticleSpectra::output_dNdSV() {
         double dNdx1_err = sqrt(dNdx1_array[i] / total_number_of_events);
         double dNdx2_err = sqrt(dNdx2_array[i] / total_number_of_events);
         double dNdr_err = sqrt(dNdr_array[i] / total_number_of_events);
-        if (particle_monval == 333) {
-            dNdx1_array[i] = dNdx1_array[i] / reconst_branching_ratio;
-            dNdx2_array[i] = dNdx2_array[i] / reconst_branching_ratio;
-            dNdr_array[i] = dNdr_array[i] / reconst_branching_ratio;
-            dNdx1_err = dNdx1_err / reconst_branching_ratio;
-            dNdx2_err = dNdx2_err / reconst_branching_ratio;
-            dNdr_err = dNdr_err / reconst_branching_ratio;
-        }
+        dNdx1_array[i] = dNdx1_array[i] * yield_scale;
+        dNdx2_array[i] = dNdx2_array[i] * yield_scale;
+        dNdr_array[i] = dNdr_array[i] * yield_scale;
+        dNdx1_err = dNdx1_err * yield_scale;
+        dNdx2_err = dNdx2_err * yield_scale;
+        dNdr_err = dNdr_err * yield_scale;
         output2 << scientific << setw(18) << setprecision(8) << xpt_array[i]
                 << "   " << dNdx1_array[i] / dspatial_x << "   "
                 << dNdx1_err / dspatial_x << "   " << ypt_array[i] << "   "
@@ -2531,12 +2325,8 @@ void singleParticleSpectra::output_dNdSV() {
                 (dNdtaudx1_array[i][j] / total_number_of_events);
             dNdtaudx2_array[i][j] =
                 (dNdtaudx2_array[i][j] / total_number_of_events);
-            if (particle_monval == 333) {
-                dNdtaudx1_array[i][j] =
-                    (dNdtaudx1_array[i][j] / reconst_branching_ratio);
-                dNdtaudx2_array[i][j] =
-                    (dNdtaudx2_array[i][j] / reconst_branching_ratio);
-            }
+            dNdtaudx1_array[i][j] = (dNdtaudx1_array[i][j] * yield_scale);
+            dNdtaudx2_array[i][j] = (dNdtaudx2_array[i][j] * yield_scale);
             output2_1 << scientific << setw(18) << setprecision(8)
                       << dNdtaudx1_array[i][j] / dspatial_x / dtau << "   ";
             output2_2 << scientific << setw(18) << setprecision(8)
@@ -2557,10 +2347,8 @@ void singleParticleSpectra::output_dNdSV() {
         eta_s_array[i] = eta_s_array[i] / (dNdetas_array[i] + 1.);
         dNdetas_array[i] = dNdetas_array[i] / total_number_of_events;
         double dNdetas_err = sqrt(dNdetas_array[i] / total_number_of_events);
-        if (particle_monval == 333) {
-            dNdetas_array[i] = dNdetas_array[i] / reconst_branching_ratio;
-            dNdetas_err = dNdetas_err / reconst_branching_ratio;
-        }
+        dNdetas_array[i] = dNdetas_array[i] * yield_scale;
+        dNdetas_err = dNdetas_err * yield_scale;
         output3 << scientific << setw(18) << setprecision(8) << eta_s_array[i]
                 << "   " << dNdetas_array[i] / deta_s << "   "
                 << dNdetas_err / deta_s << '\n';

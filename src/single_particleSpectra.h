@@ -75,6 +75,17 @@ class singleParticleSpectra {
     bool bWeakFeedDown_;
 
     double reconst_branching_ratio;
+    //! Yield weight of a reconstructed track, 1 / branching ratio. Tracks
+    //! stored explicitly in the input keep weight one.
+    double reconstructed_weight_ = 1.0;
+    //! Counts of reconstructed tracks in the integrated window, in each pT
+    //! bin of the spectrum, and in each rapidity bin of dN/dy.
+    double reconstructed_count_ = 0.0;
+    std::vector<double> reconstructed_count_pT_;
+    std::vector<double> reconstructed_count_rap_;
+    //! Tracks entering the spatial histograms, and how many were rebuilt.
+    double spatial_count_ = 0.0;
+    double spatial_reconstructed_count_ = 0.0;
 
     int order_max;
     bool ecoOutput_;
@@ -141,21 +152,28 @@ class singleParticleSpectra {
     int num_corr;
     std::vector<double> C_nmk;
     std::vector<double> C_nmk_err;
+    std::vector<double> C_nmk_cross;
     std::vector<std::vector<double>> C_nmk_eta12;
     std::vector<std::vector<double>> C_nmk_eta13;
     std::vector<std::vector<double>> C_nmk_eta12_err;
     std::vector<std::vector<double>> C_nmk_eta13_err;
+    std::vector<std::vector<double>> C_nmk_eta12_cross;
+    std::vector<std::vector<double>> C_nmk_eta13_cross;
     int flag_charge_dependence = 0;
     std::vector<double> C_nmk_ss;
     std::vector<double> C_nmk_ss_err;
     std::vector<double> C_nmk_os;
     std::vector<double> C_nmk_os_err;
+    std::vector<double> C_nmk_ss_cross;
+    std::vector<double> C_nmk_os_cross;
 
     // 3-particle correlation with charge dep on 1 and 3 particles
     std::vector<double> C_nmk_ss_13;
     std::vector<double> C_nmk_ss_13_err;
     std::vector<double> C_nmk_os_13;
     std::vector<double> C_nmk_os_13_err;
+    std::vector<double> C_nmk_ss_13_cross;
+    std::vector<double> C_nmk_os_13_cross;
 
     // \Delta \eta dependent 3-particle correlators
     std::vector<std::vector<double>> C_nmk_eta12_ss;
@@ -166,16 +184,22 @@ class singleParticleSpectra {
     std::vector<std::vector<double>> C_nmk_eta12_os_err;
     std::vector<std::vector<double>> C_nmk_eta13_ss_err;
     std::vector<std::vector<double>> C_nmk_eta13_os_err;
+    std::vector<std::vector<double>> C_nmk_eta12_ss_cross;
+    std::vector<std::vector<double>> C_nmk_eta12_os_cross;
+    std::vector<std::vector<double>> C_nmk_eta13_ss_cross;
+    std::vector<std::vector<double>> C_nmk_eta13_os_cross;
 
     // 4-particle symmetric cumulants
     int SC_num_corr;
     std::vector<double> SC_mn;
     std::vector<double> SC_mn_err;
+    std::vector<double> SC_mn_cross;
 
     // 4-particle cumulant C_n{4}
     int num_Cn4;
     std::vector<double> Cn4;
     std::vector<double> Cn4_err;
+    std::vector<double> Cn4_cross;
 
     int check_spatial_flag;
     int N_tau;
@@ -330,7 +354,11 @@ class singleParticleSpectra {
         std::vector<double> &corr_ss, std::vector<double> &corr_ss_err,
         std::vector<double> &corr_os, std::vector<double> &corr_os_err,
         std::vector<double> &corr_ss_13, std::vector<double> &corr_ss_13_err,
-        std::vector<double> &corr_os_13, std::vector<double> &corr_os_13_err);
+        std::vector<double> &corr_os_13, std::vector<double> &corr_os_13_err,
+        std::vector<double> *cross_ss = nullptr,
+        std::vector<double> *cross_os = nullptr,
+        std::vector<double> *cross_ss_13 = nullptr,
+        std::vector<double> *cross_os_13 = nullptr);
 
     //! This function computes the 3-particle correlation for Qn vectors
     //! within one event
@@ -376,7 +404,11 @@ class singleParticleSpectra {
         std::vector<std::vector<double>> &Cmnk_ss_eta13,
         std::vector<std::vector<double>> &Cmnk_ss_eta13_err,
         std::vector<std::vector<double>> &Cmnk_os_eta13,
-        std::vector<std::vector<double>> &Cmnk_os_eta13_err);
+        std::vector<std::vector<double>> &Cmnk_os_eta13_err,
+        std::vector<std::vector<double>> *cross_ss_eta12 = nullptr,
+        std::vector<std::vector<double>> *cross_os_eta12 = nullptr,
+        std::vector<std::vector<double>> *cross_ss_eta13 = nullptr,
+        std::vector<std::vector<double>> *cross_os_eta13 = nullptr);
 
     //! This function outputs the event averaged three-particle correlation
     void output_three_particle_correlation();
@@ -410,6 +442,10 @@ class singleParticleSpectra {
 
     //! This function outputs the event averaged four-particle correlation
     void output_four_particle_SC_correlation();
+    void write_four_particle_correlation(
+        const char *observable, const char *header,
+        const std::vector<double> &sum, const std::vector<double> &squares,
+        const std::vector<double> &cross);
 
     //! this function computes the pT-integrated Qn vector as a function of
     //! rapidity in one event

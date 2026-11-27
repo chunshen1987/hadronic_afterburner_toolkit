@@ -2142,6 +2142,7 @@ void particleSamples::perform_particle_reconstruction() {
                             // this is a real phi(1020)
                             particle_info mother{};
                             mother.monval = 333;
+                            mother.reconstructed = true;
                             mother.mass = particle_mass;
                             mother.E = E;
                             mother.px = px;
